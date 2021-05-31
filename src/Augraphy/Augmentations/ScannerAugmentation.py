@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import cv2
+from scipy.stats import norm
 
 from Augraphy.ImageTransformer import ImageTransformer
 from Augraphy.Augmentations.DirtyRollersAugmentation import DirtyRollersAugmentation

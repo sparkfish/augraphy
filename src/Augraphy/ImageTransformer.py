@@ -2,6 +2,7 @@ import types
 import math
 import cv2
 import numpy as np
+import random
 
 class ImageTransformer():
   def __init__(self, debug = False, debug_slant_perspective = False):
@@ -29,6 +30,17 @@ class ImageTransformer():
       self._imshow(transform.__class__.__name__, result)
       
     return result
+  
+  def blur(self, img, kernel_size):
+    blurr_options = ["gaussian", "average"]
+    blurr_opt = random.choice(blurr_options)
+
+    if blurr_opt == "average":
+      img = cv2.blur(img,kernel_size)
+    elif blurr_opt == "gaussian":
+      img = cv2.GaussianBlur(img,kernel_size,0)
+
+    return img
 
   def sobel(self, image):
       gradX = cv2.Sobel(image, ddepth = cv2.CV_32F, dx = 1, dy = 0, ksize = -1)

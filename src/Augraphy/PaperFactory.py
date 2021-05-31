@@ -1,12 +1,12 @@
 import random
 import cv2
 import numpy as np
-import glob
+from glob import glob
 
 from Augraphy.ImageTransformer import ImageTransformer
 
 class PaperFactory(ImageTransformer):
-  def __init__(self, use_texture=True, use_generated=True, debug=False):
+  def __init__(self, use_texture=True, use_generated=True, texture_path="./paper_textures", debug=False):
     super().__init__(debug=debug)
     self.create_methods = list()
 
@@ -14,7 +14,7 @@ class PaperFactory(ImageTransformer):
       self.create_methods.append(self.get_texture)
       self.paper_textures = list()
       
-      for file in glob(f"/content/drive/MyDrive/Sparkfish/images/Paper/*"):
+      for file in glob(f"{texture_path}/*"):
         self.paper_textures.append(cv2.imread(file))
 
     if (use_generated):
@@ -22,17 +22,6 @@ class PaperFactory(ImageTransformer):
 
   def create_paper(self, shape):
     return random.choice(self.create_methods)(shape)
-
-  def blur(self, img, kernel_size):
-    blurr_options = ["gaussian", "average"]
-    blurr_opt = random.choice(blurr_options)
-
-    if blurr_opt == "average":
-      img = cv2.blur(img,kernel_size)
-    elif blurr_opt == "gaussian":
-      img = cv2.GaussianBlur(img,kernel_size,0)
-
-    return img
 
   def generate_paper(self, shape):
     paper = np.full((shape[0], shape[1], 3), random.randint(160, 255), dtype="uint8")

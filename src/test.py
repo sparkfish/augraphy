@@ -23,11 +23,12 @@ def create_pdf417():
 
     return image
 
-img = create_pdf417()
-cv2.imshow("original", img)
-cv2.waitKey(1000)
-pipeline = AugraphyPipeline()
-crappified = pipeline.crappify_barcode(img)
+img = np.array(create_pdf417())
 
+
+pipeline = AugraphyPipeline()
+crappified, original = pipeline.crappify(img, rotate=False)
+
+cv2.imshow("original", original)
 cv2.imshow("crappified", crappified)
-cv2.waitKey(5000)
+cv2.waitKey(20000)

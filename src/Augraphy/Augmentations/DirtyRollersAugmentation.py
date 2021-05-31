@@ -58,20 +58,11 @@ class DirtyRollersAugmentation(ImageTransformer):
     return image
 
   def create_scanline_mask(self, width, height, line_width):
-    # define the grid of multiplicable numbers
-    # if grad_start is at 0, lower - higher. If at 1, higher - lower
-    # also create the grid of multiplicable numbers for the gradient step
-    # if grad_start == 0:
-    #     grad_inc = (grad_high_pct-grad_low_pct)/(line_width)
-    #     grad_grid = np.mgrid[grad_low_pct:grad_high_pct:grad_inc]
-    # elif grad_start == 1:
-
     grad_list = list()
 
     # Create Standard Bar
     grad_high_pct = random.randint(86, 99)
     grad_low_pct = random.randint(70,85)
-    #grad_low_pct = random.randint(50,70)
 
     grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
     grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
