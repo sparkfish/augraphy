@@ -4,6 +4,12 @@ import cv2
 import numpy as np
 import random
 
+try:
+  from google.colab.patches import cv2_imshow
+  IN_COLAB = True
+except:
+  IN_COLAB = False
+
 class ImageTransformer():
   def __init__(self, debug = False, debug_slant_perspective = False):
     self.debug = debug  
@@ -16,15 +22,17 @@ class ImageTransformer():
       #   image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
       if (self.debug_slant_perspective):
         image = self.slant_perspective(image)
-        
-      print(name)
-      cv2_imshow(image)
+      
+      if (IN_COLAB):
+        print(name)
+        cv2_imshow(image)
+      else:
+        cv2.imshow(name, image)
 
   def transform(self, transform, *args, **kwargs):
     result = transform(*args, **kwargs)
 
-    print(str(transform))
-    if (isinstance(transform, types.FunctionType)):
+    if (isinstance(transform, types.BuiltinFunctionType) or isinstance(transform, types.MethodType)):
       self._imshow(transform.__name__, result)
     else:
       self._imshow(transform.__class__.__name__, result)

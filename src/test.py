@@ -7,7 +7,7 @@ import PIL
 import os
 from pdf417gen import encode, render_image
 
-from Augraphy.AugraphyPipeline import AugraphyPipeline
+import Augraphy
 
 def create_pdf417():
     type = 'pdf417'
@@ -26,7 +26,7 @@ def create_pdf417():
 img = np.array(create_pdf417())
 
 
-pipeline = AugraphyPipeline()
+pipeline = AugraphyPipeline(debug=True)
 crappified, original = pipeline.crappify(img, rotate=False)
 
 cv2.imshow("original", original)
