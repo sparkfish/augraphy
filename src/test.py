@@ -1,4 +1,3 @@
-from Augraphy.AugraphyPipeline import AugraphyPipeline
 import string
 import random
 import cv2
@@ -6,8 +5,6 @@ import numpy as np
 import PIL
 import os
 from pdf417gen import encode, render_image
-
-import Augraphy
 
 def create_pdf417():
     type = 'pdf417'
@@ -25,10 +22,12 @@ def create_pdf417():
 
 img = np.array(create_pdf417())
 
+from Augraphy import AugraphyPipeline
 
-pipeline = AugraphyPipeline(debug=True)
+img = cv2.imread("test.png")
+pipeline = AugraphyPipeline()
 crappified, original = pipeline.crappify(img, rotate=False)
 
 cv2.imshow("original", original)
 cv2.imshow("crappified", crappified)
-cv2.waitKey(20000)
+cv2.waitKey()
