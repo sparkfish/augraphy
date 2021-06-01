@@ -7,9 +7,9 @@ from Augraphy.Augmentations.PrinterAugmentation import PrinterAugmentation
 from Augraphy.Augmentations.ScannerAugmentation import ScannerAugmentation
 
 class AugraphyPipeline(ImageTransformer):
-  def __init__(self, debug = False):
+  def __init__(self, paper_texture_path="./paper_textures", debug = False):
     super().__init__(debug)
-    self.paper_factory = PaperFactory(debug=debug)
+    self.paper_factory = PaperFactory(texture_path=paper_texture_path, debug=debug)
 
   def crappify(self, image, rotate=True):
     #scale = random.uniform(1.0, 2.0)
