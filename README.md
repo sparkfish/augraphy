@@ -1,8 +1,14 @@
 # Augraphy
 
-Augmentation pipeline for rendering synthetic paper printing and scanning processes
+Augmentation pipeline for rendering synthetic paper printing and scanning processes.
 
-pdf417decoder is a pure Python library for decoding [PDF417 barcodes](https://en.wikipedia.org/wiki/PDF417).
+Turn an image like this:
+
+[Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/original.png)
+
+Into an image like this:
+
+[Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/augmented.png)
 
 ## Installation
 
