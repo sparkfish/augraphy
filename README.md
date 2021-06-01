@@ -4,11 +4,11 @@ Augmentation pipeline for rendering synthetic paper printing and scanning proces
 
 Turn an image like this:
 
-[Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/original.png)
+![Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/original.png)
 
 Into an image like this:
 
-[Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/augmented.png)
+![Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/augmented.png)
 
 ## Installation
 
