@@ -24,9 +24,11 @@ pip install augraphy
 from Augraphy import AugraphyPipeline
 
 img = cv2.imread("test.png")
-pipeline = AugraphyPipeline()
+pipeline = AugraphyPipeline(paper_texture_path="./paper_textures")
 crappified, original = pipeline.crappify(img, rotate=False)
 ```
+
+```paper_texture_path``` defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.
 
 You can also enable debugging mode by setting the ```debug=True``` argument.
 
