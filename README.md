@@ -56,6 +56,7 @@ This will use cv2.imshow for each image transformation or cv2_imshow if running 
 - [X] Paper textures (Generated/Images)
 - [X] Scanner effects (Scanlines/Brightness Gradients)
 - [ ] Improved Configuration capabilities
+- [ ] Improve Modularity to allow new augmentations to easily be added.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
