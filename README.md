@@ -10,6 +10,20 @@ Into an image like this:
 
 ![Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/augmented.png)
 
+## Overview
+
+Training neural networks to work with images requires us to augment them in a variety of ways so that they learn to generalize. Networks designed to work with scanned document images must be trained with images that have the type of distortions seen in the wild.
+
+Augraphy is an augmentation library developed to emulate these effects in a pipeline designed to emulate the real world process of printing and scanning a document.
+
+## How It Works
+
+![Augmentation Pipeline](images/Augmentation.png)
+
+Augraphy's augmentation pipeline starts with augmentations that emulate effects like Ink Bleed, Dusty Ink and Low Ink. Augraphy then virtually prints it to paper that has been generated mathematically or cropped from paper texture images. This image is then augmented further with distortions that can be created by scanners.
+
+The end result is an image that mimics real scanned document images.
+
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install augraphy.
