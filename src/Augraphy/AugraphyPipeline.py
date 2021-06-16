@@ -17,7 +17,13 @@ class AugraphyPipeline:
       self.paper_factory = paper_factory
 
   def augment(self, image):
-    ink = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if (len(image.shape) > 2 and image.shape[2] == 3):
+          ink = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    elif (len(image.shape) > 2 and image.shape[2] == 4):
+      ink = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+    else:
+      ink = image
+      
     ink = self.ink_phase(ink)
     ink = self.make_white_transparent(ink, random.randint(self.ink_color_range[0], self.ink_color_range[1]))
     paper = self.paper_factory.create_paper(image.shape)
