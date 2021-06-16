@@ -227,10 +227,10 @@ class OneOf(Augmentation):
         return image
 
 class BrightnessTexturizeAugmentation(Augmentation):
-  def __init__(self, low=0.9, high=0.99, deviation=0.03, probability=0.5, debug=False):
+  def __init__(self, range=(0.9, 0.99), deviation=0.03, probability=0.5, debug=False):
     super().__init__(probability=probability, debug=debug)
-    self.low = low
-    self.high = high
+    self.low = range[0]
+    self.high = range[1]
     self.deviation = deviation
 
   def __call__(self, img, force=False):
@@ -575,30 +575,34 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
     return image
 
 class DustyInkAugmentation(Augmentation):
-  def __init__(self, intensity=.2, range=(0, 224), probability=0.5, debug=False):
+  def __init__(self, intensity_range=(.1, .2), color_range=(0, 224), probability=0.5, debug=False):
     super().__init__(probability=probability, debug=debug)
-    self.intensity = intensity
-    self.range = range
-    add_noise = lambda x: random.randint(range[0], range[1]) if (x == 0 and random.random() < self.intensity) else x
-    self.add_noise = np.vectorize(add_noise)
+    self.intensity_range = intensity_range
+    self.color_range = color_range
+
 
   def __call__(self, img, force=False):
     if (force or self.should_run()):
-      return self.add_noise(img)
+      intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
+      add_noise_fn = lambda x: random.randint(self.color_range[0], self.color_range[1]) if (x == 0 and random.random() < intensity) else x
+      add_noise = np.vectorize(add_noise_fn)
+      return add_noise(img)
 
     return img
   
 class InkBleedAugmentation(Augmentation):
-  def __init__(self, intensity=.2, range=(0, 224), probability=0.5, debug=False):
+  def __init__(self, intensity_range=(.1, .2), color_range=(0, 224), probability=0.5, debug=False):
     super().__init__(probability=probability, debug=debug)
-    self.intensity = intensity
-    add_noise = lambda x, y: random.randint(range[0], range[1]) if (y == 255 and random.random() < self.intensity) else x
-    self.add_noise = np.vectorize(add_noise)
+    self.intensity_range = intensity_range
+    self.color_range = color_range
 
   def __call__(self, img, force=False):
     if (force or self.should_run()):
+      intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
+      add_noise_fn = lambda x, y: random.randint(self.color_range[0], self.color_range[1]) if (y == 255 and random.random() < intensity) else x
+      add_noise = np.vectorize(add_noise_fn)
       sobel = self.transform(self.sobel, img)
-      return self.add_noise(img, sobel)
+      return add_noise(img, sobel)
     
     return img
 
