@@ -41,7 +41,7 @@ from Augraphy import AugraphyPipeline
 from Augraphy.Augmentations import *
 ```
 
-## Build Augmentation Pipleline Phases
+## Build Augmentation Pipeline Phases
 ```python
 ink_phase = AugmentationSequence([
     InkBleedAugmentation(),
