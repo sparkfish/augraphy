@@ -6,7 +6,7 @@ import PIL
 import os
 from pdf417gen import encode, render_image
 
-from Augraphy import AugraphyPipeline
+from Augraphy import AugraphyPipeline, default_augraphy_pipeline
 from Augraphy.Augmentations import *
 
 def create_pdf417():
@@ -25,50 +25,12 @@ def create_pdf417():
 
 img = np.array(create_pdf417())
 
-ink_phase = AugmentationSequence([
-    InkBleedAugmentation(),
-    DustyInkAugmentation(),
-    LowInkBlobsAugmentation(), 
-    OneOf([
-        LowInkRandomLinesAugmentation(count_range=(3, 10), use_consistent_lines=False),
-        LowInkRandomLinesAugmentation(count_range=(3, 10), use_consistent_lines=True), 
-        LowInkPeriodicLinesAugmentation(count_range=(2, 2), period_range=(5, 5), use_consistent_lines=False), 
-        LowInkPeriodicLinesAugmentation(count_range=(2, 2), period_range=(5, 5), use_consistent_lines=True), 
-    ]),
-    GaussianBlurAugmentation(probability=1)
-])
 
-paper_phase = AugmentationSequence([
-    OneOf([
-        AugmentationSequence([
-            NoiseTexturizeAugmentation(),
-            BrightnessTexturizeAugmentation()
-        ]),
-        AugmentationSequence([
-            BrightnessTexturizeAugmentation(probability=1.0),
-            NoiseTexturizeAugmentation()
-        ])
-    ]),
-    GaussianBlurAugmentation([(3,3), (3,5), (5,3), (5,5)]),
-    BrightnessAugmentation()
-])
+pipeline = default_augraphy_pipeline()
 
-post_phase = AugmentationSequence([
-    DirtyRollersAugmentation(),
-    OneOf([
-        LightingGradientAugmentation(),
-        BrightnessAugmentation()
-    ]),
-    JpegAugmentation(), 
-    SubtleNoiseAugmentation()
-])
-
-pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
-
-#img = cv2.imread("test.png")
 
 for i in range(10):
     crappified = pipeline.augment(img)
 
-    cv2.imshow("crappified", crappified)
+    cv2.imshow("crappified", crappified['output'])
     cv2.waitKey(1000)
