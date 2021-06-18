@@ -41,6 +41,14 @@ from Augraphy import AugraphyPipeline
 from Augraphy.Augmentations import *
 ```
 
+## Create Default Pipeline
+
+```python
+from Augraphy import default_augraphy_pipeline
+
+pipeline = default_augraphy_pipeline()
+```
+
 ## Build Augmentation Pipeline Phases
 ```python
 ink_phase = AugmentationSequence([
@@ -48,66 +56,58 @@ ink_phase = AugmentationSequence([
     DustyInkAugmentation(),
     LowInkBlobsAugmentation(), 
     OneOf([
-        LowInkRandomLinesAugmentation(count_range=(3, 10), use_consistent_lines=False),
-        LowInkRandomLinesAugmentation(count_range=(3, 10), use_consistent_lines=True), 
-        LowInkPeriodicLinesAugmentation(count_range=(2, 2), period_range=(5, 5), use_consistent_lines=False), 
-        LowInkPeriodicLinesAugmentation(count_range=(2, 2), period_range=(5, 5), use_consistent_lines=True), 
+        LowInkRandomLinesAugmentation(use_consistent_lines=False),
+        LowInkRandomLinesAugmentation(use_consistent_lines=True), 
+        LowInkPeriodicLinesAugmentation(use_consistent_lines=False), 
+        LowInkPeriodicLinesAugmentation(use_consistent_lines=True), 
     ]),
-    GaussianBlurAugmentation(probability=1)
+    GaussianBlurAugmentation('ink', probability=1)
 ])
 
 paper_phase = AugmentationSequence([
+    PaperFactory(),
     OneOf([
-        AugmentationSequence([
-            NoiseTexturizeAugmentation(),
-            BrightnessTexturizeAugmentation()
+    AugmentationSequence([
+        NoiseTexturizeAugmentation(probability=1.0),
+        BrightnessTexturizeAugmentation(),
+        GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
         ]),
-        AugmentationSequence([
-            BrightnessTexturizeAugmentation(probability=1.0),
-            NoiseTexturizeAugmentation()
-        ])
-    ]),
-    GaussianBlurAugmentation([(3,3), (3,5), (5,3), (5,5)]),
-    BrightnessAugmentation()
+    AugmentationSequence([
+        BrightnessTexturizeAugmentation(probability=1.0),
+        NoiseTexturizeAugmentation(),
+        GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
+    ])]),
+    BrightnessAugmentation('paper')
 ])
+
 
 post_phase = AugmentationSequence([
-    DirtyRollersAugmentation(),
     OneOf([
-        LightingGradientAugmentation(),
-        BrightnessAugmentation()
+            LightingGradientAugmentation(),
+            BrightnessAugmentation('post')
     ]),
-    JpegAugmentation(), 
-    SubtleNoiseAugmentation()
+    SubtleNoiseAugmentation(),
+    JpegAugmentation()
 ])
-
-pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
-```
-
-## **Optional:** Build Paper Factory
-
-```paper_texture_path``` defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.
-
-```python
-paper_factory = PaperFactory(paper_texture_path='./paper_textures')
-pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, paper_factory=paper_factory)
 ```
 
 ## Load and Augment Image
 ```python
 img = cv2.imread("image.png")
-crappified = pipeline.augment(img)
+data = pipeline.augment(img)
 ```
 
-## Debug Mode
+## Data Dictionary Output
 
-You can also enable debugging mode for augmentations by setting the ```debug=True``` argument. This will use cv2.imshow for each image transformation or cv2_imshow if running in Google Colab.
+The output of the pipeline will be a dictionary containing the image at various stages of processing along with augmentations applied. Additional metadata can be added by augmentations in the pipeline.
 
-```python
-OneOf([
-        #...
-    ], debug=True)
-```
+```data['image']``` stores the initial input image before any modifications were made.
+```data['image_rotated']``` stores the initial input image after rotation. This will serve as the *Ground Truth* for training neural networks.
+```data['ink']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the ink phase.
+```data['paper_texture']``` contains the image selected to be used as the paper texture by ```PaperFactory```.
+```data['paper']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the paper phase.
+```data['post']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the post phase.
+```data['output']``` stores the final image after all augmentations are applied.
 
 # Augmentations
 
@@ -327,6 +327,26 @@ The Augmentations specified in the paper phase will be applied to the background
 **Initial Image used for Examples:**
 
 ![Starting Paper Image](images/Augmentations/NoiseTexturizeBefore.png)
+
+### Paper Factory
+
+Randomly replaces the starting paper image with a texture chosen from a directory and resized to fit or cropped and tiled to fit.
+
+**Usage:**
+
+```python
+augmentation = PaperFactory(
+        tile_texture_shape=(250,250), 
+        texture_path="./paper_textures"
+        probability=0.5
+    )
+```
+
+```tile_texture_shape``` specifies the size of the texture crop when tiling a texture.
+
+```paper_texture_path``` defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.
+
+```probability``` specifies the probability that the augmentation will run.
 
 ### **Noise Texturize**
 
