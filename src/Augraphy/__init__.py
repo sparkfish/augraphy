@@ -9,7 +9,7 @@ def default_augraphy_pipeline():
                                   DustyInkAugmentation(),
                                   LowInkBlobsAugmentation(), 
                                   OneOf([
-                                    LowInkRandomLinesAugmentation(use_consistent_lines=False), #line jitter, add range 
+                                    LowInkRandomLinesAugmentation(use_consistent_lines=False),
                                     LowInkRandomLinesAugmentation(use_consistent_lines=True), 
                                     LowInkPeriodicLinesAugmentation(use_consistent_lines=False), 
                                     LowInkPeriodicLinesAugmentation(use_consistent_lines=True), 

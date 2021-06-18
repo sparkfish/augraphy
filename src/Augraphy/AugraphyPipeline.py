@@ -18,7 +18,8 @@ class AugraphyPipeline:
     data['image'] = image.copy()
     ink = data['image'].copy()
     ink = self.rotate_image(ink, random.randint(self.rotate_range[0], self.rotate_range[1]))
-
+    data['image_rotated'] = ink.copy()
+    
     if (len(ink.shape) > 2 and ink.shape[2] == 3):
       ink = cv2.cvtColor(ink, cv2.COLOR_BGR2GRAY)
     elif (len(ink.shape) > 2 and ink.shape[2] == 4):
