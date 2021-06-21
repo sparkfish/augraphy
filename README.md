@@ -45,6 +45,19 @@ pipeline = default_augraphy_pipeline()
 
 ## Optional: Modify Default Pipeline
 
+```python
+from Augraphy import default_augraphy_pipeline
+
+pipeline = default_augraphy_pipeline()
+pipeline.ink_phase.augmentations.append(BrightnessAugmentation('ink'))
+
+paper_factory = pipeline.paper_phase.augmentations[0]
+paper_factory.probability = 1.0
+
+jpeg_aug = pipeline.post_phase.augmentations[-1]
+jpeg_aug.quality_range = (10, 20)
+```
+
 ## Optional: Build Augmentation Pipeline Phases
 ```python
 ink_phase = AugmentationSequence([
@@ -85,6 +98,8 @@ post_phase = AugmentationSequence([
     SubtleNoiseAugmentation(),
     JpegAugmentation()
 ])
+
+pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 ```
 
 ## Load and Augment Image
@@ -95,23 +110,18 @@ data = pipeline.augment(img)
 
 ## Data Dictionary Output
 
-TODO: Tabelize
-
 The output of the pipeline will be a dictionary containing the image at various stages of processing along with augmentations applied. Additional metadata can be added by augmentations in the pipeline.
 
-```data['image']``` stores the initial input image before any modifications were made.
+| Key  | Description  |
+|---|---|
+| ```data['image']```  |  stores the initial input image before any modifications were made. |
+| ```data['image_rotated']```  | stores the initial input image after rotation. This will serve as the *Ground Truth* for training neural networks.  |
+| ```data['ink']```  |  contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the ink phase. |
+| ```data['paper_texture']```  |  contains the image selected to be used as the paper texture by ```PaperFactory```. |
+| ```data['paper']```  | contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the paper phase.  |
+| ```data['post']```  | contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the post phase.  |
+| ```data['output']```  | stores the final image after all augmentations are applied.  |
 
-```data['image_rotated']``` stores the initial input image after rotation. This will serve as the *Ground Truth* for training neural networks.
-
-```data['ink']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the ink phase.
-
-```data['paper_texture']``` contains the image selected to be used as the paper texture by ```PaperFactory```.
-
-```data['paper']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the paper phase.
-
-```data['post']``` contains a list of ```AugmentationResult```s with the augmentation and resulting image for each step of the post phase.
-
-```data['output']``` stores the final image after all augmentations are applied.
 
 # Augmentations
 
@@ -132,9 +142,10 @@ augmentation = AugmentationSequence(
     )
 ```
 
-```augmentations``` specifies the list of augmentations to be ran.
-
-```probability``` specifies the probability that the augmentation sequence will run.
+| Parameter  | Description  |
+|---|---|
+|   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
+|   ```probability``` | specifies the probability that the augmentation sequence will run.   |
 
 ### One Of
 
@@ -151,9 +162,10 @@ augmentation = OneOf(
     )
 ```
 
-```augmentations``` specifies the list of augmentations to be chosen from.
-
-```probability``` specifies the probability that the augmentation sequence will run.
+| Parameter  | Description  |
+|---|---|
+|   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
+|   ```probability``` | specifies the probability that the augmentation will run one of the specified augmentations.   |
 
 ### Gaussian Blur
 
@@ -169,11 +181,11 @@ augmentation = GaussianBlurAugmentation(
     )
 ```
 
-```kernels``` specifies a list of blur kernels, one of which will be selected randomly when the blur is applied.
-
-```sigmaX``` specifes sigmaX value of the gaussian blur.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|  ```kernels``` | specifies a list of blur kernels, one of which will be selected randomly when the blur is applied.   |
+|  ```sigmaX``` | specifes sigmaX value of the gaussian blur.   |
+|  ```probability``` | specifies the probability that the augmentation will run.   |
 
 ### Brightness
 
@@ -188,9 +200,10 @@ augmentation = BrightnessAugmentation(
     )
 ```
 
-```range``` specifies the range of values to be chosen at random for the brightness multiplier applied.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```range``` | specifies the range of values to be chosen at random for the brightness multiplier applied.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 
 ## Ink Processing Phase
@@ -209,11 +222,11 @@ augmentation = InkBleedAugmentation(
     )
 ```
 
-```intensity_range``` range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.
-
-```color_range``` specifes the value range of the colors used for noise.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```intensity_range``` | range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.   |
+|   ```color_range``` | specifes the value range of the colors used for noise.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -236,11 +249,11 @@ augmentation = DustyInkAugmentation(
     )
 ```
 
-```intensity_range``` range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.
-
-```color_range``` specifes the value range of the colors used for noise.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```intensity_range``` range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.   |
+|   ```color_range``` | specifes the value range of the colors used for noise.   |
+|   ```probability``` | specifies the probability that the augmentation will run.  |
 
 **Example:**
 
@@ -267,19 +280,15 @@ augmentation = LowInkBlobsAugmentation(
     )
 ```
 
-```count_range``` specifies the range for the number of blobs to add to the imaqge.
-
-```size_range``` specifies the range in pixels for the size of the image patch that blobs will be created in.
-
-```points_range``` specifies the number of points to add to image patch to create the blob.
-
-```std_range``` specifies the std_range value passed into ```sklearn.datasets.make_blobs```
-
-```features_range``` specifies the features_range value passed into ```sklearn.datasets.make_blobs```
-
-```values_range``` specifies the range of values used for the blob pixels.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```count_range``` | specifies the range for the number of blobs to add to the imaqge.  |
+|  ```size_range``` | specifies the range in pixels for the size of the image patch that blobs will be created in.   |
+|   ```points_range``` | specifies the number of points to add to image patch to create the blob.   |
+|   ```std_range``` | specifies the std_range value passed into ```sklearn.datasets.make_blobs```   |
+|   ```features_range``` | specifies the features_range value passed into ```sklearn.datasets.make_blobs```   |
+|   ```values_range``` | specifies the range of values used for the blob pixels.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -300,9 +309,10 @@ augmentation = LowInkRandomLinesAugmentation(
     )
 ```
 
-```count_range``` specifies the number of lines to add to the image.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```count_range``` | specifies the number of lines to add to the image.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 ```python
 augmentation = LowInkPeriodicLinesAugmentation(
@@ -313,11 +323,11 @@ augmentation = LowInkPeriodicLinesAugmentation(
     )
 ```
 
-```count_range``` specifies the number of lines to add that will be repeated.
-
-```period_range``` specifies the number of pixels in each period before lines are repeated.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|  ```count_range``` | specifies the number of lines to add that will be repeated.   |
+|  ```period_range``` | specifies the number of pixels in each period before lines are repeated.  |
+|  ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -348,11 +358,11 @@ augmentation = PaperFactory(
     )
 ```
 
-```tile_texture_shape``` specifies the size of the texture crop when tiling a texture.
-
-```paper_texture_path``` defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```tile_texture_shape``` | specifies the size of the texture crop when tiling a texture.   |
+|   ```paper_texture_path``` | defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 ### **Noise Texturize**
 
@@ -368,11 +378,11 @@ augmentation = NoiseTexturizeAugmentation(
     )
 ```
 
-```sigma_range``` specifies the bounds of noise fluctuations.
-
-```turbulence_range``` specifies the  how quickly big patterns will be replaced with the small ones. The lower the value the more iterations will be performed during texture generation..
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```sigma_range``` | specifies the bounds of noise fluctuations.   |
+|   ```turbulence_range``` | specifies the  how quickly big patterns will be replaced with the small ones. The lower the value the more iterations will be performed during texture generation..   |
+|   ```probability``` | specifies the probability that the augmentation will run.  |
 
 **Example:**
 
@@ -392,11 +402,11 @@ augmentation = BrightnessTexturizeAugmentation(
     )
 ```
 
-```range``` specifies the range of the brightness noise.
-
-```deviation``` specifies the deviation in the brightness noise.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```range``` | specifies the range of the brightness noise.   |
+|   ```deviation``` | specifies the deviation in the brightness noise.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -435,9 +445,10 @@ augmentation = DirtyRollersAugmentation(
     )
 ```
 
-```line_width_range``` specifies the base width of the rollers/bars/lines of the brightness gradients.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```line_width_range``` | specifies the base width of the rollers/bars/lines of the brightness gradients.   |
+|   ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -468,21 +479,17 @@ augmentation = LightingGradientAugmentation(
       mode: the way that brightness decay from max to min: linear or gaussian
       linear_decay_rate: only valid in linear_static mode. Suggested value is within [0.2, 2]
 
-```light_position``` tuple of integers (x, y) specifying the center of light strip position, which is the reference point during rotating.
-
-```direction``` integer from 0 to 360 specifying the rotation degree of light strip.
-
-```max_brightness``` specifies the max brightness in the mask.
-
-```min_brightness``` specifies the min brightness in the mask.
-
-```mode``` specifies the way that brightness decay from max to min: linear or gaussian.
-
-```linear_decay_rate``` only valid in linear_static mode. Suggested value is within [0.2, 2]
-
-```transparency``` specifies the transparency used by the generated mask, value range of 0 to 1.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|   ```light_position``` | tuple of integers (x, y) specifying the center of light strip position, which is the reference point during rotating.   |
+|   ```direction``` | integer from 0 to 360 specifying the rotation degree of light strip.  |
+|   ```max_brightness``` | specifies the max brightness in the mask.   |
+|   ```min_brightness``` | specifies the min brightness in the mask.   |
+|   ```mode``` | specifies the way that brightness decay from max to min: linear or gaussian.   |
+|   ```linear_decay_rate``` | only valid in linear_static mode. Suggested value is within [0.2, 2] |
+|   ```transparency``` | specifies the transparency used by the generated mask, value range of 0 to 1.   |
+|   ```probability``` | specifies the probability that the augmentation will run.  |
+|   |   |
 
 **Example:**
 
@@ -501,9 +508,10 @@ augmentation = SubtleNoiseAugmentation(
     )
 ```
 
-```range``` specifies the range added or subtracted from each pixel value in the image. With a range of 5, a pixel with color value of 100 will end up between 95 and 105. 
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|  ```range``` | specifies the range added or subtracted from each pixel value in the image. With a range of 5, a pixel with color value of 100 will end up between 95 and 105.  |
+|  ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -522,9 +530,10 @@ augmentation = JpegAugmentation(
     )
 ```
 
-```quality_range``` specifies the quality range for the JPEG compression encoding.
-
-```probability``` specifies the probability that the augmentation will run.
+| Parameter  | Description  |
+|---|---|
+|  ```quality_range``` | specifies the quality range for the JPEG compression encoding. |
+| ```probability``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
