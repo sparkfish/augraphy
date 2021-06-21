@@ -14,16 +14,10 @@ Augraphy's augmentation pipeline starts with augmentations that emulate effects 
 
 The end result is an image that mimics real scanned document images.
 
-**Example Barcode**
+**Example**
 
-![Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/original.png)
-![Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/augmented.png)
-
-
-**Example Text**
-
-![Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/Text.png)
-![Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/TextCrap.png)
+![Original Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/AugraphyExampleInput.png)
+![Augmented Image](https://raw.githubusercontent.com/sparkfish/augraphy/dev/images/AugraphyExampleOutput.png)
 
 # Installation
 
@@ -49,7 +43,9 @@ from Augraphy import default_augraphy_pipeline
 pipeline = default_augraphy_pipeline()
 ```
 
-## Build Augmentation Pipeline Phases
+## Optional: Modify Default Pipeline
+
+## Optional: Build Augmentation Pipeline Phases
 ```python
 ink_phase = AugmentationSequence([
     InkBleedAugmentation(),
@@ -98,6 +94,8 @@ data = pipeline.augment(img)
 ```
 
 ## Data Dictionary Output
+
+TODO: Tabelize
 
 The output of the pipeline will be a dictionary containing the image at various stages of processing along with augmentations applied. Additional metadata can be added by augmentations in the pipeline.
 
@@ -328,11 +326,13 @@ augmentation = LowInkPeriodicLinesAugmentation(
 
 ## Paper Processing Phase
 
-The Augmentations specified in the paper phase will be applied to the background paper image returned by the paper factory before the ink is printed to it. A solid color image can also be used as a source and will be texturized by the default augmentations documented here.
+The Augmentations specified in the paper phase will be applied to the background paper image returned by the paper factory before the ink is printed to it. A solid grayscale color between 255 and 196 image can also be used as a source and will be texturized by the default augmentations documented here.
 
 **Initial Image used for Examples:**
 
 ![Starting Paper Image](images/Augmentations/NoiseTexturizeBefore.png)
+
+(Blank Paper Page)
 
 ### Paper Factory
 
