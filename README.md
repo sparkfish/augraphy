@@ -8,11 +8,11 @@ Augraphy is an augmentation library developed to emulate these effects in a pipe
 
 # How It Works
 
-![Augmentation Pipeline](images/Augmentation.png)
-
 Augraphy's augmentation pipeline starts with augmentations that emulate effects like Ink Bleed, Dusty Ink and Low Ink. Augraphy then virtually prints it to paper that has been generated mathematically or cropped from paper texture images. This image is then augmented further with distortions that can be created by scanners.
 
 The end result is an image that mimics real scanned document images.
+
+![Augmentation Pipeline](images/Pipeline.png)
 
 **Example**
 
@@ -515,7 +515,9 @@ augmentation = SubtleNoiseAugmentation(
 
 **Example:**
 
-![Subtle Noise](images/Augmentations/SubtleNoise.png)
+Note: Example below created with a range of 25.
+
+![Subtle Noise](images/Augmentations/SubtleNoiseExample.png)
 
 ### **JPEG Compression**
 
