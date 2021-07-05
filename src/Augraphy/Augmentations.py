@@ -658,10 +658,10 @@ class LightingGradientAugmentation(Augmentation):
     return x_value
 
 class PaperFactory(Augmentation):
-  def __init__(self, texture_shape=(250,250), texture_path="./paper_textures", probability=0.5):
+  def __init__(self, tile_texture_shape=(250,250), texture_path="./paper_textures", probability=0.5):
     super().__init__(probability=probability)
     self.paper_textures = list()
-    self.texture_shape = texture_shape
+    self.tile_texture_shape = tile_texture_shape
     self.texture_path = texture_path
     for file in glob(f"{texture_path}/*"):
       texture = cv2.imread(file)
@@ -676,14 +676,14 @@ class PaperFactory(Augmentation):
       self.paper_textures.append(cv2.imread(file))
 
   def __repr__(self):
-    return f"PaperFactory(texture_shape={self.texture_shape}, texture_path={self.texture_path}, probability={self.probability})"
+    return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, probability={self.probability})"
 
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       shape = data['ink'][-1].result.shape
 
       if (random.choice([True, False])):
-        texture = self.get_texture(self.texture_shape)
+        texture = self.get_texture(self.tile_texture_shape)
         paper = self.tile_texture(texture, shape)
       else:
         texture = self.get_texture(shape)

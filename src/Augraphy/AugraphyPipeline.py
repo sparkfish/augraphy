@@ -2,7 +2,7 @@ import random
 import cv2
 import numpy as np
 
-from Augraphy.Augmentations import AugmentationResult
+from .Augmentations import AugmentationResult
 
 class AugraphyPipeline:
   def __init__(self, ink_phase, paper_phase, post_phase, ink_color_range=(0, 96), paper_color_range=(164, 255), rotate_range=(0,360)):
