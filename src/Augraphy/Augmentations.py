@@ -1,5 +1,3 @@
-import types
-import math
 import cv2
 import numpy as np
 import random
@@ -7,12 +5,6 @@ import random
 from glob import glob
 from scipy.stats import norm
 from sklearn.datasets import make_blobs
-
-try:
-  from google.colab.patches import cv2_imshow
-  IN_COLAB = True
-except:
-  IN_COLAB = False
 
 class AugmentationResult():
   def __init__(self, augmentation, result, metadata=None):
