@@ -225,7 +225,7 @@ class DirtyRollersAugmentation(Augmentation):
       line_width = random.randint(self.line_width_range[0], self.line_width_range[1])
       rotate = random.choice([True, False])
 
-      if (not self.debug and rotate):
+      if (rotate):
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
       image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -234,7 +234,7 @@ class DirtyRollersAugmentation(Augmentation):
       image = self.transform(self.apply_scanline_mask, image, mask, meta_mask).astype("uint8")
       image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-      if (not self.debug and rotate):
+      if (rotate):
         image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
       metadata = dict()
