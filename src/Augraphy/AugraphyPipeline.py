@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 class AugmentationResult():
-      def __init__(self, augmentation, result, metadata=None):
+  def __init__(self, augmentation, result, metadata=None):
     self.augmentation = augmentation
     self.result = result
     self.metadata = metadata
