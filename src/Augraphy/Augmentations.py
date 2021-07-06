@@ -11,11 +11,11 @@ class AugmentationResult():
     self.augmentation = augmentation
     self.result = result
     self.metadata = metadata
-    
+
 class Augmentation():
   def __init__(self, probability=0.5):
     self.probability = probability
-  
+
   def should_run(self): return random.uniform(0.0, 1.0) <= self.probability
 
 class AugmentationSequence(Augmentation):
@@ -70,7 +70,7 @@ class GaussianBlurAugmentation(Augmentation):
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       img = data[self.layer][-1].result
-      img = cv2.GaussianBlur(img, random.choice(self.kernels), self.sigmaX)   
+      img = cv2.GaussianBlur(img, random.choice(self.kernels), self.sigmaX)
       data[self.layer].append(AugmentationResult(self, img))
 
   def __repr__(self):
@@ -87,7 +87,7 @@ class BrightnessTexturizeAugmentation(Augmentation):
 
   def __repr__(self):
     return f"BrightnessTexturizeAugmentation(layer='{self.layer}', range={self.range}, deviation={self.deviation}, probability={self.probability})"
-    
+
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       img = data[self.layer][-1].result
@@ -270,7 +270,7 @@ class DirtyRollersAugmentation(Augmentation):
     grad_grid = np.hstack((grad_grid, np.flip(grad_grid), grad_exterior))
     grad_grid = np.tile(grad_grid,(height,1))
     grad_list.append(grad_grid)
-    
+
     # Create Standard Bar with Lower Dark
     grad_high_pct += min(100, random.randint(-3, 3))
     grad_low_pct -= random.randint(5, 8)
@@ -316,13 +316,13 @@ class LowInkBlobsAugmentation(Augmentation):
 
   def __repr__(self):
     return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, probability={self.probability})"
-  
+
   def create_blob(self):
     size = random.randint(self.size_range[0], self.size_range[1])
     std = random.randint(self.std_range[0], self.std_range[1]) / 100
     points = random.randint(self.points_range[0], self.points_range[1])
     features = random.randint(self.features_range[0], self.features_range[1])
-    
+
     X, y = make_blobs(n_samples=points, cluster_std=[std], centers=[(0, 0)], n_features=features) #, random_state=1)
     X *= (size // 4)
     X += (size // 2)
@@ -333,9 +333,9 @@ class LowInkBlobsAugmentation(Augmentation):
       if point[0] < blob.shape[0] and point[1] < blob.shape[1] and point[0] > 0 and point[1] > 0:
         value = random.randint(self.value_range[0], self.value_range[1])
         blob[point[0], point[1]] = value
-        
+
     return blob
-  
+
   def apply_blob(self, mask):
     blob = self.create_blob()
     x_start = random.randint(0, mask.shape[1] - blob.shape[1])
@@ -355,10 +355,10 @@ class LowInkBlobsAugmentation(Augmentation):
 
       data['ink'].append(AugmentationResult(self, image))
 
-class LowInkLineAugmentation(Augmentation):  
+class LowInkLineAugmentation(Augmentation):
   def __init__(self, use_consistent_lines=True, probability=0.5):
     super().__init__(probability=probability)
-    
+
     self.use_consistent_lines = use_consistent_lines
     inconsistent_transparency_line = lambda x: random.randint(0, 255)
     self.inconsistent_transparency_line = np.vectorize(inconsistent_transparency_line)
@@ -389,7 +389,7 @@ class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
 
   def __repr__(self):
     return f"LowInkRandomLinesAugmentation(count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
-  
+
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       mask = data['ink'][-1].result.copy()
@@ -411,7 +411,7 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
 
   def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
     period = mask.shape[0] // line_count
-    
+
     for y in range(mask.shape[0]-offset):
       if (y % period == 0):
         self.add_transparency_line(mask, y+offset, alpha)
@@ -453,7 +453,7 @@ class DustyInkAugmentation(Augmentation):
       img = add_noise(img)
 
       data['ink'].append(AugmentationResult(self, img))
-  
+
 class InkBleedAugmentation(Augmentation):
   def __init__(self, intensity_range=(.1, .2), color_range=(0, 224), probability=0.5):
     super().__init__(probability=probability)
@@ -634,8 +634,8 @@ class LightingGradientAugmentation(Augmentation):
     # cv2.imshow("crop", mask[init_mask_ul[1]:init_mask_br[1], init_mask_ul[0]:init_mask_br[0]])
     # cv2.imshow("all", mask)
     # cv2.waitKey(0)
-    return mask  
-    
+    return mask
+
   def _decayed_value_in_norm(self, x, max_value, min_value, center, range):
     """
     decay from max value to min value following Gaussian/Normal distribution
@@ -693,12 +693,12 @@ class PaperFactory(Augmentation):
   def tile_texture(self, texture, shape):
     x_scale = shape[0] // texture.shape[0] + 1
     y_scale = shape[1] // texture.shape[1] + 1
-  
+
     if (len(texture.shape) > 2):
       paper = np.empty((texture.shape[0]*x_scale, texture.shape[1]*y_scale, texture.shape[2]))
     else:
       paper = np.empty((texture.shape[0]*x_scale, texture.shape[1]*y_scale))
-    
+
     for x in range(x_scale):
       for y in range(y_scale):
         start_x = x*texture.shape[0]
@@ -729,7 +729,7 @@ class PaperFactory(Augmentation):
         scale = random.uniform(h_ratio, 1.2)
       else:
         scale = random.uniform(w_ratio, 1.2)
-      
+
       zoom = (int(texture_w*scale), int(texture_h*scale))
       #print(f"Zoom out from {texture.shape} to {zoom}")
       texture = cv2.resize(texture, zoom)
@@ -749,7 +749,7 @@ class PaperFactory(Augmentation):
       texture = cv2.resize(texture, zoom)
 
     return texture
-  
+
   def get_texture(self, shape):
     texture = random.choice(self.paper_textures)
 

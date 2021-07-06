@@ -7,12 +7,12 @@ def default_augraphy_pipeline():
     ink_phase = AugmentationSequence([
                                   InkBleedAugmentation(),
                                   DustyInkAugmentation(),
-                                  LowInkBlobsAugmentation(), 
+                                  LowInkBlobsAugmentation(),
                                   OneOf([
                                     LowInkRandomLinesAugmentation(use_consistent_lines=False),
-                                    LowInkRandomLinesAugmentation(use_consistent_lines=True), 
-                                    LowInkPeriodicLinesAugmentation(use_consistent_lines=False), 
-                                    LowInkPeriodicLinesAugmentation(use_consistent_lines=True), 
+                                    LowInkRandomLinesAugmentation(use_consistent_lines=True),
+                                    LowInkPeriodicLinesAugmentation(use_consistent_lines=False),
+                                    LowInkPeriodicLinesAugmentation(use_consistent_lines=True),
                                   ]),
                                   GaussianBlurAugmentation('ink', probability=1)
                                 ])

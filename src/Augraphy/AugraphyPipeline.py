@@ -19,15 +19,15 @@ class AugraphyPipeline:
     ink = data['image'].copy()
     ink = self.rotate_image(ink, random.randint(self.rotate_range[0], self.rotate_range[1]))
     data['image_rotated'] = ink.copy()
-    
+
     if (len(ink.shape) > 2 and ink.shape[2] == 3):
       ink = cv2.cvtColor(ink, cv2.COLOR_BGR2GRAY)
     elif (len(ink.shape) > 2 and ink.shape[2] == 4):
       ink = cv2.cvtColor(ink, cv2.COLOR_BGRA2GRAY)
-    
+
     data['pipeline'] = self
     data['ink'] = list()
-    data['paper'] = list() 
+    data['paper'] = list()
     data['post'] = list()
 
     data['ink'].append(AugmentationResult(None, ink))
@@ -56,7 +56,7 @@ class AugraphyPipeline:
     rotation_mat = cv2.getRotationMatrix2D(image_center, angle, 1.)
 
     # rotation calculates the cos and sin, taking absolutes of those.
-    abs_cos = abs(rotation_mat[0,0]) 
+    abs_cos = abs(rotation_mat[0,0])
     abs_sin = abs(rotation_mat[0,1])
 
     # find the new width and height bounds
@@ -90,7 +90,7 @@ class AugraphyPipeline:
     background_part = (background * (1 / 255.0)) * (background_mask * (1 / 255.0))
     overlay_part = (overlay_img * (1 / 255.0)) * (overlay_mask * (1 / 255.0))
 
-    # And finally just add them together, and rescale it back to an 8bit integer image    
+    # And finally just add them together, and rescale it back to an 8bit integer image
     return np.uint8(cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0))
 
   def make_white_transparent(self, img, ink_color=0):
