@@ -558,7 +558,7 @@ class GammaAugmentation(Augmentation):
     print(table.shape,img.shape)
     frame= cv2.LUT(img, table)
     data['post'].append(AugmentationResult(self, frame))
-    cv2.imwrite(os.path.join('test_outputs',str(round(value,4))+"gamma.jpg"),np.hstack((img,frame)))
+    # cv2.imwrite(os.path.join('test_outputs',str(round(value,4))+"gamma.jpg"),np.hstack((img,frame)))
 
 
 class LightingGradientAugmentation(Augmentation):
