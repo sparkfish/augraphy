@@ -519,6 +519,32 @@ Note: Example below created with a range of 25.
 
 ![Subtle Noise](images/Augmentations/SubtleNoiseExample.png)
 
+### **Gamma Adjustment**
+
+The gamma augmentation randomly applies gamma correction (from a range of value) on the overall image. 
+Gamma value of 1 will not effect the image.
+
+**Usage:**
+
+```python
+augmentation = GammaAugmentation(
+        range=(0.5,1.5),
+        probability=0.5
+    )
+``` 
+| Parameter  | Description  |
+|---|---|
+|  ```range``` | specifies the range for gamma value. Gamma value below 1 darkens the image whereas above 1 increases pixel intensities. Gamma value of 1 does not change anything|
+|  ```probability``` | specifies the probability that the augmentation will run.   |
+
+**Example:**
+
+In Example image below : lefmost picture is original, middle image is obtained with value=1.4, and rightmost image is obtained with value = 0.6
+
+![Gamma](images/Augmentations/gamma.png)
+
+
+
 ### **JPEG Compression**
 
 The JPEG augmentation uses JPEG encoding to create JPEG compression artifacts in the image.
