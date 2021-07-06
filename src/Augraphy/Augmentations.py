@@ -1,5 +1,3 @@
-import types
-import math
 import cv2
 import numpy as np
 import random
@@ -8,12 +6,6 @@ import os
 from glob import glob
 from scipy.stats import norm
 from sklearn.datasets import make_blobs
-
-try:
-  from google.colab.patches import cv2_imshow
-  IN_COLAB = True
-except:
-  IN_COLAB = False
 
 class AugmentationResult():
   def __init__(self, augmentation, result, metadata=None):
@@ -234,7 +226,7 @@ class DirtyRollersAugmentation(Augmentation):
       line_width = random.randint(self.line_width_range[0], self.line_width_range[1])
       rotate = random.choice([True, False])
 
-      if (not self.debug and rotate):
+      if (rotate):
         image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
       image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -243,7 +235,7 @@ class DirtyRollersAugmentation(Augmentation):
       image = self.transform(self.apply_scanline_mask, image, mask, meta_mask).astype("uint8")
       image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
-      if (not self.debug and rotate):
+      if (rotate):
         image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
       metadata = dict()
@@ -685,10 +677,10 @@ class LightingGradientAugmentation(Augmentation):
     return x_value
 
 class PaperFactory(Augmentation):
-  def __init__(self, texture_shape=(250,250), texture_path="./paper_textures", probability=0.5):
+  def __init__(self, tile_texture_shape=(250,250), texture_path="./paper_textures", probability=0.5):
     super().__init__(probability=probability)
     self.paper_textures = list()
-    self.texture_shape = texture_shape
+    self.tile_texture_shape = tile_texture_shape
     self.texture_path = texture_path
     for file in glob(f"{texture_path}/*"):
       texture = cv2.imread(file)
@@ -703,14 +695,14 @@ class PaperFactory(Augmentation):
       self.paper_textures.append(cv2.imread(file))
 
   def __repr__(self):
-    return f"PaperFactory(texture_shape={self.texture_shape}, texture_path={self.texture_path}, probability={self.probability})"
+    return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, probability={self.probability})"
 
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       shape = data['ink'][-1].result.shape
 
       if (random.choice([True, False])):
-        texture = self.get_texture(self.texture_shape)
+        texture = self.get_texture(self.tile_texture_shape)
         paper = self.tile_texture(texture, shape)
       else:
         texture = self.get_texture(shape)
