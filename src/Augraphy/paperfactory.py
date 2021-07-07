@@ -1,10 +1,11 @@
 ################################################################################
-# File: brightness.py
+# File: paperfactory.py
 #
-# Class: BrightnessAugmentation
+# Class: PaperFactory
 #
-# Description: This file contains a class defining an Augmentation which adjusts
-#              the brightness of the whole image by a chosen multiplier.
+# Description: This file contains a class which randomly replaces the starting
+#              paper image with a texture chosen from a directory and resized
+#              to fit or cropped and tiled to fit.
 ################################################################################
 
 
