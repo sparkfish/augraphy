@@ -1,4 +1,4 @@
-Augmentation pipeline for rendering synthetic paper printing and scanning processes.
+Augmentation pipeline for rendering synthetic paper printing, faxing and scanning processes.
 
 # Overview
 
