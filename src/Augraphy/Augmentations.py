@@ -25,9 +25,6 @@ from glob import glob
 from scipy.stats import norm
 from sklearn.datasets import make_blobs
 
-# All of the individual augmentations are broken out into separate modules here.
-from Augraphy.Augmentation.Augmentations import *
-
 
 
 ################################################################################
@@ -87,7 +84,7 @@ class OneOf(Augmentation):
                                   in augmentations]
     s = sum(augmentation_probabilities)
     self.augmentation_probabilities = [ap / s
-                                       for a
+                                       for ap
                                        in augmentation_probabilities]
 
   # Randomly selects an Augmentation to apply to data.

@@ -1,11 +1,10 @@
 ################################################################################
-# File: subtlenoise.py
+# File: jpeg.py
 #
-# Class: SubtleNoiseAugmentation
+# Class: JpegAugmentation
 #
-# Description: This file contains a class defining an Augmentation which
-#              emulates the imperfections in scanning solid colors due to subtle
-#              lighting differences.adjusts
+# Description: This file contains a class defining an Augmentation which uses
+#              JPEG encoding to create JPEG compression artifacts in the image.
 ################################################################################
 
 
@@ -14,8 +13,10 @@
 # Imports
 ################################################################################
 
-import numpy as np
+import cv2
 import random
+
+from Augraphy.Augmentations import *
 
 
 
@@ -23,19 +24,20 @@ import random
 # Class Definition
 ################################################################################
 
-class SubtleNoiseAugmentation(Augmentation):
-  def __init__(self, range=10, probability=0.5):
+class JpegAugmentation(Augmentation):
+  def __init__(self, quality_range=(25, 95), probability=0.5):
     super().__init__(probability=probability)
-    self.range = range
-    self.add_subtle_noise = np.vectorize(lambda x: max(0, min(255, x + random.randint(-self.range, self.range))))
+    self.quality_range = quality_range
 
   # Constructs a string representation of this Augmentation.
   def __repr__(self):
-    return f"SubtleNoiseAugmentation(range={self.range}, probability={self.probability})"
+    return f"JpegAugmentation(quality_range={self.quality_range}, probability={self.probability})"
 
   # Applies the Augmentation to input data.
   def __call__(self, data, force=False):
     if (force or self.should_run()):
       image = data['post'][-1].result
-      data['post'].append(AugmentationResult(self, self.add_subtle_noise(image)))
-
+      encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), random.randint(self.quality_range[0], self.quality_range[1])]
+      result, encimg = cv2.imencode('.jpg', image, encode_param)
+      image = cv2.imdecode(encimg, 1)
+      data['post'].append(AugmentationResult(self, image))

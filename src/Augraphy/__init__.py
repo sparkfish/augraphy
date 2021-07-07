@@ -1,5 +1,7 @@
 from Augraphy.AugraphyPipeline import AugraphyPipeline
-from Augraphy.Augmentations import *
+from Augraphy.Augmentations import AugmentationSequence, OneOf
+from Augraphy.augmentations import *
+from Augraphy.paperfactory import PaperFactory
 
 __all__ = [AugraphyPipeline]
 

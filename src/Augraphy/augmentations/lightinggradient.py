@@ -21,6 +21,8 @@ import random
 
 from scipy.stats import norm
 
+from Augraphy.Augmentations import *
+
 
 ################################################################################
 # Class Definition

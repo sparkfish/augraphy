@@ -14,7 +14,9 @@
 ################################################################################
 
 import cv2
-import numpy.random
+import random
+
+from Augraphy.Augmentations import *
 
 
 

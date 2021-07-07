@@ -14,7 +14,10 @@
 # Imports
 ################################################################################
 
-import numpy.random
+import random
+
+import Augraphy.Augmentations
+from Augraphy.augmentations.lowinkline import LowInkLineAugmentation
 
 
 

@@ -17,6 +17,8 @@
 import numpy as np
 import random
 
+from Augraphy.Augmentations import *
+
 
 
 ################################################################################

@@ -19,6 +19,8 @@ import random
 
 from sklearn.datasets import make_blobs
 
+from Augraphy.Augmentations import *
+
 
 
 ################################################################################

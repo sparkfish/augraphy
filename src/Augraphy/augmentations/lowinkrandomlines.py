@@ -13,7 +13,11 @@
 # Imports
 ################################################################################
 
-import numpy.random
+import random
+
+from Augraphy.Augmentations import AugmentationResult
+from Augraphy.augmentations.lowinkline import LowInkLineAugmentation
+
 
 
 
