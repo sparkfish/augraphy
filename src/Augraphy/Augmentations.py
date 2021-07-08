@@ -1,3 +1,21 @@
+################################################################################
+# File: Augmentations.py
+#
+# Classes: Augmentation
+#          AugmentationResult
+#          AugmentationSequence(Augmentation)
+#          OneOf(Augmentation)
+#
+# Description: This file contains classes defining the base Augmentation,
+#              a sequence of Augmentations, a randomly selected Augmentation,
+#              and the result of an application of an Augmentation.
+################################################################################
+
+
+################################################################################
+# Imports
+################################################################################
+
 import cv2
 import numpy as np
 import random
@@ -7,365 +25,36 @@ from glob import glob
 from scipy.stats import norm
 from sklearn.datasets import make_blobs
 
-class AugmentationResult():
-  def __init__(self, augmentation, result, metadata=None):
-    self.augmentation = augmentation
-    self.result = result
-    self.metadata = metadata
-    
-class Augmentation():
-  def __init__(self, probability=0.5):
-    self.probability = probability
-  
-  def should_run(self): return random.uniform(0.0, 1.0) <= self.probability
 
+################################################################################
+# Class Definitions
+################################################################################
+
+# The base Augmentation class which everything else inherits.
+class Augmentation:
+    def __init__(self, probability=0.5):
+        self.probability = probability
+
+    # Determines whether or not the augmentation should be
+    # applied by callers.
+    def should_run(self):
+        return random.uniform(0.0, 1.0) <= self.probability
+
+
+# Contains the result of an Augmentation's application.
+class AugmentationResult:
+    def __init__(self, augmentation, result, metadata=None):
+        self.augmentation = augmentation
+        self.result = result
+        self.metadata = metadata
+
+
+
+# Contains a list of Augmentations to be applied.
 class AugmentationSequence(Augmentation):
-  def __init__(self, augmentations, probability=1.0):
-    super().__init__(probability=probability)
-    self.augmentations = augmentations
-
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      for augmentation in self.augmentations:
-          augmentation(data)
-
-  def __repr__(self):
-    r = f"AugmentationSequence([\n"
-
-    for augmentation in self.augmentations:
-      r += f"\t{repr(augmentation)}\n"
-
-    r += f"], probability={self.probability})"
-    return r
-
-class OneOf(Augmentation):
-  def __init__(self, augmentations, probability=0.5):
-      super().__init__(probability=probability)
-      self.augmentations = augmentations
-      augmentation_probabilities = [augmentation.probability for augmentation in augmentations]
-      s = sum(augmentation_probabilities)
-      self.augmentation_probabilities = [ap / s for ap in augmentation_probabilities]
-
-  def __call__(self, data, force=False):
-      if self.augmentation_probabilities and (force or self.should_run()):
-          random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
-          augmentation = random_state.choice(self.augmentations, p=self.augmentation_probabilities)
-          augmentation(data, force=True)
-
-  def __repr__(self):
-    r = f"OneOf([\n"
-
-    for augmentation in self.augmentations:
-      r += f"\t{repr(augmentation)}\n"
-
-    r += f"], probability={self.probability})"
-    return r
-
-class GaussianBlurAugmentation(Augmentation):
-  def __init__(self, layer, kernels=[(3,3)], sigmaX=0, probability=0.5):
-    super().__init__(probability=probability)
-    self.sigmaX = sigmaX
-    self.kernels = kernels
-    self.layer = layer
-
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      img = data[self.layer][-1].result
-      img = cv2.GaussianBlur(img, random.choice(self.kernels), self.sigmaX)   
-      data[self.layer].append(AugmentationResult(self, img))
-
-  def __repr__(self):
-    return f"GaussianBlurAugmentation({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, probability={self.probability})"
-
-class BrightnessTexturizeAugmentation(Augmentation):
-  def __init__(self, range=(0.9, 0.99), deviation=0.03, layer='paper', probability=0.5):
-    super().__init__(probability=probability)
-    self.low = range[0]
-    self.high = range[1]
-    self.deviation = deviation
-    self.layer = layer
-    self.range = range
-
-  def __repr__(self):
-    return f"BrightnessTexturizeAugmentation(layer='{self.layer}', range={self.range}, deviation={self.deviation}, probability={self.probability})"
-    
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      img = data[self.layer][-1].result
-      value = random.uniform(self.low, self.high)
-      hsv = cv2.cvtColor(img.astype("uint8"),cv2.COLOR_BGR2HSV)
-      hsv = np.array(hsv, dtype = np.float64)
-
-      low = value-(value*self.deviation) # *random.uniform(0, deviation)
-      max = value+(value*self.deviation)
-      brightness_matrix = np.random.uniform(low, max, (hsv.shape[0], hsv.shape[1]))
-      hsv[:,:,1] *= brightness_matrix
-      hsv[:,:,2] *= brightness_matrix
-      hsv[:,:,1][hsv[:,:,1]>255]  = 255
-      hsv[:,:,2][hsv[:,:,2]>255]  = 255
-
-      hsv = np.array(hsv, dtype = np.uint8)
-      hsv = cv2.bitwise_not(hsv)
-      hsv = np.array(hsv, dtype = np.float64)
-
-      low = value-(value*self.deviation)
-      max = value+(value*self.deviation)
-      brightness_matrix = np.random.uniform(low, max, (hsv.shape[0], hsv.shape[1]))
-      hsv[:,:,1] *= brightness_matrix
-      hsv[:,:,2] *= brightness_matrix
-      hsv[:,:,1][hsv[:,:,1]>255]  = 255
-      hsv[:,:,2][hsv[:,:,2]>255]  = 255
-
-      hsv = np.array(hsv, dtype = np.uint8)
-      hsv = cv2.bitwise_not(hsv)
-      img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-
-      data[self.layer].append(AugmentationResult(self, img))
-
-class NoiseTexturizeAugmentation(Augmentation):
-  """
-      Consequently applies noise patterns to the original image from big to small.
-
-      sigma: defines bounds of noise fluctuations
-      turbulence: defines how quickly big patterns will be replaced with the small ones. The lower
-      value - the more iterations will be performed during texture generation.
-  """
-
-  def __init__(self, sigma_range=(3, 10), turbulence_range=(2, 5), probability=0.5, layer='paper'):
-    super().__init__(probability=probability)
-    self.sigma_range = sigma_range
-    self.turbulence_range = turbulence_range
-    self.layer = layer
-
-  def __repr__(self):
-    return f"NoiseTexturizeAugmentation(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, probability={self.probability})"
-
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      image = data[self.layer][-1].result
-
-      sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
-      turbulence = random.randint(self.turbulence_range[0], self.turbulence_range[1])
-
-      result = image.astype(float)
-      cols, rows, ch = image.shape
-      ratio = cols
-      while not ratio == 1:
-          result += self.noise(cols, rows, ratio, sigma=sigma)
-          ratio = (ratio // turbulence) or 1
-      cut = np.clip(result, 0, 255)
-
-      data[self.layer].append(AugmentationResult(self, cut.astype(np.uint8)))
-
-  def noise(self, width, height, ratio, sigma):
-      """
-      The function generates an image, filled with gaussian nose. If ratio parameter is specified,
-      noise will be generated for a lesser image and then it will be upscaled to the original size.
-      In that case noise will generate larger square patterns. To avoid multiple lines, the upscale
-      uses interpolation.
-
-      :param ratio: the size of generated noise "pixels"
-      :param sigma: defines bounds of noise fluctuations
-      """
-      mean = 0
-      #assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
-      #assert height % ratio == 0, "Can't scale image with of size {} and ratio {}".format(height, ratio)
-
-      h = int(height / ratio)
-      w = int(width / ratio)
-
-      if (h == 0):
-        h = 1
-      if (w == 0):
-        w = 1
-
-      result = np.random.normal(mean, sigma, (w, h, 1))
-      if ratio > 1:
-        result = cv2.resize(result, dsize=(width, height), interpolation=cv2.INTER_LINEAR)
-      return result.reshape((width, height, 1))
-
-class DirtyRollersAugmentation(Augmentation):
-  def __init__(self, line_width_range=(8, 12), probability=0.5):
-    super().__init__(probability=probability)
-    self.line_width_range = line_width_range
-
-  def __repr__(self):
-    return f"DirtyRollersAugmentation(line_width_range={self.line_width_range}, probability={self.probability})"
-
-  def apply_scanline_mask(self, img, mask, meta_mask):
-    if (random.choice([True, False])):
-      return self.apply_scanline_mask_v2(img, mask, meta_mask)
-    else:
-      return self.apply_scanline_mask_v1(img, mask, meta_mask)
-
-  def apply_scanline_mask_v2(self, img, mask, meta_mask):
-    mask = self.transform(self.apply_scanline_metamask_v2, mask, meta_mask)
-    update_lambda = lambda x, y: min(255, x + (x * (1-(y/100))))
-    update = np.vectorize(update_lambda)
-    return update(img, mask)
-
-  def apply_scanline_metamask_v2(self, img, mask):
-    update_lambda = lambda x, y: max(0, x - (x * (1-(y/100))))
-    update = np.vectorize(update_lambda)
-    return update(img, mask)
-
-  def apply_scanline_mask_v1(self, img, mask, meta_mask):
-    mask = self.transform(self.apply_scanline_metamask_v1, mask, meta_mask)
-    update_lambda = lambda x, y: max(0, x - (x * (1-(y/100))))
-    update = np.vectorize(update_lambda)
-    return update(img, mask)
-
-  def apply_scanline_metamask_v1(self, img, mask):
-    update_lambda = lambda x, y: min(99, x + (x * (1-(y/100))))
-    update = np.vectorize(update_lambda)
-    return update(img, mask)
-
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      image = data['post'][-1].result
-      line_width = random.randint(self.line_width_range[0], self.line_width_range[1])
-      rotate = random.choice([True, False])
-
-      if (rotate):
-        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-
-      image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-      mask = self.transform(self.create_scanline_mask, image.shape[1], image.shape[0], line_width)
-      meta_mask = self.transform(self.create_scanline_mask, image.shape[1], image.shape[0], line_width * random.randint(10, 25))
-      image = self.transform(self.apply_scanline_mask, image, mask, meta_mask).astype("uint8")
-      image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-
-      if (rotate):
-        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-      metadata = dict()
-      metadata['mask'] = mask
-      metadata['metamask'] = meta_mask
-      data['post'].append(self, image, metadata)
-
-  def create_scanline_mask(self, width, height, line_width):
-    grad_list = list()
-
-    # Create Standard Bar
-    grad_high_pct = random.randint(86, 99)
-    grad_low_pct = random.randint(70,85)
-
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_grid = np.hstack((grad_grid, np.flip(grad_grid)))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-
-    # Create Standard Bar with Wide Dark
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_center = np.full((random.randint(1, 6)), grad_low_pct)
-    grad_grid = np.hstack((grad_grid, grad_center, np.flip(grad_grid)))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-
-    # Create Standard Bar with Wide Light
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_exterior = np.full((random.randint(1, 6)), grad_high_pct)
-    grad_grid = np.hstack((grad_grid, np.flip(grad_grid), grad_exterior))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-    
-    # Create Standard Bar with Lower Dark
-    grad_high_pct += min(100, random.randint(-3, 3))
-    grad_low_pct -= random.randint(5, 8)
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_grid = np.hstack((grad_grid, np.flip(grad_grid)))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-
-    # Create Standard Bar with Low Dark and Wide Dark
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_center = np.full((random.randint(1, 6)), grad_low_pct)
-    grad_grid = np.hstack((grad_grid, grad_center, np.flip(grad_grid)))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-
-    # Create Standard Bar with Low Dark Wide Light
-    grad_dec = (grad_low_pct-grad_high_pct)/(line_width)
-    grad_grid = np.mgrid[grad_high_pct:grad_low_pct:grad_dec]
-    grad_exterior = np.full((random.randint(1, 6)), grad_high_pct)
-    grad_grid = np.hstack((grad_grid, np.flip(grad_grid), grad_exterior))
-    grad_grid = np.tile(grad_grid,(height,1))
-    grad_list.append(grad_grid)
-
-    mask = random.choice(grad_list)
-    while (mask.shape[1] < width):
-      mask = np.hstack((mask, random.choice(grad_list)))
-
-    return mask[:,0:width]
-
-class LowInkBlobsAugmentation(Augmentation):
-  def __init__(self, count_range=(5, 25), size_range=(10, 20), points_range=(5, 25), std_range=(10, 75), features_range=(15, 25), value_range=(180, 250), probability=0.5):
-    super().__init__(probability=probability)
-    self.count_range = count_range
-    self.size_range = size_range
-    self.points_range = points_range
-    self.std_range = std_range
-    self.features_range = features_range
-    self.value_range = value_range
-    apply = lambda x, y: x if x > y else y
-    self.apply = np.vectorize(apply)
-
-  def __repr__(self):
-    return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, probability={self.probability})"
-  
-  def create_blob(self):
-    size = random.randint(self.size_range[0], self.size_range[1])
-    std = random.randint(self.std_range[0], self.std_range[1]) / 100
-    points = random.randint(self.points_range[0], self.points_range[1])
-    features = random.randint(self.features_range[0], self.features_range[1])
-    
-    X, y = make_blobs(n_samples=points, cluster_std=[std], centers=[(0, 0)], n_features=features) #, random_state=1)
-    X *= (size // 4)
-    X += (size // 2)
-    X = [[int(item) for item in items] for items in X]
-    blob = np.full((size, size, 1), 0, dtype="uint8")
-
-    for point in X:
-      if point[0] < blob.shape[0] and point[1] < blob.shape[1] and point[0] > 0 and point[1] > 0:
-        value = random.randint(self.value_range[0], self.value_range[1])
-        blob[point[0], point[1]] = value
-        
-    return blob
-  
-  def apply_blob(self, mask):
-    blob = self.create_blob()
-    x_start = random.randint(0, mask.shape[1] - blob.shape[1])
-    y_start = random.randint(0, mask.shape[0] - blob.shape[0])
-    x_stop = x_start + blob.shape[1]
-    y_stop = y_start + blob.shape[0]
-    mask_chunk = mask[y_start:y_stop, x_start:x_stop]
-    mask[y_start:y_stop, x_start:x_stop] = self.apply(mask_chunk, blob[:,:,0])
-
-  def __call__(self, data, force=False):
-    if (force or self.should_run()):
-      image = data['ink'][-1].result.copy()
-      count = random.randint(self.count_range[0], self.count_range[1])
-
-      for i in range(count):
-        self.apply_blob(image)
-
-      data['ink'].append(AugmentationResult(self, image))
-
-class LowInkLineAugmentation(Augmentation):  
-  def __init__(self, use_consistent_lines=True, probability=0.5):
-    super().__init__(probability=probability)
-    
-    self.use_consistent_lines = use_consistent_lines
-    inconsistent_transparency_line = lambda x: random.randint(0, 255)
-    self.inconsistent_transparency_line = np.vectorize(inconsistent_transparency_line)
-
-    apply_line = lambda x, y: x if x > y else y
-    self.apply_line = np.vectorize(apply_line)
+    def __init__(self, augmentations, probability=1.0):
+        super().__init__(probability=probability)
+        self.augmentations = augmentations
 
   def __repr__(self):
     return f"LowInkLineAugmentation(use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
@@ -746,38 +435,59 @@ class PaperFactory(Augmentation):
       h_ratio = shape_h / texture_h
       w_ratio = shape_w / texture_w
 
-      if (h_ratio > w_ratio):
-        scale = random.uniform(h_ratio, 1.2)
-      else:
-        scale = random.uniform(w_ratio, 1.2)
-      
-      zoom = (int(texture_w*scale), int(texture_h*scale))
-      #print(f"Zoom out from {texture.shape} to {zoom}")
-      texture = cv2.resize(texture, zoom)
-      texture_h = texture.shape[0]
-      texture_w = texture.shape[1]
+    # The entire sequence can be applied with this.
+    def __call__(self, data, force=False):
+        if force or self.should_run():
+            for augmentation in self.augmentations:
+                augmentation(data)
 
-    if (texture_h <= shape_h or texture_w <= shape_w): # Zoom in
-      h_ratio = shape_h / texture_h
-      w_ratio = shape_w / texture_w
+    # Constructs a string containing the representations
+    # of each augmentation in the sequence.
+    def __repr__(self):
+        r = f"AugmentationSequence([\n"
 
-      if (h_ratio > w_ratio):
-        scale = random.uniform(h_ratio, h_ratio+1.5)
-      else:
-        scale = random.uniform(w_ratio, w_ratio+1.5)
-      zoom = (int(texture_w*scale), int(texture_h*scale))
-      #print(f"Zoom in from {texture.shape} to {zoom}")
-      texture = cv2.resize(texture, zoom)
+        for augmentation in self.augmentations:
+            r += f"\t{repr(augmentation)}\n"
 
-    return texture
-  
-  def get_texture(self, shape):
-    texture = random.choice(self.paper_textures)
+        r += f"], probability={self.probability})"
+        return r
 
-    if (texture.shape[0] < shape[0] or texture.shape[1] < shape[1]):
-      texture = self.resize(texture, shape)
 
-    h = random.randint(0, texture.shape[0]-shape[0])
-    w = random.randint(0, texture.shape[1]-shape[1])
-    cropped_texture = texture[h:h+shape[0], w:w+shape[1]]
-    return cropped_texture
+# Given a list of Augmentations, selects one to apply.
+class OneOf(Augmentation):
+    def __init__(self, augmentations, probability=0.5):
+        super().__init__(probability=probability)
+        self.augmentations = augmentations
+
+        # Compute the average probability from all augmentations.
+        augmentation_probabilities = [
+            augmentation.probability for augmentation in augmentations
+        ]
+        s = sum(augmentation_probabilities)
+        self.augmentation_probabilities = [ap / s for ap in augmentation_probabilities]
+
+    # Randomly selects an Augmentation to apply to data.
+    def __call__(self, data, force=False):
+        if self.augmentation_probabilities and (force or self.should_run()):
+
+            # Seed the random object.
+            random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
+
+            # Randomly selects one Augmentation to apply.
+            augmentation = random_state.choice(
+                self.augmentations, p=self.augmentation_probabilities
+            )
+
+            # Applies the selected Augmentation.
+            augmentation(data, force=True)
+
+    # Constructs a string containing the representations
+    # of each augmentation
+    def __repr__(self):
+        r = f"OneOf([\n"
+
+        for augmentation in self.augmentations:
+            r += f"\t{repr(augmentation)}\n"
+
+        r += f"], probability={self.probability})"
+        return r

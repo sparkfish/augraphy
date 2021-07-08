@@ -519,6 +519,7 @@ Note: Example below created with a range of 25.
 
 ![Subtle Noise](images/Augmentations/SubtleNoiseExample.png)
 
+
 ### **Gamma Adjustment**
 
 The gamma augmentation randomly applies gamma correction (from a range of value) on the overall image. 

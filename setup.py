@@ -22,7 +22,7 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.7",    
+    python_requires=">=3.7",
     install_requires=[
         "numpy >= 1.20.1",
         "opencv-python >= 4.5.1.48",
