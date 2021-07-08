@@ -1,35 +1,30 @@
-################################################################################
-# File: inkbleed.py
-#
-# Class: InkBleedAugmentation
-#
-# Description: This file contains a class defining an Augmentation which relies
-#              on sobel edge detection to create a mask of all edges, then
-#              applies random noise to those edges. When followed by a blur,
-#              this creates a fuzzy edge that emulates an ink bleed effect.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
+from base.augmentationResult import AugmentationResult
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class InkBleedAugmentation(Augmentation):
+    """Uses Sobel edge detection to create a mask of all edges, then applies
+    random noise to those edges. When followed by a blur, this creates a
+    fuzzy edge that emulates an ink bleed effect.
+
+    :param intensity_range: Pair of floats determining the range from which
+           noise intensity is sampled.
+    :type intensity: tuple, optional
+    :param color_range: Pair of ints determining the range from which color
+           noise is sampled.
+    :type color_range: tuple, optional
+    :param probability: The probability this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(
         self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.intensity_range = intensity_range
         self.color_range = color_range
@@ -38,8 +33,13 @@ class InkBleedAugmentation(Augmentation):
     def __repr__(self):
         return f"InkBleedAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, probability={self.probability})"
 
-    # Computes the gradient of the image intensity function.
+
     def sobel(self, image):
+        """Computes the gradient of the image intensity function.
+
+        :param image: The image over which to create an edge mask.
+        :type image: numpy.array
+        """
         gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
         gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
         gradient = cv2.subtract(gradX, gradY)

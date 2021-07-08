@@ -1,30 +1,26 @@
-################################################################################
-# File: lowinkperiodiclines.py
-#
-# Class: LowInkPeriodicLinesAugmentation
-#
-# Description: This file contains a class defining an Augmentation which creates
-#              a set of lines that repeat in a periodic fashion throughout the
-#              image.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import random
 
-import Augraphy.Augmentations
-from Augraphy.augmentations.lowinkline import LowInkLineAugmentation
+from base.augmentationresult import AugmentationResult
+from lowinkline import LowInkLineAugmentation
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
+    """Creates a set of lines that repeat in a periodic fashion throughout the
+    image.
+
+    :param count_range: Pair of ints determining the range from which to sample
+           the number of lines to apply.
+    :type count_range: tuple, optional
+    :param period_range: Pair of ints determining the range from which to sample
+           the distance between lines.
+    :type period_range: tuple, optional
+    :param use_consistent_lines: Whether or not to vary the width and alpha of
+           generated low ink lines.
+    :type use_consistent_lines: bool, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(
         self,
         count_range=(2, 5),
@@ -32,6 +28,7 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
         use_consistent_lines=True,
         probability=0.5,
     ):
+        """Constructor method"""
         super().__init__(
             use_consistent_lines=use_consistent_lines, probability=probability
         )
@@ -42,20 +39,36 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
     def __repr__(self):
         return f"LowInkPeriodicLinesAugmentation(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
 
-    # Takes an image, a number of lines to print, an offset value, and
-    # an opacity value, then creates horizontal lines of the given opacity
-    # over the input image at the specified y-positions, starting at the offset.
     def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
+        """Creates horizontal lines of some opacity over the input image, at
+        y-positions determined by the offset and line_count.
+
+        :param mask: The image to apply the line to.
+        :type mask: numpy.array
+        :param line_count: The number of lines to generate.
+        :type line_count: int
+        :param offset: How far from the edge of the image to generate lines.
+        :type offset: int
+        :param alpha: The opacity of the lines.
+        :type alpha: int
+        """
         period = mask.shape[0] // line_count
 
         for y in range(mask.shape[0] - offset):
             if y % period == 0:
                 self.add_transparency_line(mask, y + offset, alpha)
 
-    # Takes an image, a number of lines to print, and a distance between them,
-    # then creates horizontal lines of random opacity over the input image
-    # at random intervals.
     def add_periodic_transparency_lines(self, mask, lines, line_periods):
+        """Creates horizontal lines of random opacity over the input image, at
+        random intervals.
+
+        :param mask: The image to apply the line to.
+        :type mask: numpy.array
+        :param lines: How many lines to add to the image.
+        :type lines: int
+        :param line_periods: The distance between lines.
+        :type line_periods: int
+        """
         period = mask.shape[0] // line_periods
         self.add_periodic_transparency_line(
             mask,

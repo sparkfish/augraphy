@@ -1,33 +1,26 @@
-################################################################################
-# File: dustyink.py
-#
-# Class: DustyInkAugmentation
-#
-# Description: This file contains a class defining an Augmentation which applies
-#              random noise to the ink itself, emulating a dusty or inconsistent
-#              ink tone when followed by a blur.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
+from base.augmentationResult import AugmentationResult
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class DustyInkAugmentation(Augmentation):
+    """Applies random noise to the ink itself, emulating a dusty or
+    inconsistent ink tone when followed by a blur.
+
+    :param intensity_range: Pair of bounds for intensity sample.
+    :type intensity_range: tuple, optional
+    :param color_range: Pair of bounds for 8-bit colors.
+    :type color_range: tuple, optional
+    :param probability: Probability of this Augmentation being applied.
+    :type probability: float, optional
+    """
     def __init__(
         self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.intensity_range = intensity_range
         self.color_range = color_range

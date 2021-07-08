@@ -1,30 +1,24 @@
-################################################################################
-# File: lowinkrandomlines.py
-#
-# Class: LowInkRandomLinesAugmentation
-#
-# Description: This file contains a class defining an Augmentation which adds
-#              low ink lines randomly throughout the image.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import random
 
-from Augraphy.Augmentations import AugmentationResult
-from Augraphy.augmentations.lowinkline import LowInkLineAugmentation
+from base.augmentationresult import AugmentationResult
+from lowinkline import LowInkLineAugmentation
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
+    """Adds low ink lines randomly throughout the image.
+
+    :param count_range: Pair of ints determining the range from which the number
+           of lines is sampled.
+    :type count_range: tuple, optional
+    :param use_consistent_lines: Whether or not to vary the width and alpha of
+           generated low ink lines.
+    :type use_consistent_lines: bool, optional
+    :param probability: The probability this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(self, count_range=(5, 10), use_consistent_lines=True, probability=0.5):
+        """Constructor method"""
         super().__init__(
             use_consistent_lines=use_consistent_lines, probability=probability
         )

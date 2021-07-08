@@ -1,37 +1,31 @@
-################################################################################
-# File: paperfactory.py
-#
-# Class: PaperFactory
-#
-# Description: This file contains a class which randomly replaces the starting
-#              paper image with a texture chosen from a directory and resized
-#              to fit or cropped and tiled to fit.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
+from base.augmentationresult import AugmentationResult
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class PaperFactory(Augmentation):
+    """Replaces the starting paper image with a texture randomly chosen from
+    a directory and resized to fit or cropped and tiled to fit.
+
+    :param tile_texture_shape: Pair of ints determining the range from which to
+           sample the texture dimensions.
+    :type tile_texture_shape: tuple, optional
+    :param texture_path: Directory location to pull paper textures from.
+    :type texture_path: string, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(
         self,
         tile_texture_shape=(250, 250),
         texture_path="./paper_textures",
         probability=0.5,
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.paper_textures = list()
         self.tile_texture_shape = tile_texture_shape

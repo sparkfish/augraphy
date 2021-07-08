@@ -1,32 +1,37 @@
-################################################################################
-# File: lowinkblobs.py
-#
-# Class: LowInkBlobsAugmentation
-#
-# Description: This file contains a class defining an Augmentation which uses
-#              sklearn.datasets.make_blobs to create random blobs of "low ink"
-#              that will be applied to the image.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import numpy as np
 import random
 
 from sklearn.datasets import make_blobs
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
+from base.augmentationresult import AugmentationResult
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class LowInkBlobsAugmentation(Augmentation):
+    """ Creates random blobs of "low ink" to apply to the image.
+
+    :param count_range: Pair of ints determining the range from which the number
+           of blobs to generate is sampled.
+    :type count_range: tuple, optional
+    :param size_range: Pair of ints determining the range from which the
+           diameter of a blob is sampled.
+    :type size_range: tuple, optional
+    :param points_range: Pair of ints determining the range from which the
+           number of points in a blob is sampled.
+    :type points_range: tuple, optional
+    :param std_range: Pair of ints determining the range from which the
+           standard deviation of the blob distribution is sampled.
+    :type std_range: tuple, optional
+    :param features_range: Pair of ints determining the range from which the
+           number of features in the blob is sampled.
+    :type features_range: tuple, optional
+    :param value_range: Pair of ints determining the range from which the
+           value of a point in the blob is sampled.
+    :type value_range: tuple, optional
+    :param probability: The probability this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(
         self,
         count_range=(5, 25),
@@ -37,6 +42,7 @@ class LowInkBlobsAugmentation(Augmentation):
         value_range=(180, 250),
         probability=0.5,
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.count_range = count_range
         self.size_range = size_range
@@ -51,8 +57,8 @@ class LowInkBlobsAugmentation(Augmentation):
     def __repr__(self):
         return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, probability={self.probability})"
 
-    # Generates a Gaussian blob to place in the image.
     def create_blob(self):
+        """Generates a Gaussian blob to place in the image."""
         size = random.randint(self.size_range[0], self.size_range[1])
         std = random.randint(self.std_range[0], self.std_range[1]) / 100
         points = random.randint(self.points_range[0], self.points_range[1])
@@ -78,8 +84,8 @@ class LowInkBlobsAugmentation(Augmentation):
 
         return blob
 
-    # Places a Gaussian blob at a random location in the image.
     def apply_blob(self, mask):
+        """Places a Gaussian blob at a random location in the image."""
         blob = self.create_blob()
         x_start = random.randint(0, mask.shape[1] - blob.shape[1])
         y_start = random.randint(0, mask.shape[0] - blob.shape[0])

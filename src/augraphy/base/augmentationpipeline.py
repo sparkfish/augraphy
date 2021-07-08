@@ -2,10 +2,28 @@ import random
 import cv2
 import numpy as np
 
-from Augraphy.Augmentations import AugmentationResult
+from augmentationresult import AugmentationResult
 
 
 class AugraphyPipeline:
+    """Contains phases of image augmentations and their results.
+
+    :param ink_phase: AugmentationSequence of Augmentations to apply.
+    :type ink_phase: base.augmentationsequence
+    :param paper_phase: AugmentationSequence of Augmentations to apply.
+    :type paper_phase: base.augmentationsequence
+    :param post_phase: AugmentationSequence of Augmentations to apply.
+    :type post_phase: base.augmentationsequence
+    :param ink_color_range: Pair of ints determining the range from which to
+           sample the ink color.
+    :type ink_color_range: tuple, optional
+    :param paper_color_range: Pair of ints determining the range from which to
+           sample the paper color.
+    :type paper_color_range: tuple, optional
+    :param rotate_range: Pair of ints determining the range from which to sample
+           the paper rotation.
+    :type rotate_range: tuple, optional
+    """
     def __init__(
         self,
         ink_phase,
@@ -15,6 +33,7 @@ class AugraphyPipeline:
         paper_color_range=(164, 255),
         rotate_range=(0, 360),
     ):
+        """Constructor method"""
         self.ink_phase = ink_phase
         self.paper_phase = paper_phase
         self.post_phase = post_phase
@@ -23,6 +42,14 @@ class AugraphyPipeline:
         self.paper_color_range = paper_color_range
 
     def augment(self, image):
+        """Applies the Augmentations in each phase of the pipeline.
+
+        :param image: The image to apply Augmentations to.
+        :type image: numpy.array
+        :return: A dictionary of AugmentationResults representing the changes
+                 in each phase of the pipeline.
+        :rtype: dictionary
+        """
         data = dict()
         data["image"] = image.copy()
         ink = data["image"].copy()
@@ -74,8 +101,8 @@ class AugraphyPipeline:
         return data
 
     def rotate_image(self, mat, angle):
-        """
-        Rotates an image (angle in degrees) and expands image to avoid cropping
+        """Rotates an image (angle in degrees) and expands image to avoid
+        cropping.
         """
         mat = cv2.bitwise_not(mat)
         height, width = mat.shape[:2]  # image shape has 3 dimensions
@@ -104,6 +131,7 @@ class AugraphyPipeline:
         return rotated_mat
 
     def print_ink_to_paper(self, overlay, background):
+        """Applies the ink layer to the paper layer."""
         overlay = self.make_white_transparent(
             overlay, random.randint(self.ink_color_range[0], self.ink_color_range[1])
         )

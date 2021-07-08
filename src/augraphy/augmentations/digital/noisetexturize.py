@@ -1,31 +1,13 @@
-################################################################################
-# File: noisetexture.py
-#
-# Class: NoiseTexturizeAugmentation
-#
-# Description: This file contains a class defining an Augmentation which creates
-#               a random noise based texture pattern to emulate paper textures.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class NoiseTexturizeAugmentation(Augmentation):
-    """
+    """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
 
     sigma: defines bounds of noise fluctuations
@@ -40,6 +22,7 @@ class NoiseTexturizeAugmentation(Augmentation):
         probability=0.5,
         layer="paper",
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.sigma_range = sigma_range
         self.turbulence_range = turbulence_range
@@ -70,10 +53,10 @@ class NoiseTexturizeAugmentation(Augmentation):
             data[self.layer].append(AugmentationResult(self, cut.astype(np.uint8)))
 
     def noise(self, width, height, ratio, sigma):
-        """
-        The function generates an image, filled with gaussian nose. If ratio parameter is specified,
-        noise will be generated for a lesser image and then it will be upscaled to the original size.
-        In that case noise will generate larger square patterns. To avoid multiple lines, the upscale
+        """ The function generates an image, filled with gaussian nose. If ratio
+        parameter is specified, noise will be generated for a lesser image and
+        then it will be upscaled to the original size. In that case noise will
+        generate larger square patterns. To avoid multiple lines, the upscale
         uses interpolation.
 
         :param ratio: the size of generated noise "pixels"

@@ -5,6 +5,7 @@ class OneOf:
     :type augmentations: list
     """
     def __init__(self, augmentations):
+        """Constructor method"""
         self.augmentations = augmentations
 
         self.augmentation_probabilities = computeProbability(self.augmentations)

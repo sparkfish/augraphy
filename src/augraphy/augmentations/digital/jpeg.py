@@ -1,30 +1,21 @@
-################################################################################
-# File: jpeg.py
-#
-# Class: JpegAugmentation
-#
-# Description: This file contains a class defining an Augmentation which uses
-#              JPEG encoding to create JPEG compression artifacts in the image.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import random
 
-from Augraphy.Augmentations import *
+from base.augmentation import Augmentation
 
-
-################################################################################
-# Class Definition
-################################################################################
 
 
 class JpegAugmentation(Augmentation):
+    """Uses JPEG encoding to create compression artifacts in the image.
+
+    :param quality_range: Pair of ints determining the range from which to
+           sample the compression quality.
+    :type quality_range: tuple, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(self, quality_range=(25, 95), probability=0.5):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.quality_range = quality_range
 

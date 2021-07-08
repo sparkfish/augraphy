@@ -1,31 +1,23 @@
 ################################################################################
 # File: lowinkline.py
 #
-# Class: LowInkLineAugmentation
-#
-# Description: This file contains a class defining an Augmentation which other
-#              Augmentations can use to define streak behavior common in
-#              printers running out of ink.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
-
-
-################################################################################
-# Class Definitions
-################################################################################
+from base.augmentations import Augmentation
 
 
 class LowInkLineAugmentation(Augmentation):
+    """Generates streaking behavior common to printers running out of ink.
+
+    :param use_consistent_lines: Whether or not to vary the width and alpha of
+           generated low ink lines.
+    :type use_consistent_lines: bool, optional
+    :param probability: The probability this Augmentation will be applied.
+    :type probability: float, optional
+    """
     def __init__(self, use_consistent_lines=True, probability=0.5):
+        """Constructor method"""
         super().__init__(probability=probability)
 
         self.use_consistent_lines = use_consistent_lines
@@ -45,6 +37,15 @@ class LowInkLineAugmentation(Augmentation):
     # then adds a line at that position in the image with the given
     # opacity.
     def add_transparency_line(self, mask, y, alpha=None):
+        """ Adds a line with some opacity at a vertical position in the image.
+
+        :param mask: The image to apply the line to.
+        :type mask: numpy.array
+        :param y: The vertical position to apply the line at.
+        :type y: int
+        :param alpha: The desired opacity of the line.
+        :type alpha: int, optional
+        """
         if alpha == None:
             alpha = random.randint(16, 224)
 
