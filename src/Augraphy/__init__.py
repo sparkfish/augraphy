@@ -1,5 +1,5 @@
 from Augraphy.AugraphyPipeline import AugraphyPipeline
-from Augraphy.Augmentations import AugmentationSequence, OneOf
+from Augraphy.base import AugmentationSequence, OneOf
 from Augraphy.augmentations import *
 from Augraphy.paperfactory import PaperFactory
 
