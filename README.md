@@ -571,15 +571,6 @@ Encoded with quality range of (10, 15)
 ![JPEG Compression Before](images/Augmentations/JPEGCompressionBefore.png)
 ![JPEG Compression After](images/Augmentations/JPEGCompression.png)
 
-# Roadmap
-
-- [X] Ink effects (Bleed/Dusty/Low)
-- [X] Paper textures (Generated/Images)
-- [X] Scanner effects (Scanlines/Brightness Gradients)
-- [X] Improved Configuration capabilities
-- [X] Improve Modularity to allow new augmentations to easily be added.
-- [ ] Convert DirtyRollers to use HSV for Brightness adjustment.
-
 # Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
