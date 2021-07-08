@@ -5,7 +5,6 @@ import random
 from base.augmentation import Augmentation
 
 
-
 class BrightnessTexturizeAugmentation(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
@@ -20,6 +19,7 @@ class BrightnessTexturizeAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(
         self, range=(0.9, 0.99), deviation=0.03, layer="paper", probability=0.5
     ):

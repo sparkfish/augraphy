@@ -4,7 +4,6 @@ from base.augmentationresult import AugmentationResult
 from lowinkline import LowInkLineAugmentation
 
 
-
 class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
     """Creates a set of lines that repeat in a periodic fashion throughout the
     image.
@@ -21,6 +20,7 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(
         self,
         count_range=(2, 5),

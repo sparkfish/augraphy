@@ -6,7 +6,6 @@ import random
 from base.augmentation import Augmentation
 
 
-
 class DirtyRollersAugmentation(Augmentation):
     """Emulates an effect created by certain document scanners.
 
@@ -16,6 +15,7 @@ class DirtyRollersAugmentation(Augmentation):
     :param probability: The probability this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, line_width_range=(8, 12), probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)

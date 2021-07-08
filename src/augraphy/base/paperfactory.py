@@ -6,7 +6,6 @@ from base.augmentation import Augmentation
 from base.augmentationresult import AugmentationResult
 
 
-
 class PaperFactory(Augmentation):
     """Replaces the starting paper image with a texture randomly chosen from
     a directory and resized to fit or cropped and tiled to fit.
@@ -19,6 +18,7 @@ class PaperFactory(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(
         self,
         tile_texture_shape=(250, 250),

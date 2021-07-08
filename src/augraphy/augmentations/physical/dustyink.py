@@ -5,7 +5,6 @@ from base.augmentation import Augmentation
 from base.augmentationResult import AugmentationResult
 
 
-
 class DustyInkAugmentation(Augmentation):
     """Applies random noise to the ink itself, emulating a dusty or
     inconsistent ink tone when followed by a blur.
@@ -17,6 +16,7 @@ class DustyInkAugmentation(Augmentation):
     :param probability: Probability of this Augmentation being applied.
     :type probability: float, optional
     """
+
     def __init__(
         self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
     ):

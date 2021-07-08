@@ -16,6 +16,7 @@ class LowInkLineAugmentation(Augmentation):
     :param probability: The probability this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, use_consistent_lines=True, probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)
@@ -37,7 +38,7 @@ class LowInkLineAugmentation(Augmentation):
     # then adds a line at that position in the image with the given
     # opacity.
     def add_transparency_line(self, mask, y, alpha=None):
-        """ Adds a line with some opacity at a vertical position in the image.
+        """Adds a line with some opacity at a vertical position in the image.
 
         :param mask: The image to apply the line to.
         :type mask: numpy.array

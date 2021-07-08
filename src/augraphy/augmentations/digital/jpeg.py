@@ -4,7 +4,6 @@ import random
 from base.augmentation import Augmentation
 
 
-
 class JpegAugmentation(Augmentation):
     """Uses JPEG encoding to create compression artifacts in the image.
 
@@ -14,6 +13,7 @@ class JpegAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, quality_range=(25, 95), probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)

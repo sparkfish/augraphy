@@ -4,6 +4,7 @@ class AugmentationSequence:
     :param augmentations: A list of Augmentation objects to be applied.
     :type augmentations: list
     """
+
     def __init__(self, augmentations):
         """Constructor method"""
         self.augmentations = augmentations

@@ -4,13 +4,14 @@ class OneOf:
     :param augmentations: A list of Augmentations to choose from.
     :type augmentations: list
     """
+
     def __init__(self, augmentations):
         """Constructor method"""
         self.augmentations = augmentations
 
         self.augmentation_probabilities = computeProbability(self.augmentations)
 
-   # Randomly selects an Augmentation to apply to data.
+    # Randomly selects an Augmentation to apply to data.
     def __call__(self, data, force=False):
         if self.augmentation_probabilities and (force or self.should_run()):
 
@@ -47,4 +48,4 @@ class OneOf:
             augmentation.probability for augmentation in augmentations
         ]
         s = sum(augmentation_probabilities)
-        return augmentation_probabilities = [ap / s for ap in augmentation_probabilities]
+        return [ap / s for ap in augmentation_probabilities]

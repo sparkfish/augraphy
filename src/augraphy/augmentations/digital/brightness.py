@@ -5,7 +5,6 @@ import random
 from base.augmentation import Augmentation
 
 
-
 class BrightnessAugmentation(Augmentation):
     """Adjusts the brightness of the whole image by a chosen multiplier.
 
@@ -17,6 +16,7 @@ class BrightnessAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, layer, range=(0.8, 1.4), probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)

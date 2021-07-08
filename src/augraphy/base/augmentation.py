@@ -1,5 +1,6 @@
 import random
 
+
 class Augmentation:
     """The base class which all pipeline augmentations inherit from.
 
@@ -12,7 +13,6 @@ class Augmentation:
         """Constructor method"""
         self.probability = probability
 
-
     def should_run(self):
         """Determines whether or not the augmentation should be applied
         by callers.
@@ -22,4 +22,3 @@ class Augmentation:
         :rtype: bool
         """
         return random.uniform(0.0, 1.0) <= self.probability
-

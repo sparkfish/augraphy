@@ -17,6 +17,7 @@ class GaussianBlurAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, layer, kernels=[(3, 3)], sigmaX=0, probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)

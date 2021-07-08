@@ -24,6 +24,7 @@ class AugraphyPipeline:
            the paper rotation.
     :type rotate_range: tuple, optional
     """
+
     def __init__(
         self,
         ink_phase,

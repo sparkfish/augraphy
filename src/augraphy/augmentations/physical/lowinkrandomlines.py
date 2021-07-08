@@ -4,7 +4,6 @@ from base.augmentationresult import AugmentationResult
 from lowinkline import LowInkLineAugmentation
 
 
-
 class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
     """Adds low ink lines randomly throughout the image.
 
@@ -17,6 +16,7 @@ class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
     :param probability: The probability this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, count_range=(5, 10), use_consistent_lines=True, probability=0.5):
         """Constructor method"""
         super().__init__(

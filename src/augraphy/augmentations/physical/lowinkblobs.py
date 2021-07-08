@@ -7,9 +7,8 @@ from base.augmentation import Augmentation
 from base.augmentationresult import AugmentationResult
 
 
-
 class LowInkBlobsAugmentation(Augmentation):
-    """ Creates random blobs of "low ink" to apply to the image.
+    """Creates random blobs of "low ink" to apply to the image.
 
     :param count_range: Pair of ints determining the range from which the number
            of blobs to generate is sampled.
@@ -32,6 +31,7 @@ class LowInkBlobsAugmentation(Augmentation):
     :param probability: The probability this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(
         self,
         count_range=(5, 25),

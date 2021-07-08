@@ -4,6 +4,7 @@ import random
 from base.augmentation import Augmentation
 from base.augmentationresult import AugmentationResult
 
+
 class SubtleNoiseAugmentation(Augmentation):
     """Emulates the imperfections in scanning solid colors due to subtle
     lighting differences.
@@ -13,6 +14,7 @@ class SubtleNoiseAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, range=10, probability=0.5):
         super().__init__(probability=probability)
         self.range = range

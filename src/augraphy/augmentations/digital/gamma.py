@@ -6,7 +6,6 @@ import os
 from base.augmentation import Augmentation
 
 
-
 class GammaAugmentation(Augmentation):
     """Adjusts the gamma of the whole image by a chosen multiplier.
 
@@ -16,6 +15,7 @@ class GammaAugmentation(Augmentation):
     :param probability: The probability that this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(self, range=(0.5, 1.5), probability=0.5):
         """Constructor method"""
         super().__init__(probability=probability)

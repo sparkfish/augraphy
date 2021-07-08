@@ -5,7 +5,6 @@ import random
 from base.augmentation import Augmentation
 
 
-
 class NoiseTexturizeAugmentation(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
@@ -53,7 +52,7 @@ class NoiseTexturizeAugmentation(Augmentation):
             data[self.layer].append(AugmentationResult(self, cut.astype(np.uint8)))
 
     def noise(self, width, height, ratio, sigma):
-        """ The function generates an image, filled with gaussian nose. If ratio
+        """The function generates an image, filled with gaussian nose. If ratio
         parameter is specified, noise will be generated for a lesser image and
         then it will be upscaled to the original size. In that case noise will
         generate larger square patterns. To avoid multiple lines, the upscale

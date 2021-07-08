@@ -6,7 +6,6 @@ from base.augmentation import Augmentation
 from base.augmentationResult import AugmentationResult
 
 
-
 class InkBleedAugmentation(Augmentation):
     """Uses Sobel edge detection to create a mask of all edges, then applies
     random noise to those edges. When followed by a blur, this creates a
@@ -21,6 +20,7 @@ class InkBleedAugmentation(Augmentation):
     :param probability: The probability this Augmentation will be applied.
     :type probability: float, optional
     """
+
     def __init__(
         self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
     ):
@@ -32,7 +32,6 @@ class InkBleedAugmentation(Augmentation):
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
         return f"InkBleedAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, probability={self.probability})"
-
 
     def sobel(self, image):
         """Computes the gradient of the image intensity function.
