@@ -1,30 +1,25 @@
-################################################################################
-# File: gaussianblur.py
-#
-# Class: GaussianBlurAugmentation
-#
-# Description: This file contains a class defining an Augmentation which applies
-#              a gaussian blur to the whole image.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import random
 
-from Augraphy.Augmentations import *
-
-
-################################################################################
-# Class Definition
-################################################################################
+from base.augmentation import Augmentation
 
 
 class GaussianBlurAugmentation(Augmentation):
+    """Applies a Gaussian blur to the whole image.
+
+    :param layer: The image layer to apply the blur to.
+    :type layer: string
+    :param kernels: List of height/width pairs from which to sample the kernel
+           size.
+    :type kernels: list, optional
+    :param sigmaX: Standard deviation of the kernel along the x-axis.
+    :type sigmaX: float, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
+
     def __init__(self, layer, kernels=[(3, 3)], sigmaX=0, probability=0.5):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.sigmaX = sigmaX
         self.kernels = kernels

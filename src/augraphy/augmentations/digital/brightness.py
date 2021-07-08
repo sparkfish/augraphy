@@ -1,31 +1,24 @@
-################################################################################
-# File: brightness.py
-#
-# Class: BrightnessAugmentation
-#
-# Description: This file contains a class defining an Augmentation which adjusts
-#              the brightness of the whole image by a chosen multiplier.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
-
-
-################################################################################
-# Class Definition
-################################################################################
+from base.augmentation import Augmentation
 
 
 class BrightnessAugmentation(Augmentation):
+    """Adjusts the brightness of the whole image by a chosen multiplier.
+
+    :param layer: The layer of image to adjust brightness of.
+    :type layer: string
+    :param range: Pair of ints determining the range from which to sample
+           the brightness shift.
+    :type range: tuple, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
+
     def __init__(self, layer, range=(0.8, 1.4), probability=0.5):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.range = range
         self.layer = layer
