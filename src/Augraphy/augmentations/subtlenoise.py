@@ -5,7 +5,7 @@
 #
 # Description: This file contains a class defining an Augmentation which
 #              emulates the imperfections in scanning solid colors due to subtle
-#              lighting differences.adjusts
+#              lighting differences.
 ################################################################################
 
 
