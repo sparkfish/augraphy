@@ -545,6 +545,7 @@ In Example image below : lefmost picture is original, middle image is obtained w
 ![Gamma](images/Augmentations/gamma.png)
 
 
+
 ### **JPEG Compression**
 
 The JPEG augmentation uses JPEG encoding to create JPEG compression artifacts in the image.
