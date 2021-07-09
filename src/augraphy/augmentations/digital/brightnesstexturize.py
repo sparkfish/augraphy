@@ -1,34 +1,29 @@
-################################################################################
-# File: brightnesstexturize.py
-#
-# Class: BrightnessTexturizeAugmentation
-#
-# Description: This file contains a class defining an Augmentation which creates
-#              a random noise in the brightness channel to emulate paper
-#              textures.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 
-from Augraphy.Augmentations import *
-
-
-################################################################################
-# Class Definition
-################################################################################
+from base.augmentation import Augmentation
 
 
 class BrightnessTexturizeAugmentation(Augmentation):
+    """Creates a random noise in the brightness channel to emulate paper
+    textures.
+
+    :param range: Pair of ints determining the range from which to sample values
+           for the brightness matrix.
+    :type range: tuple, optional
+    :param deviation: Additional variation for the uniform sample.
+    :type deviation: float, optional
+    :param layer: The image layer to apply the brightness texturization to
+    :type layer: string, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
+
     def __init__(
         self, range=(0.9, 0.99), deviation=0.03, layer="paper", probability=0.5
     ):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.low = range[0]
         self.high = range[1]

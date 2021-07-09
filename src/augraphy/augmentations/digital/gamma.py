@@ -1,32 +1,23 @@
-################################################################################
-# File: gamma.py
-#
-# Class: GammaAugmentation
-#
-# Description: This file contains a class defining an Augmentation which adjusts
-#              the gamma of the whole image by a chosen multiplier.
-################################################################################
-
-
-################################################################################
-# Imports
-################################################################################
-
 import cv2
 import numpy as np
 import random
 import os
 
-from Augraphy.Augmentations import *
-
-
-################################################################################
-# Class Definition
-################################################################################
+from base.augmentation import Augmentation
 
 
 class GammaAugmentation(Augmentation):
+    """Adjusts the gamma of the whole image by a chosen multiplier.
+
+    :param range: Pair of ints determining the range from which to sample the
+           gamma shift.
+    :type range: tuple, optional
+    :param probability: The probability that this Augmentation will be applied.
+    :type probability: float, optional
+    """
+
     def __init__(self, range=(0.5, 1.5), probability=0.5):
+        """Constructor method"""
         super().__init__(probability=probability)
         self.range = range
 
