@@ -51,16 +51,7 @@ class OneOf(Augmentation):
         :param augmentations: Augmentations to compute probability list for.
         :type augmentations: list
         """
-        augmentation_probabilities = []
 
-        """Allow for both AugmentationSequences and Augmentations"""
-        for aug in augmentations:
-            if isinstance(aug, AugmentationSequence):
-                for a in aug.augmentations:
-                    augmentation_probabilities.append(a.probability)
-
-            if isinstance(aug, Augmentation):
-                augmentation_probabilities.append(aug.probability)
-
+        augmentation_probabilities = [augmentation.probability for augmentation in augmentations]
         s = sum(augmentation_probabilities)
         return [ap / s for ap in augmentation_probabilities]
