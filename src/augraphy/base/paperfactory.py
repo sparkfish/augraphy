@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 import random
+import glob
 
-from base.augmentation import Augmentation
-from base.augmentationresult import AugmentationResult
+from augraphy.base.augmentation import Augmentation
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class PaperFactory(Augmentation):
@@ -30,7 +31,7 @@ class PaperFactory(Augmentation):
         self.paper_textures = list()
         self.tile_texture_shape = tile_texture_shape
         self.texture_path = texture_path
-        for file in glob(f"{texture_path}/*"):
+        for file in glob.glob(f"{texture_path}/*"):
             texture = cv2.imread(file)
 
             if len(texture.shape) > 2 and texture.shape[2] == 4:

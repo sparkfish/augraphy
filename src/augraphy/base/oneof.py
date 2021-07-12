@@ -1,15 +1,19 @@
-class OneOf:
+from augraphy.base.augmentation import Augmentation
+from augraphy.base.augmentationsequence import AugmentationSequence
+from augraphy.base.augmentation import Augmentation
+
+class OneOf(Augmentation):
     """Given a list of Augmentations, selects one to apply.
 
     :param augmentations: A list of Augmentations to choose from.
     :type augmentations: list
     """
 
-    def __init__(self, augmentations):
+    def __init__(self, augmentations, probability=0.5):
         """Constructor method"""
         self.augmentations = augmentations
-
-        self.augmentation_probabilities = computeProbability(self.augmentations)
+        self.augmentation_probabilities = self.computeProbability(self.augmentations)
+        self.probability = probability
 
     # Randomly selects an Augmentation to apply to data.
     def __call__(self, data, force=False):
@@ -44,8 +48,16 @@ class OneOf:
         :param augmentations: Augmentations to compute probability list for.
         :type augmentations: list
         """
-        augmentation_probabilities = [
-            augmentation.probability for augmentation in augmentations
-        ]
+        augmentation_probabilities = []
+
+        """Allow for both AugmentationSequences and Augmentations"""
+        for aug in augmentations:
+            if isinstance(aug, AugmentationSequence):
+                for a in aug.augmentations:
+                    augmentation_probabilities.append(a.probability)
+
+            if isinstance(aug, Augmentation):
+                augmentation_probabilities.append(aug.probability)
+
         s = sum(augmentation_probabilities)
         return [ap / s for ap in augmentation_probabilities]

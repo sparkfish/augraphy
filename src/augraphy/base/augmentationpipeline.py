@@ -2,7 +2,7 @@ import random
 import cv2
 import numpy as np
 
-from augmentationresult import AugmentationResult
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class AugraphyPipeline:
