@@ -1,7 +1,7 @@
 import cv2
 import random
 
-from base.augmentation import Augmentation
+from augraphy.base.augmentation import Augmentation
 
 
 class GaussianBlurAugmentation(Augmentation):

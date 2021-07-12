@@ -3,8 +3,8 @@ import random
 
 from sklearn.datasets import make_blobs
 
-from base.augmentation import Augmentation
-from base.augmentationresult import AugmentationResult
+from augraphy.base.augmentation import Augmentation
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class LowInkBlobsAugmentation(Augmentation):

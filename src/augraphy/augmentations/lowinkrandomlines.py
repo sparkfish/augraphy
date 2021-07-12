@@ -1,7 +1,7 @@
 import random
 
-from base.augmentationresult import AugmentationResult
-from lowinkline import LowInkLineAugmentation
+from augraphy.base.augmentationresult import AugmentationResult
+from augraphy.augmentations.lowinkline import LowInkLineAugmentation
 
 
 class LowInkRandomLinesAugmentation(LowInkLineAugmentation):

@@ -3,8 +3,8 @@ import random
 import cv2
 from PIL import Image
 
-from base.augmentation import Augmentation
-from base.augmentationResult import AugmentationResult
+from augraphy.base.augmentation import Augmentation
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BleedThroughAugmentation():

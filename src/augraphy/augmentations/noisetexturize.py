@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import random
 
-from base.augmentation import Augmentation
+from augraphy.base.augmentation import Augmentation
 
 
 class NoiseTexturizeAugmentation(Augmentation):

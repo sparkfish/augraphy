@@ -3,7 +3,7 @@ import numpy as np
 import random
 import os
 
-from base.augmentation import Augmentation
+from augraphy.base.augmentation import Augmentation
 
 
 class GammaAugmentation(Augmentation):

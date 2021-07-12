@@ -4,7 +4,7 @@ import random
 
 from scipy.stats import norm
 
-from base.augmentation import Augmentation
+from augraphy.base.augmentation import Augmentation
 
 
 class LightingGradientAugmentation(Augmentation):

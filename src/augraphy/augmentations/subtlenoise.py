@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-from base.augmentation import Augmentation
-from base.augmentationresult import AugmentationResult
+from augraphy.base.augmentation import Augmentation
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class SubtleNoiseAugmentation(Augmentation):

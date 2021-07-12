@@ -4,7 +4,7 @@
 import numpy as np
 import random
 
-from base.augmentations import Augmentation
+from augraphy.base.augmentation import Augmentation
 
 
 class LowInkLineAugmentation(Augmentation):
