@@ -4,7 +4,7 @@ import random
 
 
 from augraphy.base.augmentation import Augmentation
-
+from augraphy.base.augmentationresult import AugmentationResult
 
 class DirtyRollersAugmentation(Augmentation):
     """Emulates an effect created by certain document scanners.

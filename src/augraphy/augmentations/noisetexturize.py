@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from augraphy.base.augmentation import Augmentation
-
+from augraphy.base.augmentationresult import AugmentationResult
 
 class NoiseTexturizeAugmentation(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.

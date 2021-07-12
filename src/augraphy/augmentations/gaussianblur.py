@@ -2,7 +2,7 @@ import cv2
 import random
 
 from augraphy.base.augmentation import Augmentation
-
+from augraphy.base.augmentationresult import AugmentationResult
 
 class GaussianBlurAugmentation(Augmentation):
     """Applies a Gaussian blur to the whole image.

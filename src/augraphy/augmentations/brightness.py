@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from augraphy.base.augmentation import Augmentation
-
+from augraphy.base.augmentationresult import AugmentationResult
 
 class BrightnessAugmentation(Augmentation):
     """Adjusts the brightness of the whole image by a chosen multiplier.

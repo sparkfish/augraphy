@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from augraphy.base.augmentation import Augmentation
-
+from augraphy.base.augmentationresult import AugmentationResult
 
 class BrightnessTexturizeAugmentation(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
