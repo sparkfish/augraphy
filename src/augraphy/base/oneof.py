@@ -1,3 +1,6 @@
+import numpy as np
+import random
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationsequence import AugmentationSequence
 from augraphy.base.augmentation import Augmentation
