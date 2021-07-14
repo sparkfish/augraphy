@@ -13,13 +13,13 @@ class LowInkLineAugmentation(Augmentation):
     :param use_consistent_lines: Whether or not to vary the width and alpha of
            generated low ink lines.
     :type use_consistent_lines: bool, optional
-    :param probability: The probability this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, use_consistent_lines=True, probability=0.5):
+    def __init__(self, use_consistent_lines=True, p=0.5):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
 
         self.use_consistent_lines = use_consistent_lines
         inconsistent_transparency_line = lambda x: random.randint(0, 255)
@@ -32,7 +32,7 @@ class LowInkLineAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkLineAugmentation(use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
+        return f"LowInkLineAugmentation(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Takes an image, a vertical position, and an opacity value,
     # then adds a line at that position in the image with the given

@@ -21,6 +21,7 @@ class LightingGradientAugmentation(Augmentation):
       min_brightness: integer that min brightness in the mask
       mode: the way that brightness decay from max to min: linear or gaussian
       linear_decay_rate: only valid in linear_static mode. Suggested value is within [0.2, 2]
+      p: float, the probability that this Augmentation will be applied.
     Return:
       light_mask: ndarray in float type consisting value from 0 to strength
     """
@@ -34,10 +35,10 @@ class LightingGradientAugmentation(Augmentation):
         mode="gaussian",
         linear_decay_rate=None,
         transparency=None,
-        probability=0.5,
+        p=0.5,
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.light_position = light_position
         self.direction = direction
         self.max_brightness = max_brightness
@@ -48,7 +49,7 @@ class LightingGradientAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LightingGradientAugmentation(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, probability={self.probability})"
+        return f"LightingGradientAugmentation(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

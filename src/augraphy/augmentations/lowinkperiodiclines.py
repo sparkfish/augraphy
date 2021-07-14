@@ -17,8 +17,8 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
     :param use_consistent_lines: Whether or not to vary the width and alpha of
            generated low ink lines.
     :type use_consistent_lines: bool, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
@@ -26,18 +26,18 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
         count_range=(2, 5),
         period_range=(10, 30),
         use_consistent_lines=True,
-        probability=0.5,
+        p=0.5,
     ):
         """Constructor method"""
         super().__init__(
-            use_consistent_lines=use_consistent_lines, probability=probability
+            use_consistent_lines=use_consistent_lines, p=p
         )
         self.count_range = count_range
         self.period_range = period_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkPeriodicLinesAugmentation(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
+        return f"LowInkPeriodicLinesAugmentation(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
         """Creates horizontal lines of some opacity over the input image, at

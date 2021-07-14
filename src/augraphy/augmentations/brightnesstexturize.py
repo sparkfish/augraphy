@@ -16,15 +16,15 @@ class BrightnessTexturizeAugmentation(Augmentation):
     :type deviation: float, optional
     :param layer: The image layer to apply the brightness texturization to
     :type layer: string, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
-        self, range=(0.9, 0.99), deviation=0.03, layer="paper", probability=0.5
+        self, range=(0.9, 0.99), deviation=0.03, layer="paper", p=0.5
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.low = range[0]
         self.high = range[1]
         self.deviation = deviation
@@ -33,7 +33,7 @@ class BrightnessTexturizeAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturizeAugmentation(layer='{self.layer}', range={self.range}, deviation={self.deviation}, probability={self.probability})"
+        return f"BrightnessTexturizeAugmentation(layer='{self.layer}', range={self.range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

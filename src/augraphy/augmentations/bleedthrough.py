@@ -28,8 +28,8 @@ class BleedThroughAugmentation():
     :param offsets: Tuple of x and y offset pair to shift the bleed through 
             effect from original input.
     :type offsets: tuple, optional
-    :param probability: The probability this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
     def __init__(
         self,
@@ -39,9 +39,9 @@ class BleedThroughAugmentation():
         sigmaX = 0,
         alpha = 0.3,
         offsets = (10,20),
-        probability=0.5
+        p=0.5
     ):
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.intensity_range = intensity_range
         self.color_range = color_range
         self.ksize = ksize
@@ -51,7 +51,7 @@ class BleedThroughAugmentation():
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThroughAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},probability={self.probability})"
+        return f"BleedThroughAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
  
     # Add salt and pepper noise
     def add_sp_noise(self, img, prob=0.05):

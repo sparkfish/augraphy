@@ -10,13 +10,15 @@ class OneOf(Augmentation):
 
     :param augmentations: A list of Augmentations to choose from.
     :type augmentations: list
+    :param p: The probability that this augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, augmentations, probability=0.5):
+    def __init__(self, augmentations, p=0.5):
         """Constructor method"""
         self.augmentations = augmentations
         self.augmentation_probabilities = self.computeProbability(self.augmentations)
-        self.probability = probability
+        self.p = p
 
     # Randomly selects an Augmentation to apply to data.
     def __call__(self, data, force=False):
@@ -41,7 +43,7 @@ class OneOf(Augmentation):
         for augmentation in self.augmentations:
             r += f"\t{repr(augmentation)}\n"
 
-        r += f"], probability={self.probability})"
+        r += f"], p={self.p})"
         return r
 
     def computeProbability(self, augmentations):
@@ -52,6 +54,6 @@ class OneOf(Augmentation):
         :type augmentations: list
         """
 
-        augmentation_probabilities = [augmentation.probability for augmentation in augmentations]
+        augmentation_probabilities = [augmentation.p for augmentation in augmentations]
         s = sum(augmentation_probabilities)
         return [ap / s for ap in augmentation_probabilities]

@@ -16,18 +16,18 @@ class PaperFactory(Augmentation):
     :type tile_texture_shape: tuple, optional
     :param texture_path: Directory location to pull paper textures from.
     :type texture_path: string, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
         self,
         tile_texture_shape=(250, 250),
         texture_path="./paper_textures",
-        probability=0.5,
+        p=0.5,
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.paper_textures = list()
         self.tile_texture_shape = tile_texture_shape
         self.texture_path = texture_path
@@ -45,7 +45,7 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, probability={self.probability})"
+        return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

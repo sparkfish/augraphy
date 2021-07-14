@@ -12,17 +12,17 @@ class GammaAugmentation(Augmentation):
     :param range: Pair of ints determining the range from which to sample the
            gamma shift.
     :type range: tuple, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, range=(0.5, 1.5), probability=0.5):
+    def __init__(self, range=(0.5, 1.5), p=0.5):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.range = range
 
     def __repr__(self):
-        return f"GammaAugmentation(range={self.range}, probability={self.probability})"
+        return f"GammaAugmentation(range={self.range}, p={self.p})"
 
     def __call__(self, data, force=False):
         img = data["post"][-1].result

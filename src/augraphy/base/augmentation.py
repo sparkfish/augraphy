@@ -4,14 +4,14 @@ import random
 class Augmentation:
     """The base class which all pipeline augmentations inherit from.
 
-    :param probability: The probability that this augmentation will be run when
+    :param p: The probability that this augmentation will be run when
         executed as part of a pipeline.
-    :type probability: float, optional
+    :type p: float, optional
     """
 
-    def __init__(self, probability=0.5):
+    def __init__(self, p=0.5):
         """Constructor method"""
-        self.probability = probability
+        self.p = p
 
     def should_run(self):
         """Determines whether or not the augmentation should be applied
@@ -21,4 +21,4 @@ class Augmentation:
             random sample on the unit interval.
         :rtype: bool
         """
-        return random.uniform(0.0, 1.0) <= self.probability
+        return random.uniform(0.0, 1.0) <= self.p

@@ -13,21 +13,21 @@ class DustyInkAugmentation(Augmentation):
     :type intensity_range: tuple, optional
     :param color_range: Pair of bounds for 8-bit colors.
     :type color_range: tuple, optional
-    :param probability: Probability of this Augmentation being applied.
-    :type probability: float, optional
+    :param p: Probability of this Augmentation being applied.
+    :type p: float, optional
     """
 
     def __init__(
-        self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
+        self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.intensity_range = intensity_range
         self.color_range = color_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DustyInkAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, probability={self.probability})"
+        return f"DustyInkAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

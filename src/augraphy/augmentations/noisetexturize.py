@@ -12,24 +12,26 @@ class NoiseTexturizeAugmentation(Augmentation):
     sigma: defines bounds of noise fluctuations
     turbulence: defines how quickly big patterns will be replaced with the small ones. The lower
     value - the more iterations will be performed during texture generation.
+    layer: the pipeline layer this Augmentation is applied in
+    p: the probability that this Augmentation will be applied
     """
 
     def __init__(
         self,
         sigma_range=(3, 10),
         turbulence_range=(2, 5),
-        probability=0.5,
+        p=0.5,
         layer="paper",
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.sigma_range = sigma_range
         self.turbulence_range = turbulence_range
         self.layer = layer
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoiseTexturizeAugmentation(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, probability={self.probability})"
+        return f"NoiseTexturizeAugmentation(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

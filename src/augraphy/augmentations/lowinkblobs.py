@@ -28,8 +28,8 @@ class LowInkBlobsAugmentation(Augmentation):
     :param value_range: Pair of ints determining the range from which the
            value of a point in the blob is sampled.
     :type value_range: tuple, optional
-    :param probability: The probability this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
@@ -40,10 +40,10 @@ class LowInkBlobsAugmentation(Augmentation):
         std_range=(10, 75),
         features_range=(15, 25),
         value_range=(180, 250),
-        probability=0.5,
+        p=0.5,
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.count_range = count_range
         self.size_range = size_range
         self.points_range = points_range
@@ -55,7 +55,7 @@ class LowInkBlobsAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, probability={self.probability})"
+        return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
     def create_blob(self):
         """Generates a Gaussian blob to place in the image."""

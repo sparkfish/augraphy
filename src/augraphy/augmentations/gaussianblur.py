@@ -14,13 +14,13 @@ class GaussianBlurAugmentation(Augmentation):
     :type kernels: list, optional
     :param sigmaX: Standard deviation of the kernel along the x-axis.
     :type sigmaX: float, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, layer, kernels=[(3, 3)], sigmaX=0, probability=0.5):
+    def __init__(self, layer, kernels=[(3, 3)], sigmaX=0, p=0.5):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.sigmaX = sigmaX
         self.kernels = kernels
         self.layer = layer
@@ -34,4 +34,4 @@ class GaussianBlurAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"GaussianBlurAugmentation({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, probability={self.probability})"
+        return f"GaussianBlurAugmentation({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"

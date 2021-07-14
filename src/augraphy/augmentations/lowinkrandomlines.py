@@ -13,20 +13,20 @@ class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
     :param use_consistent_lines: Whether or not to vary the width and alpha of
            generated low ink lines.
     :type use_consistent_lines: bool, optional
-    :param probability: The probability this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, count_range=(5, 10), use_consistent_lines=True, probability=0.5):
+    def __init__(self, count_range=(5, 10), use_consistent_lines=True, p=0.5):
         """Constructor method"""
         super().__init__(
-            use_consistent_lines=use_consistent_lines, probability=probability
+            use_consistent_lines=use_consistent_lines, p=p
         )
         self.count_range = count_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkRandomLinesAugmentation(count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, probability={self.probability})"
+        return f"LowInkRandomLinesAugmentation(count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

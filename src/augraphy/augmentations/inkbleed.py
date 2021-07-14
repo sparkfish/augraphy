@@ -17,21 +17,21 @@ class InkBleedAugmentation(Augmentation):
     :param color_range: Pair of ints determining the range from which color
            noise is sampled.
     :type color_range: tuple, optional
-    :param probability: The probability this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
-        self, intensity_range=(0.1, 0.2), color_range=(0, 224), probability=0.5
+        self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5
     ):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.intensity_range = intensity_range
         self.color_range = color_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleedAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, probability={self.probability})"
+        return f"InkBleedAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     def sobel(self, image):
         """Computes the gradient of the image intensity function.

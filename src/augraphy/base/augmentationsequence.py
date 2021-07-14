@@ -5,12 +5,14 @@ class AugmentationSequence(Augmentation):
 
     :param augmentations: A list of Augmentation objects to be applied.
     :type augmentations: list
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, augmentations, probability=0.5):
+    def __init__(self, augmentations, p=0.5):
         """Constructor method"""
         self.augmentations = augmentations
-        self.probability = probability
+        self.p = p
 
     def __repr__(self):
         output = f"AugmentationSequence([\n"

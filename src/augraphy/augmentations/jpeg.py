@@ -10,18 +10,18 @@ class JpegAugmentation(Augmentation):
     :param quality_range: Pair of ints determining the range from which to
            sample the compression quality.
     :type quality_range: tuple, optional
-    :param probability: The probability that this Augmentation will be applied.
-    :type probability: float, optional
+    :param p: The probability that this Augmentation will be applied.
+    :type p: float, optional
     """
 
-    def __init__(self, quality_range=(25, 95), probability=0.5):
+    def __init__(self, quality_range=(25, 95), p=0.5):
         """Constructor method"""
-        super().__init__(probability=probability)
+        super().__init__(p=p)
         self.quality_range = quality_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"JpegAugmentation(quality_range={self.quality_range}, probability={self.probability})"
+        return f"JpegAugmentation(quality_range={self.quality_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
