@@ -52,7 +52,7 @@ pipeline = default_augraphy_pipeline()
 pipeline.ink_phase.augmentations.append(BrightnessAugmentation('ink'))
 
 paper_factory = pipeline.paper_phase.augmentations[0]
-paper_factory.probability = 1.0
+paper_factory.p = 1.0
 
 jpeg_aug = pipeline.post_phase.augmentations[-1]
 jpeg_aug.quality_range = (10, 20)
@@ -70,19 +70,19 @@ ink_phase = AugmentationSequence([
         LowInkPeriodicLinesAugmentation(use_consistent_lines=False), 
         LowInkPeriodicLinesAugmentation(use_consistent_lines=True), 
     ]),
-    GaussianBlurAugmentation('ink', probability=1)
+    GaussianBlurAugmentation('ink', p=1)
 ])
 
 paper_phase = AugmentationSequence([
     PaperFactory(),
     OneOf([
     AugmentationSequence([
-        NoiseTexturizeAugmentation(probability=1.0),
+        NoiseTexturizeAugmentation(p=1.0),
         BrightnessTexturizeAugmentation(),
         GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
         ]),
     AugmentationSequence([
-        BrightnessTexturizeAugmentation(probability=1.0),
+        BrightnessTexturizeAugmentation(p=1.0),
         NoiseTexturizeAugmentation(),
         GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
     ])]),
@@ -138,14 +138,14 @@ augmentation = AugmentationSequence(
         augmentations=[
             # Add Augmentations Here
         ]
-        probability=1.0
+        p=1.0
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
-|   ```probability``` | specifies the probability that the augmentation sequence will run.   |
+|   ```p``` | specifies the probability that the augmentation sequence will run.   |
 
 ### One Of
 
@@ -158,14 +158,14 @@ augmentation = OneOf(
         augmentations=[
             # Add Augmentations Here
         ]
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
-|   ```probability``` | specifies the probability that the augmentation will run one of the specified augmentations.   |
+|   ```p``` | specifies the probability that the augmentation will run one of the specified augmentations.   |
 
 ### Gaussian Blur
 
@@ -177,7 +177,7 @@ The Gaussian Blur augmentations applies a gaussian blur to the whole image.
 augmentation = GaussianBlurAugmentation(
         kernels=[(3,3)], 
         sigmaX=0,
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -185,7 +185,7 @@ augmentation = GaussianBlurAugmentation(
 |---|---|
 |  ```kernels``` | specifies a list of blur kernels, one of which will be selected randomly when the blur is applied.   |
 |  ```sigmaX``` | specifes sigmaX value of the gaussian blur.   |
-|  ```probability``` | specifies the probability that the augmentation will run.   |
+|  ```p``` | specifies the probability that the augmentation will run.   |
 
 ### Brightness
 
@@ -196,14 +196,14 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
 ```python
 augmentation = BrightnessAugmentation(
         range=(0.8, 1.4)
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |   ```range``` | specifies the range of values to be chosen at random for the brightness multiplier applied.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 
 ## Ink Processing Phase
@@ -218,7 +218,7 @@ The Ink Bleed augmentation relies on sobel edge detection to create a mask of al
 augmentation = InkBleedAugmentation(
         intensity_range=(.1, .2), 
         color_range=(0, 224)
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -226,7 +226,7 @@ augmentation = InkBleedAugmentation(
 |---|---|
 |   ```intensity_range``` | range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.   |
 |   ```color_range``` | specifes the value range of the colors used for noise.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -245,7 +245,7 @@ The Dusty Ink augmentation applies random noise to the ink itself, emulating a d
 augmentation = DustyInkAugmentation(
         intensity_range=(.1, .2), 
         color_range=(0, 224)
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -253,7 +253,7 @@ augmentation = DustyInkAugmentation(
 |---|---|
 |   ```intensity_range``` range of intensities to select from. Intensity must be a value between 0 to 1 and specifies the intensity of the noise added to the edges.   |
 |   ```color_range``` | specifes the value range of the colors used for noise.   |
-|   ```probability``` | specifies the probability that the augmentation will run.  |
+|   ```p``` | specifies the probability that the augmentation will run.  |
 
 **Example:**
 
@@ -276,7 +276,7 @@ augmentation = LowInkBlobsAugmentation(
         std_range=(10, 75), 
         features_range=(15, 25), 
         value_range=(180, 250),
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -288,7 +288,7 @@ augmentation = LowInkBlobsAugmentation(
 |   ```std_range``` | specifies the std_range value passed into ```sklearn.datasets.make_blobs```   |
 |   ```features_range``` | specifies the features_range value passed into ```sklearn.datasets.make_blobs```   |
 |   ```values_range``` | specifies the range of values used for the blob pixels.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -305,21 +305,21 @@ augmentation = LowInkBlobsAugmentation(
 augmentation = LowInkRandomLinesAugmentation(
         count_range=(5, 10), 
         use_consistent_lines=True,
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |   ```count_range``` | specifies the number of lines to add to the image.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 ```python
 augmentation = LowInkPeriodicLinesAugmentation(
         count_range=(5, 10),
         period_range=(10, 30),
         use_consistent_lines=True,
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -327,7 +327,7 @@ augmentation = LowInkPeriodicLinesAugmentation(
 |---|---|
 |  ```count_range``` | specifies the number of lines to add that will be repeated.   |
 |  ```period_range``` | specifies the number of pixels in each period before lines are repeated.  |
-|  ```probability``` | specifies the probability that the augmentation will run.   |
+|  ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -354,7 +354,7 @@ Randomly replaces the starting paper image with a texture chosen from a director
 augmentation = PaperFactory(
         tile_texture_shape=(250,250), 
         texture_path="./paper_textures"
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -362,7 +362,7 @@ augmentation = PaperFactory(
 |---|---|
 |   ```tile_texture_shape``` | specifies the size of the texture crop when tiling a texture.   |
 |   ```paper_texture_path``` | defines where the images used for non-generated paper textures will be loaded from. See the ```paper_textures``` folder on Github for examples.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 ### **Noise Texturize**
 
@@ -374,7 +374,7 @@ The Noise Texturize augmentation creates a random noise based texture pattern to
 augmentation = NoiseTexturizeAugmentation(
         sigma_range=(3, 10), 
         turbulence_range=(2, 5)
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -382,7 +382,7 @@ augmentation = NoiseTexturizeAugmentation(
 |---|---|
 |   ```sigma_range``` | specifies the bounds of noise fluctuations.   |
 |   ```turbulence_range``` | specifies the  how quickly big patterns will be replaced with the small ones. The lower the value the more iterations will be performed during texture generation..   |
-|   ```probability``` | specifies the probability that the augmentation will run.  |
+|   ```p``` | specifies the probability that the augmentation will run.  |
 
 **Example:**
 
@@ -398,7 +398,7 @@ The Noise Texturize augmentation creates a random noise in the brightness channe
 augmentation = BrightnessTexturizeAugmentation(
         range=(0.9, 0.99), 
         deviation=0.03
-        probability=0.5
+        p=0.5
     )
 ```
 
@@ -406,7 +406,7 @@ augmentation = BrightnessTexturizeAugmentation(
 |---|---|
 |   ```range``` | specifies the range of the brightness noise.   |
 |   ```deviation``` | specifies the deviation in the brightness noise.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -441,14 +441,14 @@ The Dirty Rollers augmentation emulates an effect created by certain document sc
 ```python
 augmentation = DirtyRollersAugmentation(
         line_width_range=(8, 12)
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |   ```line_width_range``` | specifies the base width of the rollers/bars/lines of the brightness gradients.   |
-|   ```probability``` | specifies the probability that the augmentation will run.   |
+|   ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -469,7 +469,7 @@ augmentation = LightingGradientAugmentation(
         mode="gaussian", 
         linear_decay_rate=None, 
         transparency=None
-        probability=0.5
+        p=0.5
     )
 ```
       position: tuple of integers (x, y) defining
@@ -488,7 +488,7 @@ augmentation = LightingGradientAugmentation(
 |   ```mode``` | specifies the way that brightness decay from max to min: linear or gaussian.   |
 |   ```linear_decay_rate``` | only valid in linear_static mode. Suggested value is within [0.2, 2] |
 |   ```transparency``` | specifies the transparency used by the generated mask, value range of 0 to 1.   |
-|   ```probability``` | specifies the probability that the augmentation will run.  |
+|   ```p``` | specifies the probability that the augmentation will run.  |
 |   |   |
 
 **Example:**
@@ -504,14 +504,14 @@ The Subtle Noise augmentation emulates the imperfections in scanning solid color
 ```python
 augmentation = SubtleNoiseAugmentation(
         range=5,
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |  ```range``` | specifies the range added or subtracted from each pixel value in the image. With a range of 5, a pixel with color value of 100 will end up between 95 and 105.  |
-|  ```probability``` | specifies the probability that the augmentation will run.   |
+|  ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -530,13 +530,13 @@ Gamma value of 1 will not effect the image.
 ```python
 augmentation = GammaAugmentation(
         range=(0.5,1.5),
-        probability=0.5
+        p=0.5
     )
 ``` 
 | Parameter  | Description  |
 |---|---|
 |  ```range``` | specifies the range for gamma value. Gamma value below 1 darkens the image whereas above 1 increases pixel intensities. Gamma value of 1 does not change anything|
-|  ```probability``` | specifies the probability that the augmentation will run.   |
+|  ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
@@ -555,14 +555,14 @@ The JPEG augmentation uses JPEG encoding to create JPEG compression artifacts in
 ```python
 augmentation = JpegAugmentation(
         quality_range=(50, 95),
-        probability=0.5
+        p=0.5
     )
 ```
 
 | Parameter  | Description  |
 |---|---|
 |  ```quality_range``` | specifies the quality range for the JPEG compression encoding. |
-| ```probability``` | specifies the probability that the augmentation will run.   |
+| ```p``` | specifies the probability that the augmentation will run.   |
 
 **Example:**
 
