@@ -75,7 +75,10 @@ class NoiseTexturizeAugmentation(Augmentation):
         if w == 0:
             w = 1
 
-        result = np.random.normal(mean, sigma, (w, h, 1))
+
+        gaussian = np.vectorize(lambda x: random.gauss(mean,sigma))
+        result = gaussian(np.array((w,h)))
+
         if ratio > 1:
             result = cv2.resize(
                 result, dsize=(width, height), interpolation=cv2.INTER_LINEAR
