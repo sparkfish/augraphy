@@ -45,9 +45,9 @@ class BrightnessTexturizeAugmentation(Augmentation):
 
             low = value - (value * self.deviation)  # *random.uniform(0, deviation)
             max = value + (value * self.deviation)
-            brightness_matrix = np.random.uniform(
-                low, max, (hsv.shape[0], hsv.shape[1])
-            )
+
+            makerand = np.vectorize(lambda x: random.uniform(low,max))
+            brightness_matrix = makerand(np.array((hsv.shape[0], hsv.shape[1])))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
@@ -59,9 +59,9 @@ class BrightnessTexturizeAugmentation(Augmentation):
 
             low = value - (value * self.deviation)
             max = value + (value * self.deviation)
-            brightness_matrix = np.random.uniform(
-                low, max, (hsv.shape[0], hsv.shape[1])
-            )
+
+            makerand = np.vectorize(lambda x: random.uniform(low,max))
+            brightness_matrix = makerand(np.array((hsv.shape[0], hsv.shape[1])))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
