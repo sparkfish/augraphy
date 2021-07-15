@@ -33,6 +33,7 @@ class AugraphyPipeline:
         ink_color_range=(0, 96),
         paper_color_range=(164, 255),
         rotate_range=(0, 360),
+        log = False
     ):
         """Constructor method"""
         self.ink_phase = ink_phase
@@ -41,6 +42,7 @@ class AugraphyPipeline:
         self.ink_color_range = ink_color_range
         self.rotate_range = rotate_range
         self.paper_color_range = paper_color_range
+        self.log = log
 
     def augment(self, image):
         """Applies the Augmentations in each phase of the pipeline.
@@ -54,8 +56,13 @@ class AugraphyPipeline:
         data = dict()
         data["image"] = image.copy()
         ink = data["image"].copy()
+        angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+        
+        if self.log:
+            print('angle =', angle)
+
         ink = self.rotate_image(
-            ink, random.randint(self.rotate_range[0], self.rotate_range[1])
+            ink, angle
         )
         data["image_rotated"] = ink.copy()
 
@@ -70,14 +77,20 @@ class AugraphyPipeline:
         data["post"] = list()
 
         data["ink"].append(AugmentationResult(None, ink))
+
+        paper_color = random.randint(
+                        self.paper_color_range[0], self.paper_color_range[1]
+                    )
+
+        if self.log:
+            print('paper_color =', paper_color)
+
         data["paper"].append(
             AugmentationResult(
                 None,
                 np.full(
                     (ink.shape[0], ink.shape[1], 3),
-                    random.randint(
-                        self.paper_color_range[0], self.paper_color_range[1]
-                    ),
+                    paper_color,
                     dtype="uint",
                 ),
             )
@@ -133,8 +146,13 @@ class AugraphyPipeline:
 
     def print_ink_to_paper(self, overlay, background):
         """Applies the ink layer to the paper layer."""
+        ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
+        
+        if self.log:
+            print('ink_color =', ink_color)
+            
         overlay = self.make_white_transparent(
-            overlay, random.randint(self.ink_color_range[0], self.ink_color_range[1])
+            overlay, ink_color
         )
         # Split out the transparency mask from the colour info
         overlay_img = overlay[:, :, :3]  # Grab the BRG planes
