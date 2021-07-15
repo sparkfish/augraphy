@@ -6,8 +6,7 @@ from PIL import Image
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-
-class BleedThroughAugmentation():
+class BleedThroughAugmentation(Augmentation):
     """Emulates bleed through effect from the combination of ink bleed and
     gaussian blur operations.
 
@@ -117,8 +116,8 @@ class BleedThroughAugmentation():
     def __call__(self, data, force=False):
         if force or self.should_run():
             img = data["ink"][-1].result.copy()
-
-            img_flip = cv2.flip(img, 1)
+            img_flip = cv2.flip(img, 0)
+            img_flip = cv2.flip(img_flip, 1)
             img_bleed = self.generate_bleeding_ink(img_flip, self.intensity_range, self.color_range, self.ksize, self.sigmaX)
             img_bleed_offset = self.generate_offset(img_bleed, self.offsets)
             img_bleedthrough = self.blend(img, img_bleed_offset,self.alpha)
