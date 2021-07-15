@@ -1,4 +1,3 @@
-import numpy as np
 import random
 
 from augraphy.base.augmentation import Augmentation
@@ -24,13 +23,8 @@ class OneOf(Augmentation):
     def __call__(self, data, force=False):
         if self.augmentation_probabilities and (force or self.should_run()):
 
-            # Seed the random object.
-            random_state = np.random.RandomState(random.randint(0, 2 ** 32 - 1))
-
             # Randomly selects one Augmentation to apply.
-            augmentation = random_state.choice(
-                self.augmentations, p=self.augmentation_probabilities
-            )
+            augmentation = random.choice(self.augmentations)
 
             # Applies the selected Augmentation.
             augmentation(data, force=True)
