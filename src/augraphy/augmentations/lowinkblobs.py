@@ -65,11 +65,11 @@ class LowInkBlobsAugmentation(Augmentation):
             for i in range(count):
                 applyBlob(
                     image,
-                    size_range,
-                    points_range,
-                    std_range,
-                    features_range,
-                    value_range,
+                    self.size_range,
+                    self.points_range,
+                    self.std_range,
+                    self.features_range,
+                    self.value_range,
                 )
 
             data["ink"].append(AugmentationResult(self, image))
