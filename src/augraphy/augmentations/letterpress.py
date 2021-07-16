@@ -1,3 +1,5 @@
+import random
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lib import applyBlob, addNoise
