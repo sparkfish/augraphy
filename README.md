@@ -571,6 +571,11 @@ Encoded with quality range of (10, 15)
 ![JPEG Compression Before](images/Augmentations/JPEGCompressionBefore.png)
 ![JPEG Compression After](images/Augmentations/JPEGCompression.png)
 
+# Interoperability
+You may wish to use Augraphy with other projects, such as [Albumentations](https://github.com/albumentations-team/albumentations), [imgaug](https://github.com/aleju/imgaug), or [imagecorruptions](https://github.com/bethgelab/imagecorruptions).
+
+We support wrapping Albumentations augmentations and imgaug augmenters with the `ForeignAugmentation` class, defined in `src/augraphy/utilities/foreign.py`. `imgaug` already provides wrapper classes for `imagecorruptions` transforms, so transitively we support those too.
+
 # Reproducibility
 This library uses the Python standard library's [random](https://docs.python.org/3/library/random.html) module to generate pseudorandom numbers. If you want to limit nondeterministic results, consider setting the [random seed](https://docs.python.org/3/library/random.html#random.seed) in programs that use the Augraphy library, by including `random.seed(42)` in your scripts. (The number 42 is not required; feel free to choose your own memorable seed when requiring deterministic RNG).
 
