@@ -63,7 +63,7 @@ class LowInkBlobsAugmentation(Augmentation):
             count = random.randint(self.count_range[0], self.count_range[1])
 
             for i in range(count):
-                applyBlob(
+                image = applyBlob(
                     image,
                     self.size_range,
                     self.points_range,
