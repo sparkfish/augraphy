@@ -32,5 +32,5 @@ class DustyInkAugmentation(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             img = data["ink"][-1].result
-            img = addNoise(img)
+            img = addNoise(img, self.intensity_range, self.color_range)
             data["ink"].append(AugmentationResult(self, img))
