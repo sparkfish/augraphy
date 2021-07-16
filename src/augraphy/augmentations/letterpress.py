@@ -70,4 +70,4 @@ class LetterpressAugmentation(Augmentation):
 
             image = addNoise(image)
 
-            data["ink"].append(AugmentationResult(self, img))
+            data["ink"].append(AugmentationResult(self, image))
