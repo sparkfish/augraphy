@@ -3,6 +3,7 @@ import random
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
+from augraphy.augmentations.lib import addNoise
 
 
 class DustyInkAugmentation(Augmentation):
@@ -17,9 +18,7 @@ class DustyInkAugmentation(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(
-        self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5
-    ):
+    def __init__(self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5):
         """Constructor method"""
         super().__init__(p=p)
         self.intensity_range = intensity_range
@@ -33,13 +32,5 @@ class DustyInkAugmentation(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             img = data["ink"][-1].result
-            intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
-            add_noise_fn = (
-                lambda x: random.randint(self.color_range[0], self.color_range[1])
-                if (x == 0 and random.random() < intensity)
-                else x
-            )
-            add_noise = np.vectorize(add_noise_fn)
-            img = add_noise(img)
-
+            img = addNoise(img)
             data["ink"].append(AugmentationResult(self, img))
