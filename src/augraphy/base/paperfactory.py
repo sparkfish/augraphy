@@ -50,17 +50,21 @@ class PaperFactory(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            shape = data["ink"][-1].result.shape
-
-            if random.choice([True, False]):
-                texture = self.get_texture(self.tile_texture_shape)
-                paper = self.tile_texture(texture, shape)
+            
+            if self.paper_textures:
+                shape = data["ink"][-1].result.shape
+    
+                if random.choice([True, False]):
+                    texture = self.get_texture(self.tile_texture_shape)
+                    paper = self.tile_texture(texture, shape)
+                else:
+                    texture = self.get_texture(shape)
+                    paper = texture.copy()
+    
+                data["paper_texture"] = texture
+                data["paper"].append(AugmentationResult(self, paper))
             else:
-                texture = self.get_texture(shape)
-                paper = texture.copy()
-
-            data["paper_texture"] = texture
-            data["paper"].append(AugmentationResult(self, paper))
+                print("No paper image in the paper directory!")
 
     # Takes a texture and a shape and returns the shape with
     # the texture tiled in a vertical/horizontal grid across it.

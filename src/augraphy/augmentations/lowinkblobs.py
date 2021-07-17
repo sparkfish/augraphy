@@ -92,7 +92,13 @@ class LowInkBlobsAugmentation(Augmentation):
         x_stop = x_start + blob.shape[1]
         y_stop = y_start + blob.shape[0]
         mask_chunk = mask[y_start:y_stop, x_start:x_stop]
-        mask[y_start:y_stop, x_start:x_stop] = self.apply(mask_chunk, blob[:, :, 0])
+        mask_dim = len(mask.shape) # mask channels
+        if mask_dim>2: # colour image or > 3 channels
+            for i in range(mask_dim):
+                mask[y_start:y_stop, x_start:x_stop,i] = self.apply(mask_chunk[:,:,i], blob[:, :, 0])
+        else: # single channel grayscale or binary image
+            mask[y_start:y_stop, x_start:x_stop] = self.apply(mask_chunk[:,:], blob[:, :,0])
+        
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
