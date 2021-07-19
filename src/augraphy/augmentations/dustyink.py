@@ -3,7 +3,7 @@ import random
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-
+from augraphy.augmentations.lib import addNoise
 
 class DustyInkAugmentation(Augmentation):
     """Applies random noise to the ink itself, emulating a dusty or
@@ -33,13 +33,5 @@ class DustyInkAugmentation(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             img = data["ink"][-1].result
-            intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
-            add_noise_fn = (
-                lambda x: random.randint(self.color_range[0], self.color_range[1])
-                if (x == 0 and random.random() < intensity)
-                else x
-            )
-            add_noise = np.vectorize(add_noise_fn)
-            img = add_noise(img)
-
+            img = addNoise(img, self.intensity_range, self.color_range)
             data["ink"].append(AugmentationResult(self, img))

@@ -1,14 +1,12 @@
-import numpy as np
 import random
-
-from sklearn.datasets import make_blobs
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lib import applyBlob
+from augraphy.augmentations.lib import applyBlob, addNoise
 
-class LowInkBlobsAugmentation(Augmentation):
-    """Creates random blobs of "low ink" to apply to the image.
+
+class LetterpressAugmentation(Augmentation):
+    """Produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
     :param count_range: Pair of ints determining the range from which the number
            of blobs to generate is sampled.
@@ -32,16 +30,16 @@ class LowInkBlobsAugmentation(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(
-        self,
-        count_range=(5, 25),
-        size_range=(10, 20),
-        points_range=(5, 25),
-        std_range=(10, 75),
-        features_range=(15, 25),
-        value_range=(180, 250),
-        p=0.5,
-    ):
+
+    def __init__(self,
+                 count_range=(1000, 2500),
+                 size_range=(60, 80),
+                 points_range=(200, 250),
+                 std_range=(10, 75),
+                 features_range=(15, 25),
+                 value_range=(200, 250),
+                 p=0.5
+                 ):
         """Constructor method"""
         super().__init__(p=p)
         self.count_range = count_range
@@ -51,11 +49,10 @@ class LowInkBlobsAugmentation(Augmentation):
         self.features_range = features_range
         self.value_range = value_range
 
-    # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"LetterpressAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
-    # Applies the Augmentation to input data.
+
     def __call__(self, data, force=False):
         if force or self.should_run():
             image = data["ink"][-1].result.copy()
@@ -68,7 +65,9 @@ class LowInkBlobsAugmentation(Augmentation):
                     self.points_range,
                     self.std_range,
                     self.features_range,
-                    self.value_range
+                    self.value_range,
                 )
+
+            image = addNoise(image)
 
             data["ink"].append(AugmentationResult(self, image))
