@@ -13,23 +13,20 @@ from augraphy.base.augmentationpipeline import AugraphyPipeline
 from augraphy.augmentations.brightness import BrightnessAugmentation
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturizeAugmentation
 from augraphy.augmentations.dirtyrollers import DirtyRollersAugmentation
-from augraphy.augmentations.dustyink import DustyInkAugmentation
 from augraphy.augmentations.gaussianblur import GaussianBlurAugmentation
 from augraphy.augmentations.inkbleed import InkBleedAugmentation
 from augraphy.augmentations.jpeg import JpegAugmentation
+from augraphy.augmentations.letterpress import LetterpressAugmentation
 from augraphy.augmentations.lightinggradient import LightingGradientAugmentation
-from augraphy.augmentations.lowinkblobs import LowInkBlobsAugmentation
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLinesAugmentation
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLinesAugmentation
 from augraphy.augmentations.noisetexturize import NoiseTexturizeAugmentation
 from augraphy.augmentations.subtlenoise import SubtleNoiseAugmentation
 
-
 def default_augraphy_pipeline():
     ink_phase = AugmentationSequence([
                                   InkBleedAugmentation(),
-                                  DustyInkAugmentation(),
-                                  LowInkBlobsAugmentation(),
+				  LetterpressAugmentation(),
                                   OneOf([
                                     LowInkRandomLinesAugmentation(use_consistent_lines=False),
                                     LowInkRandomLinesAugmentation(use_consistent_lines=True),
