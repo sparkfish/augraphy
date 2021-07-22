@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentationresult import AugmentationResult
-
+from augraphy.base.augmentationsequence import AugmentationSequence
 
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
@@ -30,9 +30,9 @@ class AugraphyPipeline:
         ink_phase,
         paper_phase,
         post_phase,
-        ink_color_range=(0, 96),
-        paper_color_range=(164, 255),
-        rotate_range=(0, 360),
+        ink_color_range=(0, 0),
+        paper_color_range=(255, 255),
+        rotate_range=(0, 0),
         log = False
     ):
         """Constructor method"""
@@ -56,14 +56,25 @@ class AugraphyPipeline:
         data = dict()
         data["image"] = image.copy()
         ink = data["image"].copy()
-        angle = random.randint(self.rotate_range[0], self.rotate_range[1])
-        
+
+        if ((self.rotate_range[0] != 0) | (self.rotate_range[1] != 0)):
+            angle = random.randint(
+                self.rotate_range[0], self.rotate_range[1]
+            )
+        else:
+            angle = 0
+
+
         if self.log:
             print('angle =', angle)
 
-        ink = self.rotate_image(
-            ink, angle
-        )
+        if (angle != 0):
+            ink = self.rotate_image(
+                ink, angle
+            )
+        else:
+            ink = ink
+
         data["image_rotated"] = ink.copy()
 
         if len(ink.shape) > 2 and ink.shape[2] == 3:
@@ -78,9 +89,12 @@ class AugraphyPipeline:
 
         data["ink"].append(AugmentationResult(None, ink))
 
-        paper_color = random.randint(
-                        self.paper_color_range[0], self.paper_color_range[1]
-                    )
+        if ((self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0)):
+            paper_color = random.randint(
+                self.paper_color_range[0], self.paper_color_range[1]
+            )
+        else:
+            paper_color = 255
 
         if self.log:
             print('paper_color =', paper_color)
@@ -96,9 +110,21 @@ class AugraphyPipeline:
             )
         )
 
+        # If phases were defined None or [] in a custom pipeline, they wouldn't
+        # be callable objects, so make them empty AugmentationSequences
+        if (self.ink_phase is None or self.ink_phase == []):
+            self.ink_phase = AugmentationSequence([])
+
+        if (self.paper_phase is None or self.paper_phase == []):
+            self.paper_phase = AugmentationSequence([])
+
+        if (self.post_phase is None or self.post_phase == []):
+            self.post_phase = AugmentationSequence([])
+
         self.ink_phase(data)
         self.paper_phase(data)
 
+        # ink and paper phases always have at least one result by now
         data["post"].append(
             AugmentationResult(
                 None,
@@ -146,11 +172,17 @@ class AugraphyPipeline:
 
     def print_ink_to_paper(self, overlay, background):
         """Applies the ink layer to the paper layer."""
-        ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
-        
+
+        if ((self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0)):
+            ink_color = random.randint(
+                self.ink_color_range[0], self.ink_color_range[1]
+            )
+        else:
+            ink_color = 0
+
         if self.log:
             print('ink_color =', ink_color)
-            
+
         overlay = self.make_white_transparent(
             overlay, ink_color
         )
