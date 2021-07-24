@@ -32,7 +32,7 @@ class DirtyRollersAugmentation(Augmentation):
             return self.apply_scanline_mask_v1(img, mask, meta_mask)
 
     def apply_scanline_mask_v2(self, img, mask, meta_mask):
-        mask = self.transform(self.apply_scanline_metamask_v2, mask, meta_mask)
+        mask = self.apply_scanline_metamask_v2(mask, meta_mask)
         update_lambda = lambda x, y: min(255, x + (x * (1 - (y / 100))))
         update = np.vectorize(update_lambda)
         return update(img, mask)
@@ -43,7 +43,7 @@ class DirtyRollersAugmentation(Augmentation):
         return update(img, mask)
 
     def apply_scanline_mask_v1(self, img, mask, meta_mask):
-        mask = self.transform(self.apply_scanline_metamask_v1, mask, meta_mask)
+        mask = self.apply_scanline_metamask_v1(mask, meta_mask)
         update_lambda = lambda x, y: max(0, x - (x * (1 - (y / 100))))
         update = np.vectorize(update_lambda)
         return update(img, mask)
@@ -67,28 +67,17 @@ class DirtyRollersAugmentation(Augmentation):
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             
-            # where is this transform?
-            mask = self.transform(
-                self.create_scanline_mask, image.shape[1], image.shape[0], line_width
-            )
-            meta_mask = self.transform(
-                self.create_scanline_mask,
-                image.shape[1],
-                image.shape[0],
-                line_width * random.randint(10, 25),
-            )
-            image = self.transform(
-                self.apply_scanline_mask, image, mask, meta_mask
-            ).astype("uint8")
+
+            mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
+            
+            meta_mask = self.create_scanline_mask(image.shape[1],image.shape[0],line_width * random.randint(10, 25))
+            image = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             if rotate:
                 image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            metadata = dict()
-            metadata["mask"] = mask
-            metadata["metamask"] = meta_mask
-            data["post"].append(self, image, metadata)
+            data["post"].append(AugmentationResult(self, image))
 
     def create_scanline_mask(self, width, height, line_width):
         grad_list = list()

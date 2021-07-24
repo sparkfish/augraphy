@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="Augraphy",
-    version="2.0.5",
+    name="augraphy",
+    version="3.0.0",
     author="Sparkfish LLC",
     author_email="packages@sparkfish.com",
     description="Augmentation pipeline for rendering synthetic paper printing and scanning processes",
