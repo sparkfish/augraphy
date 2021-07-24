@@ -9,12 +9,19 @@ from augraphy.base.augmentationresult import AugmentationResult
 class PageBorderAugmentation(Augmentation):
     """
 
-            :param side: th
-            :param width_range:
-            :param pages:
-            :param noise_intensity_range:
-            :param p:
-            """
+    :param side: One of the four sides of page i:e top,right,left,bottom.
+                By default it is "left"
+    :type side: string , optional
+    :param width_range: Pair of ints determining the range from of the page border
+    :type width_range: tuple, optional
+    :param pages: An integer determining the number of page shadows in the border
+    :type pages: int , optional
+    :param noise_intensity_range: A pair of floats determining the intensity of
+                                  noise being applied around the borders.
+    :type noise_intensity_range: tuple , optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
+    """
 
     def __init__(
         self,
@@ -73,3 +80,30 @@ class PageBorderAugmentation(Augmentation):
         border = self.add_corner_noise(np.uint8(border), noise_intensity)
         border = cv2.blur(border, (3, 3))
         return border
+
+    def __call__(self, data, force=False):
+        if force or self.should_run():
+            # print("Adding borders")
+            image = data["post"][-1].result
+            noise_intensity = random.uniform(self.noise_intensity_range[0], self.noise_intensity_range[1])
+            border_width = random.randint(self.width_range[0], self.width_range[1])
+            if len(image.shape)>=3:
+                H, W, C = image.shape
+            else:
+                H,W=image.shape
+
+            if self.side == "left":
+                border = self.create_border(border_width, H, self.pages, noise_intensity)
+                # print(image.shape,border.shape)
+                image = np.hstack((border, image))
+            elif self.side == "right":
+                border = self.create_border(border_width, H, self.pages, noise_intensity)
+                image = np.hstack((image, np.fliplr(border)))
+            elif self.side == "top":
+                border = self.create_border(border_width, W, self.pages, noise_intensity)
+                image = np.vstack((cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE), image))
+            elif self.side == "bottom":
+                border = self.create_border(border_width, W, self.pages, noise_intensity)
+                image = np.vstack((image, (cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE))))
+
+            data["post"].append(AugmentationResult(self, image))
