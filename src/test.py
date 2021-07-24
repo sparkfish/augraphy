@@ -6,10 +6,7 @@ import PIL
 import os
 from pdf417gen import encode, render_image
 
-from augraphy.base.augmentationpipeline import AugraphyPipeline
-from augraphy.default.pipeline import default_augraphy_pipeline
-from augraphy.augmentations import *
-
+from augraphy import *
 
 def create_pdf417():
     type = "pdf417"
