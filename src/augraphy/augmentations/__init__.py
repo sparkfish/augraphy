@@ -16,6 +16,7 @@ from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLinesAugmen
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLinesAugmentation
 from augraphy.augmentations.noisetexturize import NoiseTexturizeAugmentation
 from augraphy.augmentations.subtlenoise import SubtleNoiseAugmentation
+from augraphy.augmentations.pageborder import PageBorderAugmentation
 
 __all__ = [
     "BleedThroughAugmentation",
@@ -35,5 +36,6 @@ __all__ = [
     "LowInkPeriodicLinesAugmentation",
     "LowInkRandomLinesAugmentation",
     "NoiseTexturizeAugmentation",
-    "SubtleNoiseAugmentation"
+    "SubtleNoiseAugmentation",
+    "PageBorderAugmentation"
     ]
