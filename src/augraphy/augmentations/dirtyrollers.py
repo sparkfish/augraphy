@@ -9,8 +9,8 @@ from augraphy.base.augmentationresult import AugmentationResult
 class DirtyRollersAugmentation(Augmentation):
     """Emulates an effect created by certain document scanners.
 
-    :param line_width_range:
-           width of a dirty roller line is sampled.
+    :param line_width_range: Pair of ints determining the range from which the 
+    width of a dirty roller line is sampled.
     :type line_width_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
