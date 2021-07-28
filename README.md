@@ -585,6 +585,17 @@ Depending on your application, you may also need to set the [numpy random seed](
 # Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
+# Citations
+If you use Augraphy in your research, please cite the project:
+
+```
+@misc{Augraphy,
+  author = {Sparkfish Ltd.},
+  title = {Augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes.},
+  howpublished = {\url{https://github.com/sparkfish/augraphy}},
+}
+```
+
 # License
 **MIT**
 
