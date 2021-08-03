@@ -590,7 +590,7 @@ If you use Augraphy in your research, please cite the project:
 
 ```
 @misc{Augraphy,
-  author = {Sparkfish Ltd.},
+  author = {Sparkfish LLC},
   title = {Augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes.},
   howpublished = {\url{https://github.com/sparkfish/augraphy}},
 }
