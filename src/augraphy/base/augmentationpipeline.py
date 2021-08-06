@@ -216,10 +216,10 @@ class AugraphyPipeline:
 
         # Convert to grayscale if not already.
         if len(img.shape) > 2 and img.shape[2] > 1:
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            img = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
 
         # Apply transparency mask based on grayscale.
-        img_bgra[:, :, 3] = ~img[:, :]
+        img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
         return img_bgra
 
     def __repr__(self):
