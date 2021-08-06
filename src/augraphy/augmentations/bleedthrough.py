@@ -108,7 +108,7 @@ class BleedThroughAugmentation(Augmentation):
         )
         add_noise = np.vectorize(add_noise_fn)
         sobel = self.sobel(img)
-        img_noise = add_noise(img, self.add_sp_noise(sobel))
+        img_noise = np.double(add_noise(img, self.add_sp_noise(sobel)))
         img_bleed = cv2.GaussianBlur(img_noise, ksize=ksize, sigmaX=sigmaX)   
         return img_bleed
 

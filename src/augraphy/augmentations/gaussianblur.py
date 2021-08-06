@@ -1,5 +1,6 @@
 import cv2
 import random
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -28,7 +29,7 @@ class GaussianBlurAugmentation(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = data[self.layer][-1].result
+            img = np.double(data[self.layer][-1].result)
             img = cv2.GaussianBlur(img, random.choice(self.kernels), self.sigmaX)
             data[self.layer].append(AugmentationResult(self, img))
 
