@@ -16,7 +16,7 @@ class AugmentationSequence(Augmentation):
 
     def __repr__(self):
         output = f"AugmentationSequence([\n"
-        for aug in augmentations:
+        for aug in self.augmentations:
             output += f"\t{repr(aug)}\n"
 
         output += "])"
