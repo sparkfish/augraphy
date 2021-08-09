@@ -106,8 +106,21 @@ def applyBlob(
            value of a point in the blob is sampled.
     :type value_range: tuple, optional
     """
+    dim = min(mask.shape[0], mask.shape[1]) # we don't want to generate blobs larger than the mask
+
+    # temporary local variables, in case
+    size = size_range
+    std = std_range
+
+    # make sure we don't generate a blob larger than the mask
+    if (2 * (size_range[1] + std_range[1]) > dim):
+        # don't make a radius that won't fit in our mask
+        size = (1,dim//2 - 1)
+        # don't make a std.deviation that when added to radius, is larger than mask
+        std = (0,dim//2 - size[1])
+
     blob = _create_blob(
-        size_range, points_range, std_range, features_range, value_range
+        size, points_range, std, features_range, value_range
     )
 
     x_start = random.randint(0, mask.shape[1] - blob.shape[1])
