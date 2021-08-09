@@ -6,7 +6,7 @@ from PIL import Image
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class BleedThroughAugmentation(Augmentation):
+class BleedThrough(Augmentation):
     """Emulates bleed through effect from the combination of ink bleed and
     gaussian blur operations.
 
@@ -50,7 +50,7 @@ class BleedThroughAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThroughAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
+        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
  
     # Add salt and pepper noise
     def add_sp_noise(self, img, prob=0.05):

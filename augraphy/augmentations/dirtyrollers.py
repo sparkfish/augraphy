@@ -6,7 +6,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class DirtyRollersAugmentation(Augmentation):
+class DirtyRollers(Augmentation):
     """Emulates an effect created by certain document scanners.
 
     :param line_width_range: Pair of ints determining the range from which the 
@@ -23,7 +23,7 @@ class DirtyRollersAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyRollersAugmentation(line_width_range={self.line_width_range}, p={self.p})"
+        return f"DirtyRollers(line_width_range={self.line_width_range}, p={self.p})"
 
     def apply_scanline_mask(self, img, mask, meta_mask):
         if random.choice([True, False]):

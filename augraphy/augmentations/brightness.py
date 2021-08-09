@@ -5,7 +5,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class BrightnessAugmentation(Augmentation):
+class Brightness(Augmentation):
     """Adjusts the brightness of the whole image by a chosen multiplier.
 
     :param layer: The layer of image to adjust brightness of.
@@ -25,7 +25,7 @@ class BrightnessAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessAugmentation({self.layer}, range={self.range}, p={self.p})"
+        return f"Brightness({self.layer}, range={self.range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

@@ -5,7 +5,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
 
-class SubtleNoiseAugmentation(Augmentation):
+class SubtleNoise(Augmentation):
     """Emulates the imperfections in scanning solid colors due to subtle
     lighting differences.
 
@@ -24,7 +24,7 @@ class SubtleNoiseAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"SubtleNoiseAugmentation(range={self.range}, p={self.p})"
+        return f"SubtleNoise(range={self.range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

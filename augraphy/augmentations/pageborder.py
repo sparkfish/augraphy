@@ -6,7 +6,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
 
-class PageBorderAugmentation(Augmentation):
+class PageBorder(Augmentation):
     """
 
     :param side: One of the four sides of page i:e top,right,left,bottom.
@@ -39,7 +39,7 @@ class PageBorderAugmentation(Augmentation):
         self.noise_intensity_range=noise_intensity_range
 
     def __repr__(self):
-        return f"PageBorderAugmentation(width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
+        return f"PageBorder(width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
 
     def add_corner_noise(self,border, intensity=0.2):
         ksize = (5, 5)

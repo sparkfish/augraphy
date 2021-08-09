@@ -5,7 +5,7 @@ import numpy as np
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class GaussianBlurAugmentation(Augmentation):
+class GaussianBlur(Augmentation):
     """Applies a Gaussian blur to the whole image.
 
     :param layer: The image layer to apply the blur to.
@@ -35,4 +35,4 @@ class GaussianBlurAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"GaussianBlurAugmentation({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"
+        return f"GaussianBlur({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"

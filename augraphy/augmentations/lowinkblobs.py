@@ -7,7 +7,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lib import applyBlob
 
-class LowInkBlobsAugmentation(Augmentation):
+class LowInkBlobs(Augmentation):
     """Creates random blobs of "low ink" to apply to the image.
 
     :param count_range: Pair of ints determining the range from which the number
@@ -53,7 +53,7 @@ class LowInkBlobsAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkBlobsAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"LowInkBlobs(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

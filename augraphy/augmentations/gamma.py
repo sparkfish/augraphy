@@ -6,7 +6,7 @@ import os
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class GammaAugmentation(Augmentation):
+class Gamma(Augmentation):
     """Adjusts the gamma of the whole image by a chosen multiplier.
 
     :param range: Pair of ints determining the range from which to sample the
@@ -22,7 +22,7 @@ class GammaAugmentation(Augmentation):
         self.range = range
 
     def __repr__(self):
-        return f"GammaAugmentation(range={self.range}, p={self.p})"
+        return f"Gamma(range={self.range}, p={self.p})"
 
     def __call__(self, data, force=False):
         img = data["post"][-1].result

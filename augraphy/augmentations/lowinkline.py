@@ -7,7 +7,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 
 
-class LowInkLineAugmentation(Augmentation):
+class LowInkLine(Augmentation):
     """Generates streaking behavior common to printers running out of ink.
 
     :param use_consistent_lines: Whether or not to vary the width and alpha of
@@ -32,7 +32,7 @@ class LowInkLineAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkLineAugmentation(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Takes an image, a vertical position, and an opacity value,
     # then adds a line at that position in the image with the given

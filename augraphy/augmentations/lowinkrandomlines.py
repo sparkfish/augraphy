@@ -1,10 +1,10 @@
 import random
 
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lowinkline import LowInkLineAugmentation
+from augraphy.augmentations.lowinkline import LowInkLine
 
 
-class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
+class LowInkRandomLines(LowInkLine):
     """Adds low ink lines randomly throughout the image.
 
     :param count_range: Pair of ints determining the range from which the number
@@ -26,7 +26,7 @@ class LowInkRandomLinesAugmentation(LowInkLineAugmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkRandomLinesAugmentation(count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return f"LowInkRandomLines(count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

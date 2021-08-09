@@ -5,7 +5,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lib import addNoise
 
-class DustyInkAugmentation(Augmentation):
+class DustyInk(Augmentation):
     """Applies random noise to the ink itself, emulating a dusty or
     inconsistent ink tone when followed by a blur.
 
@@ -27,7 +27,7 @@ class DustyInkAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DustyInkAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
+        return f"DustyInk(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

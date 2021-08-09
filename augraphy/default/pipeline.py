@@ -9,45 +9,45 @@ from augraphy import *
 
 def default_augraphy_pipeline():
     ink_phase = AugmentationSequence([
-        InkBleedAugmentation(),
-        BleedThroughAugmentation(),
-	LetterpressAugmentation(),
-        FoldingAugmentation(),
+        InkBleed(),
+        BleedThrough(),
+	Letterpress(),
+        Folding(),
         OneOf([
-            LowInkRandomLinesAugmentation(use_consistent_lines=False),
-            LowInkRandomLinesAugmentation(use_consistent_lines=True),
-            LowInkPeriodicLinesAugmentation(use_consistent_lines=False),
-            LowInkPeriodicLinesAugmentation(use_consistent_lines=True),
+            LowInkRandomLines(use_consistent_lines=False),
+            LowInkRandomLines(use_consistent_lines=True),
+            LowInkPeriodicLines(use_consistent_lines=False),
+            LowInkPeriodicLines(use_consistent_lines=True),
         ]),
-        GaussianBlurAugmentation('ink')
+        GaussianBlur('ink')
     ])
 
     paper_phase = AugmentationSequence([
         PaperFactory(),
         OneOf([
             AugmentationSequence([
-                NoiseTexturizeAugmentation(),
-                BrightnessTexturizeAugmentation(),
-                GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
+                NoiseTexturize(),
+                BrightnessTexturize(),
+                GaussianBlur('paper', [(3,3), (3,5), (5,3), (5,5)]),
             ]),
             AugmentationSequence([
-                BrightnessTexturizeAugmentation(),
-                NoiseTexturizeAugmentation(),
-                GaussianBlurAugmentation('paper', [(3,3), (3,5), (5,3), (5,5)]),
+                BrightnessTexturize(),
+                NoiseTexturize(),
+                GaussianBlur('paper', [(3,3), (3,5), (5,3), (5,5)]),
             ])]),
-        BrightnessAugmentation('paper')
+        Brightness('paper')
     ])
 
 
     post_phase = AugmentationSequence([
-        DirtyRollersAugmentation(),
+        DirtyRollers(),
         OneOf([
-            LightingGradientAugmentation(),
-            BrightnessAugmentation('post')
+            LightingGradient(),
+            Brightness('post')
         ]),
-        DirtyDrumAugmentation(),
-        SubtleNoiseAugmentation(),
-        JpegAugmentation()
+        DirtyDrum(),
+        SubtleNoise(),
+        Jpeg()
     ])
 
     return AugraphyPipeline(ink_phase, paper_phase, post_phase)

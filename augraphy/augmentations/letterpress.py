@@ -5,7 +5,7 @@ from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lib import applyBlob, addNoise
 
 
-class LetterpressAugmentation(Augmentation):
+class Letterpress(Augmentation):
     """Produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
     :param count_range: Pair of ints determining the range from which the number
@@ -50,7 +50,7 @@ class LetterpressAugmentation(Augmentation):
         self.value_range = value_range
 
     def __repr__(self):
-        return f"LetterpressAugmentation(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
 
     def __call__(self, data, force=False):

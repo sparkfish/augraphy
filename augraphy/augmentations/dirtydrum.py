@@ -6,7 +6,7 @@ from PIL import Image
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class DirtyDrumAugmentation(Augmentation):
+class DirtyDrum(Augmentation):
     """Emulates dirty drum effect by creating stripes of vertical and 
     horizontal noises.
     
@@ -40,7 +40,7 @@ class DirtyDrumAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyDrumAugmentation(line_width_range={self.line_width_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},p={self.p})"
+        return f"DirtyDrum(line_width_range={self.line_width_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},p={self.p})"
  
     
     # Blend images to produce DirtyDrum effect

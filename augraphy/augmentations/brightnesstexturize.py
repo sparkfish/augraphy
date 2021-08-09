@@ -5,7 +5,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class BrightnessTexturizeAugmentation(Augmentation):
+class BrightnessTexturize(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
 
@@ -33,7 +33,7 @@ class BrightnessTexturizeAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturizeAugmentation(layer='{self.layer}', range={self.range}, deviation={self.deviation}, p={self.p})"
+        return f"BrightnessTexturize(layer='{self.layer}', range={self.range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

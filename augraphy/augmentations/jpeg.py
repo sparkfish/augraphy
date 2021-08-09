@@ -4,7 +4,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class JpegAugmentation(Augmentation):
+class Jpeg(Augmentation):
     """Uses JPEG encoding to create compression artifacts in the image.
 
     :param quality_range: Pair of ints determining the range from which to
@@ -21,7 +21,7 @@ class JpegAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"JpegAugmentation(quality_range={self.quality_range}, p={self.p})"
+        return f"Jpeg(quality_range={self.quality_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

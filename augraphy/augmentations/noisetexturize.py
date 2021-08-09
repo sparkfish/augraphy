@@ -5,7 +5,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-class NoiseTexturizeAugmentation(Augmentation):
+class NoiseTexturize(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
 
@@ -31,7 +31,7 @@ class NoiseTexturizeAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoiseTexturizeAugmentation(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
+        return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

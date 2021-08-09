@@ -6,7 +6,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
 
-class InkBleedAugmentation(Augmentation):
+class InkBleed(Augmentation):
     """Uses Sobel edge detection to create a mask of all edges, then applies
     random noise to those edges. When followed by a blur, this creates a
     fuzzy edge that emulates an ink bleed effect.
@@ -31,7 +31,7 @@ class InkBleedAugmentation(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleedAugmentation(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
+        return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     def sobel(self, image):
         """Computes the gradient of the image intensity function.

@@ -1,41 +1,41 @@
-from augraphy.augmentations.bleedthrough import BleedThroughAugmentation
-from augraphy.augmentations.brightness import BrightnessAugmentation
-from augraphy.augmentations.brightnesstexturize import BrightnessTexturizeAugmentation
-from augraphy.augmentations.dirtydrum import DirtyDrumAugmentation
-from augraphy.augmentations.dirtyrollers import DirtyRollersAugmentation
-from augraphy.augmentations.dustyink import DustyInkAugmentation
-from augraphy.augmentations.folding import FoldingAugmentation
-from augraphy.augmentations.gamma import GammaAugmentation
-from augraphy.augmentations.gaussianblur import GaussianBlurAugmentation
-from augraphy.augmentations.inkbleed import InkBleedAugmentation
-from augraphy.augmentations.jpeg import JpegAugmentation
-from augraphy.augmentations.letterpress import LetterpressAugmentation
-from augraphy.augmentations.lightinggradient import LightingGradientAugmentation
-from augraphy.augmentations.lowinkblobs import LowInkBlobsAugmentation
-from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLinesAugmentation
-from augraphy.augmentations.lowinkrandomlines import LowInkRandomLinesAugmentation
-from augraphy.augmentations.noisetexturize import NoiseTexturizeAugmentation
-from augraphy.augmentations.subtlenoise import SubtleNoiseAugmentation
-from augraphy.augmentations.pageborder import PageBorderAugmentation
+from augraphy.augmentations.bleedthrough import BleedThrough
+from augraphy.augmentations.brightness import Brightness
+from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
+from augraphy.augmentations.dirtydrum import DirtyDrum
+from augraphy.augmentations.dirtyrollers import DirtyRollers
+from augraphy.augmentations.dustyink import DustyInk
+from augraphy.augmentations.folding import Folding
+from augraphy.augmentations.gamma import Gamma
+from augraphy.augmentations.gaussianblur import GaussianBlur
+from augraphy.augmentations.inkbleed import InkBleed
+from augraphy.augmentations.jpeg import Jpeg
+from augraphy.augmentations.letterpress import Letterpress
+from augraphy.augmentations.lightinggradient import LightingGradient
+from augraphy.augmentations.lowinkblobs import LowInkBlobs
+from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
+from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
+from augraphy.augmentations.noisetexturize import NoiseTexturize
+from augraphy.augmentations.subtlenoise import SubtleNoise
+from augraphy.augmentations.pageborder import PageBorder
 
 __all__ = [
-    "BleedThroughAugmentation",
-    "BrightnessAugmentation",
-    "BrightnessTexturizeAugmentation",
-    "DirtyDrumAugmentation",
-    "DirtyRollersAugmentation",
-    "DustyInkAugmentation",
-    "FoldingAugmentation",
-    "GammaAugmentation",
-    "GaussianBlurAugmentation",
-    "InkBleedAugmentation",
-    "JpegAugmentation",
-    "LetterpressAugmentation",
-    "LightingGradientAugmentation",
-    "LowInkBlobsAugmentation",
-    "LowInkPeriodicLinesAugmentation",
-    "LowInkRandomLinesAugmentation",
-    "NoiseTexturizeAugmentation",
-    "SubtleNoiseAugmentation",
-    "PageBorderAugmentation"
+    "BleedThrough",
+    "Brightness",
+    "BrightnessTexturize",
+    "DirtyDrum",
+    "DirtyRollers",
+    "DustyInk",
+    "Folding",
+    "Gamma",
+    "GaussianBlur",
+    "InkBleed",
+    "Jpeg",
+    "Letterpress",
+    "LightingGradient",
+    "LowInkBlobs",
+    "LowInkPeriodicLines",
+    "LowInkRandomLines",
+    "NoiseTexturize",
+    "PageBorder",
+    "SubtleNoise"
     ]

@@ -1,10 +1,10 @@
 import random
 
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lowinkline import LowInkLineAugmentation
+from augraphy.augmentations.lowinkline import LowInkLine
 
 
-class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
+class LowInkPeriodicLines(LowInkLine):
     """Creates a set of lines that repeat in a periodic fashion throughout the
     image.
 
@@ -37,7 +37,7 @@ class LowInkPeriodicLinesAugmentation(LowInkLineAugmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkPeriodicLinesAugmentation(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return f"LowInkPeriodicLines(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
         """Creates horizontal lines of some opacity over the input image, at
