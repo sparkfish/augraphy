@@ -9,7 +9,7 @@ class AugmentationSequence(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, augmentations, p=0.5):
+    def __init__(self, augmentations, p=1):
         """Constructor method"""
         self.augmentations = augmentations
         self.p = p

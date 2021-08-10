@@ -8,12 +8,12 @@ from augraphy.base.augmentationsequence import AugmentationSequence
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
 
-    :param ink_phase: AugmentationSequence of Augmentations to apply.
-    :type ink_phase: base.augmentationsequence
-    :param paper_phase: AugmentationSequence of Augmentations to apply.
-    :type paper_phase: base.augmentationsequence
-    :param post_phase: AugmentationSequence of Augmentations to apply.
-    :type post_phase: base.augmentationsequence
+    :param ink_phase: Collection of Augmentations to apply.
+    :type ink_phase: base.augmentationsequence or list
+    :param paper_phase: Collection of Augmentations to apply.
+    :type paper_phase: base.augmentationsequence or list
+    :param post_phase: Collection of Augmentations to apply.
+    :type post_phase: base.augmentationsequence or list
     :param ink_color_range: Pair of ints determining the range from which to
            sample the ink color.
     :type ink_color_range: tuple, optional
@@ -36,13 +36,20 @@ class AugraphyPipeline:
         log = False
     ):
         """Constructor method"""
-        self.ink_phase = ink_phase
-        self.paper_phase = paper_phase
-        self.post_phase = post_phase
+        self.ink_phase = wrapListMaybe(ink_phase)
+        self.paper_phase = wrapListMaybe(paper_phase)
+        self.post_phase = wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.rotate_range = rotate_range
         self.paper_color_range = paper_color_range
         self.log = log
+
+    def wrapListMaybe(augs):
+        """Converts a bare list to an AugmentationSequence, or does nothing."""
+        if type(augs) is list:
+            return AugmentationSequence(augs)
+        else:
+            return augs
 
     def augment(self, image):
         """Applies the Augmentations in each phase of the pipeline.
