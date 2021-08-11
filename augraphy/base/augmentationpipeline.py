@@ -36,15 +36,15 @@ class AugraphyPipeline:
         log = False
     ):
         """Constructor method"""
-        self.ink_phase = wrapListMaybe(ink_phase)
-        self.paper_phase = wrapListMaybe(paper_phase)
-        self.post_phase = wrapListMaybe(post_phase)
+        self.ink_phase = self.wrapListMaybe(ink_phase)
+        self.paper_phase = self.wrapListMaybe(paper_phase)
+        self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.rotate_range = rotate_range
         self.paper_color_range = paper_color_range
         self.log = log
 
-    def wrapListMaybe(augs):
+    def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
         if type(augs) is list:
             return AugmentationSequence(augs)
