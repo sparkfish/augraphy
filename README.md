@@ -546,7 +546,7 @@ In Example image below : lefmost picture is original, middle image is obtained w
 
 ### **Page Borders**
 
-Page Border augmentation applies a show of pages on any side of the page.
+Page Border augmentation applies a shadow of underlying pages on any side of the page, creating an effect of single or multiple borders on specified side of page.
 **Usage:**
 
 ```python
