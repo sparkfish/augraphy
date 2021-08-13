@@ -48,7 +48,7 @@ class InkBleed(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = data["ink"][-1].result
+            image = data["ink"][-1].result
             intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
             add_noise_fn = (
                 lambda x, y: random.randint(self.color_range[0], self.color_range[1])
@@ -56,7 +56,7 @@ class InkBleed(Augmentation):
                 else x
             )
             add_noise = np.vectorize(add_noise_fn)
-            sobel = self.sobel(img)
-            img = add_noise(img, sobel)
+            sobel = self.sobel(image)
+            image = add_noise(image, sobel)
 
-            data["ink"].append(AugmentationResult(self, img))
+            data["ink"].append(AugmentationResult(self, image))

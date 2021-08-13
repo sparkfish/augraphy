@@ -159,18 +159,18 @@ class DirtyDrum(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = data["post"][-1].result
+            image = data["post"][-1].result
             
             # Create directional masks for dirty drum effect
-            img_dirty_h = self.create_dirty_mask(img, self.line_width_range, 0)
-            img_dirty_v = self.create_dirty_mask(img, self.line_width_range, 1)
+            image_dirty_h = self.create_dirty_mask(image, self.line_width_range, 0)
+            image_dirty_v = self.create_dirty_mask(image, self.line_width_range, 1)
             
             # Apply gaussian blur to mask of dirty drum
-            img_dirty_h = cv2.GaussianBlur(img_dirty_h, ksize=self.ksize, sigmaX=self.sigmaX)
-            img_dirty_v = cv2.GaussianBlur(img_dirty_v, ksize=self.ksize, sigmaX=self.sigmaX) 
+            image_dirty_h = cv2.GaussianBlur(image_dirty_h, ksize=self.ksize, sigmaX=self.sigmaX)
+            image_dirty_v = cv2.GaussianBlur(image_dirty_v, ksize=self.ksize, sigmaX=self.sigmaX) 
 
             # Blend image with the masks of dirty drum effect
-            img_dirty = self.blend(img_dirty_v,img_dirty_h,0.5)
-            img_dirty_drum = self.blend(img,img_dirty,self.alpha)
+            image_dirty = self.blend(image_dirty_v,image_dirty_h,0.5)
+            image_dirty_drum = self.blend(image,image_dirty,self.alpha)
 
-            data["post"].append(AugmentationResult(self, img_dirty_drum))
+            data["post"].append(AugmentationResult(self, image_dirty_drum))

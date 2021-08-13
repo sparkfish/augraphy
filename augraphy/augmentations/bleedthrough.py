@@ -115,11 +115,11 @@ class BleedThrough(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = data["ink"][-1].result.copy()
-            img_flip = cv2.flip(img, 0)
-            img_flip = cv2.flip(img_flip, 1)
-            img_bleed = self.generate_bleeding_ink(img_flip, self.intensity_range, self.color_range, self.ksize, self.sigmaX)
-            img_bleed_offset = self.generate_offset(img_bleed, self.offsets)
-            img_bleedthrough = self.blend(img, img_bleed_offset,self.alpha)
+            image = data["ink"][-1].result.copy()
+            image_flip = cv2.flip(image, 0)
+            image_flip = cv2.flip(image_flip, 1)
+            image_bleed = self.generate_bleeding_ink(image_flip, self.intensity_range, self.color_range, self.ksize, self.sigmaX)
+            image_bleed_offset = self.generate_offset(image_bleed, self.offsets)
+            image_bleedthrough = self.blend(image, image_bleed_offset,self.alpha)
 
-            data["ink"].append(AugmentationResult(self, img_bleedthrough))
+            data["ink"].append(AugmentationResult(self, image_bleedthrough))

@@ -1,3 +1,4 @@
+from augraphy.augmentations.badphotocopy import BadPhotocopy
 from augraphy.augmentations.bleedthrough import BleedThrough
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
@@ -19,6 +20,7 @@ from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
 
 __all__ = [
+    "BadPhotocopy",
     "BleedThrough",
     "Brightness",
     "BrightnessTexturize",
