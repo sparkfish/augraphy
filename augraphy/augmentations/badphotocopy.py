@@ -30,7 +30,7 @@ class BadPhotocopy(Augmentation):
     # You may change and modify this section for different blobs' pattern
     def apply_blobs_pattern(self, img, blob_density):
         
-        img_bad= img.copy(0)
+        img_bad= img.copy()
         img_bad = applyBlob_full(img_bad, blob_density)
          
         # random choice to apply blobs at image corner
