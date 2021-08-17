@@ -1,0 +1,4 @@
+# Reproducibility
+This library uses the Python standard library's [random](https://docs.python.org/3/library/random.html) module to generate pseudorandom numbers. If you want to limit nondeterministic results, consider setting the [random seed](https://docs.python.org/3/library/random.html#random.seed) in programs that use the Augraphy library, by including `random.seed(42)` in your scripts. (The number 42 is not required; feel free to choose your own memorable seed when requiring deterministic RNG).
+
+Depending on your application, you may also need to set the [numpy random seed](https://docs.scipy.org/doc/numpy-1.15.0/reference/generated/numpy.random.seed.html) or the seeds for other sources of randomness (for a brief overview, see [here](https://pytorch.org/docs/stable/notes/randomness.html)), but Augraphy does not depend on these for random number generation.
