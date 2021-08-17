@@ -544,6 +544,34 @@ In Example image below : lefmost picture is original, middle image is obtained w
 
 ![Gamma](images/Augmentations/gamma.png)
 
+### **Page Borders**
+
+Page Border augmentation applies a shadow of underlying pages on any side of the page, creating an effect of single or multiple borders on specified side of page.
+**Usage:**
+
+```python
+augmentation = PageBorder(
+        side="left",
+        width_range=(10,30),
+        pages=4,
+        noise_intensity_range=(0.2,0.5)
+        p=0.5
+    )
+``` 
+| Parameter  | Description  |
+|---|---|
+|  ```side``` | specifies the side of the page on which the border will be drawn i:e left,right,top, and bottom|
+|  ```width_range``` | specifies the width of the border|
+|  ```pages``` | specifies the number of pages to augment in the border|
+|  ```noise_intensity_range``` | specifies the range of noise applied around the border and pages|
+|  ```p``` | specifies the probability that the augmentation will run.   |
+
+**Example:**
+Example image   
+
+![Border](images/Augmentations/PageBorder.png)
+
+
 
 
 ### **JPEG Compression**
