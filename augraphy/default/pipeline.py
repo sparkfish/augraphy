@@ -11,8 +11,7 @@ def default_augraphy_pipeline():
     ink_phase = AugmentationSequence([
         InkBleed(),
         BleedThrough(),
-	Letterpress(),
-        Folding(),
+	    Letterpress(),
         OneOf([
             LowInkRandomLines(use_consistent_lines=False),
             LowInkRandomLines(use_consistent_lines=True),
@@ -40,14 +39,18 @@ def default_augraphy_pipeline():
 
 
     post_phase = AugmentationSequence([
-        DirtyRollers(),
+        OneOf([
+            PageBorder(),
+            DirtyRollers()
+        ]),
         OneOf([
             LightingGradient(),
             Brightness('post')
         ]),
         DirtyDrum(),
         SubtleNoise(),
-        Jpeg()
+        Jpeg(),
+        Folding()
     ])
 
     return AugraphyPipeline(ink_phase, paper_phase, post_phase)

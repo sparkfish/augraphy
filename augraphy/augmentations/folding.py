@@ -205,7 +205,7 @@ class Folding(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["ink"][-1].result.copy()
+            image = data["post"][-1].result.copy()
 
             # get image dimension
             if len(image.shape)>2:
@@ -218,4 +218,4 @@ class Folding(Augmentation):
             for _ in range(self.fold_count):
                 image_fold = self.apply_folding(image_fold, ysize, xsize, self.gradient_width, self.gradient_height, self.fold_noise)
  
-            data["ink"].append(AugmentationResult(self, image_fold))
+            data["post"].append(AugmentationResult(self, image_fold))
