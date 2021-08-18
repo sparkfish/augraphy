@@ -1,4 +1,6 @@
 import random
+import numpy as np
+import cv2
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -57,10 +59,11 @@ class Letterpress(Augmentation):
         if force or self.should_run():
             image = data["ink"][-1].result.copy()
             count = random.randint(self.count_range[0], self.count_range[1])
-
+            noise_mask = np.copy(image)
+            
             for i in range(count):
-                image = applyBlob(
-                    image,
+                noise_mask = applyBlob(
+                    noise_mask,
                     self.size_range,
                     self.points_range,
                     self.std_range,
@@ -68,6 +71,13 @@ class Letterpress(Augmentation):
                     self.value_range,
                 )
 
-            image = addNoise(image)
-
+            apply_mask_fn = (
+                lambda x, y: y if (x < 128) else x
+            )
+            apply_mask = np.vectorize(apply_mask_fn)
+            
+            noise_mask = addNoise(noise_mask)
+            noise_mask = cv2.GaussianBlur(noise_mask, (3,3), 0)
+            image = apply_mask(image, noise_mask)
+            
             data["ink"].append(AugmentationResult(self, image))
