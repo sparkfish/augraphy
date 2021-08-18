@@ -55,8 +55,17 @@ class InkBleed(Augmentation):
                 if (y == 255 and random.random() < intensity)
                 else x
             )
+            apply_mask_fn = (
+                lambda x, y, z: x if (z != 255 or x < 64) else y
+            )
             add_noise = np.vectorize(add_noise_fn)
+            apply_mask = np.vectorize(apply_mask_fn)
             sobel = self.sobel(image)
-            image = add_noise(image, sobel)
+            sobel = cv2.dilate(sobel, (3,3), iterations=1)
+            noise_mask = add_noise(image, sobel)
+            noise_mask = noise_mask.astype("uint8")
+            noise_mask = cv2.GaussianBlur(noise_mask, (3,3), 0)
+            
+            image = apply_mask(image, noise_mask, sobel)
 
             data["ink"].append(AugmentationResult(self, image))
