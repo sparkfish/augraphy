@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import cv2
+import random
 from PIL import Image
 
 from augraphy.base.augmentation import Augmentation
@@ -161,16 +162,28 @@ class DirtyDrum(Augmentation):
         if force or self.should_run():
             image = data["post"][-1].result
             
-            # Create directional masks for dirty drum effect
-            image_dirty_h = self.create_dirty_mask(image, self.line_width_range, 0)
-            image_dirty_v = self.create_dirty_mask(image, self.line_width_range, 1)
+            direction = random.choice([0, 1, 2])
             
-            # Apply gaussian blur to mask of dirty drum
-            image_dirty_h = cv2.GaussianBlur(image_dirty_h, ksize=self.ksize, sigmaX=self.sigmaX)
-            image_dirty_v = cv2.GaussianBlur(image_dirty_v, ksize=self.ksize, sigmaX=self.sigmaX) 
-
-            # Blend image with the masks of dirty drum effect
-            image_dirty = self.blend(image_dirty_v,image_dirty_h,0.5)
+            if (direction == 0):
+                # Create directional masks for dirty drum effect
+                image_dirty = self.create_dirty_mask(image, self.line_width_range, 0)
+                # Apply gaussian blur to mask of dirty drum
+                #image_dirty = cv2.GaussianBlur(image_dirty, ksize=self.ksize, sigmaX=self.sigmaX)
+            elif (direction == 1): 
+                # Create directional masks for dirty drum effect
+                image_dirty = self.create_dirty_mask(image, self.line_width_range, 1)
+                # Apply gaussian blur to mask of dirty drum
+                #image_dirty = cv2.GaussianBlur(image_dirty, ksize=self.ksize, sigmaX=self.sigmaX)
+            else:
+                # Create directional masks for dirty drum effect
+                image_dirty_h = self.create_dirty_mask(image, self.line_width_range, 0)
+                image_dirty_v = self.create_dirty_mask(image, self.line_width_range, 1)
+                # Apply gaussian blur to mask of dirty drum
+                #image_dirty_h = cv2.GaussianBlur(image_dirty_h, ksize=self.ksize, sigmaX=self.sigmaX)
+                #image_dirty_v = cv2.GaussianBlur(image_dirty_v, ksize=self.ksize, sigmaX=self.sigmaX)
+                # Blend image with the masks of dirty drum effect
+                image_dirty = self.blend(image_dirty_v,image_dirty_h,0.5)
+                
             image_dirty_drum = self.blend(image,image_dirty,self.alpha)
 
             data["post"].append(AugmentationResult(self, image_dirty_drum))
