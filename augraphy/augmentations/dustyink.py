@@ -1,5 +1,5 @@
 import numpy as np
-import random
+import cv2
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -33,5 +33,12 @@ class DustyInk(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             img = data["ink"][-1].result
-            img = addNoise(img, self.intensity_range, self.color_range)
+            apply_mask_fn = (
+                lambda x, y: y if (x < 64) else x
+            )
+            apply_mask = np.vectorize(apply_mask_fn)
+            noise_mask = addNoise(img, self.intensity_range, self.color_range)
+            noise_mask = cv2.GaussianBlur(noise_mask, (3,3), 0)
+            img = apply_mask(img, noise_mask)
+            
             data["ink"].append(AugmentationResult(self, img))
