@@ -25,7 +25,7 @@ class PageBorder(Augmentation):
 
     def __init__(
         self,
-        side="left",
+        side="random",
         width_range=(5,30),
         pages=None,
         noise_intensity_range=(0.2 , 0.5),
@@ -92,17 +92,22 @@ class PageBorder(Augmentation):
             else:
                 H,W=image.shape
 
-            if self.side == "left":
+            if self.side == "random":
+                side = random.choice(["left", "right", "top", "bottom"])
+            else:
+                side = self.side
+
+            if side == "left":
                 border = self.create_border(border_width, H, self.pages, noise_intensity)
                 # print(image.shape,border.shape)
                 image = np.hstack((border, image))
-            elif self.side == "right":
+            elif side == "right":
                 border = self.create_border(border_width, H, self.pages, noise_intensity)
                 image = np.hstack((image, np.fliplr(border)))
-            elif self.side == "top":
+            elif side == "top":
                 border = self.create_border(border_width, W, self.pages, noise_intensity)
                 image = np.vstack((cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE), image))
-            elif self.side == "bottom":
+            elif side == "bottom":
                 border = self.create_border(border_width, W, self.pages, noise_intensity)
                 image = np.vstack((image, (cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE))))
 
