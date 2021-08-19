@@ -18,6 +18,7 @@ from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
+from augraphy.augmentations.pencilscribbles import PencilScribbles
 
 __all__ = [
     "BadPhotocopy",
@@ -39,5 +40,6 @@ __all__ = [
     "LowInkRandomLines",
     "NoiseTexturize",
     "PageBorder",
+    "PencilScribbles"
     "SubtleNoise"
     ]
