@@ -40,6 +40,6 @@ __all__ = [
     "LowInkRandomLines",
     "NoiseTexturize",
     "PageBorder",
-    "PencilScribbles"
+    "PencilScribbles",
     "SubtleNoise"
     ]
