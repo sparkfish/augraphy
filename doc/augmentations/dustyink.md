@@ -22,6 +22,6 @@ augmentation = DustyInk(
 
 Before and After Blur
 
-![Dusty Ink no Blur](images/Augmentations/DustyInk.png)
-![Dusty Ink with Blur](images/Augmentations/DustyInkBlur.png)
+![Dusty Ink no Blur](../../images/Augmentations/DustyInk.png)
+![Dusty Ink with Blur](../../images/Augmentations/DustyInkBlur.png)
 

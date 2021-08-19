@@ -20,5 +20,5 @@ augmentation = SubtleNoise(
 
 Created with a range of 25.
 
-![Subtle Noise](images/Augmentations/SubtleNoiseExample.png)
+![Subtle Noise](../../images/Augmentations/SubtleNoiseExample.png)
 

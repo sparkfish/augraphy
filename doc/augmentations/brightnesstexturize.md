@@ -20,4 +20,4 @@ augmentation = BrightnessTexturize(
 
 **Example Result:**
 
-![Ink Bleed with Blur](images/Augmentations/BrightnessTexturizeAfter.png)
+![Ink Bleed with Blur](../../images/Augmentations/BrightnessTexturizeAfter.png)

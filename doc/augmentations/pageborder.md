@@ -24,4 +24,4 @@ augmentation = PageBorder(
 
 **Example Result:**
 
-![Border](images/Augmentations/PageBorder.png)
+![Border](../../images/Augmentations/PageBorder.png)
