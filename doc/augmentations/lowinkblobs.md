@@ -18,7 +18,7 @@ augmentation = LowInkBlobs(
 
 | Parameter | Description |
 |---|---|
-| `count_range` | The range for the number of blobs to add to the imaqge. |
+| `count_range` | The range for the number of blobs to add to the image. |
 | `size_range` | The range in pixels for the size of the image patch that blobs will be created in. |
 | `points_range` | The number of points to add to image patch to create the blob. |
 | `std_range` | The std_range value passed into ```sklearn.datasets.make_blobs``` |
@@ -28,5 +28,5 @@ augmentation = LowInkBlobs(
 
 **Example Result:**
 
-![Ink Bleed no Blur](images/Augmentations/LowInkBlobs.png)
-![Ink Bleed with Blur](images/Augmentations/LowInkBlobsBlur.png)
+![Ink Bleed no Blur](../../images/Augmentations/LowInkBlobs.png)
+![Ink Bleed with Blur](../../images/Augmentations/LowInkBlobsBlur.png)

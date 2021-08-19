@@ -20,5 +20,5 @@ augmentation = Jpeg(
 
 Encoded with quality range of (10, 15)
 
-![JPEG Compression Before](images/Augmentations/JPEGCompressionBefore.png)
-![JPEG Compression After](images/Augmentations/JPEGCompression.png)
+![JPEG Compression Before](../../images/Augmentations/JPEGCompressionBefore.png)
+![JPEG Compression After](../../images/Augmentations/JPEGCompression.png)

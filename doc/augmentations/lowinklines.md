@@ -34,5 +34,5 @@ augmentation = LowInkPeriodicLines(
 
 **Example:**
 
-![Ink Bleed no Blur](images/Augmentations/LowInkLines.png)
-![Ink Bleed with Blur](images/Augmentations/LowInkLinesBlur.png)
+![Ink Bleed no Blur](../../images/Augmentations/LowInkLines.png)
+![Ink Bleed with Blur](../../images/Augmentations/LowInkLinesBlur.png)
