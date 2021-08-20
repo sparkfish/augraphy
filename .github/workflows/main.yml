@@ -27,14 +27,16 @@ jobs:
           set -xe
           python -VV
           python -m pip install --upgrade pip setuptools wheel virtualenv
-          python -m pip install black flake8 pytest tox tox-gh-actions
+          python -m pip install black flake8 pytest
           python -m pip install numpy scipy opencv-python sklearn Pillow
-          
+                   
       - name: "Run black check"
-        run: black --check
+        run: black --check .
+        
       - name: "Run flake8 lint"
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          
       - name: "Run pytest"
         run: "python -m pytest"
