@@ -26,10 +26,10 @@ jobs:
         run: |
           set -xe
           python -VV
-          python -m augraphy
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade virtualenv tox tox-gh-actions
           python -m pip install --upgrade pytest
+          python -m pip install -r requirements.txt
 
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "python -m tox"
