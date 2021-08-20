@@ -20,4 +20,4 @@ augmentation = NoiseTexturize(
 
 **Example Result:**
 
-![Ink Bleed with Blur](images/Augmentations/NoiseTexturizeAfter.png)
+![Ink Bleed with Blur](../../images/Augmentations/NoiseTexturizeAfter.png)
