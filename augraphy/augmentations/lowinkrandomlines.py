@@ -19,7 +19,9 @@ class LowInkRandomLines(LowInkLine):
 
     def __init__(self, count_range=(5, 10), use_consistent_lines=True, p=0.5):
         """Constructor method"""
-        super().__init__(use_consistent_lines=use_consistent_lines, p=p)
+        super().__init__(
+            use_consistent_lines=use_consistent_lines, p=p
+        )
         self.count_range = count_range
 
     # Constructs a string representation of this Augmentation.

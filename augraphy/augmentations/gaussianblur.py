@@ -5,7 +5,6 @@ import numpy as np
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-
 class GaussianBlur(Augmentation):
     """Applies a Gaussian blur to the whole image.
 

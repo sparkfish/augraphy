@@ -41,5 +41,5 @@ __all__ = [
     "NoiseTexturize",
     "PageBorder",
     "PencilScribbles",
-    "SubtleNoise",
-]
+    "SubtleNoise"
+    ]

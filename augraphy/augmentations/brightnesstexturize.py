@@ -5,7 +5,6 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
-
 class BrightnessTexturize(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
@@ -21,7 +20,9 @@ class BrightnessTexturize(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, range=(0.9, 0.99), deviation=0.03, layer="paper", p=0.5):
+    def __init__(
+        self, range=(0.9, 0.99), deviation=0.03, layer="paper", p=0.5
+    ):
         """Constructor method"""
         super().__init__(p=p)
         self.low = range[0]
@@ -45,7 +46,7 @@ class BrightnessTexturize(Augmentation):
             low = value - (value * self.deviation)  # *random.uniform(0, deviation)
             max = value + (value * self.deviation)
 
-            makerand = np.vectorize(lambda x: random.uniform(low, max))
+            makerand = np.vectorize(lambda x: random.uniform(low,max))
             brightness_matrix = makerand(np.zeros((hsv.shape[0], hsv.shape[1])))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
@@ -59,7 +60,7 @@ class BrightnessTexturize(Augmentation):
             low = value - (value * self.deviation)
             max = value + (value * self.deviation)
 
-            makerand = np.vectorize(lambda x: random.uniform(low, max))
+            makerand = np.vectorize(lambda x: random.uniform(low,max))
             brightness_matrix = makerand(np.zeros((hsv.shape[0], hsv.shape[1])))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix

@@ -1,6 +1,5 @@
 from augraphy.base.augmentation import Augmentation
 
-
 class AugmentationSequence(Augmentation):
     """A list of Augmentations to be applied sequentially.
 
@@ -24,6 +23,6 @@ class AugmentationSequence(Augmentation):
         return output
 
     def __call__(self, data, force=False):
-        if force or self.should_run():
+        if (force or self.should_run()):
             for augmentation in self.augmentations:
                 augmentation(data)
