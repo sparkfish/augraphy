@@ -30,8 +30,8 @@ jobs:
           python -m pip install black flake8 pytest
           python -m pip install numpy scipy opencv-python sklearn Pillow
                    
-      - name: "Run black"
-        run: black .
+      - name: "Run black check"
+        run: black --check .
         
       - name: "Run flake8 lint"
         run: |
