@@ -6,6 +6,7 @@ import os
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
+
 class Gamma(Augmentation):
     """Adjusts the gamma of the whole image by a chosen multiplier.
 

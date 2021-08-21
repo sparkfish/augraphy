@@ -5,6 +5,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
+
 class NoiseTexturize(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
@@ -75,9 +76,8 @@ class NoiseTexturize(Augmentation):
         if w == 0:
             w = 1
 
-
-        gaussian = np.vectorize(lambda x: random.gauss(mean,sigma))
-        result = gaussian(np.array((w,h)))
+        gaussian = np.vectorize(lambda x: random.gauss(mean, sigma))
+        result = gaussian(np.array((w, h)))
 
         if ratio > 1:
             result = cv2.resize(
