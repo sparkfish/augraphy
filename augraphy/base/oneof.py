@@ -4,6 +4,7 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationsequence import AugmentationSequence
 from augraphy.base.augmentation import Augmentation
 
+
 class OneOf(Augmentation):
     """Given a list of Augmentations, selects one to apply.
 

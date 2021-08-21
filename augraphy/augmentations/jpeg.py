@@ -4,6 +4,7 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
+
 class Jpeg(Augmentation):
     """Uses JPEG encoding to create compression artifacts in the image.
 

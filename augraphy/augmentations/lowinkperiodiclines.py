@@ -29,9 +29,7 @@ class LowInkPeriodicLines(LowInkLine):
         p=0.5,
     ):
         """Constructor method"""
-        super().__init__(
-            use_consistent_lines=use_consistent_lines, p=p
-        )
+        super().__init__(use_consistent_lines=use_consistent_lines, p=p)
         self.count_range = count_range
         self.period_range = period_range
 

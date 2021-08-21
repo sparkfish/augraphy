@@ -11,5 +11,5 @@ __all__ = [
     "AugmentationResult",
     "AugmentationSequence",
     "OneOf",
-    "PaperFactory"
-    ]
+    "PaperFactory",
+]

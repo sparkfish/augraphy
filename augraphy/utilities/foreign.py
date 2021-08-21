@@ -29,7 +29,7 @@ class ForeignAugmentation(Augmentation):
 
     def __call__(self, data):
         image = data[self.layer][-1].result
-        result = self.augmentation(image = image)
+        result = self.augmentation(image=image)
         output = self.handleForeignAugResult(result)
         data[self.layer].append(AugmentationResult(self, output))
 
