@@ -55,12 +55,17 @@ class AugraphyPipeline:
     def augment(self, image):
         """Applies the Augmentations in each phase of the pipeline.
 
-        :param image: The image to apply Augmentations to.
+        :param image: The image to apply Augmentations to. Minimum 30x30 pixels.
         :type image: numpy.array
         :return: A dictionary of AugmentationResults representing the changes
                  in each phase of the pipeline.
         :rtype: dictionary
         """
+        
+        # Check that image is the correct size.
+        if (image.shape[0] < 30) or (image.shape[1] < 30):
+            raise Exception("Image should have dimensions greater than 30x30, but actual dimensions were {}.".format(image.shape))
+        
         data = dict()
         data["image"] = image.copy()
         ink = data["image"].copy()
