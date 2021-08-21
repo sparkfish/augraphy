@@ -16,8 +16,8 @@ def random_image():
 def default_pipeline():
     return default_augraphy_pipeline()
 
+
 # do this 10 times to increase chances of catching stray bugs
 def test_default_pipeline10(random_image, default_pipeline):
     for i in range(10):
         augmented = default_pipeline.augment(random_image)
-
