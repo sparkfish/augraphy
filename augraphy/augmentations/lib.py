@@ -5,6 +5,7 @@ from sklearn.datasets import make_blobs
 import random
 import cv2
 
+
 def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """Applies random noise to the input image.
 
@@ -107,22 +108,22 @@ def applyBlob(
            value of a point in the blob is sampled.
     :type value_range: tuple, optional
     """
-    dim = min(mask.shape[0], mask.shape[1]) # we don't want to generate blobs larger than the mask
+    dim = min(
+        mask.shape[0], mask.shape[1]
+    )  # we don't want to generate blobs larger than the mask
 
     # temporary local variables, in case
     size = size_range
     std = std_range
 
     # make sure we don't generate a blob larger than the mask
-    if (2 * (size_range[1] + std_range[1]) > dim):
+    if 2 * (size_range[1] + std_range[1]) > dim:
         # don't make a radius that won't fit in our mask
-        size = (1,dim//2 - 1)
+        size = (1, dim // 2 - 1)
         # don't make a std.deviation that when added to radius, is larger than mask
-        std = (0,dim//2 - size[1])
+        std = (0, dim // 2 - size[1])
 
-    blob = _create_blob(
-        size, points_range, std, features_range, value_range
-    )
+    blob = _create_blob(size, points_range, std, features_range, value_range)
 
     x_start = random.randint(0, mask.shape[1] - blob.shape[1])
     y_start = random.randint(0, mask.shape[0] - blob.shape[0])
@@ -133,27 +134,25 @@ def applyBlob(
 
     apply_chunk = np.vectorize(lambda x, y: max(x, y))
 
-    mask_dim = len(mask.shape) # mask channels
-    if mask_dim>2: # colour image or > 3 channels
+    mask_dim = len(mask.shape)  # mask channels
+    if mask_dim > 2:  # colour image or > 3 channels
         for i in range(mask_dim):
-            mask[y_start:y_stop, x_start:x_stop,i] = apply_chunk(mask_chunk[:,:,i], blob[:, :, 0])
-    else: # single channel grayscale or binary image
-        mask[y_start:y_stop, x_start:x_stop] = apply_chunk(mask_chunk[:,:], blob[:, :,0])
+            mask[y_start:y_stop, x_start:x_stop, i] = apply_chunk(
+                mask_chunk[:, :, i], blob[:, :, 0]
+            )
+    else:  # single channel grayscale or binary image
+        mask[y_start:y_stop, x_start:x_stop] = apply_chunk(
+            mask_chunk[:, :], blob[:, :, 0]
+        )
 
     return mask
 
 
 # create horizontal or vertical oriented patch of blobs
 def create_blob_with_shape(
-                size_range, 
-                points_range,
-                std_range,
-                features_range,
-                value_range, 
-                new_size, 
-                f_dir
-                ):
-    """Create horizonal or vertical shape image and filled with blobs. 
+    size_range, points_range, std_range, features_range, value_range, new_size, f_dir
+):
+    """Create horizonal or vertical shape image and filled with blobs.
 
     :param size_range: Pair of ints determining the range from which the
            diameter of a blob is sampled.
@@ -175,89 +174,99 @@ def create_blob_with_shape(
     :f_dir: Flag to specify image shape, 0=vertical, 1=horizontal
     :type f_dir: int, optional
     """
-    
+
     new_length = size_range[1] * new_size
     ori_length = size_range[1]
-    interval = int(np.ceil(size_range[1] /2))
-    
+    interval = int(np.ceil(size_range[1] / 2))
+
     if f_dir:
         img_blobs = np.zeros((ori_length, new_length))
     else:
         img_blobs = np.zeros((new_length, ori_length))
-    
-    ysize,xsize = img_blobs.shape
-    
+
+    ysize, xsize = img_blobs.shape
+
     apply_chunk = np.vectorize(lambda x, y: y if y != 0 else max(x, y))
-    
-    for i in range(0, new_length-ori_length+1, interval ):
-        
-        blob = _create_blob(size_range, points_range, std_range, features_range, value_range)
-        blob = blob[:,:,0]
-        
+
+    for i in range(0, new_length - ori_length + 1, interval):
+
+        blob = _create_blob(
+            size_range, points_range, std_range, features_range, value_range
+        )
+        blob = blob[:, :, 0]
+
         ybsize, xbsize = blob.shape
         shape_max = size_range[1]
-        
+
         # add small discontinuous lines
         img_lines = np.zeros_like(blob)
-        ylsize, xlsize = img_lines.shape  
-        
-        if random.random()>0.5:
+        ylsize, xlsize = img_lines.shape
+
+        if random.random() > 0.5:
             h_dir = 1
         else:
             h_dir = 0
-        
-        for xl in range(xlsize): 
-            if random.randint(1,10)>6:
-                n_line = random.randint(1, np.ceil(ylsize/20)) 
+
+        for xl in range(xlsize):
+            if random.randint(1, 10) > 6:
+                n_line = random.randint(1, np.ceil(ylsize / 20))
                 for j in range(n_line):
-                    line_length = random.randint(1, np.ceil(ylsize/30))  
-                    ylstart = random.randint(0, ylsize-line_length) 
-                    ylend = ylstart + line_length 
-                    
+                    line_length = random.randint(1, np.ceil(ylsize / 30))
+                    ylstart = random.randint(0, ylsize - line_length)
+                    ylend = ylstart + line_length
+
                     if h_dir:
-                        img_lines[ylstart:ylend,xl] = random.randint(5,25)
+                        img_lines[ylstart:ylend, xl] = random.randint(5, 25)
                     else:
-                        img_lines[xl, ylstart:ylend] = random.randint(5,25)
-        
-        if f_dir: 
+                        img_lines[xl, ylstart:ylend] = random.randint(5, 25)
+
+        if f_dir:
             # get start coordinates
-            ystart = random.randint(0,ysize-ybsize )
-            xstart= random.randint(i,i+(shape_max-xbsize) )
-            yend= ystart+ybsize
-            xend = xstart+xbsize
+            ystart = random.randint(0, ysize - ybsize)
+            xstart = random.randint(i, i + (shape_max - xbsize))
+            yend = ystart + ybsize
+            xend = xstart + xbsize
             # apply blobs of noise and lines
-            img_blobs[ystart:yend,xstart:xend] = apply_chunk(img_blobs[ystart:yend,xstart:xend] , blob)
-            img_blobs[ystart:yend,xstart:xend] = apply_chunk(img_blobs[ystart:yend,xstart:xend] , img_lines)
+            img_blobs[ystart:yend, xstart:xend] = apply_chunk(
+                img_blobs[ystart:yend, xstart:xend], blob
+            )
+            img_blobs[ystart:yend, xstart:xend] = apply_chunk(
+                img_blobs[ystart:yend, xstart:xend], img_lines
+            )
         else:
             # get start coordinates
-            ystart = random.randint(i,i+(shape_max-ybsize) )
-            xstart= random.randint(0,xsize-xbsize )
-            yend= ystart+ybsize
-            xend = xstart+xbsize
+            ystart = random.randint(i, i + (shape_max - ybsize))
+            xstart = random.randint(0, xsize - xbsize)
+            yend = ystart + ybsize
+            xend = xstart + xbsize
             # apply blobs of noise and lines
-            img_blobs[ystart:yend,xstart:xend] = apply_chunk(img_blobs[ystart:yend,xstart:xend], blob)
-            img_blobs[ystart:yend,xstart:xend] = apply_chunk(img_blobs[ystart:yend,xstart:xend], img_lines)
-
+            img_blobs[ystart:yend, xstart:xend] = apply_chunk(
+                img_blobs[ystart:yend, xstart:xend], blob
+            )
+            img_blobs[ystart:yend, xstart:xend] = apply_chunk(
+                img_blobs[ystart:yend, xstart:xend], img_lines
+            )
 
     return img_blobs
 
+
 # extend from applyBlob - create patch of blobs at image corner
 def applyBlob_corners(
-        mask,
-        size_range=(10, 20),
-        points_range=(5, 25),
-        std_range=(10, 75),
-        features_range=(15, 25),
-        value_range=(180, 250),
-        scale_blob = (1,3),
-        f_topleft= 1,
-        f_topright= 1,
-        f_bottomleft= 1,
-        f_bottomright= 1,
-        inverse=1,
-        ):
-    
-    """Create blobs at corners of provided image. 
+    mask,
+    size_range=(10, 20),
+    points_range=(5, 25),
+    std_range=(10, 75),
+    features_range=(15, 25),
+    value_range=(180, 250),
+    scale_blob=(1, 3),
+    f_topleft=1,
+    f_topright=1,
+    f_bottomleft=1,
+    f_bottomright=1,
+    inverse=1,
+):
+
+    """Create blobs at corners of provided image.
     :param mask: The image to place the blob in.
     :type mask: numpy.array
     :param size_range: Pair of ints determining the range from which the
@@ -289,100 +298,177 @@ def applyBlob_corners(
             instead of a higher value.
     :type inverse: int, optional
     """
-    
-    if inverse: apply_chunk = np.vectorize(lambda x, y: y if y != 0 else max(x, y))
-    else:       apply_chunk = np.vectorize(lambda x, y: max(x, y))
+
+    if inverse:
+        apply_chunk = np.vectorize(lambda x, y: y if y != 0 else max(x, y))
+    else:
+        apply_chunk = np.vectorize(lambda x, y: max(x, y))
 
     # create patch of blobs
-    new_size_v = random.randint(1,2)
-    img_blobs_v = create_blob_with_shape(size_range, points_range,std_range,features_range,value_range, new_size_v, 0)
-    new_size_h = random.randint(1,2)
-    img_blobs_h = create_blob_with_shape(size_range, points_range,std_range,features_range,value_range, new_size_h, 1)
-     
-    scale = random.randint(scale_blob[0],scale_blob[1])
-    img_blobs_h = cv2.resize(img_blobs_h, (img_blobs_h.shape[1]*scale,img_blobs_h.shape[0]*scale), interpolation = cv2.INTER_AREA)
-    scale = random.randint(scale_blob[0],scale_blob[1]) 
-    img_blobs_v = cv2.resize(img_blobs_v, (img_blobs_v.shape[1]*scale,img_blobs_v.shape[0]*scale), interpolation = cv2.INTER_AREA)
-    
+    new_size_v = random.randint(1, 2)
+    img_blobs_v = create_blob_with_shape(
+        size_range, points_range, std_range, features_range, value_range, new_size_v, 0
+    )
+    new_size_h = random.randint(1, 2)
+    img_blobs_h = create_blob_with_shape(
+        size_range, points_range, std_range, features_range, value_range, new_size_h, 1
+    )
+
+    scale = random.randint(scale_blob[0], scale_blob[1])
+    img_blobs_h = cv2.resize(
+        img_blobs_h,
+        (img_blobs_h.shape[1] * scale, img_blobs_h.shape[0] * scale),
+        interpolation=cv2.INTER_AREA,
+    )
+    scale = random.randint(scale_blob[0], scale_blob[1])
+    img_blobs_v = cv2.resize(
+        img_blobs_v,
+        (img_blobs_v.shape[1] * scale, img_blobs_v.shape[0] * scale),
+        interpolation=cv2.INTER_AREA,
+    )
+
     ysize, xsize = mask.shape
-    
+
     # resolve size issue, to not exceeding input mask size
-    if (img_blobs_h.shape[0]>ysize) and (img_blobs_h.shape[0]>ysize) :
-        img_blobs_h = cv2.resize(img_blobs_h, (xsize,ysize), interpolation = cv2.INTER_AREA)
-    elif (img_blobs_h.shape[0]>ysize):
-        img_blobs_h = cv2.resize(img_blobs_h, (img_blobs_h.shape[1],ysize), interpolation = cv2.INTER_AREA)
-    elif (img_blobs_h.shape[1]>xsize):
-        img_blobs_h = cv2.resize(img_blobs_h, (xsize,img_blobs_h.shape[0]), interpolation = cv2.INTER_AREA)
-    
-    if (img_blobs_v.shape[0]>ysize) and (img_blobs_v.shape[0]>ysize) :
-        img_blobs_v = cv2.resize(img_blobs_v, (xsize,ysize), interpolation = cv2.INTER_AREA)
-    elif (img_blobs_v.shape[0]>ysize):
-        img_blobs_v = cv2.resize(img_blobs_v, (img_blobs_v.shape[1],ysize), interpolation = cv2.INTER_AREA)
-    elif (img_blobs_v.shape[1]>xsize):
-        img_blobs_v = cv2.resize(img_blobs_v, (xsize,img_blobs_v.shape[0]), interpolation = cv2.INTER_AREA)
-    
+    if (img_blobs_h.shape[0] > ysize) and (img_blobs_h.shape[0] > ysize):
+        img_blobs_h = cv2.resize(
+            img_blobs_h, (xsize, ysize), interpolation=cv2.INTER_AREA
+        )
+    elif img_blobs_h.shape[0] > ysize:
+        img_blobs_h = cv2.resize(
+            img_blobs_h, (img_blobs_h.shape[1], ysize), interpolation=cv2.INTER_AREA
+        )
+    elif img_blobs_h.shape[1] > xsize:
+        img_blobs_h = cv2.resize(
+            img_blobs_h, (xsize, img_blobs_h.shape[0]), interpolation=cv2.INTER_AREA
+        )
+
+    if (img_blobs_v.shape[0] > ysize) and (img_blobs_v.shape[0] > ysize):
+        img_blobs_v = cv2.resize(
+            img_blobs_v, (xsize, ysize), interpolation=cv2.INTER_AREA
+        )
+    elif img_blobs_v.shape[0] > ysize:
+        img_blobs_v = cv2.resize(
+            img_blobs_v, (img_blobs_v.shape[1], ysize), interpolation=cv2.INTER_AREA
+        )
+    elif img_blobs_v.shape[1] > xsize:
+        img_blobs_v = cv2.resize(
+            img_blobs_v, (xsize, img_blobs_v.shape[0]), interpolation=cv2.INTER_AREA
+        )
+
     # separate blobs into smaller patches
-    img_blobs_h_half_top = img_blobs_h[:int(img_blobs_h.shape[0]/2), :]
-    img_blobs_h_half_bottom = img_blobs_h[int(img_blobs_h.shape[0]/2):,:]
-    img_blobs_h_half_topleft = img_blobs_h_half_top[:,:int(img_blobs_h_half_top.shape[1]/2)]
-    img_blobs_h_half_topright = img_blobs_h_half_top[:,int(img_blobs_h_half_top.shape[1]/2):]
-    img_blobs_h_half_bottomleft = img_blobs_h_half_bottom[:,:int(img_blobs_h_half_bottom.shape[1]/2)]
-    img_blobs_h_half_bottomright = img_blobs_h_half_bottom[:,int(img_blobs_h_half_bottom.shape[1]/2):]
-    img_blobs_v_half_left = img_blobs_v[:,:int(img_blobs_v.shape[1]/2)]
-    img_blobs_v_half_right = img_blobs_v[:,int(img_blobs_v.shape[1]/2):]
-    img_blobs_v_half_topleft = img_blobs_v_half_left[:int(img_blobs_v_half_left.shape[0]/2),:]
-    img_blobs_v_half_bottomleft = img_blobs_v_half_left[int(img_blobs_v_half_left.shape[0]/2):,:]
-    img_blobs_v_half_topright = img_blobs_v_half_right[:int(img_blobs_v_half_right.shape[0]/2),:]
-    img_blobs_v_half_bottomright = img_blobs_v_half_right[int(img_blobs_v_half_right.shape[0]/2):,:]
+    img_blobs_h_half_top = img_blobs_h[: int(img_blobs_h.shape[0] / 2), :]
+    img_blobs_h_half_bottom = img_blobs_h[int(img_blobs_h.shape[0] / 2) :, :]
+    img_blobs_h_half_topleft = img_blobs_h_half_top[
+        :, : int(img_blobs_h_half_top.shape[1] / 2)
+    ]
+    img_blobs_h_half_topright = img_blobs_h_half_top[
+        :, int(img_blobs_h_half_top.shape[1] / 2) :
+    ]
+    img_blobs_h_half_bottomleft = img_blobs_h_half_bottom[
+        :, : int(img_blobs_h_half_bottom.shape[1] / 2)
+    ]
+    img_blobs_h_half_bottomright = img_blobs_h_half_bottom[
+        :, int(img_blobs_h_half_bottom.shape[1] / 2) :
+    ]
+    img_blobs_v_half_left = img_blobs_v[:, : int(img_blobs_v.shape[1] / 2)]
+    img_blobs_v_half_right = img_blobs_v[:, int(img_blobs_v.shape[1] / 2) :]
+    img_blobs_v_half_topleft = img_blobs_v_half_left[
+        : int(img_blobs_v_half_left.shape[0] / 2), :
+    ]
+    img_blobs_v_half_bottomleft = img_blobs_v_half_left[
+        int(img_blobs_v_half_left.shape[0] / 2) :, :
+    ]
+    img_blobs_v_half_topright = img_blobs_v_half_right[
+        : int(img_blobs_v_half_right.shape[0] / 2), :
+    ]
+    img_blobs_v_half_bottomright = img_blobs_v_half_right[
+        int(img_blobs_v_half_right.shape[0] / 2) :, :
+    ]
 
     # get size of patches
-    yhsize,  xhsize = img_blobs_h_half_top.shape
-    yvsize,  xvsize = img_blobs_v_half_left.shape
-    yhhsize,  xhhsize = img_blobs_h_half_topleft.shape
-    yvvsize,  xvvsize = img_blobs_v_half_topleft.shape
-   
+    yhsize, xhsize = img_blobs_h_half_top.shape
+    yvsize, xvsize = img_blobs_v_half_left.shape
+    yhhsize, xhhsize = img_blobs_h_half_topleft.shape
+    yvvsize, xvvsize = img_blobs_v_half_topleft.shape
+
     if f_topleft:
         # top line - left
-        mask[:yhsize,:xhsize] = apply_chunk( mask[:yhsize,:xhsize] , img_blobs_h_half_bottom)
+        mask[:yhsize, :xhsize] = apply_chunk(
+            mask[:yhsize, :xhsize], img_blobs_h_half_bottom
+        )
         # left line  - top
-        mask[:yvsize,:xvsize] = apply_chunk(mask[:yvsize,:xvsize] , img_blobs_v_half_right)
+        mask[:yvsize, :xvsize] = apply_chunk(
+            mask[:yvsize, :xvsize], img_blobs_v_half_right
+        )
         # top left corner - top
-        mask[:yhhsize,:xhhsize] = apply_chunk(mask[:yhhsize,:xhhsize], img_blobs_h_half_bottomright)
+        mask[:yhhsize, :xhhsize] = apply_chunk(
+            mask[:yhhsize, :xhhsize], img_blobs_h_half_bottomright
+        )
         # top left corner - left
-        mask[:yvvsize,:xvvsize] = apply_chunk(mask[:yvvsize,:xvvsize]  , img_blobs_v_half_bottomright)
-    
+        mask[:yvvsize, :xvvsize] = apply_chunk(
+            mask[:yvvsize, :xvvsize], img_blobs_v_half_bottomright
+        )
+
     if f_topright:
         # top line - right
-        mask[:yhsize,xsize-xhsize:xsize] = apply_chunk( mask[:yhsize,xsize-xhsize:xsize] , img_blobs_h_half_bottom)
+        mask[:yhsize, xsize - xhsize : xsize] = apply_chunk(
+            mask[:yhsize, xsize - xhsize : xsize], img_blobs_h_half_bottom
+        )
         # right line  - top
-        mask[:yvsize,xsize-xvsize:xsize] = apply_chunk(mask[:yvsize,xsize-xvsize:xsize] , img_blobs_v_half_left)
+        mask[:yvsize, xsize - xvsize : xsize] = apply_chunk(
+            mask[:yvsize, xsize - xvsize : xsize], img_blobs_v_half_left
+        )
         # top right corner - top
-        mask[:yhhsize,xsize-xhhsize:xsize] = apply_chunk(mask[:yhhsize,xsize-xhhsize:xsize], img_blobs_h_half_bottomleft)
+        mask[:yhhsize, xsize - xhhsize : xsize] = apply_chunk(
+            mask[:yhhsize, xsize - xhhsize : xsize], img_blobs_h_half_bottomleft
+        )
         # top right corner - right
-        mask[:yvvsize,xsize-xvvsize:xsize] = apply_chunk(mask[:yvvsize,xsize-xvvsize:xsize], img_blobs_v_half_bottomleft)
-    
+        mask[:yvvsize, xsize - xvvsize : xsize] = apply_chunk(
+            mask[:yvvsize, xsize - xvvsize : xsize], img_blobs_v_half_bottomleft
+        )
+
     if f_bottomleft:
         # bottom line - left
-        mask[ysize-yhsize:ysize,:xhsize] = apply_chunk(mask[ysize-yhsize:ysize,:xhsize] , img_blobs_h_half_bottom)
+        mask[ysize - yhsize : ysize, :xhsize] = apply_chunk(
+            mask[ysize - yhsize : ysize, :xhsize], img_blobs_h_half_bottom
+        )
         # left line  - bottom
-        mask[ysize-yvsize:ysize,:xvsize] = apply_chunk(mask[ysize-yvsize:ysize,:xvsize], img_blobs_v_half_right)
+        mask[ysize - yvsize : ysize, :xvsize] = apply_chunk(
+            mask[ysize - yvsize : ysize, :xvsize], img_blobs_v_half_right
+        )
         # bottom left corner - bottom
-        mask[ysize-yhhsize:ysize,:xhhsize] = apply_chunk(mask[ysize-yhhsize:ysize,:xhhsize], img_blobs_h_half_topright)
+        mask[ysize - yhhsize : ysize, :xhhsize] = apply_chunk(
+            mask[ysize - yhhsize : ysize, :xhhsize], img_blobs_h_half_topright
+        )
         # bottom left corner - left
-        mask[ysize-yvvsize:ysize,:xvvsize] = apply_chunk(mask[ysize-yvvsize:ysize,:xvvsize] , img_blobs_v_half_topright)
-    
+        mask[ysize - yvvsize : ysize, :xvvsize] = apply_chunk(
+            mask[ysize - yvvsize : ysize, :xvvsize], img_blobs_v_half_topright
+        )
+
     if f_bottomright:
-    
+
         # bottom line - right
-        mask[ysize-yhsize:ysize,xsize-xhsize:xsize] = apply_chunk(mask[ysize-yhsize:ysize,xsize-xhsize:xsize] , img_blobs_h_half_top) 
+        mask[ysize - yhsize : ysize, xsize - xhsize : xsize] = apply_chunk(
+            mask[ysize - yhsize : ysize, xsize - xhsize : xsize], img_blobs_h_half_top
+        )
         # right line  - bottom
-        mask[ysize-yvsize:ysize,xsize-xvsize:xsize] = apply_chunk(mask[ysize-yvsize:ysize,xsize-xvsize:xsize] , img_blobs_v_half_left)
+        mask[ysize - yvsize : ysize, xsize - xvsize : xsize] = apply_chunk(
+            mask[ysize - yvsize : ysize, xsize - xvsize : xsize], img_blobs_v_half_left
+        )
         # bottom right corner - bottom
-        mask[ysize-yhhsize:ysize,xsize-xhhsize:xsize] = apply_chunk(mask[ysize-yhhsize:ysize,xsize-xhhsize:xsize] , img_blobs_h_half_topleft)
+        mask[ysize - yhhsize : ysize, xsize - xhhsize : xsize] = apply_chunk(
+            mask[ysize - yhhsize : ysize, xsize - xhhsize : xsize],
+            img_blobs_h_half_topleft,
+        )
         # bottom right corner - right
-        mask[ysize-yvvsize:ysize,xsize-xvvsize:xsize] = apply_chunk(mask[ysize-yvvsize:ysize,xsize-xvvsize:xsize] , img_blobs_v_half_topleft)
-    
+        mask[ysize - yvvsize : ysize, xsize - xvvsize : xsize] = apply_chunk(
+            mask[ysize - yvvsize : ysize, xsize - xvvsize : xsize],
+            img_blobs_v_half_topleft,
+        )
+
     return mask
+
 
 # extend from applyBlob -create patch of blobs randomly in the image
 def applyBlob_random(
@@ -392,11 +478,11 @@ def applyBlob_random(
     std_range=(10, 75),
     features_range=(15, 25),
     value_range=(180, 250),
-    scale_blob=(3,3),
+    scale_blob=(3, 3),
     inverse=1,
-    ):
+):
 
-    """Create patches of blobs randomly in the provided image. 
+    """Create patches of blobs randomly in the provided image.
     :param mask: The image to place the blob in.
     :type mask: numpy.array
     :param size_range: Pair of ints determining the range from which the
@@ -420,8 +506,7 @@ def applyBlob_random(
             instead of a higher value.
     :type inverse: int, optional
     """
-    
-    
+
     # initialization
     img_blobs_v_array = []
     img_blobs_h_array = []
@@ -429,45 +514,83 @@ def applyBlob_random(
     xv_size_all = []
     yh_size_all = []
     xh_size_all = []
-    
-    for i in range(2): # stack multiple times to create multiple layers of blobs 
 
-        size_range= [int(size + (i*0.5)) for size in size_range]
-        points_range=[max(int(points - (i)),1) for points in points_range]
-        
-        if inverse: apply_chunk = np.vectorize(lambda x, y: y if y != 0 else max(x, y))
-        else:       apply_chunk = np.vectorize(lambda x, y: max(x, y))
-    
+    for i in range(2):  # stack multiple times to create multiple layers of blobs
+
+        size_range = [int(size + (i * 0.5)) for size in size_range]
+        points_range = [max(int(points - (i)), 1) for points in points_range]
+
+        if inverse:
+            apply_chunk = np.vectorize(lambda x, y: y if y != 0 else max(x, y))
+        else:
+            apply_chunk = np.vectorize(lambda x, y: max(x, y))
+
         ysize, xsize = mask.shape
-        scale_length = random.randint(1,1)
-        
+        scale_length = random.randint(1, 1)
+
         # create patch of blobs
-        new_size_v = random.randint(1,scale_length)
-        img_blobs_v = create_blob_with_shape(size_range, points_range,std_range,features_range,value_range, new_size_v, 0)
-        new_size_h = random.randint(1,scale_length)
-        img_blobs_h = create_blob_with_shape(size_range, points_range,std_range,features_range,value_range, new_size_h, 1)
-     
+        new_size_v = random.randint(1, scale_length)
+        img_blobs_v = create_blob_with_shape(
+            size_range,
+            points_range,
+            std_range,
+            features_range,
+            value_range,
+            new_size_v,
+            0,
+        )
+        new_size_h = random.randint(1, scale_length)
+        img_blobs_h = create_blob_with_shape(
+            size_range,
+            points_range,
+            std_range,
+            features_range,
+            value_range,
+            new_size_h,
+            1,
+        )
+
         # resize images based on input scale
-        scale = random.randint(scale_blob[0],scale_blob[1])
-        img_blobs_h = cv2.resize(img_blobs_h, (img_blobs_h.shape[1]*scale,img_blobs_h.shape[0]*scale), interpolation = cv2.INTER_AREA)
-        scale = random.randint(scale_blob[0],scale_blob[1])
-        img_blobs_v = cv2.resize(img_blobs_v, (img_blobs_v.shape[1]*scale,img_blobs_v.shape[0]*scale), interpolation = cv2.INTER_AREA)
-    
+        scale = random.randint(scale_blob[0], scale_blob[1])
+        img_blobs_h = cv2.resize(
+            img_blobs_h,
+            (img_blobs_h.shape[1] * scale, img_blobs_h.shape[0] * scale),
+            interpolation=cv2.INTER_AREA,
+        )
+        scale = random.randint(scale_blob[0], scale_blob[1])
+        img_blobs_v = cv2.resize(
+            img_blobs_v,
+            (img_blobs_v.shape[1] * scale, img_blobs_v.shape[0] * scale),
+            interpolation=cv2.INTER_AREA,
+        )
+
         # resolve size issue, to not exceeding input mask size
-        if (img_blobs_h.shape[0]>ysize) and (img_blobs_h.shape[0]>ysize) :
-            img_blobs_h = cv2.resize(img_blobs_h, (xsize,ysize), interpolation = cv2.INTER_AREA)
-        elif (img_blobs_h.shape[0]>ysize):
-            img_blobs_h = cv2.resize(img_blobs_h, (img_blobs_h.shape[1],ysize), interpolation = cv2.INTER_AREA)
-        elif (img_blobs_h.shape[1]>xsize):
-            img_blobs_h = cv2.resize(img_blobs_h, (xsize,img_blobs_h.shape[0]), interpolation = cv2.INTER_AREA)
-        
-        if (img_blobs_v.shape[0]>ysize) and (img_blobs_v.shape[0]>ysize) :
-            img_blobs_v = cv2.resize(img_blobs_v, (xsize,ysize), interpolation = cv2.INTER_AREA)
-        elif (img_blobs_v.shape[0]>ysize):
-            img_blobs_v = cv2.resize(img_blobs_v, (img_blobs_v.shape[1],ysize), interpolation = cv2.INTER_AREA)
-        elif (img_blobs_v.shape[1]>xsize):
-            img_blobs_v = cv2.resize(img_blobs_v, (xsize,img_blobs_v.shape[0]), interpolation = cv2.INTER_AREA)
-    
+        if (img_blobs_h.shape[0] > ysize) and (img_blobs_h.shape[0] > ysize):
+            img_blobs_h = cv2.resize(
+                img_blobs_h, (xsize, ysize), interpolation=cv2.INTER_AREA
+            )
+        elif img_blobs_h.shape[0] > ysize:
+            img_blobs_h = cv2.resize(
+                img_blobs_h, (img_blobs_h.shape[1], ysize), interpolation=cv2.INTER_AREA
+            )
+        elif img_blobs_h.shape[1] > xsize:
+            img_blobs_h = cv2.resize(
+                img_blobs_h, (xsize, img_blobs_h.shape[0]), interpolation=cv2.INTER_AREA
+            )
+
+        if (img_blobs_v.shape[0] > ysize) and (img_blobs_v.shape[0] > ysize):
+            img_blobs_v = cv2.resize(
+                img_blobs_v, (xsize, ysize), interpolation=cv2.INTER_AREA
+            )
+        elif img_blobs_v.shape[0] > ysize:
+            img_blobs_v = cv2.resize(
+                img_blobs_v, (img_blobs_v.shape[1], ysize), interpolation=cv2.INTER_AREA
+            )
+        elif img_blobs_v.shape[1] > xsize:
+            img_blobs_v = cv2.resize(
+                img_blobs_v, (xsize, img_blobs_v.shape[0]), interpolation=cv2.INTER_AREA
+            )
+
         # pack patch of image with blobs
         img_blobs_v_array.append(img_blobs_v)
         img_blobs_h_array.append(img_blobs_h)
@@ -482,65 +605,67 @@ def applyBlob_random(
     max_xv = np.max(xv_size_all)
     max_yh = np.max(yh_size_all)
     max_xh = np.max(xh_size_all)
-    
-    xh_start_fixed = random.randint(0,xsize-max_xh)
-    yh_start_fixed = random.randint(0,ysize-max_yh)
-    
-    xv_start_fixed = random.randint(0,xsize-max_xv)
-    yv_start_fixed = random.randint(0,ysize-max_yv)
 
-    for (img_blobs_v, img_blobs_h) in zip(img_blobs_v_array,img_blobs_h_array):
+    xh_start_fixed = random.randint(0, xsize - max_xh)
+    yh_start_fixed = random.randint(0, ysize - max_yh)
 
-        yhsize,  xhsize = img_blobs_h.shape
-        yvsize,  xvsize = img_blobs_v.shape
+    xv_start_fixed = random.randint(0, xsize - max_xv)
+    yv_start_fixed = random.randint(0, ysize - max_yv)
+
+    for (img_blobs_v, img_blobs_h) in zip(img_blobs_v_array, img_blobs_h_array):
+
+        yhsize, xhsize = img_blobs_h.shape
+        yvsize, xvsize = img_blobs_v.shape
 
         # to let all patches of image having same origin
-        xh_start = xh_start_fixed + int(np.floor((max_xh - xhsize)/2))
-        yh_start = yh_start_fixed + int(np.floor((max_yh - yhsize)/2))
+        xh_start = xh_start_fixed + int(np.floor((max_xh - xhsize) / 2))
+        yh_start = yh_start_fixed + int(np.floor((max_yh - yhsize) / 2))
         xh_end = xh_start + xhsize
         yh_end = yh_start + yhsize
-        
+
         # to let all patches of image having same origin
-        xv_start = xv_start_fixed + int(np.floor((max_xv - xvsize)/2))
-        yv_start = yv_start_fixed + int(np.floor((max_yv - yvsize)/2))
+        xv_start = xv_start_fixed + int(np.floor((max_xv - xvsize) / 2))
+        yv_start = yv_start_fixed + int(np.floor((max_yv - yvsize) / 2))
         xv_end = xv_start + xvsize
         yv_end = yv_start + yvsize
-        
+
         # apply blobs to image
-        mask[yh_start:yh_end,xh_start:xh_end] = apply_chunk( mask[yh_start:yh_end,xh_start:xh_end] , img_blobs_h)
-        mask[yv_start:yv_end,xv_start:xv_end] = apply_chunk( mask[yv_start:yv_end,xv_start:xv_end] , img_blobs_v)
+        mask[yh_start:yh_end, xh_start:xh_end] = apply_chunk(
+            mask[yh_start:yh_end, xh_start:xh_end], img_blobs_h
+        )
+        mask[yv_start:yv_end, xv_start:xv_end] = apply_chunk(
+            mask[yv_start:yv_end, xv_start:xv_end], img_blobs_v
+        )
 
     return mask
 
 
 # create small tiny spot of blobs everywhere in the image
 def applyBlob_full(mask, blob_density):
-    """Create tiny blobs randomly in the provided image. 
+    """Create tiny blobs randomly in the provided image.
     :param mask: The image to place the blob in.
     :type mask: numpy.array
     """
-    
+
     # add small discontinuous lines
     img_lines = mask.copy()
-    ylsize, xlsize = img_lines.shape  
-    
-    for xl in range(xlsize): 
-        if random.randint(1,100)>95:
-            n_line = random.randint(1, int(np.ceil(ylsize/100)*blob_density)) 
+    ylsize, xlsize = img_lines.shape
+
+    for xl in range(xlsize):
+        if random.randint(1, 100) > 95:
+            n_line = random.randint(1, int(np.ceil(ylsize / 100) * blob_density))
             for j in range(n_line):
-                line_length = random.randint(1, np.ceil(ylsize/200))  
-                ylstart = random.randint(0, ylsize-line_length) 
-                ylend = ylstart + line_length 
-                
-                if random.random()>0.5:
-                    xle = xl+random.randint(1,3)
-                    xle = min(xlsize,xle)          
-                    img_lines[ylstart:ylend,xl:xle] = random.randint(5,25)
+                line_length = random.randint(1, np.ceil(ylsize / 200))
+                ylstart = random.randint(0, ylsize - line_length)
+                ylend = ylstart + line_length
+
+                if random.random() > 0.5:
+                    xle = xl + random.randint(1, 3)
+                    xle = min(xlsize, xle)
+                    img_lines[ylstart:ylend, xl:xle] = random.randint(5, 25)
                 else:
-                    xle = xl+random.randint(1,3)
-                    xle = min(ylsize,xle)  
-                    img_lines[xl:xle, ylstart:ylend] = random.randint(5,25)
+                    xle = xl + random.randint(1, 3)
+                    xle = min(ylsize, xle)
+                    img_lines[xl:xle, ylstart:ylend] = random.randint(5, 25)
 
     return img_lines
-
-

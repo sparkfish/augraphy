@@ -32,7 +32,9 @@ class LowInkLine(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return (
+            f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        )
 
     # Takes an image, a vertical position, and an opacity value,
     # then adds a line at that position in the image with the given
