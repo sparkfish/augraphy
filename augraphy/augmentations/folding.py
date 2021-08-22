@@ -9,7 +9,6 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 class Folding(Augmentation):
     """Emulates folding effect from perspective transformation
-
     :param fold count: Number of applied foldings
     :type fold_count: int, optional
     :param fold_noise: Level of noise added to folding area. Range from
@@ -212,6 +211,12 @@ class Folding(Augmentation):
         fold_width_one_side = int(
             random.randint(min_fold_x, max_fold_x) / 2
         )  # folding width from left to center of folding, or from right to center of folding
+        
+        # test for valid folding center line
+        if (xsize-fold_width_one_side-1) < (fold_width_one_side+1):
+            print("Folding augmentation is not applied, please increase image size")
+            return img
+        
         fold_x = random.randint(
             fold_width_one_side + 1, xsize - fold_width_one_side - 1
         )  # center of folding
@@ -222,7 +227,7 @@ class Folding(Augmentation):
             fold_y_shift_min, fold_y_shift_max
         )  # y distortion in folding (support positive y value for now)
 
-        if (max_fold_x > min_fold_x) and (fold_y_shift != 0):
+        if (fold_width_one_side != 0) and (fold_y_shift != 0):
             img_fold_l = self.warp_fold_left_side(
                 img, ysize, fold_noise, fold_x, fold_width_one_side, fold_y_shift
             )
@@ -231,7 +236,7 @@ class Folding(Augmentation):
             )
             return img_fold_r
         else:
-            if max_fold_x > min_fold_x:
+            if fold_width_one_side == 0:
                 print(
                     "Folding augmentation is not applied, please increase gradient width or image size"
                 )
