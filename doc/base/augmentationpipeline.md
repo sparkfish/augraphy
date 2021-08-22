@@ -2,6 +2,8 @@
 
 The Augraphy Pipeline contains "phases" or "layers" of image augmentations and their results.
 
+**Note:** Augraphy Pipelines only accept images **larger than 30x30 pixels.**
+
 **Example Usage:**
 ```python
 ink_phase = [InkBleed(), Letterpress(), GaussianBlur("ink")]

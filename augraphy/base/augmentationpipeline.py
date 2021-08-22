@@ -5,6 +5,7 @@ import numpy as np
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.base.augmentationsequence import AugmentationSequence
 
+
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
 
@@ -33,7 +34,7 @@ class AugraphyPipeline:
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
         rotate_range=(0, 0),
-        log = False
+        log=False,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -54,31 +55,35 @@ class AugraphyPipeline:
     def augment(self, image):
         """Applies the Augmentations in each phase of the pipeline.
 
-        :param image: The image to apply Augmentations to.
+        :param image: The image to apply Augmentations to. Minimum 30x30 pixels.
         :type image: numpy.array
         :return: A dictionary of AugmentationResults representing the changes
                  in each phase of the pipeline.
         :rtype: dictionary
         """
+
+        # Check that image is the correct size.
+        if (image.shape[0] < 30) or (image.shape[1] < 30):
+            raise Exception(
+                "Image should have dimensions greater than 30x30, but actual dimensions were {}.".format(
+                    image.shape
+                )
+            )
+
         data = dict()
         data["image"] = image.copy()
         ink = data["image"].copy()
 
-        if ((self.rotate_range[0] != 0) | (self.rotate_range[1] != 0)):
-            angle = random.randint(
-                self.rotate_range[0], self.rotate_range[1]
-            )
+        if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+            angle = random.randint(self.rotate_range[0], self.rotate_range[1])
         else:
             angle = 0
 
-
         if self.log:
-            print('angle =', angle)
+            print("angle =", angle)
 
-        if (angle != 0):
-            ink = self.rotate_image(
-                ink, angle
-            )
+        if angle != 0:
+            ink = self.rotate_image(ink, angle)
         else:
             ink = ink
 
@@ -96,7 +101,7 @@ class AugraphyPipeline:
 
         data["ink"].append(AugmentationResult(None, ink))
 
-        if ((self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0)):
+        if (self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0):
             paper_color = random.randint(
                 self.paper_color_range[0], self.paper_color_range[1]
             )
@@ -104,7 +109,7 @@ class AugraphyPipeline:
             paper_color = 255
 
         if self.log:
-            print('paper_color =', paper_color)
+            print("paper_color =", paper_color)
 
         data["paper"].append(
             AugmentationResult(
@@ -119,13 +124,13 @@ class AugraphyPipeline:
 
         # If phases were defined None or [] in a custom pipeline, they wouldn't
         # be callable objects, so make them empty AugmentationSequences
-        if (self.ink_phase is None or self.ink_phase == []):
+        if self.ink_phase is None or self.ink_phase == []:
             self.ink_phase = AugmentationSequence([])
 
-        if (self.paper_phase is None or self.paper_phase == []):
+        if self.paper_phase is None or self.paper_phase == []:
             self.paper_phase = AugmentationSequence([])
 
-        if (self.post_phase is None or self.post_phase == []):
+        if self.post_phase is None or self.post_phase == []:
             self.post_phase = AugmentationSequence([])
 
         self.ink_phase(data)
@@ -180,19 +185,15 @@ class AugraphyPipeline:
     def print_ink_to_paper(self, overlay, background):
         """Applies the ink layer to the paper layer."""
 
-        if ((self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0)):
-            ink_color = random.randint(
-                self.ink_color_range[0], self.ink_color_range[1]
-            )
+        if (self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0):
+            ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
         else:
             ink_color = 0
 
         if self.log:
-            print('ink_color =', ink_color)
+            print("ink_color =", ink_color)
 
-        overlay = self.make_white_transparent(
-            overlay, ink_color
-        )
+        overlay = self.make_white_transparent(overlay, ink_color)
         # Split out the transparency mask from the colour info
         overlay_img = overlay[:, :, :3]  # Grab the BRG planes
         overlay_mask = overlay[:, :, 3:]  # And the alpha plane

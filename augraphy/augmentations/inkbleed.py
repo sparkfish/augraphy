@@ -21,9 +21,7 @@ class InkBleed(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(
-        self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5
-    ):
+    def __init__(self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5):
         """Constructor method"""
         super().__init__(p=p)
         self.intensity_range = intensity_range
@@ -55,17 +53,15 @@ class InkBleed(Augmentation):
                 if (y == 255 and random.random() < intensity)
                 else x
             )
-            apply_mask_fn = (
-                lambda x, y, z: x if (z != 255 or x < 64) else y
-            )
+            apply_mask_fn = lambda x, y, z: x if (z != 255 or x < 64) else y
             add_noise = np.vectorize(add_noise_fn)
             apply_mask = np.vectorize(apply_mask_fn)
             sobel = self.sobel(image)
-            sobel = cv2.dilate(sobel, (3,3), iterations=1)
+            sobel = cv2.dilate(sobel, (3, 3), iterations=1)
             noise_mask = add_noise(image, sobel)
             noise_mask = noise_mask.astype("uint8")
-            noise_mask = cv2.GaussianBlur(noise_mask, (3,3), 0)
-            
+            noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+
             image = apply_mask(image, noise_mask, sobel)
 
             data["ink"].append(AugmentationResult(self, image))

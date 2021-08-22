@@ -6,10 +6,11 @@ import random
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
+
 class DirtyRollers(Augmentation):
     """Emulates an effect created by certain document scanners.
 
-    :param line_width_range: Pair of ints determining the range from which the 
+    :param line_width_range: Pair of ints determining the range from which the
     width of a dirty roller line is sampled.
     :type line_width_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
@@ -66,11 +67,12 @@ class DirtyRollers(Augmentation):
                 image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
 
             mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
-            
-            meta_mask = self.create_scanline_mask(image.shape[1],image.shape[0],line_width * random.randint(10, 25))
+
+            meta_mask = self.create_scanline_mask(
+                image.shape[1], image.shape[0], line_width * random.randint(10, 25)
+            )
             image = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
