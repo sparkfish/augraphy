@@ -7,35 +7,28 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BadPhotoCopy(Augmentation):
-    """ Uses olsen noise to generate an effect of dirty copier
+    """Uses olsen noise to generate an effect of dirty copier
     :param noise_density: Pair of floats determining density of noises.
             Lower value generates sparser noise.
     :type noise_density: tuple, optional
-    :param max_iteration: Pair of ints determining the range of iterations for 
-            the requested noise value. Higher value generates sparser 
+    :param max_iteration: Pair of ints determining the range of iterations for
+            the requested noise value. Higher value generates sparser
             noise.
     :type max_iteration: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
-    def __init__(
-        self, noise_density=(0.01, 0.1), max_iteration=(12, 15),  p=0.5
-        
-    ): 
+    def __init__(self, noise_density=(0.01, 0.1), max_iteration=(12, 15), p=0.5):
         """Constructor method"""
         super().__init__(p=p)
         self.noise_density = noise_density
         self.max_iteration = max_iteration
         self._SCALE_FACTOR = 2
-        self.GAUSSIAN = np.array([[1, 2, 1],
-                                  [2, 4, 2],
-                                  [1, 2, 1]])
-        self.BOX = np.array([[1, 1, 1],
-                             [1, 1, 1],
-                             [1, 1, 1]]) * 1/9
+        self.GAUSSIAN = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+        self.BOX = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) * 1 / 9
         self._blur_edge = 2  # extra pixels are needed for the blur (3 - 1).
-        
+
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
         return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, p={self.p})"
@@ -50,27 +43,35 @@ class BadPhotoCopy(Augmentation):
                         'transpose'='True' transpose result.
         :return:
         """
-        
+
         # check position (starting coordinates) of noise
-        if position is None: position = [0] * len(shape)            
-        elif len(position) != len(shape): raise ValueError("Offset and shape values do not match")
-            
+        if position is None:
+            position = [0] * len(shape)
+        elif len(position) != len(shape):
+            raise ValueError("Offset and shape values do not match")
+
         # initialize mask
         x, y = np.array(position)
         r_shape = self._required_dim(np.array(shape))
-        pixels = np.zeros(r_shape, dtype='uint8')
+        pixels = np.zeros(r_shape, dtype="uint8")
 
         # check kernel
-        if kernel is None: kernel = self.GAUSSIAN
-        elif kernel.shape != (3, 3): raise NotImplementedError
-        
+        if kernel is None:
+            kernel = self.GAUSSIAN
+        elif kernel.shape != (3, 3):
+            raise NotImplementedError
+
         # apply olsen noise
         width, height = np.array(shape)
-        self._olsen_noise(pixels, x, y, width, height, iteration=iteration, kernel=kernel)
-        
+        self._olsen_noise(
+            pixels, x, y, width, height, iteration=iteration, kernel=kernel
+        )
+
         # apply transpose
-        if transpose: pixels = np.transpose(pixels[:width, :height])
-        else: pixels = pixels[:width, :height]
+        if transpose:
+            pixels = np.transpose(pixels[:width, :height])
+        else:
+            pixels = pixels[:width, :height]
 
         return pixels
 
@@ -83,8 +84,9 @@ class BadPhotoCopy(Augmentation):
         """
         return dim + self._blur_edge + self._SCALE_FACTOR + 1
 
-
-    def _olsen_noise(self, pixels, x, y, width, height, iteration=7, kernel=np.ones((3, 3))):
+    def _olsen_noise(
+        self, pixels, x, y, width, height, iteration=7, kernel=np.ones((3, 3))
+    ):
         """
         Olsen Noise generation algorithm.
         :param pixels: Pixel working space.
@@ -99,20 +101,31 @@ class BadPhotoCopy(Augmentation):
             # Base case.
             self._apply_noise(pixels, x, y, width, height, iteration)
             return
-        x_remainder = x & 1  # Adjust the x_remainder so we know how much more into the pixel are.
+        x_remainder = (
+            x & 1
+        )  # Adjust the x_remainder so we know how much more into the pixel are.
         y_remainder = y & 1
 
-        self._olsen_noise(pixels,
-                    ((x + x_remainder) // self._SCALE_FACTOR) - x_remainder,
-                    ((y + y_remainder) // self._SCALE_FACTOR) - y_remainder,
-                    ((width + x_remainder) // self._SCALE_FACTOR) + self._blur_edge,
-                    ((height + y_remainder) // self._SCALE_FACTOR) + self._blur_edge,
-                    iteration - 1, kernel=kernel)  # Recursive scope call.
+        self._olsen_noise(
+            pixels,
+            ((x + x_remainder) // self._SCALE_FACTOR) - x_remainder,
+            ((y + y_remainder) // self._SCALE_FACTOR) - y_remainder,
+            ((width + x_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+            ((height + y_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+            iteration - 1,
+            kernel=kernel,
+        )  # Recursive scope call.
 
-        self._scale_shift(pixels, width + self._blur_edge, height + self._blur_edge, self._SCALE_FACTOR, x_remainder, y_remainder)
+        self._scale_shift(
+            pixels,
+            width + self._blur_edge,
+            height + self._blur_edge,
+            self._SCALE_FACTOR,
+            x_remainder,
+            y_remainder,
+        )
         self._apply_kernel(pixels, width, height, kernel=kernel)
         self._apply_noise(pixels, x, y, width, height, iteration)
-
 
     def _scale_shift(self, pixels, width, height, factor, shift_x, shift_y):
         """
@@ -130,11 +143,13 @@ class BadPhotoCopy(Augmentation):
             for x in range(width - 1, -1, -1):
                 pixels[x, y] = pixels[(x + shift_x) // factor, (y + shift_y) // factor]
 
-
-    def _apply_noise(self, pixels, x_within_field, y_within_field, width, height, iteration):
+    def _apply_noise(
+        self, pixels, x_within_field, y_within_field, width, height, iteration
+    ):
         for i, m in np.ndenumerate(pixels[:width, :height]):
-            pixels[i] += (self._hash_random(i[0] + x_within_field, i[1] + y_within_field, iteration) & (1 << (self.max_iteration[1] - iteration)))
-
+            pixels[i] += self._hash_random(
+                i[0] + x_within_field, i[1] + y_within_field, iteration
+            ) & (1 << (self.max_iteration[1] - iteration))
 
     def _hash_random(self, *elements):
         """
@@ -149,7 +164,6 @@ class BadPhotoCopy(Augmentation):
             hash_value = self._hash(hash_value)
             i += 1
         return hash_value
-
 
     def _hash(self, v):
         value = int(v)
@@ -176,7 +190,6 @@ class BadPhotoCopy(Augmentation):
         value += value >> 12
         return value
 
-
     def _crimp(self, color):
         """
         crimps the values between 255 and 0. Required for some other convolutions like emboss where they go out of register.
@@ -189,7 +202,6 @@ class BadPhotoCopy(Augmentation):
             return 0
         return int(color)
 
-
     def _apply_kernel(self, pixels, width, height, kernel=np.ones((3, 3))):
         """
         Applies a convolution with the results pixel in the upper left-hand corner.
@@ -201,7 +213,6 @@ class BadPhotoCopy(Augmentation):
         """
         for index, m in np.ndenumerate(pixels[:width, :height]):
             pixels[index] = self._convolve(pixels, index, kernel)
-
 
     def _convolve(self, pixels, index, matrix):
         """
@@ -220,7 +231,7 @@ class BadPhotoCopy(Augmentation):
         if parts == 0:
             return self._crimp(total)
         return self._crimp(total // parts)
-    
+
     def sobel(self, image):
         """Computes the gradient of the image intensity function.
 
@@ -234,22 +245,19 @@ class BadPhotoCopy(Augmentation):
         return gradient
 
     def apply_augmentation(self, image):
-        
+
         # get image dimensions
-        if len(image.shape)>2:
+        if len(image.shape) > 2:
             ysize, xsize, dim = image.shape
         else:
-            ysize, xsize = image.shape; dim = 2
-        
+            ysize, xsize = image.shape
+            dim = 2
+
         # initialize vectorized mapping functions
         # add random zero value noise
-        add_noise_fn = (
-            lambda x: 0
-            if (x <= random.randint(0,224))
-            else 255
-         )
+        add_noise_fn = lambda x: 0 if (x <= random.randint(0, 224)) else 255
         add_noise = np.vectorize(add_noise_fn)
-      
+
         # remove noise by using min
         remove_noise_fn = (
             lambda original, noised, mask: min(original, noised + mask)
@@ -257,78 +265,90 @@ class BadPhotoCopy(Augmentation):
             else original
         )
         remove_noise = np.vectorize(remove_noise_fn)
-        
+
         # add random noise range from 0-128
         add_edge_noise_fn = (
-            lambda x, y: random.randint(0,128)
-            if (y == 255 and random.random() < .70)
+            lambda x, y: random.randint(0, 128)
+            if (y == 255 and random.random() < 0.70)
             else x
         )
         add_edge_noise = np.vectorize(add_edge_noise_fn)
-        
-        
+
         image_sobel = self.sobel(image)
-        image_sobel = cv2.GaussianBlur(image_sobel, (3,3), 0)
-        image_sobel[:,:][image_sobel[:,:]%255 != 0 ] = 255
-        image_sobel = cv2.dilate(image_sobel, (5,5), iterations=2)
+        image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
+        image_sobel[:, :][image_sobel[:, :] % 255 != 0] = 255
+        image_sobel = cv2.dilate(image_sobel, (5, 5), iterations=2)
 
         image_sobel_sobel = self.sobel(image_sobel)
-        image_sobel_sobel = cv2.dilate(image_sobel_sobel, (3,3), iterations=2)
+        image_sobel_sobel = cv2.dilate(image_sobel_sobel, (3, 3), iterations=2)
         image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
-        image_sobel = cv2.GaussianBlur(image_sobel, (5,5), 0)
-      
+        image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
+
         # create mask of noises
-        shape = (random.randint(np.ceil(ysize*self.noise_density[0]), np.ceil(ysize*self.noise_density[1])), random.randint(np.ceil(xsize*self.noise_density[0]),np.ceil(xsize*self.noise_density[1])))
-        position = (random.randint(0, shape[1]), random.randint(0,shape[0]))
-        iteration = random.randint(self.max_iteration[0],self.max_iteration[1])
+        shape = (
+            random.randint(
+                np.ceil(ysize * self.noise_density[0]),
+                np.ceil(ysize * self.noise_density[1]),
+            ),
+            random.randint(
+                np.ceil(xsize * self.noise_density[0]),
+                np.ceil(xsize * self.noise_density[1]),
+            ),
+        )
+        position = (random.randint(0, shape[1]), random.randint(0, shape[0]))
+        iteration = random.randint(self.max_iteration[0], self.max_iteration[1])
         kernel = random.choice([self.GAUSSIAN, self.BOX])
         transpose = random.choice([True, False])
 
         mask = self.noise(shape, position, iteration, kernel, transpose)
-        mask = cv2.resize(mask, (image.shape[1],image.shape[0]))
+        mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
 
         # random flip mask vertically or horizontally
-        if (random.choice([True,False])):
+        if random.choice([True, False]):
             mask = cv2.flip(mask, 0)
-        if (random.choice([True,False])):
+        if random.choice([True, False]):
             mask = cv2.flip(mask, 1)
 
         # randomize noise type
         noise_img_type = random.randint(0, 2)
-        
+
         noise_img = add_noise(mask).astype("uint8")
-        blurred = cv2.GaussianBlur(noise_img, (random.choice([3, 5, 7]),random.choice([3, 5, 7])), 0)
-      
-        
+        blurred = cv2.GaussianBlur(
+            noise_img, (random.choice([3, 5, 7]), random.choice([3, 5, 7])), 0
+        )
+
         # type 2 noise
-        if (noise_img_type == 2):
-            noise_img = cv2.multiply(noise_img, blurred, scale=1/255)
-            result = cv2.multiply(noise_img, image, scale=1/255)
+        if noise_img_type == 2:
+            noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
+            result = cv2.multiply(noise_img, image, scale=1 / 255)
             result = remove_noise(image, result, image_sobel)
             return result
-      
-        _,thresh1 = cv2.threshold(blurred,random.randint(64,128),255,cv2.THRESH_BINARY)
-      
+
+        _, thresh1 = cv2.threshold(
+            blurred, random.randint(64, 128), 255, cv2.THRESH_BINARY
+        )
+
         # type 0 noise
-        if (noise_img_type == 0):
-            result = cv2.multiply(thresh1, image, scale=1/255)
+        if noise_img_type == 0:
+            result = cv2.multiply(thresh1, image, scale=1 / 255)
             result = remove_noise(image, result, image_sobel)
             return result
-      
+
         grey_img = noise_img.copy()
-        grey_img[:,:][grey_img[:,:]==0] = random.choice([255, 255, 255, random.randint(196, 224)])
-      
+        grey_img[:, :][grey_img[:, :] == 0] = random.choice(
+            [255, 255, 255, random.randint(196, 224)]
+        )
+
         # type 1 noise
-        if (noise_img_type == 1):
-            noise_img = cv2.multiply(grey_img, thresh1, scale=1/255)
-            result = cv2.multiply(noise_img, image, scale=1/255)
+        if noise_img_type == 1:
+            noise_img = cv2.multiply(grey_img, thresh1, scale=1 / 255)
+            result = cv2.multiply(noise_img, image, scale=1 / 255)
             result = remove_noise(image, result, image_sobel)
             return result
-    
+
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
             image = data["ink"][-1].result
             result = self.apply_augmentation(image)
             data["ink"].append(AugmentationResult(self, result))
-

@@ -211,12 +211,12 @@ class Folding(Augmentation):
         fold_width_one_side = int(
             random.randint(min_fold_x, max_fold_x) / 2
         )  # folding width from left to center of folding, or from right to center of folding
-        
+
         # test for valid folding center line
-        if (xsize-fold_width_one_side-1) < (fold_width_one_side+1):
+        if (xsize - fold_width_one_side - 1) < (fold_width_one_side + 1):
             print("Folding augmentation is not applied, please increase image size")
             return img
-        
+
         fold_x = random.randint(
             fold_width_one_side + 1, xsize - fold_width_one_side - 1
         )  # center of folding
