@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="https://user-images.githubusercontent.com/1108065/130455343-034d5a1a-c994-4cb5-81bf-d5c0ae341870.png" />
+</p>
+
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
 
 Highly-configurable pipelines apply adjustments to the originals to create realistic old or noisy documents by acting as a factory, producing almost an infinite number of variations from their source.  This simulation of realistic paper-oriented process distortions can create large amounts of training data for AI/ML processes to learn how to remove those distortions.
