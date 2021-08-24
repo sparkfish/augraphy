@@ -123,6 +123,9 @@ def applyBlob(
         # don't make a std.deviation that when added to radius, is larger than mask
         std = (0, dim // 2 - size[1])
 
+    if size[1] < size[0]:
+        return mask  # solve error where size[1] is smaller than size[0]
+
     blob = _create_blob(size, points_range, std, features_range, value_range)
 
     x_start = random.randint(0, mask.shape[1] - blob.shape[1])

@@ -53,7 +53,9 @@ class LowInkPeriodicLines(LowInkLine):
         period = mask.shape[0] // line_count
 
         for y in range(mask.shape[0] - offset):
-            if y % period == 0:
+            if (period != 0) and (
+                y % period == 0
+            ):  # period can't be zero here, else there would be zero division error
                 self.add_transparency_line(mask, y + offset, alpha)
 
     def add_periodic_transparency_lines(self, mask, lines, line_periods):

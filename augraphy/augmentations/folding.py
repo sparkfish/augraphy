@@ -46,6 +46,8 @@ class Folding(Augmentation):
     # Perspective transform based on 4 points
     def four_point_transform(self, image, pts, dst, xs, ys):
         M = cv2.getPerspectiveTransform(pts, dst)
+        if not isinstance(image, np.floating):
+            image = image.astype("float")
         img_warped = cv2.warpPerspective(image, M, (xs, ys))
         # return the warped image
         return img_warped

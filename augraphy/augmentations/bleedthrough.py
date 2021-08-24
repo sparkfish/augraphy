@@ -79,6 +79,8 @@ class BleedThrough(Augmentation):
 
     # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
+        if (img.shape[0] != img_bleed.shape[0]) or (img.shape[1] != img_bleed.shape[1]):
+            return img
         img_PIL = Image.fromarray(img)
         img_bleed_PIL = Image.fromarray(img_bleed)
         img_PIL = img_PIL.convert("RGBA")
