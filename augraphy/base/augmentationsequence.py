@@ -26,4 +26,5 @@ class AugmentationSequence(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             for augmentation in self.augmentations:
+                # print(augmentation)
                 augmentation(data)
