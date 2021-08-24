@@ -19,6 +19,7 @@ from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
+from augraphy.augmentations.bookbinding import BookBinding
 
 __all__ = [
     "BadPhotocopy",
@@ -42,4 +43,5 @@ __all__ = [
     "PageBorder",
     "PencilScribbles",
     "SubtleNoise",
+    "BookBinding"
 ]
