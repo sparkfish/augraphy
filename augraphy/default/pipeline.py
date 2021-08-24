@@ -58,7 +58,7 @@ def default_augraphy_pipeline():
             DirtyDrum(),
             SubtleNoise(),
             Jpeg(),
-            Folding(),
+            # Folding(),
         ]
     )
 

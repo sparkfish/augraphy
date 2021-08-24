@@ -43,5 +43,5 @@ __all__ = [
     "PageBorder",
     "PencilScribbles",
     "SubtleNoise",
-    "BookBinding"
+    "BookBinding",
 ]
