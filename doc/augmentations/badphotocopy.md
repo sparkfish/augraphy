@@ -6,12 +6,14 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
 ```python
 augmentation = BadPhotocopy(
-	blob_density = 0.6,
+	noise_density=(0.01, 0.1), 
+	max_iteration=(12, 15),  
 	p=0.5
 	)
 ```
 
 | Parameter | Description |
 |---|---|
-| `blob_density` | Amount of blobs in the image, a range from 0 to 1. |
+| `noise_density` | Density of noise blobs, lower value generates sparser noise. |
+| `max_iteration` | Iterations of noise value, higher value generates sparser noise. |
 | `p` | The probability this augmentation will be applied. |
