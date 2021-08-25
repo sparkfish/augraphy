@@ -1,3 +1,5 @@
+import time
+
 from augraphy.base.augmentation import Augmentation
 
 
@@ -26,4 +28,9 @@ class AugmentationSequence(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
             for augmentation in self.augmentations:
+                start = time.process_time()  # time at start of execution
                 augmentation(data)
+                end = time.process_time()  # time at end of execution
+                elapsed = end - start  # execution duration
+
+                data["log"]["time"].append((augmentation, elapsed))
