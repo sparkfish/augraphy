@@ -1,4 +1,4 @@
-from augraphy.augmentations.badphotocopy import BadPhotocopy
+from augraphy.augmentations.badphotocopy import BadPhotoCopy
 from augraphy.augmentations.bleedthrough import BleedThrough
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
@@ -22,7 +22,7 @@ from augraphy.augmentations.pencilscribbles import PencilScribbles
 from augraphy.augmentations.bookbinding import BookBinding
 
 __all__ = [
-    "BadPhotocopy",
+    "BadPhotoCopy",
     "BleedThrough",
     "Brightness",
     "BrightnessTexturize",

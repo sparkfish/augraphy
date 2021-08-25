@@ -34,7 +34,6 @@ class AugraphyPipeline:
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
         rotate_range=(0, 0),
-        log=False,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -43,7 +42,6 @@ class AugraphyPipeline:
         self.ink_color_range = ink_color_range
         self.rotate_range = rotate_range
         self.paper_color_range = paper_color_range
-        self.log = log
 
     def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
@@ -71,6 +69,16 @@ class AugraphyPipeline:
             )
 
         data = dict()
+
+        # Store performance metadata and other logs here.
+        data["log"] = dict()
+
+        # For storing augmentation execution times.
+        data["log"]["time"] = list()
+
+        # This is useful.
+        data["log"]["image_shape"] = image.shape
+
         data["image"] = image.copy()
         ink = data["image"].copy()
 
@@ -79,8 +87,7 @@ class AugraphyPipeline:
         else:
             angle = 0
 
-        if self.log:
-            print("angle =", angle)
+        data["log"]["rotation_angle"] = angle
 
         if angle != 0:
             ink = self.rotate_image(ink, angle)
@@ -108,8 +115,7 @@ class AugraphyPipeline:
         else:
             paper_color = 255
 
-        if self.log:
-            print("paper_color =", paper_color)
+        data["log"]["paper_color"] = paper_color
 
         data["paper"].append(
             AugmentationResult(
@@ -141,7 +147,7 @@ class AugraphyPipeline:
             AugmentationResult(
                 None,
                 self.print_ink_to_paper(
-                    data["ink"][-1].result, data["paper"][-1].result
+                    data, data["ink"][-1].result, data["paper"][-1].result
                 ),
             )
         )
@@ -182,7 +188,7 @@ class AugraphyPipeline:
         rotated_mat = cv2.bitwise_not(rotated_mat)
         return rotated_mat
 
-    def print_ink_to_paper(self, overlay, background):
+    def print_ink_to_paper(self, data, overlay, background):
         """Applies the ink layer to the paper layer."""
 
         if (self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0):
@@ -190,8 +196,7 @@ class AugraphyPipeline:
         else:
             ink_color = 0
 
-        if self.log:
-            print("ink_color =", ink_color)
+        data["log"]["ink_color"] = ink_color
 
         overlay = self.make_white_transparent(overlay, ink_color)
         # Split out the transparency mask from the colour info

@@ -33,8 +33,9 @@ class LowInkRandomLines(LowInkLine):
             count = random.randint(self.count_range[0], self.count_range[1])
 
             for i in range(count):
-                mask = self.add_transparency_line(
-                    mask, random.randint(1, mask.shape[0] - 1)
-                )
+                if mask.shape[0] - 1 >= 1:
+                    mask = self.add_transparency_line(
+                        mask, random.randint(1, mask.shape[0] - 1)
+                    )
 
             data["ink"].append(AugmentationResult(self, mask))
