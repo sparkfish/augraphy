@@ -261,7 +261,7 @@ class BadPhotoCopy(Augmentation):
         # remove noise by using min
         remove_noise_fn = (
             lambda original, noised, mask: min(original, noised + mask)
-            if (noised + mask <= 255)
+            if (np.uint(noised) + np.uint(mask) <= 255)
             else original
         )
         remove_noise = np.vectorize(remove_noise_fn)
