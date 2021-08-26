@@ -27,11 +27,10 @@ class BookBinding(Augmentation):
         self.curve_intensity_range = curve_intensity_range
 
     def __repr__(self):
-        return f"bookbinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
+        return f"BookBinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
         img_output = img.copy()
-        print(img.shape)
         rows = img.shape[0]
         cols = img.shape[1]
         for i in range(rows):
@@ -48,7 +47,7 @@ class BookBinding(Augmentation):
         img_output = np.zeros(img.shape, dtype=img.dtype)
         for i in range(rows):
             for j in range(cols):
-                offset_x = 0  # int(60 * math.sin(2 * 3.14 * i / (3 * cols)))
+                offset_x = 0
                 offset_y = int(curve_intensity * math.sin(2 * 3.14 * j / (3 * rows)))
                 if i + offset_y < rows:
                     img_output[i, j] = img[(i + offset_y) % rows, (j + offset_x) % cols]
@@ -62,7 +61,6 @@ class BookBinding(Augmentation):
         curve_intensity = random.randint(
             self.curve_intensity_range[0], self.curve_intensity_range[1]
         )
-        print(radius, angle, curve_intensity)
         image = data["post"][-1].result.copy()
         image = self.add_book_shadow(image, radius, angle)
         image = self.curve_page(image, curve_intensity)
