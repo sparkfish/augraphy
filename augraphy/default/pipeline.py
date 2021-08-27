@@ -11,6 +11,7 @@ from augraphy import *
 def default_augraphy_pipeline():
     ink_phase = AugmentationSequence(
         [
+            Dithering("ink"),
             InkBleed(),
             BleedThrough(),
             Letterpress(),
