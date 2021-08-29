@@ -1,9 +1,11 @@
 from augraphy.augmentations.badphotocopy import BadPhotoCopy
 from augraphy.augmentations.bleedthrough import BleedThrough
+from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
+from augraphy.augmentations.dithering import Dithering
 from augraphy.augmentations.dustyink import DustyInk
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
@@ -19,15 +21,17 @@ from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
-from augraphy.augmentations.bookbinding import BookBinding
+
 
 __all__ = [
     "BadPhotoCopy",
     "BleedThrough",
+    "BookBinding",
     "Brightness",
     "BrightnessTexturize",
     "DirtyDrum",
     "DirtyRollers",
+    "Dithering",
     "DustyInk",
     "Folding",
     "Gamma",
@@ -43,5 +47,4 @@ __all__ = [
     "PageBorder",
     "PencilScribbles",
     "SubtleNoise",
-    "BookBinding",
 ]
