@@ -17,3 +17,4 @@ augmentation = Folding(
 | `p` | The probability that this augmentation will be applied. |
 
 
+![BookBinding](../../images/Augmentations/BookBinding.png)
