@@ -19,4 +19,3 @@ augmentation = DirtyRollers(
 **Example Result:**
 
 ![Ink Bleed no Blur](../../images/Augmentations/DirtyRollers.png)
-

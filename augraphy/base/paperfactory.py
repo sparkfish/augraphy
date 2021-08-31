@@ -1,7 +1,8 @@
+import glob
+import random
+
 import cv2
 import numpy as np
-import random
-import glob
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -45,7 +46,9 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
+        return (
+            f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
+        )
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
@@ -78,7 +81,7 @@ class PaperFactory(Augmentation):
                     texture.shape[0] * x_scale,
                     texture.shape[1] * y_scale,
                     texture.shape[2],
-                )
+                ),
             )
         else:
             paper = np.empty((texture.shape[0] * x_scale, texture.shape[1] * y_scale))

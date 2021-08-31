@@ -31,4 +31,3 @@ augmentation = LightingGradient(
 **Example Output:**
 
 ![Lighting Gradient](../../images/Augmentations/LightingGradient.png)
-

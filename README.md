@@ -27,13 +27,13 @@ After both the ink and paper phases are completed, processing continues by apply
 The end result is an image that mimics real documents.
 
 <p align="center" width="100%">
-    <img src="images/Pipeline.png"> 
+    <img src="images/Pipeline.png">
 </p>
 
 ## Example Before / After Images
 <p align="center" width="100%">
-    <img src="images/AugraphyExampleInput.png"> 
-    <img src="images/AugraphyExampleOutput.png"> 
+    <img src="images/AugraphyExampleInput.png">
+    <img src="images/AugraphyExampleOutput.png">
 </p>
 
 # Example Usage

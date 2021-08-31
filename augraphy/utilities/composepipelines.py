@@ -1,5 +1,4 @@
 """This module contains a class supporting composition of AugraphyPipelines"""
-
 from augraphy.base.augmentationpipeline import AugraphyPipeline
 from augraphy.base.augmentationresult import AugmentationResult
 

@@ -1,8 +1,9 @@
 ################################################################################
 # File: lowinkline.py
 #
-import numpy as np
 import random
+
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 
@@ -24,7 +25,7 @@ class LowInkLine(Augmentation):
         self.use_consistent_lines = use_consistent_lines
         inconsistent_transparency_line = lambda x: random.randint(0, 255)
         self.inconsistent_transparency_line = np.vectorize(
-            inconsistent_transparency_line
+            inconsistent_transparency_line,
         )
 
         apply_line = lambda x, y: x if x > y else y
@@ -32,9 +33,7 @@ class LowInkLine(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return (
-            f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
-        )
+        return f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Takes an image, a vertical position, and an opacity value,
     # then adds a line at that position in the image with the given
@@ -49,7 +48,7 @@ class LowInkLine(Augmentation):
         :param alpha: The desired opacity of the line.
         :type alpha: int, optional
         """
-        if alpha == None:
+        if alpha is None:
             alpha = random.randint(16, 224)
 
         if self.use_consistent_lines:

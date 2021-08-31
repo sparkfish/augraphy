@@ -1,6 +1,8 @@
-import numpy as np
-import cv2
 import random
+
+import cv2
+import numpy as np
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -73,9 +75,7 @@ class PencilScribbles(Augmentation):
 
         intensity = random.uniform(intensity_range[0], intensity_range[1])
         noise = (
-            lambda x: random.randint(color_range[0], color_range[1])
-            if (x == 0 and random.random() < intensity)
-            else x
+            lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
         )
         add_noise = np.vectorize(noise)
 
@@ -90,11 +90,7 @@ class PencilScribbles(Augmentation):
         stroke_image = apply_mask(stroke_image, noise_mask)
 
         intensity = random.uniform(0.4, 0.7)
-        add_noise_fn = (
-            lambda x, y: random.randint(32, 128)
-            if (y == 255 and random.random() < intensity)
-            else x
-        )
+        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
 
         add_noise = np.vectorize(add_noise_fn)
         apply_mask = np.vectorize(apply_mask_fn)
@@ -119,15 +115,11 @@ class PencilScribbles(Augmentation):
         size = min([size, max_height, max_width])
         width, height = size, size  # picture's size
 
-        strokes_img = (
-            np.zeros((height, width, 3), np.uint8) + 255
-        )  # make the background white
+        strokes_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
 
         for i in range(5):
             # lets say these are my black pixels in a white image.
-            stroke_img = (
-                np.zeros((height, width, 3), np.uint8) + 255
-            )  # make the background white
+            stroke_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
             x = np.array(
                 [
                     random.randint(25, size - 25),
@@ -135,7 +127,7 @@ class PencilScribbles(Augmentation):
                     random.randint(25, size - 25),
                     random.randint(25, size - 25),
                     random.randint(25, size - 25),
-                ]
+                ],
             )
             y = np.array(
                 [
@@ -144,7 +136,7 @@ class PencilScribbles(Augmentation):
                     random.randint(25, size - 25),
                     random.randint(25, size - 25),
                     random.randint(25, size - 25),
-                ]
+                ],
             )
 
             start_stop = [
@@ -167,7 +159,8 @@ class PencilScribbles(Augmentation):
                 False,
                 (0, 0, 0),
                 thickness=random.randint(
-                    self.thickness_range[0], self.thickness_range[1]
+                    self.thickness_range[0],
+                    self.thickness_range[1],
                 ),
             )
             strokes_img = self.apply_pencil_stroke(stroke_img, strokes_img)
@@ -178,7 +171,8 @@ class PencilScribbles(Augmentation):
         target_x = random.randint(0, target.shape[1] - paste.shape[1])
         target_y = random.randint(0, target.shape[0] - paste.shape[0])
         target[
-            target_y : target_y + paste.shape[1], target_x : target_x + paste.shape[0]
+            target_y : target_y + paste.shape[1],
+            target_x : target_x + paste.shape[0],
         ] = paste
         return target
 

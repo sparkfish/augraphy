@@ -1,4 +1,5 @@
 import random
+
 import cv2
 import numpy as np
 
@@ -64,8 +65,8 @@ class AugraphyPipeline:
         if (image.shape[0] < 30) or (image.shape[1] < 30):
             raise Exception(
                 "Image should have dimensions greater than 30x30, but actual dimensions were {}.".format(
-                    image.shape
-                )
+                    image.shape,
+                ),
             )
 
         data = dict()
@@ -110,7 +111,8 @@ class AugraphyPipeline:
 
         if (self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0):
             paper_color = random.randint(
-                self.paper_color_range[0], self.paper_color_range[1]
+                self.paper_color_range[0],
+                self.paper_color_range[1],
             )
         else:
             paper_color = 255
@@ -125,7 +127,7 @@ class AugraphyPipeline:
                     paper_color,
                     dtype="uint",
                 ),
-            )
+            ),
         )
 
         # If phases were defined None or [] in a custom pipeline, they wouldn't
@@ -147,9 +149,11 @@ class AugraphyPipeline:
             AugmentationResult(
                 None,
                 self.print_ink_to_paper(
-                    data, data["ink"][-1].result, data["paper"][-1].result
+                    data,
+                    data["ink"][-1].result,
+                    data["paper"][-1].result,
                 ),
-            )
+            ),
         )
 
         self.post_phase(data)
@@ -217,7 +221,7 @@ class AugraphyPipeline:
 
         # And finally just add them together, and rescale it back to an 8bit integer image
         return np.uint8(
-            cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0)
+            cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0),
         )
 
     def make_white_transparent(self, img, ink_color=0):
