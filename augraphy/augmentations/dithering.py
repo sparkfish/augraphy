@@ -56,7 +56,9 @@ class Dithering(Augmentation):
             img_dither_fs = image.copy().astype("float")
             for channel_num in range(dim):
                 img_dither_fs[:, :, channel_num] = self.apply_Floyd_Steinberg(
-                    img_dither_fs[:, :, channel_num], ysize, xsize
+                    img_dither_fs[:, :, channel_num],
+                    ysize,
+                    xsize,
                 )
         else:  # grayscale or binary
             ysize, xsize = image.shape
@@ -103,7 +105,11 @@ class Dithering(Augmentation):
             ysize, xsize = image.shape
             img_dither_ordered = image.copy().astype("float")
             img_dither_ordered = self.apply_Ordered(
-                img_dither_ordered, ysize, xsize, order, ordered_matrix
+                img_dither_ordered,
+                ysize,
+                xsize,
+                order,
+                ordered_matrix,
             )
 
         return img_dither_ordered.astype("uint8")
@@ -122,7 +128,12 @@ class Dithering(Augmentation):
         # pattern is TL, BR, TR, BL
         self.create_bayer(x, y, half, value + (step * 0), step * 4, matrix)
         self.create_bayer(
-            x + half, y + half, half, value + (step * 1), step * 4, matrix
+            x + half,
+            y + half,
+            half,
+            value + (step * 1),
+            step * 4,
+            matrix,
         )
         self.create_bayer(x + half, y, half, value + (step * 2), step * 4, matrix)
         self.create_bayer(x, y + half, half, value + (step * 3), step * 4, matrix)

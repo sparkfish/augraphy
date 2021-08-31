@@ -1,5 +1,6 @@
-import cv2
 import random
+
+import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation

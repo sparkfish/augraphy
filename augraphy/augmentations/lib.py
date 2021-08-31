@@ -1,9 +1,9 @@
 """This module contains functions generally useful for building augmentations."""
+import random
 
+import cv2
 import numpy as np
 from sklearn.datasets import make_blobs
-import random
-import cv2
 
 
 def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
@@ -18,11 +18,7 @@ def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """
 
     intensity = random.uniform(intensity_range[0], intensity_range[1])
-    noise = (
-        lambda x: random.randint(color_range[0], color_range[1])
-        if (x == 0 and random.random() < intensity)
-        else x
-    )
+    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
     add_noise = np.vectorize(noise)
 
     return add_noise(image)
@@ -60,7 +56,10 @@ def _create_blob(
     features = random.randint(features_range[0], features_range[1])
 
     X, y = make_blobs(
-        n_samples=points, cluster_std=[std], centers=[(0, 0)], n_features=features
+        n_samples=points,
+        cluster_std=[std],
+        centers=[(0, 0)],
+        n_features=features,
     )  # , random_state=1)
     X *= size // 4
     X += size // 2
@@ -68,12 +67,7 @@ def _create_blob(
     blob = np.full((size, size, 1), 0, dtype="uint8")
 
     for point in X:
-        if (
-            point[0] < blob.shape[0]
-            and point[1] < blob.shape[1]
-            and point[0] > 0
-            and point[1] > 0
-        ):
+        if point[0] < blob.shape[0] and point[1] < blob.shape[1] and point[0] > 0 and point[1] > 0:
             value = random.randint(value_range[0], value_range[1])
             blob[point[0], point[1]] = value
 
@@ -109,7 +103,8 @@ def applyBlob(
     :type value_range: tuple, optional
     """
     dim = min(
-        mask.shape[0], mask.shape[1]
+        mask.shape[0],
+        mask.shape[1],
     )  # we don't want to generate blobs larger than the mask
 
     # temporary local variables, in case
@@ -141,11 +136,13 @@ def applyBlob(
     if mask_dim > 2:  # colour image or > 3 channels
         for i in range(mask_dim):
             mask[y_start:y_stop, x_start:x_stop, i] = apply_chunk(
-                mask_chunk[:, :, i], blob[:, :, 0]
+                mask_chunk[:, :, i],
+                blob[:, :, 0],
             )
     else:  # single channel grayscale or binary image
         mask[y_start:y_stop, x_start:x_stop] = apply_chunk(
-            mask_chunk[:, :], blob[:, :, 0]
+            mask_chunk[:, :],
+            blob[:, :, 0],
         )
 
     return mask

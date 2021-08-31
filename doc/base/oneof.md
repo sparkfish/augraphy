@@ -19,4 +19,3 @@ augmentation = OneOf(
 |---|---|
 |   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
 |   ```p``` | specifies the probability that the augmentation will run one of the specified augmentations.   |
-

@@ -6,8 +6,8 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
 ```python
 augmentation = BadPhotocopy(
-	noise_density=(0.01, 0.1), 
-	max_iteration=(12, 15),  
+	noise_density=(0.01, 0.1),
+	max_iteration=(12, 15),
 	p=0.5
 	)
 ```

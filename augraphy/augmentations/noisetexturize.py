@@ -1,6 +1,7 @@
+import random
+
 import cv2
 import numpy as np
-import random
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -41,7 +42,8 @@ class NoiseTexturize(Augmentation):
 
             sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
             turbulence = random.randint(
-                self.turbulence_range[0], self.turbulence_range[1]
+                self.turbulence_range[0],
+                self.turbulence_range[1],
             )
 
             result = image.astype(float)
@@ -81,6 +83,8 @@ class NoiseTexturize(Augmentation):
 
         if ratio > 1:
             result = cv2.resize(
-                result, dsize=(width, height), interpolation=cv2.INTER_LINEAR
+                result,
+                dsize=(width, height),
+                interpolation=cv2.INTER_LINEAR,
             )
         return result.reshape((width, height, 1))

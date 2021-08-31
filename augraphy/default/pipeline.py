@@ -21,10 +21,10 @@ def default_augraphy_pipeline():
                     LowInkRandomLines(use_consistent_lines=True),
                     LowInkPeriodicLines(use_consistent_lines=False),
                     LowInkPeriodicLines(use_consistent_lines=True),
-                ]
+                ],
             ),
             GaussianBlur("ink"),
-        ]
+        ],
     )
 
     paper_phase = AugmentationSequence(
@@ -37,19 +37,19 @@ def default_augraphy_pipeline():
                             NoiseTexturize(),
                             BrightnessTexturize(),
                             GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
-                        ]
+                        ],
                     ),
                     AugmentationSequence(
                         [
                             BrightnessTexturize(),
                             NoiseTexturize(),
                             GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
-                        ]
+                        ],
                     ),
-                ]
+                ],
             ),
             Brightness("paper"),
-        ]
+        ],
     )
 
     post_phase = AugmentationSequence(
@@ -60,7 +60,7 @@ def default_augraphy_pipeline():
             SubtleNoise(),
             Jpeg(),
             # Folding(),
-        ]
+        ],
     )
 
     return AugraphyPipeline(ink_phase, paper_phase, post_phase)

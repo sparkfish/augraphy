@@ -24,4 +24,3 @@ Before and After Blur
 
 ![Ink Bleed no Blur](../../images/Augmentations/InkBleed.png)
 ![Ink Bleed with Blur](../../images/Augmentations/InkBleedBlur.png)
-

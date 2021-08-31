@@ -1,5 +1,6 @@
-import cv2
 import random
+
+import cv2
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -29,7 +30,7 @@ class Downscale(Augmentation):
         if force or self.should_run():
             image = data["post"][-1].result
             scale = random.randint(self.scale_range[0], self.scale_range[1])
-            new_size = (image.shape[1]//scale, image.shape[0]//scale)
+            new_size = (image.shape[1] // scale, image.shape[0] // scale)
             downscaled = cv2.resize(image, new_size)
             upscaled = cv2.resize(downscaled, (image.shape[1], image.shape[0]))
             data["post"].append(AugmentationResult(self, upscaled))

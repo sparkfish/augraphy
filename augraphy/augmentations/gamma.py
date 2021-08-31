@@ -1,7 +1,8 @@
+import os
+import random
+
 import cv2
 import numpy as np
-import random
-import os
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -31,7 +32,7 @@ class Gamma(Augmentation):
         value = random.uniform(self.range[0], self.range[1])
         invGamma = 1.0 / value
         table = np.array(
-            [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]
+            [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)],
         ).astype("uint8")
         print(table.shape, img.shape)
         frame = cv2.LUT(img, table)

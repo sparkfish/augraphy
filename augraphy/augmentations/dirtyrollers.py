@@ -1,7 +1,7 @@
-import cv2
-import numpy as np
 import random
 
+import cv2
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -59,7 +59,8 @@ class DirtyRollers(Augmentation):
         if force or self.should_run():
             image = data["post"][-1].result
             line_width = random.randint(
-                self.line_width_range[0], self.line_width_range[1]
+                self.line_width_range[0],
+                self.line_width_range[1],
             )
             rotate = random.choice([True, False])
 
@@ -71,7 +72,9 @@ class DirtyRollers(Augmentation):
             mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
 
             meta_mask = self.create_scanline_mask(
-                image.shape[1], image.shape[0], line_width * random.randint(10, 25)
+                image.shape[1],
+                image.shape[0],
+                line_width * random.randint(10, 25),
             )
             image = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)

@@ -1,5 +1,5 @@
 ---
-name: CI
+name: main
 
 on:
   push:
@@ -9,35 +9,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
-    name: "Python ${{ matrix.python-version }}"
-    runs-on: ubuntu-latest
-
+  main:
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9"]
+        python-version: ['3.7', '3.8', '3.9']
 
+    runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with:
-          python-version: "${{ matrix.python-version }}"
-      - name: "Install dependencies"
-        run: |
-          set -xe
-          python -VV
-          python -m pip install --upgrade pip setuptools wheel virtualenv
-          python -m pip install black flake8 pytest
-          python -m pip install numpy scipy opencv-python sklearn Pillow
-
-      - name: "Run black formatting check"
-        run: black --check .
-
-      - name: "Run flake8 lint: fail on syntax errors or undefined names"
-        run: flake8 . --count --select=E9,F63,F7,F82 --show-source
-
-      - name: "Run flake8 lint: warn on any other errors"
-        run: flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      - name: "Run pytest"
-        run: python -m pytest
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: install tox
+      run: python -m pip install --upgrade tox virtualenv setuptools pip
+    - name: run tox
+      run: tox -e py
