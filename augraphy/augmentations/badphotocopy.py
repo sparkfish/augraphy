@@ -23,7 +23,11 @@ class BadPhotoCopy(Augmentation):
     """
 
     def __init__(
-        self, noise_density=(0.1, 0.9), max_iteration=(7, 9), hash_type=0, p=0.5
+        self,
+        noise_density=(0.1, 0.9),
+        max_iteration=(7, 9),
+        hash_type=0,
+        p=0.5,
     ):
         """Constructor method"""
         super().__init__(p=p)
