@@ -146,3 +146,17 @@ def applyBlob(
         )
 
     return mask
+
+def binaryThreshold(img, thresholdType=cv2.THRESH_OTSU):
+    """Converts img to grayscale and applies the given threshold type,
+    or uses Otsu thresholding if no thresholdType is given.
+
+    :param img: the image to binarize
+    :type img: numpy.array
+    :param thresholdType: the type of thresholding to apply
+    :type thresholdType: cv2.THRESH_ value, optional
+    """
+    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret,thresholded = cv2.threshold(grayscale, 0, 255, thresholdType)
+    return thresholded
+
