@@ -1,5 +1,6 @@
 numpy >= 1.20.1
 opencv-python
 Pillow
+requests
 scipy
 sklearn

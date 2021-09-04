@@ -3,5 +3,6 @@ opencv-python
 Pillow
 pre-commit
 pytest
+requests
 scipy
 sklearn
