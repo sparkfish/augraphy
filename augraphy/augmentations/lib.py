@@ -148,15 +148,82 @@ def applyBlob(
     return mask
 
 
-def binaryThreshold(img, thresholdType=cv2.THRESH_OTSU):
-    """Converts img to grayscale and applies the given threshold type,
-    or uses Otsu thresholding if no thresholdType is given.
+def binaryThreshold(
+    img,
+    enable_otsu=1,
+    enable_simple=0,
+    simple_method=cv2.THRESH_BINARY,
+    thres=127,
+    max_value=255,
+    enable_adaptive=0,
+    adaptive_method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    block_size=21,
+    C=10,
+):
+    """Converts img to grayscale and applies the given threshold type
 
     :param img: the image to binarize
     :type img: numpy.array
-    :param thresholdType: the type of thresholding to apply
-    :type thresholdType: cv2.THRESH_ value, optional
+
+    :param enable_otsu: Flag to enable otsu binarization method
+    :type enable_otsu: Int, optional
+
+    :param enable_simple: Flag to enable simple binarization method
+    :type enable_simple: Int, optional
+    :param simple_method: Simple binarization method
+    :type simple_method: cv2.THRESH_ value, optional
+    :param thres: Thresholding value for simple binarization method
+    :type thres: Int, optional
+    :param max_value: Max value of image for simple binarization method
+    :type max_value: Int, optional
+
+    :param enable_adaptive: Flag to enable adaptive binarization method
+    :type enable_adaptive: Int, optional
+    :param adaptive_method: Adaptive binarization method
+    :type adaptive_method: cv2.THRESH_ value, optional
+    :param block_size: Size of a pixel neighborhood that is used to calculate
+                        a threshold value for adaptive method
+    :type block_size: Int, optional
+    :param C: Constant subtracted from the mean or weighted mean, only for
+                        adaptive method
+    :type C: Int, optional
     """
+
+    if enable_simple or enable_adaptive:
+        enable_otsu = 0
+
+    # convert to grayscale
     grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    ret, thresholded = cv2.threshold(grayscale, 0, 255, thresholdType)
+
+    # otsu method:
+    if enable_otsu:
+        ret, thresholded = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)
+    # simple method
+    elif enable_simple:
+        simple_methods = [
+            cv2.THRESH_BINARY,
+            cv2.THRESH_BINARY_INV,
+            cv2.THRESH_TRUNC,
+            cv2.THRESH_TOZERO,
+            cv2.THRESH_TOZERO_INV,
+        ]
+        if simple_method in simple_methods:
+            ret, thresholded = cv2.threshold(grayscale, thres, max_value, simple_method)
+        else:
+            raise TypeError("Invalid thresholding method.")
+    # adaptive method
+    elif enable_adaptive:
+        adaptive_methods = [cv2.ADAPTIVE_THRESH_MEAN_C, cv2.ADAPTIVE_THRESH_GAUSSIAN_C]
+        if adaptive_method in adaptive_methods:
+            thresholded = cv2.adaptiveThreshold(
+                grayscale,
+                255,
+                adaptive_method,
+                cv2.THRESH_BINARY,
+                block_size,
+                C,
+            )
+        else:
+            raise TypeError("Invalid thresholding method.")
+
     return thresholded
