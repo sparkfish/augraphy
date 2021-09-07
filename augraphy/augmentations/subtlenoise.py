@@ -1,5 +1,6 @@
-import numpy as np
 import random
+
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -19,7 +20,7 @@ class SubtleNoise(Augmentation):
         super().__init__(p=p)
         self.range = range
         self.add_subtle_noise = np.vectorize(
-            lambda x: max(0, min(255, x + random.randint(-self.range, self.range)))
+            lambda x: max(0, min(255, x + random.randint(-self.range, self.range))),
         )
 
     # Constructs a string representation of this Augmentation.

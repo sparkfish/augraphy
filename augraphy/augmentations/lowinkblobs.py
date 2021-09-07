@@ -1,11 +1,11 @@
-import numpy as np
 import random
 
+import numpy as np
 from sklearn.datasets import make_blobs
 
+from augraphy.augmentations.lib import applyBlob
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lib import applyBlob
 
 
 class LowInkBlobs(Augmentation):

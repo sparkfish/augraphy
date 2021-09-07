@@ -1,6 +1,7 @@
-import numpy as np
 import random
+
 import cv2
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -15,15 +16,24 @@ class BadPhotoCopy(Augmentation):
             the requested noise value. Higher value generates sparser
             noise.
     :type max_iteration: tuple, optional
+    :param hash_type: Types of hashes to generate olsen noise.
+    :type hash_type: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
-    def __init__(self, noise_density=(0.01, 0.1), max_iteration=(12, 15), p=0.5):
+    def __init__(
+        self,
+        noise_density=(0.1, 0.9),
+        max_iteration=(7, 9),
+        hash_type=0,
+        p=0.5,
+    ):
         """Constructor method"""
         super().__init__(p=p)
         self.noise_density = noise_density
         self.max_iteration = max_iteration
+        self.hash_type = hash_type
         self._SCALE_FACTOR = 2
         self.GAUSSIAN = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
         self.BOX = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) * 1 / 9
@@ -31,7 +41,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, p={self.p})"
+        return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
 
     def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
         """
@@ -64,7 +74,13 @@ class BadPhotoCopy(Augmentation):
         # apply olsen noise
         width, height = np.array(shape)
         self._olsen_noise(
-            pixels, x, y, width, height, iteration=iteration, kernel=kernel
+            pixels,
+            x,
+            y,
+            width,
+            height,
+            iteration=iteration,
+            kernel=kernel,
         )
 
         # apply transpose
@@ -85,7 +101,14 @@ class BadPhotoCopy(Augmentation):
         return dim + self._blur_edge + self._SCALE_FACTOR + 1
 
     def _olsen_noise(
-        self, pixels, x, y, width, height, iteration=7, kernel=np.ones((3, 3))
+        self,
+        pixels,
+        x,
+        y,
+        width,
+        height,
+        iteration=7,
+        kernel=np.ones((3, 3)),
     ):
         """
         Olsen Noise generation algorithm.
@@ -101,9 +124,7 @@ class BadPhotoCopy(Augmentation):
             # Base case.
             self._apply_noise(pixels, x, y, width, height, iteration)
             return
-        x_remainder = (
-            x & 1
-        )  # Adjust the x_remainder so we know how much more into the pixel are.
+        x_remainder = x & 1  # Adjust the x_remainder so we know how much more into the pixel are.
         y_remainder = y & 1
 
         self._olsen_noise(
@@ -144,12 +165,23 @@ class BadPhotoCopy(Augmentation):
                 pixels[x, y] = pixels[(x + shift_x) // factor, (y + shift_y) // factor]
 
     def _apply_noise(
-        self, pixels, x_within_field, y_within_field, width, height, iteration
+        self,
+        pixels,
+        x_within_field,
+        y_within_field,
+        width,
+        height,
+        iteration,
     ):
         for i, m in np.ndenumerate(pixels[:width, :height]):
-            pixels[i] += self._hash_random(
-                i[0] + x_within_field, i[1] + y_within_field, iteration
-            ) & (1 << (self.max_iteration[1] - iteration))
+            pixels[i] += (
+                self._hash_random(
+                    i[0] + x_within_field,
+                    i[1] + y_within_field,
+                    iteration,
+                )
+                & (1 << (self.max_iteration[1] - iteration))
+            )
 
     def _hash_random(self, *elements):
         """
@@ -168,26 +200,34 @@ class BadPhotoCopy(Augmentation):
     def _hash(self, v):
         value = int(v)
         original = value
-        q = value & 3
-        if q == 3:
+
+        if self.hash_type == 1:
             value += original
-            value ^= value << 32
-            value ^= original << 36
-            value += value >> 22
-        elif q == 2:
-            value += original
-            value ^= value << 22
+            value ^= value << 1
+
+        else:
+            q = value & 3
+
+            if q == 3:
+                value += original
+                value ^= value << 32
+                value ^= original << 36
+                value += value >> 22
+            elif q == 2:
+                value += original
+                value ^= value << 22
+                value += value >> 34
+            elif q == 1:
+                value += original
+                value ^= value << 20
+                value += value >> 2
+            value ^= value << 6
+            value += value >> 10
+            value ^= value << 8
             value += value >> 34
-        elif q == 1:
-            value += original
-            value ^= value << 20
-            value += value >> 2
-        value ^= value << 6
-        value += value >> 10
-        value ^= value << 8
-        value += value >> 34
-        value ^= value << 50
-        value += value >> 12
+            value ^= value << 50
+            value += value >> 12
+
         return value
 
     def _crimp(self, color):
@@ -249,6 +289,7 @@ class BadPhotoCopy(Augmentation):
         # get image dimensions
         if len(image.shape) > 2:
             ysize, xsize, dim = image.shape
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             ysize, xsize = image.shape
             dim = 2
@@ -267,11 +308,7 @@ class BadPhotoCopy(Augmentation):
         remove_noise = np.vectorize(remove_noise_fn)
 
         # add random noise range from 0-128
-        add_edge_noise_fn = (
-            lambda x, y: random.randint(0, 128)
-            if (y == 255 and random.random() < 0.70)
-            else x
-        )
+        add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
         add_edge_noise = np.vectorize(add_edge_noise_fn)
 
         image_sobel = self.sobel(image)
@@ -314,7 +351,9 @@ class BadPhotoCopy(Augmentation):
 
         noise_img = add_noise(mask).astype("uint8")
         blurred = cv2.GaussianBlur(
-            noise_img, (random.choice([3, 5, 7]), random.choice([3, 5, 7])), 0
+            noise_img,
+            (random.choice([3, 5, 7]), random.choice([3, 5, 7])),
+            0,
         )
 
         # type 2 noise
@@ -325,7 +364,10 @@ class BadPhotoCopy(Augmentation):
             return result
 
         _, thresh1 = cv2.threshold(
-            blurred, random.randint(64, 128), 255, cv2.THRESH_BINARY
+            blurred,
+            random.randint(64, 128),
+            255,
+            cv2.THRESH_BINARY,
         )
 
         # type 0 noise
@@ -336,7 +378,7 @@ class BadPhotoCopy(Augmentation):
 
         grey_img = noise_img.copy()
         grey_img[:, :][grey_img[:, :] == 0] = random.choice(
-            [255, 255, 255, random.randint(196, 224)]
+            [255, 255, 255, random.randint(196, 224)],
         )
 
         # type 1 noise

@@ -2,7 +2,6 @@ import random
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationsequence import AugmentationSequence
-from augraphy.base.augmentation import Augmentation
 
 
 class OneOf(Augmentation):
@@ -33,7 +32,7 @@ class OneOf(Augmentation):
     # Constructs a string containing the representations
     # of each augmentation
     def __repr__(self):
-        r = f"OneOf([\n"
+        r = "OneOf([\n"
 
         for augmentation in self.augmentations:
             r += f"\t{repr(augmentation)}\n"

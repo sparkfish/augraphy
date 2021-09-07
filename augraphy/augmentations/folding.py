@@ -1,7 +1,7 @@
-import numpy as np
 import random
-import cv2
 
+import cv2
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -54,7 +54,13 @@ class Folding(Augmentation):
 
     # Transform left side of folding area
     def warp_fold_left_side(
-        self, img, ysize, fold_noise, fold_x, fold_width_one_side, fold_y_shift
+        self,
+        img,
+        ysize,
+        fold_noise,
+        fold_x,
+        fold_width_one_side,
+        fold_y_shift,
     ):
 
         img_fuse = img.copy()
@@ -85,10 +91,12 @@ class Folding(Augmentation):
 
         # points of folding area
         source_pts = np.array(
-            [top_left, bottom_left, bottom_right, top_right], dtype=np.float32
+            [top_left, bottom_left, bottom_right, top_right],
+            dtype=np.float32,
         )
         destination_pts = np.array(
-            [dtop_left, dbottom_left, dbottom_right, dtop_right], dtype=np.float32
+            [dtop_left, dbottom_left, dbottom_right, dtop_right],
+            dtype=np.float32,
         )
 
         # crop section of folding area
@@ -103,7 +111,11 @@ class Folding(Augmentation):
 
         # warp folding area
         img_warped = self.four_point_transform(
-            img_crop, source_pts, destination_pts, cxsize, cysize + fold_y_shift
+            img_crop,
+            source_pts,
+            destination_pts,
+            cxsize,
+            cysize + fold_y_shift,
         )
         img_warped = self.add_noise(img_warped, 1, fold_noise / 2)
 
@@ -116,7 +128,13 @@ class Folding(Augmentation):
 
     # Transform right side of folding area
     def warp_fold_right_side(
-        self, img, ysize, fold_noise, fold_x, fold_width_one_side, fold_y_shift
+        self,
+        img,
+        ysize,
+        fold_noise,
+        fold_x,
+        fold_width_one_side,
+        fold_y_shift,
     ):
 
         img_fuse = img.copy()
@@ -147,10 +165,12 @@ class Folding(Augmentation):
 
         # points of folding area
         source_pts = np.array(
-            [top_left, bottom_left, bottom_right, top_right], dtype=np.float32
+            [top_left, bottom_left, bottom_right, top_right],
+            dtype=np.float32,
         )
         destination_pts = np.array(
-            [dtop_left, dbottom_left, dbottom_right, dtop_right], dtype=np.float32
+            [dtop_left, dbottom_left, dbottom_right, dtop_right],
+            dtype=np.float32,
         )
 
         # crop section of folding area
@@ -165,7 +185,11 @@ class Folding(Augmentation):
 
         # warp folding area
         img_warped = self.four_point_transform(
-            img_crop, source_pts, destination_pts, cxsize, cysize + fold_y_shift
+            img_crop,
+            source_pts,
+            destination_pts,
+            cxsize,
+            cysize + fold_y_shift,
         )
         img_warped = self.add_noise(img_warped, 0, fold_noise / 2)
 
@@ -195,9 +219,7 @@ class Folding(Augmentation):
                 if side:  # more noise on right side
                     p_score = (((x) / xsize) ** 3) * p  # non linear score with power
                 else:  # more noise on left side
-                    p_score = (
-                        ((xsize - x) / xsize) ** 3
-                    ) * p  # non linear score with power
+                    p_score = (((xsize - x) / xsize) ** 3) * p  # non linear score with power
 
                 if p_score > random.random():
                     img[y, x] = 0
@@ -205,13 +227,19 @@ class Folding(Augmentation):
 
     # Apply perspective transform 2 times and get single folding effect
     def apply_folding(
-        self, img, ysize, xsize, gradient_width, gradient_height, fold_noise
+        self,
+        img,
+        ysize,
+        xsize,
+        gradient_width,
+        gradient_height,
+        fold_noise,
     ):
 
         min_fold_x = min(np.ceil(gradient_width[0] * xsize), xsize).astype("int")
         max_fold_x = min(np.ceil(gradient_width[1] * xsize), xsize).astype("int")
         fold_width_one_side = int(
-            random.randint(min_fold_x, max_fold_x) / 2
+            random.randint(min_fold_x, max_fold_x) / 2,
         )  # folding width from left to center of folding, or from right to center of folding
 
         # test for valid folding center line
@@ -220,31 +248,43 @@ class Folding(Augmentation):
             return img
 
         fold_x = random.randint(
-            fold_width_one_side + 1, xsize - fold_width_one_side - 1
+            fold_width_one_side + 1,
+            xsize - fold_width_one_side - 1,
         )  # center of folding
 
         fold_y_shift_min = min(np.ceil(gradient_height[0] * ysize), ysize).astype("int")
         fold_y_shift_max = min(np.ceil(gradient_height[1] * ysize), ysize).astype("int")
         fold_y_shift = random.randint(
-            fold_y_shift_min, fold_y_shift_max
+            fold_y_shift_min,
+            fold_y_shift_max,
         )  # y distortion in folding (support positive y value for now)
 
         if (fold_width_one_side != 0) and (fold_y_shift != 0):
             img_fold_l = self.warp_fold_left_side(
-                img, ysize, fold_noise, fold_x, fold_width_one_side, fold_y_shift
+                img,
+                ysize,
+                fold_noise,
+                fold_x,
+                fold_width_one_side,
+                fold_y_shift,
             )
             img_fold_r = self.warp_fold_right_side(
-                img_fold_l, ysize, fold_noise, fold_x, fold_width_one_side, fold_y_shift
+                img_fold_l,
+                ysize,
+                fold_noise,
+                fold_x,
+                fold_width_one_side,
+                fold_y_shift,
             )
             return img_fold_r
         else:
             if fold_width_one_side == 0:
                 print(
-                    "Folding augmentation is not applied, please increase gradient width or image size"
+                    "Folding augmentation is not applied, please increase gradient width or image size",
                 )
             else:
                 print(
-                    "Folding augmentation is not applied, please increase gradient height or image size"
+                    "Folding augmentation is not applied, please increase gradient height or image size",
                 )
             return img
 

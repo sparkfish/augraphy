@@ -1,10 +1,12 @@
 import random
-import numpy as np
-import cv2
 
+import cv2
+import numpy as np
+
+from augraphy.augmentations.lib import addNoise
+from augraphy.augmentations.lib import applyBlob
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lib import applyBlob, addNoise
 
 
 class Letterpress(Augmentation):

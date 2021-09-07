@@ -4,9 +4,7 @@ Currently supported:
 1. Albumentations: https://github.com/albumentations-team/albumentations
 2. Imgaug: https://github.com/aleju/imgaug
 """
-
 import numpy
-
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult

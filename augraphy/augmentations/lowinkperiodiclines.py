@@ -1,7 +1,7 @@
 import random
 
-from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lowinkline import LowInkLine
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class LowInkPeriodicLines(LowInkLine):

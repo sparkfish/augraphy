@@ -1,6 +1,7 @@
-import numpy as np
 import random
+
 import cv2
+import numpy as np
 from PIL import Image
 
 from augraphy.base.augmentation import Augmentation

@@ -1,7 +1,9 @@
-import numpy as np
-import random
-import cv2
 import math
+import random
+
+import cv2
+import numpy as np
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -59,7 +61,8 @@ class BookBinding(Augmentation):
         radius = random.randint(self.radius_range[0], self.radius_range[1])
         angle = 30
         curve_intensity = random.randint(
-            self.curve_intensity_range[0], self.curve_intensity_range[1]
+            self.curve_intensity_range[0],
+            self.curve_intensity_range[1],
         )
         image = data["post"][-1].result.copy()
         image = self.add_book_shadow(image, radius, angle)

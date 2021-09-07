@@ -1,7 +1,7 @@
-import numpy as np
 import random
+
 import cv2
-import random
+import numpy as np
 from PIL import Image
 
 from augraphy.base.augmentation import Augmentation
@@ -28,7 +28,12 @@ class DirtyDrum(Augmentation):
     """
 
     def __init__(
-        self, line_width_range=(6, 18), ksize=(17, 17), sigmaX=0, alpha=0.5, p=0.5
+        self,
+        line_width_range=(6, 18),
+        ksize=(17, 17),
+        sigmaX=0,
+        alpha=0.5,
+        p=0.5,
     ):
         super().__init__(p=p)
         self.line_width_range = line_width_range
@@ -68,9 +73,7 @@ class DirtyDrum(Augmentation):
                 if side:  # more noise on right side
                     p_score = (((x) / xsize) ** 0.5) * p  # non linear score with power
                 else:  # more noise on left side
-                    p_score = (
-                        ((xsize - x) / xsize) ** 0.5
-                    ) * p  # non linear score with power
+                    p_score = (((xsize - x) / xsize) ** 0.5) * p  # non linear score with power
 
                 if p_score > random.random():
                     img[y, x] = 0
@@ -93,9 +96,7 @@ class DirtyDrum(Augmentation):
             # generate initial random strip width
             current_width2 = random.randint(line_width_range[0], line_width_range[1])
             current_width = current_width2 * random.randint(1, 5)
-            while (
-                x + (current_width + current_width2) < xsize
-            ):  # while next stripe is smaller than size
+            while x + (current_width + current_width2) < xsize:  # while next stripe is smaller than size
 
                 # coordinates of stripe
                 ys = 0
@@ -127,9 +128,7 @@ class DirtyDrum(Augmentation):
 
             current_height2 = random.randint(line_width_range[0], line_width_range[1])
             current_height = current_height2 * random.randint(1, 5)
-            while (
-                y + (current_height) < ysize
-            ):  # while next stripe is smaller than size
+            while y + (current_height) < ysize:  # while next stripe is smaller than size
 
                 # coordinates of stripe
                 ys = y
@@ -140,16 +139,21 @@ class DirtyDrum(Augmentation):
 
                 # rotate, and then get left portion of stripe and apply noise
                 img_dirty_left = self.add_noise(
-                    np.rot90(img_dirty[ys:ymid, xs:xe], k=1), 0, p=0.5
+                    np.rot90(img_dirty[ys:ymid, xs:xe], k=1),
+                    0,
+                    p=0.5,
                 )
                 img_dirty[ys:ymid, xs:xe] = np.rot90(img_dirty_left, k=3)  # rotate back
 
                 # rotate, and get right portion of stripe and apply noise
                 img_dirty_right = self.add_noise(
-                    np.rot90(img_dirty[ymid:ye, xs:xe], k=1), 1, p=0.5
+                    np.rot90(img_dirty[ymid:ye, xs:xe], k=1),
+                    1,
+                    p=0.5,
                 )
                 img_dirty[ymid:ye, xs:xe] = np.rot90(
-                    img_dirty_right, k=3
+                    img_dirty_right,
+                    k=3,
                 )  # rotate back
 
                 # alternate stripe in opposite intensity (black -> white or white -> black)
@@ -159,7 +163,8 @@ class DirtyDrum(Augmentation):
                 y += current_height + current_height2
                 # generate random strip width
                 current_height2 = random.randint(
-                    line_width_range[0], line_width_range[1]
+                    line_width_range[0],
+                    line_width_range[1],
                 )
                 current_height = current_height2 * random.randint(1, 5)
 

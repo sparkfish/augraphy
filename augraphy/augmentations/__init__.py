@@ -18,9 +18,9 @@ from augraphy.augmentations.lowinkblobs import LowInkBlobs
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.noisetexturize import NoiseTexturize
-from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
+from augraphy.augmentations.subtlenoise import SubtleNoise
 
 
 __all__ = [

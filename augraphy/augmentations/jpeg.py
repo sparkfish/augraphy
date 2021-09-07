@@ -1,5 +1,6 @@
-import cv2
 import random
+
+import cv2
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult

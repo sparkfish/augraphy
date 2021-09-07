@@ -1,7 +1,7 @@
-import cv2
-import numpy as np
 import random
 
+import cv2
+import numpy as np
 from scipy.stats import norm
 
 from augraphy.base.augmentation import Augmentation
@@ -120,11 +120,18 @@ class LightingGradient(Augmentation):
         for i in range(canvas_y):
             if mode == "linear":
                 i_value = self._decayed_value_in_linear(
-                    i, max_brightness, init_light_pos[1], linear_decay_rate
+                    i,
+                    max_brightness,
+                    init_light_pos[1],
+                    linear_decay_rate,
                 )
             elif mode == "gaussian":
                 i_value = self._decayed_value_in_norm(
-                    i, max_brightness, min_brightness, init_light_pos[1], mask_size[1]
+                    i,
+                    max_brightness,
+                    min_brightness,
+                    init_light_pos[1],
+                    mask_size[1],
                 )
             else:
                 i_value = 0
@@ -134,7 +141,8 @@ class LightingGradient(Augmentation):
         mask = cv2.warpAffine(mask, rotate_M, (canvas_x, canvas_y))
         # crop
         mask = mask[
-            init_mask_ul[1] : init_mask_br[1], init_mask_ul[0] : init_mask_br[0]
+            init_mask_ul[1] : init_mask_br[1],
+            init_mask_ul[0] : init_mask_br[0],
         ]
         mask = np.asarray(mask, dtype=np.uint8)
         # add median blur

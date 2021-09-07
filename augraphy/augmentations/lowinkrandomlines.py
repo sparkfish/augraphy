@@ -1,7 +1,7 @@
 import random
 
-from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.augmentations.lowinkline import LowInkLine
+from augraphy.base.augmentationresult import AugmentationResult
 
 
 class LowInkRandomLines(LowInkLine):
@@ -35,7 +35,8 @@ class LowInkRandomLines(LowInkLine):
             for i in range(count):
                 if mask.shape[0] - 1 >= 1:
                     mask = self.add_transparency_line(
-                        mask, random.randint(1, mask.shape[0] - 1)
+                        mask,
+                        random.randint(1, mask.shape[0] - 1),
                     )
 
             data["ink"].append(AugmentationResult(self, mask))
