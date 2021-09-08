@@ -73,9 +73,7 @@ class DirtyDrum(Augmentation):
                 if side:  # more noise on right side
                     p_score = (((x) / xsize) ** 0.5) * p  # non linear score with power
                 else:  # more noise on left side
-                    p_score = (
-                        ((xsize - x) / xsize) ** 0.5
-                    ) * p  # non linear score with power
+                    p_score = (((xsize - x) / xsize) ** 0.5) * p  # non linear score with power
 
                 if p_score > random.random():
                     img[y, x] = 0
@@ -98,9 +96,7 @@ class DirtyDrum(Augmentation):
             # generate initial random strip width
             current_width2 = random.randint(line_width_range[0], line_width_range[1])
             current_width = current_width2 * random.randint(1, 5)
-            while (
-                x + (current_width + current_width2) < xsize
-            ):  # while next stripe is smaller than size
+            while x + (current_width + current_width2) < xsize:  # while next stripe is smaller than size
 
                 # coordinates of stripe
                 ys = 0
@@ -132,9 +128,7 @@ class DirtyDrum(Augmentation):
 
             current_height2 = random.randint(line_width_range[0], line_width_range[1])
             current_height = current_height2 * random.randint(1, 5)
-            while (
-                y + (current_height) < ysize
-            ):  # while next stripe is smaller than size
+            while y + (current_height) < ysize:  # while next stripe is smaller than size
 
                 # coordinates of stripe
                 ys = y

@@ -18,11 +18,7 @@ def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """
 
     intensity = random.uniform(intensity_range[0], intensity_range[1])
-    noise = (
-        lambda x: random.randint(color_range[0], color_range[1])
-        if (x == 0 and random.random() < intensity)
-        else x
-    )
+    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
     add_noise = np.vectorize(noise)
 
     return add_noise(image)
@@ -71,12 +67,7 @@ def _create_blob(
     blob = np.full((size, size, 1), 0, dtype="uint8")
 
     for point in X:
-        if (
-            point[0] < blob.shape[0]
-            and point[1] < blob.shape[1]
-            and point[0] > 0
-            and point[1] > 0
-        ):
+        if point[0] < blob.shape[0] and point[1] < blob.shape[1] and point[0] > 0 and point[1] > 0:
             value = random.randint(value_range[0], value_range[1])
             blob[point[0], point[1]] = value
 

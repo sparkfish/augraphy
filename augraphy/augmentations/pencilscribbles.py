@@ -75,9 +75,7 @@ class PencilScribbles(Augmentation):
 
         intensity = random.uniform(intensity_range[0], intensity_range[1])
         noise = (
-            lambda x: random.randint(color_range[0], color_range[1])
-            if (x == 0 and random.random() < intensity)
-            else x
+            lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
         )
         add_noise = np.vectorize(noise)
 
@@ -92,11 +90,7 @@ class PencilScribbles(Augmentation):
         stroke_image = apply_mask(stroke_image, noise_mask)
 
         intensity = random.uniform(0.4, 0.7)
-        add_noise_fn = (
-            lambda x, y: random.randint(32, 128)
-            if (y == 255 and random.random() < intensity)
-            else x
-        )
+        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
 
         add_noise = np.vectorize(add_noise_fn)
         apply_mask = np.vectorize(apply_mask_fn)
@@ -121,15 +115,11 @@ class PencilScribbles(Augmentation):
         size = min([size, max_height, max_width])
         width, height = size, size  # picture's size
 
-        strokes_img = (
-            np.zeros((height, width, 3), np.uint8) + 255
-        )  # make the background white
+        strokes_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
 
         for i in range(5):
             # lets say these are my black pixels in a white image.
-            stroke_img = (
-                np.zeros((height, width, 3), np.uint8) + 255
-            )  # make the background white
+            stroke_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
             x = np.array(
                 [
                     random.randint(25, size - 25),

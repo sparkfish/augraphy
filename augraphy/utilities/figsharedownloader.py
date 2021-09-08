@@ -73,7 +73,8 @@ class FigshareDownloader:
         """
 
         urlretrieve(
-            fileDict["download_url"], os.path.join(self.saveDir, fileDict["name"])
+            fileDict["download_url"],
+            os.path.join(self.saveDir, fileDict["name"]),
         )
 
     def downloadSingleFile(self, articleID, fileDict):

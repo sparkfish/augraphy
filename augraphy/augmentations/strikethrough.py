@@ -1,7 +1,9 @@
-import numpy as np
-import random
-import cv2
 import math
+import random
+
+import cv2
+import numpy as np
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -64,7 +66,8 @@ class Strikethrough(Augmentation):
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         strikethrough_thickness = random.randint(
-            self.strikethrough_thickness_range[0], self.strikethrough_thickness_range[1]
+            self.strikethrough_thickness_range[0],
+            self.strikethrough_thickness_range[1],
         )
         image = cv2.blur(image, (5, 5))
         image = image.astype("uint8")
@@ -74,12 +77,17 @@ class Strikethrough(Augmentation):
             image = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
 
         ret, thresh1 = cv2.threshold(
-            image, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV
+            image,
+            0,
+            255,
+            cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
         )
         rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
         dilation = cv2.dilate(thresh1, rect_kernel, iterations=1)
         contours, hierarchy = cv2.findContours(
-            dilation, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+            dilation,
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_NONE,
         )
 
         strikethrough_img = image.copy()
@@ -102,9 +110,7 @@ class Strikethrough(Augmentation):
                 mid_end = [x + w, int(y + (h / 2))]
                 points_count = random.randint(3, 10)
                 points = np.linspace(mid_start[0], mid_end[0], points_count)
-                points_list = [
-                    [int(x), (mid_start[1] + random.randint(-6, 6))] for x in points
-                ]
+                points_list = [[int(x), (mid_start[1] + random.randint(-6, 6))] for x in points]
                 points_list = self.smooth(points_list, 8)
                 for i in range(len(points_list) - 1):
                     p1 = (int(points_list[i][0]), int(points_list[i][1]))

@@ -124,9 +124,7 @@ class BadPhotoCopy(Augmentation):
             # Base case.
             self._apply_noise(pixels, x, y, width, height, iteration)
             return
-        x_remainder = (
-            x & 1
-        )  # Adjust the x_remainder so we know how much more into the pixel are.
+        x_remainder = x & 1  # Adjust the x_remainder so we know how much more into the pixel are.
         y_remainder = y & 1
 
         self._olsen_noise(
@@ -310,11 +308,7 @@ class BadPhotoCopy(Augmentation):
         remove_noise = np.vectorize(remove_noise_fn)
 
         # add random noise range from 0-128
-        add_edge_noise_fn = (
-            lambda x, y: random.randint(0, 128)
-            if (y == 255 and random.random() < 0.70)
-            else x
-        )
+        add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
         add_edge_noise = np.vectorize(add_edge_noise_fn)
 
         image_sobel = self.sobel(image)

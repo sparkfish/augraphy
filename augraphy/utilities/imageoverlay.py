@@ -73,12 +73,7 @@ class ImageOverlay(Augmentation):
         return cropped
 
     def __repr__(self):
-        repstring = (
-            "ImageOverlay(\n"
-            f"foreground={self.foreground},\n"
-            f"layer={self.layer},\n"
-            f"p={self.p})"
-        )
+        repstring = "ImageOverlay(\n" f"foreground={self.foreground},\n" f"layer={self.layer},\n" f"p={self.p})"
 
     def __call__(self, data, force=False):
         img = data[self.layer][-1].result

@@ -1,5 +1,6 @@
 from augraphy.augmentations.badphotocopy import BadPhotoCopy
 from augraphy.augmentations.bleedthrough import BleedThrough
+from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
 from augraphy.augmentations.dirtydrum import DirtyDrum
@@ -17,11 +18,10 @@ from augraphy.augmentations.lowinkblobs import LowInkBlobs
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.noisetexturize import NoiseTexturize
-from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
-from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.strikethrough import Strikethrough
+from augraphy.augmentations.subtlenoise import SubtleNoise
 
 __all__ = [
     "BadPhotoCopy",
