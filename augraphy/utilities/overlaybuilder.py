@@ -76,9 +76,7 @@ class OverlayBuilder:
             for i in range(self.ntimes):
                 overlayBase[
                     yloc : (yloc + fgHeight),
-                    (bgWidth - (self.edgeOffset + fgWidth)) : (
-                        bgWidth - self.edgeOffset
-                    ),
+                    (bgWidth - (self.edgeOffset + fgWidth)) : (bgWidth - self.edgeOffset),
                 ] = self.foreground
                 yloc += fgHeight + offsetHeight
 
@@ -95,9 +93,7 @@ class OverlayBuilder:
             xloc = offsetWidth
             for i in range(self.ntimes):
                 overlayBase[
-                    (bgHeight - (self.edgeOffset + fgHeight)) : (
-                        bgHeight - self.edgeOffset
-                    ),
+                    (bgHeight - (self.edgeOffset + fgHeight)) : (bgHeight - self.edgeOffset),
                     xloc : (xloc + fgWidth),
                 ] = self.foreground
                 xloc += fgWidth + offsetWidth
