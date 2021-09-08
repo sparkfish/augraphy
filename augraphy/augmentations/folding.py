@@ -219,7 +219,9 @@ class Folding(Augmentation):
                 if side:  # more noise on right side
                     p_score = (((x) / xsize) ** 3) * p  # non linear score with power
                 else:  # more noise on left side
-                    p_score = (((xsize - x) / xsize) ** 3) * p  # non linear score with power
+                    p_score = (
+                        ((xsize - x) / xsize) ** 3
+                    ) * p  # non linear score with power
 
                 if p_score > random.random():
                     img[y, x] = 0

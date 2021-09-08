@@ -46,9 +46,7 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return (
-            f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
-        )
+        return f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

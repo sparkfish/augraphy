@@ -72,7 +72,9 @@ class FigshareDownloader:
         :type fileDict: dictionary
         """
 
-        urlretrieve(fileDict["download_url"], os.path.join(self.saveDir, fileDict["name"]))
+        urlretrieve(
+            fileDict["download_url"], os.path.join(self.saveDir, fileDict["name"])
+        )
 
     def downloadSingleFile(self, articleID, fileDict):
         """Download one file in articleID"""
