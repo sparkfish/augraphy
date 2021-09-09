@@ -12,17 +12,19 @@ class ImageOverlay(Augmentation):
     on background. Not all of foreground will necessarily be visible; some may
     be cut off by the edge of the background image.
 
-    :param layer: The layer of image to overlay onto
-    :type layer: string, optional
-    :param background: the document on which to overlay the foreground
-    :type background: np.array
     :param foreground: the image to overlay on the background document
     :type foreground: np.array
+    :param position: a pair of x and y coordinates to place the foreground image
+        If not given, the foreground will be randomly placed.
+    :type layer: pair of ints, optional
+    :param layer: The layer of image to overlay onto.
+    :type layer: string, optional
     :param p: the probability this augmentation will be applied
     :type p: float, optional
     """
 
-    def __init__(self, foreground, layer="post", p=0.5):
+    def __init__(self, foreground, position=(None, None), layer="post", p=0.5):
+        self.position = position
         self.foreground = foreground
         self.layer = layer
         super().__init__(p=p)
@@ -60,9 +62,14 @@ class ImageOverlay(Augmentation):
         # Center the background image
         ambient[xstart:xstop, ystart:ystop] = background
 
-        # Choose somewhere to put the foreground
-        xloc = random.randrange(0, xstop)
-        yloc = random.randrange(0, ystop)
+        if self.position == (None, None):
+            # Choose somewhere to put the foreground
+            xloc = random.randrange(0, xstop)
+            yloc = random.randrange(0, ystop)
+
+        else:
+            xloc = self.position[0]
+            yloc = self.position[1]
 
         # Place the foreground at (xloc,yloc)
         ambient = self.layerForeground(ambient, xloc, yloc)
