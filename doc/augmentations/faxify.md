@@ -6,7 +6,7 @@ The faxify augmentation emulates faxify effect in the image.
 
 ```python
 augmentation = Faxify(
-			     scale_range=(1, 1), 
+			     scale_range=(1, 1),
                  monochrome=0,
                  monochrome_method="Otsu",
                  monochrome_threshold=127,

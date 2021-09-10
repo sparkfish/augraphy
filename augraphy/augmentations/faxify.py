@@ -1,8 +1,9 @@
 import random
-import numpy as np
-import cv2
-from augraphy.augmentations.lib import binaryThreshold
 
+import cv2
+import numpy as np
+
+from augraphy.augmentations.lib import binaryThreshold
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -116,7 +117,10 @@ class Faxify(Augmentation):
         image_kernel = np.zeros((kernel_size_x, kernel_size_x))
         image_kernel[half_kernel_size, half_kernel_size] = 1
         gaussian_kernel = cv2.GaussianBlur(
-            image_kernel, (kernel_size_x, kernel_size_y), sigmaX=sigma, sigmaY=sigma
+            image_kernel,
+            (kernel_size_x, kernel_size_y),
+            sigmaX=sigma,
+            sigmaY=sigma,
         )
         gaussian_kernel *= 1 / np.max(gaussian_kernel)
 
@@ -127,8 +131,7 @@ class Faxify(Augmentation):
         for y in range(0, ysize - kernel_size + 1, kernel_size):
             for x in range(0, xsize - kernel_size + 1, kernel_size):
                 image_halftone[y : y + kernel_size, x : x + kernel_size] = (
-                    np.mean(rotated[y : y + kernel_size, x : x + kernel_size])
-                    * gaussian_kernel
+                    np.mean(rotated[y : y + kernel_size, x : x + kernel_size]) * gaussian_kernel
                 )
 
         # rotate back using negative angle
@@ -156,14 +159,10 @@ class Faxify(Augmentation):
 
         if len(img.shape) > 2:
             img_gray = np.min(img_complement, axis=2) * (gray_level / max_value)
-            img_gray[
-                np.where(np.sum(img, axis=2) == 0)
-            ] = max_value  # if there is no color, set it to max value
+            img_gray[np.where(np.sum(img, axis=2) == 0)] = max_value  # if there is no color, set it to max value
         else:
             img_gray = img_complement * (gray_level / max_value)
-            img_gray[
-                np.where(img == 0)
-            ] = max_value  # if there is no color, set it to max value
+            img_gray[np.where(img == 0)] = max_value  # if there is no color, set it to max value
 
         if invert:
             return (img_gray / 255).astype("float")
