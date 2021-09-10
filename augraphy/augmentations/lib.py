@@ -150,7 +150,7 @@ def applyBlob(
 
 def binaryThreshold(
     img,
-    enable_otsu=1,
+    enable_otsu=0,
     enable_simple=0,
     simple_method=cv2.THRESH_BINARY,
     thres=127,
@@ -189,8 +189,9 @@ def binaryThreshold(
     :type C: Int, optional
     """
 
-    if enable_simple or enable_adaptive:
-        enable_otsu = 0
+    # otsu as default method
+    if not enable_otsu and not enable_simple and not enable_adaptive:
+        enable_otsu = 1
 
     # convert to grayscale
     grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

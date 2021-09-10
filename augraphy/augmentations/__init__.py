@@ -7,6 +7,7 @@ from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
 from augraphy.augmentations.dithering import Dithering
 from augraphy.augmentations.dustyink import DustyInk
+from augraphy.augmentations.faxify import Faxify
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.gaussianblur import GaussianBlur
@@ -33,6 +34,7 @@ __all__ = [
     "DirtyRollers",
     "Dithering",
     "DustyInk",
+    "Faxify",
     "Folding",
     "Gamma",
     "GaussianBlur",
