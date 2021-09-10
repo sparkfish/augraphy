@@ -65,7 +65,10 @@ class OverlayBuilder:
         if self.edge == "left":
             yloc = offsetHeight
             for i in range(self.ntimes):
-                overlayBase[yloc : (yloc + fgHeight), self.edgeOffset : (self.edgeOffset + fgWidth)] = self.foreground
+                overlayBase[
+                    yloc : (yloc + fgHeight),
+                    self.edgeOffset : (self.edgeOffset + fgWidth),
+                ] = self.foreground
                 yloc += fgHeight + offsetHeight
 
         elif self.edge == "right":
@@ -80,7 +83,10 @@ class OverlayBuilder:
         elif self.edge == "top":
             xloc = offsetWidth
             for i in range(self.ntimes):
-                overlayBase[self.edgeOffset : (self.edgeOffset + fgHeight), xloc : (xloc + fgWidth)] = self.foreground
+                overlayBase[
+                    self.edgeOffset : (self.edgeOffset + fgHeight),
+                    xloc : (xloc + fgWidth),
+                ] = self.foreground
                 xloc += fgWidth + offsetWidth
 
         elif self.edge == "bottom":
