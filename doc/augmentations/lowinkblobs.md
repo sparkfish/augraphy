@@ -16,15 +16,15 @@ augmentation = LowInkBlobs(
 	)
 ```
 
-| Parameter | Description |
-|---|---|
-| `count_range` | The range for the number of blobs to add to the image. |
-| `size_range` | The range in pixels for the size of the image patch that blobs will be created in. |
-| `points_range` | The number of points to add to image patch to create the blob. |
-| `std_range` | The std_range value passed into ```sklearn.datasets.make_blobs``` |
-| `features_range` | The features_range value passed into ```sklearn.datasets.make_blobs``` |
-| `values_range` | The range of values used for the blob pixels. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter        | Description                                                                        |
+|------------------|------------------------------------------------------------------------------------|
+| `count_range`    | The range for the number of blobs to add to the image.                             |
+| `size_range`     | The range in pixels for the size of the image patch that blobs will be created in. |
+| `points_range`   | The number of points to add to image patch to create the blob.                     |
+| `std_range`      | The std_range value passed into `sklearn.datasets.make_blobs`                      |
+| `features_range` | The features_range value passed into `sklearn.datasets.make_blobs`                 |
+| `values_range`   | The range of values used for the blob pixels.                                      |
+| `p`              | The probability that this augmentation will be applied.                            |
 
 **Example Result:**
 

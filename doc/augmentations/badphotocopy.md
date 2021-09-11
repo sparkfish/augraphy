@@ -13,9 +13,9 @@ augmentation = BadPhotocopy(
 	)
 ```
 
-| Parameter | Description |
-|---|---|
-| `noise_density` | Density of noise blobs, lower value generates sparser noise. |
+| Parameter       | Description                                                      |
+|-----------------|------------------------------------------------------------------|
+| `noise_density` | Density of noise blobs, lower value generates sparser noise.     |
 | `max_iteration` | Iterations of noise value, higher value generates sparser noise. |
-| `hash_type` | Types of hashes to generate olsen noise. |
-| `p` | The probability this augmentation will be applied. |
+| `hash_type`     | Types of hashes to generate olsen noise.                         |
+| `p`             | The probability this augmentation will be applied.               |

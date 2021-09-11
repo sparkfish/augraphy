@@ -12,10 +12,10 @@ augmentation = Gamma(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `range` | Specifies the range for gamma value. Gamma value below 1 darkens the image whereas above 1 increases pixel intensities. Gamma value of 1 does not change anything. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter | Description                                                                                                                                                        |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `range`   | Specifies the range for gamma value. Gamma value below 1 darkens the image whereas above 1 increases pixel intensities. Gamma value of 1 does not change anything. |
+| `p`       | The probability that this augmentation will be applied.                                                                                                            |
 
 **Example Result:**
 

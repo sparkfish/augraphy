@@ -13,11 +13,12 @@ augmentation = BleedThrough(
 	)
 ```
 
-| Parameter | Description |
-| `intensity_range` | The range from which noise intensity is sampled. |
-| `color_range` | The range from which color noise is sampled. |
-| `ksize` | Tuple of height/width from which to sample the kernel size. Higher value increases the spread of the bleeding effect. |
-| `sigmaX` | Standard deviation of the kernel along the x-axis. |
-| `alpha` | Intensity of bleeding effect. |
-| `offsets` | Distance in x and y directions to shift the bleedthrough effect. |
-| `p` | The probability this augmentation will be applied. |
+| Parameter         | Description                                                                                                           |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `intensity_range` | The range from which noise intensity is sampled.                                                                      |
+| `color_range`     | The range from which color noise is sampled.                                                                          |
+| `ksize`           | Tuple of height/width from which to sample the kernel size. Higher value increases the spread of the bleeding effect. |
+| `sigmaX`          | Standard deviation of the kernel along the x-axis.                                                                    |
+| `alpha`           | Intensity of bleeding effect.                                                                                         |
+| `offsets`         | Distance in x and y directions to shift the bleedthrough effect.                                                      |
+| `p`               | The probability this augmentation will be applied.                                                                    |

@@ -12,9 +12,10 @@ augmentation = DirtyDrum(
 	)
 ```
 
-| Parameter | Description |
+| Parameter          | Description                                                     |
+|--------------------|-----------------------------------------------------------------|
 | `line_width_range` | The range from which the width of a dirty drum line is sampled. |
-| `ksize` | Height/width pair from which to sample the kernel size. |
-| `sigmaX` | Standard deviation of the kernel along the x-axis. |
-| `alpha` | Intensity of the effect. |
-| `p` | The probability this augmentation will be applied. |
+| `ksize`            | Height/width pair from which to sample the kernel size.         |
+| `sigmaX`           | Standard deviation of the kernel along the x-axis.              |
+| `alpha`            | Intensity of the effect.                                        |
+| `p`                | The probability this augmentation will be applied.              |

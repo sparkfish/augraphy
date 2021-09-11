@@ -12,11 +12,11 @@ augmentation = NoiseTexturize(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `sigma_range` | The bounds of noise fluctuations. |
+| Parameter          | Description                                                                                                                                          |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sigma_range`      | The bounds of noise fluctuations.                                                                                                                    |
 | `turbulence_range` | How quickly big patterns will be replaced with the small ones. The lower the value, the more iterations will be performed during texture generation. |
-| `p` | The probability that this augmentation will be applied. |
+| `p`                | The probability that this augmentation will be applied.                                                                                              |
 
 **Example Result:**
 

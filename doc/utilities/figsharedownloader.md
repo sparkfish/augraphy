@@ -19,5 +19,6 @@ fsdl.downloadSingleFile(articleID, files[0])
 fsdl.downloadAllFiles(articleID)
 ```
 
-| Parameter | Description |
+| Parameter   | Description                                 |
+|-------------|---------------------------------------------|
 | `directory` | An optional directory to download files to. |

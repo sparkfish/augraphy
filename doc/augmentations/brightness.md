@@ -11,7 +11,7 @@ augmentation = Brightness(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `range` | The range of values to be chosen at random for the brightness multiplier applied. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter | Description                                                                       |
+|-----------|-----------------------------------------------------------------------------------|
+| `range`   | The range of values to be chosen at random for the brightness multiplier applied. |
+| `p`       | The probability that this augmentation will be applied.                           |

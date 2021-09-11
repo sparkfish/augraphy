@@ -12,8 +12,8 @@ augmentation = GaussianBlur(
     )
 ```
 
-| Parameter | Description |
-|---|---|
+| Parameter | Description                                                                                        |
+|-----------|----------------------------------------------------------------------------------------------------|
 | `kernels` | Specifies a list of blur kernels, one of which will be selected randomly when the blur is applied. |
-| `sigmaX` | Standard deviation of the kernel along the x-axis. |
-| `p` | The probability that this augmentation will be applied. |
+| `sigmaX`  | Standard deviation of the kernel along the x-axis.                                                 |
+| `p`       | The probability that this augmentation will be applied.                                            |

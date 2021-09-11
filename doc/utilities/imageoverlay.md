@@ -14,7 +14,8 @@ augmentation = ImageOverlay(
 	)
 ```
 
-| Parameter | Description |
-| `foreground` | The image you want to overlay on the document. |
-| `layer` | The layer of image to apply the overlay to. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter    | Description                                             |
+|--------------|---------------------------------------------------------|
+| `foreground` | The image you want to overlay on the document.          |
+| `layer`      | The layer of image to apply the overlay to.             |
+| `p`          | The probability that this augmentation will be applied. |

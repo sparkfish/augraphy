@@ -12,10 +12,10 @@ augmentation = LowInkRandomLines(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `count_range` | The number of lines to add to the image. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter     | Description                                             |
+|---------------|---------------------------------------------------------|
+| `count_range` | The number of lines to add to the image.                |
+| `p`           | The probability that this augmentation will be applied. |
 
 ```python
 augmentation = LowInkPeriodicLines(
@@ -26,11 +26,11 @@ augmentation = LowInkPeriodicLines(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `count_range` | The number of lines to add that will be repeated. |
-| `period_range` | The number of pixels in each period before lines are repeated.|
-| `p` | The probability that this augmentation will be applied. |
+| Parameter      | Description                                                    |
+|----------------|----------------------------------------------------------------|
+| `count_range`  | The number of lines to add that will be repeated.              |
+| `period_range` | The number of pixels in each period before lines are repeated. |
+| `p`            | The probability that this augmentation will be applied.        |
 
 **Example:**
 

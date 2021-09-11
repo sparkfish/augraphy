@@ -11,10 +11,10 @@ augmentation = Jpeg(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `quality_range` | The quality range for the JPEG compression encoding. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter       | Description                                             |
+|-----------------|---------------------------------------------------------|
+| `quality_range` | The quality range for the JPEG compression encoding.    |
+| `p`             | The probability that this augmentation will be applied. |
 
 **Example Result:**
 

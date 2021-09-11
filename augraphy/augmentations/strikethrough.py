@@ -13,7 +13,7 @@ class Strikethrough(Augmentation):
     """
     Uses contours detection to detect text lines and add a smooth text strikethrough effect
     :param num_lines_range: Pair of ints determining the number of lines to add strikethrough
-    :type range: int tuple, optional
+    :type num_lines_range: int tuple, optional
     :param strikethrough_length_range: Pair of floats between 0 to 1 , to determine the length of strikethrough effect
     :type range: float tuple, optional
     :param strikethrough_thickness_range: Pair of ints, to determine the thickness of strikethrough line
