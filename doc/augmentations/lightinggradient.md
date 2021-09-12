@@ -17,16 +17,16 @@ augmentation = LightingGradient(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `light_position` | Tuple of integers (x, y) specifying the center of light strip position, which is the reference point during rotating. |
-| `direction` | Integer from 0 to 360 specifying the rotation degree of light strip. |
-| `max_brightness` | Specifies the max brightness in the mask. |
-| `min_brightness` | Specifies the min brightness in the mask. |
-| `mode` | Specifies the way that brightness decays from max to min: linear or gaussian. |
-| `linear_decay_rate` | Only valid in linear_static mode. Suggested value is within [0.2, 2] |
-| `transparency` | Specifies the transparency used by the generated mask, value range of 0 to 1. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter           | Description                                                                                                           |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `light_position`    | Tuple of integers (x, y) specifying the center of light strip position, which is the reference point during rotating. |
+| `direction`         | Integer from 0 to 360 specifying the rotation degree of light strip.                                                  |
+| `max_brightness`    | Specifies the max brightness in the mask.                                                                             |
+| `min_brightness`    | Specifies the min brightness in the mask.                                                                             |
+| `mode`              | Specifies the way that brightness decays from max to min: linear or gaussian.                                         |
+| `linear_decay_rate` | Only valid in linear_static mode. Suggested value is within [0.2, 2]                                                  |
+| `transparency`      | Specifies the transparency used by the generated mask, value range of 0 to 1.                                         |
+| `p`                 | The probability that this augmentation will be applied.                                                               |
 
 **Example Output:**
 

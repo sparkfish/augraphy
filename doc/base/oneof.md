@@ -6,16 +6,16 @@ Augmentation list that will execute one of the specified augmentations randomly.
 
 ```python
 augmentation = OneOf(
-        augmentations=[
-            # Add Augmentations Here
-			Bleedthrough(p=1),
-			GaussianBlur(p=0.75)
+	augmentations=[
+		# Add Augmentations Here
+		Bleedthrough(p=1),
+		GaussianBlur(p=0.75)
         ],
-        p=0.5
+	p=0.5
     )
 ```
 
-| Parameter  | Description  |
-|---|---|
-|   ```augmentations``` | specifies the list of augmentations to be chosen from.   |
-|   ```p``` | specifies the probability that the augmentation will run one of the specified augmentations.   |
+| Parameter       | Description                                                                                  |
+|-----------------|----------------------------------------------------------------------------------------------|
+| `augmentations` | specifies the list of augmentations to be chosen from.                                       |
+| `p`             | specifies the probability that the augmentation will run one of the specified augmentations. |

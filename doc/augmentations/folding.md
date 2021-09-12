@@ -12,10 +12,10 @@ augmentation = Folding(
 	)
 ```
 
-| Parameter | Description  |
-|---|---|
-| `fold_count` | Number of folds to apply. |
-| `fold_noise` | Level of noise added to folding area. Range from 0 to 1. |
-| `gradient_width` | Measure of the space affected by the fold prior to being warped, as percentage of page width. |
-| `gradient_height` | Measure of depth of fold, as percentage of page height. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter         | Description                                                                                   |
+|-------------------|-----------------------------------------------------------------------------------------------|
+| `fold_count`      | Number of folds to apply.                                                                     |
+| `fold_noise`      | Level of noise added to folding area. Range from 0 to 1.                                      |
+| `gradient_width`  | Measure of the space affected by the fold prior to being warped, as percentage of page width. |
+| `gradient_height` | Measure of depth of fold, as percentage of page height.                                       |
+| `p`               | The probability that this augmentation will be applied.                                       |

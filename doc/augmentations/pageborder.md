@@ -14,13 +14,13 @@ augmentation = PageBorder(
     )
 ```
 
-| Parameter | Description |
-|---|---|
-| `side` | The side of the page on which the border will be drawn. One of: left, right, top, bottom. |
-| `width_range` | The width of the border. |
-| `pages` | The number of pages to augment in the border. |
-| `noise_intensity_range` | The range of noise applied around the border and pages. |
-| `p` | The probability that this augmentation will be applied. |
+| Parameter               | Description                                                                               |
+|-------------------------|-------------------------------------------------------------------------------------------|
+| `side`                  | The side of the page on which the border will be drawn. One of: left, right, top, bottom. |
+| `width_range`           | The width of the border.                                                                  |
+| `pages`                 | The number of pages to augment in the border.                                             |
+| `noise_intensity_range` | The range of noise applied around the border and pages.                                   |
+| `p`                     | The probability that this augmentation will be applied.                                   |
 
 **Example Result:**
 

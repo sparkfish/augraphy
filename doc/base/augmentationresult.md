@@ -6,8 +6,8 @@ Contains the result of an augmentation's application, and the augmentation itsel
 ```python
 data[layer].append(AugmentationResult(self, augmentation))
 ```
-| Parameter | Description |
-|---|---|
-| `augmentation` | The augmentation that was applied. |
-| `result` | The image transformed by `augmentation`. |
-| `metadata` | Additional data that may be added by callers. |
+| Parameter      | Description                                   |
+|----------------|-----------------------------------------------|
+| `augmentation` | The augmentation that was applied.            |
+| `result`       | The image transformed by `augmentation`.      |
+| `metadata`     | Additional data that may be added by callers. |
