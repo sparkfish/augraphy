@@ -19,3 +19,5 @@ augmentation = Folding(
 | `gradient_width`  | Measure of the space affected by the fold prior to being warped, as percentage of page width. |
 | `gradient_height` | Measure of depth of fold, as percentage of page height.                                       |
 | `p`               | The probability that this augmentation will be applied.                                       |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1DNZoPc_z2CG8-VpwTvBWQoJG0cWa86MV?usp=sharing)

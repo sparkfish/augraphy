@@ -25,3 +25,5 @@ augmentation = PageBorder(
 **Example Result:**
 
 ![Border](../../images/Augmentations/PageBorder.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1eRFCmmyoQD87ZgAeweAk5dkygS-Hk3Zu?usp=sharing)

@@ -29,3 +29,5 @@ augmentation = Faxify(
 | `angle`                | The angle of halftone effect.                                              |
 | `sigma`                | The sigma value of gaussian kernel in halftone effect.                     |
 | `p`                    | The probability that this augmentation will be applied.                    |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/12hxA5JDCi76hxmjFTotw0A3JmnwNpL6i?usp=sharing)

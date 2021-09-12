@@ -31,3 +31,5 @@ augmentation = LightingGradient(
 **Example Output:**
 
 ![Lighting Gradient](../../images/Augmentations/LightingGradient.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/12S2eOyIm5gPoTrvWSMr4PnkK8_LgEXlU?usp=sharing)

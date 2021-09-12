@@ -19,3 +19,5 @@ augmentation = DirtyDrum(
 | `sigmaX`           | Standard deviation of the kernel along the x-axis.              |
 | `alpha`            | Intensity of the effect.                                        |
 | `p`                | The probability this augmentation will be applied.              |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1yl0AxrAE2RyWnkWh07yWRDZdHJVfIfqb?usp=sharing)

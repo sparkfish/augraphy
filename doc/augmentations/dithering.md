@@ -19,3 +19,5 @@ augmentation = Dithering(
 | `dither`  | Types of dithering, ordered or Floyd Steinberg dithering. |
 | `order`   | The order number for ordered dithering.                   |
 | `p`       | The probability that this augmentation will be applied.   |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/19bqVyTF21BlzvEH4wOg_zFoFnCepPH1h?usp=sharing)

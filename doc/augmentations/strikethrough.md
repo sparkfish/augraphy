@@ -19,3 +19,5 @@ augmentation = Strikethrough(
 | `strikethrough_length_range`    | Pair of floats between 0 and 1, determining the length of the strikethrough effect. |
 | `strikethrough_thickness_range` | Pair of ints, to determine the thickness of strikethrough line.                     |
 | `p`                             | The probability this augmentation will be applied.                                  |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1uX1jUctJurM6BHrFkconth-y5usKOvB1?usp=sharing)

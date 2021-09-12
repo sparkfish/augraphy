@@ -22,3 +22,5 @@ Encoded with quality range of (10, 15)
 
 ![JPEG Compression Before](../../images/Augmentations/JPEGCompressionBefore.png)
 ![JPEG Compression After](../../images/Augmentations/JPEGCompression.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1mlv1jb8PTes9bKz5i0C3b353WK8kgWeH?usp=sharing)

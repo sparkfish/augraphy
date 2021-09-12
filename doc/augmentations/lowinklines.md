@@ -17,6 +17,8 @@ augmentation = LowInkRandomLines(
 | `count_range` | The number of lines to add to the image.                |
 | `p`           | The probability that this augmentation will be applied. |
 
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_FX-m7jtfdkucpGL1Ei3Mk_P-mi6DtDq?usp=sharing)
+
 ```python
 augmentation = LowInkPeriodicLines(
 	count_range=(5, 10),
@@ -36,3 +38,5 @@ augmentation = LowInkPeriodicLines(
 
 ![Ink Bleed no Blur](../../images/Augmentations/LowInkLines.png)
 ![Ink Bleed with Blur](../../images/Augmentations/LowInkLinesBlur.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1AfbcC_9_fp8zDnc8GCL0kGApLO67MW7A?usp=sharing)

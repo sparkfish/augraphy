@@ -22,3 +22,5 @@ augmentation = PencilScribbles(
 | `thickness_range`    | The range for the size of the scribbles to create.                                              |
 | `brightness_change`  | Value change for the brightness of the strokes. Default 128 creates a graphite-like appearance. |
 | `p`                  | The probability that this augmentation will be applied.                                         |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1jyBODoE2UxLAUVgkFEQ2s1gOScjCzpdk?usp=sharing)

@@ -21,3 +21,5 @@ augmentation = NoiseTexturize(
 **Example Result:**
 
 ![Ink Bleed with Blur](../../images/Augmentations/NoiseTexturizeAfter.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1UOwbY83BeEbpRXiSQlhZvodUvrUVPpXh?usp=sharing)

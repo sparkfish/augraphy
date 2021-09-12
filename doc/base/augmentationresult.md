@@ -2,7 +2,8 @@
 
 Contains the result of an augmentation's application, and the augmentation itself. Augmentations add these to the pipeline data dictionary during pipeline execution.
 
-** Example Usage: **
+**Example Usage:**
+
 ```python
 data[layer].append(AugmentationResult(self, augmentation))
 ```
