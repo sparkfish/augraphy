@@ -19,3 +19,5 @@ augmentation = BadPhotocopy(
 | `max_iteration` | Iterations of noise value, higher value generates sparser noise. |
 | `hash_type`     | Types of hashes to generate olsen noise.                         |
 | `p`             | The probability this augmentation will be applied.               |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_n7atcI-xVSpnV17YuzZhd9ISe735fBo?usp=sharing)

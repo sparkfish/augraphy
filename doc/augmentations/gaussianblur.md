@@ -17,3 +17,5 @@ augmentation = GaussianBlur(
 | `kernels` | Specifies a list of blur kernels, one of which will be selected randomly when the blur is applied. |
 | `sigmaX`  | Standard deviation of the kernel along the x-axis.                                                 |
 | `p`       | The probability that this augmentation will be applied.                                            |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1bmbgDjxjwWUO-LKTPaZNL2xywam-NgWJ?usp=sharing)

@@ -24,3 +24,5 @@ Before and After Blur
 
 ![Dusty Ink no Blur](../../images/Augmentations/DustyInk.png)
 ![Dusty Ink with Blur](../../images/Augmentations/DustyInkBlur.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1vpuBElXkvhjzf3Z0Ou9ew1GwD7gRd5Ac?usp=sharing)

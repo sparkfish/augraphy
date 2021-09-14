@@ -15,3 +15,5 @@ augmentation = Brightness(
 |-----------|-----------------------------------------------------------------------------------|
 | `range`   | The range of values to be chosen at random for the brightness multiplier applied. |
 | `p`       | The probability that this augmentation will be applied.                           |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1zPuAFgW8BdgX9tH9grorp_V3B7FswVUq?usp=sharing)

@@ -17,3 +17,5 @@ augmentation = BookBinding(
 | `radius_range`          | The range of the curl radius, in pixels.                |
 | `curve_intensity_range` | The intensity by which the page text should be curved.  |
 | `p`                     | The probability that this augmentation will be applied. |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1Ju1kzxpHhIZWUbgML8PKaw8KMBoz3PTC?usp=sharing)

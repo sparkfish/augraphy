@@ -22,3 +22,5 @@ augmentation = Gamma(
 In the image below, the leftmost picture is the original, the middle image is obtained by using a gamma value of 1.4, and the rightmost image is obtained by using a gamma value of 0.6.
 
 ![Gamma](../../images/Augmentations/gamma.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_h1TybFELR6-e5UeVmjRniof-PLAvyXB?usp=sharing)

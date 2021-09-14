@@ -21,3 +21,5 @@ augmentation = BrightnessTexturize(
 **Example Result:**
 
 ![Ink Bleed with Blur](../../images/Augmentations/BrightnessTexturizeAfter.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1vi4Tytxw-4Ap1pmSULtp3UhfjU8O9G2t?usp=sharing)

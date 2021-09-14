@@ -30,3 +30,5 @@ augmentation = LowInkBlobs(
 
 ![Ink Bleed no Blur](../../images/Augmentations/LowInkBlobs.png)
 ![Ink Bleed with Blur](../../images/Augmentations/LowInkBlobsBlur.png)
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/18htEZ2nkdZsq1vJgZaIEogzODv820sRy?usp=sharing)

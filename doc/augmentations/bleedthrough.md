@@ -22,3 +22,5 @@ augmentation = BleedThrough(
 | `alpha`           | Intensity of bleeding effect.                                                                                         |
 | `offsets`         | Distance in x and y directions to shift the bleedthrough effect.                                                      |
 | `p`               | The probability this augmentation will be applied.                                                                    |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1iwU2AnYhhJKEdddFP0Uu3DwEz8QnfQcs?usp=sharing)

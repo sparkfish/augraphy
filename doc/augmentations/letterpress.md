@@ -22,3 +22,5 @@ augmentation = Letterpress(
 | `features_range` | The range from which the number of features in the blob is sampled.              |
 | `value_range`    | The range from which the value of a point in the blob is sampled.                |
 | `p`              | The probability this augmentation will be applied.                               |
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1qp_ZnbdP0A4eIhxkF0h7Dduw_9gtAhti?usp=sharing)
