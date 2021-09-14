@@ -39,6 +39,17 @@ class BadPhotoCopy(Augmentation):
         self.BOX = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) * 1 / 9
         self._blur_edge = 2  # extra pixels are needed for the blur (3 - 1).
 
+        if self.hash_type == 1:
+            self.noise_density = (0.01, 0.1)
+        elif self.hash_type == 2:
+            self.noise_density = (0.3, 0.3)
+        elif self.hash_type == 3:
+            self.noise_density = (0.01, 0.2)
+        elif self.hash_type == 4:
+            self.noise_density = (0.01, 0.2)
+        elif self.hash_type == 5:
+            self.noise_density = (0.1, 0.5)
+
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
         return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
@@ -173,15 +184,17 @@ class BadPhotoCopy(Augmentation):
         height,
         iteration,
     ):
-        for i, m in np.ndenumerate(pixels[:width, :height]):
-            pixels[i] += (
-                self._hash_random(
-                    i[0] + x_within_field,
-                    i[1] + y_within_field,
-                    iteration,
-                )
-                & (1 << (self.max_iteration[1] - iteration))
+        for i, m in np.ndenumerate(pixels):
+            hash_value = self._hash_random(
+                i[0] + x_within_field,
+                i[1] + y_within_field,
+                iteration,
             )
+
+            if self.hash_type != 4:
+                hash_value &= 1 << (self.max_iteration[1] - iteration)
+
+            pixels[i] += hash_value
 
     def _hash_random(self, *elements):
         """
@@ -201,11 +214,30 @@ class BadPhotoCopy(Augmentation):
         value = int(v)
         original = value
 
-        if self.hash_type == 1:
+        if self.hash_type == 1:  # noise start from page border
             value += original
             value ^= value << 1
+            value = min(value, 255)
 
-        else:
+        elif self.hash_type == 2:  # disontinuous noises
+            value += original * 5
+            value ^= value << 2
+            value = value % 255
+
+        elif self.hash_type == 3:  # even noise on the whole page
+            value = max(value, random.randint(190, 210))
+
+        elif self.hash_type == 4:  # parse and little noise
+            if random.randint(0, 1000) > 999:
+                value = 255 - random.randint(11, 30)
+            else:
+                value = 255 - random.randint(220, 230)
+
+        elif self.hash_type == 5:  # uniform pattern
+            value = 255 - (value * 4)
+            value = value % 128
+
+        else:  # totaly randomize
             q = value & 3
 
             if q == 3:
@@ -346,8 +378,14 @@ class BadPhotoCopy(Augmentation):
         if random.choice([True, False]):
             mask = cv2.flip(mask, 1)
 
+        if self.hash_type != 3 and self.hash_type != 4:  # scale to 0-255
+            mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
+
         # randomize noise type
         noise_img_type = random.randint(0, 2)
+
+        if self.hash_type == 3 or self.hash_type == 4:
+            noise_img_type = 2
 
         noise_img = add_noise(mask).astype("uint8")
         blurred = cv2.GaussianBlur(
