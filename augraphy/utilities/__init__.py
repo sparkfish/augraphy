@@ -9,5 +9,5 @@ __all__ = [
     "ForeignAugmentation",
     "FigshareDownloader",
     "ImageOverlay",
-    "OverlayBuiler",
+    "OverlayBuilder",
 ]
