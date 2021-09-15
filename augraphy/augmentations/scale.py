@@ -39,17 +39,28 @@ class Scale(Augmentation):
         if force or self.should_run():
             image = data[self.layer][-1].result
 
-            new_size = (round(image.shape[1] * self.scale_factor), round(image.shape[0] * self.scale_factor))
+            new_size = (
+                round(image.shape[1] * self.scale_factor),
+                round(image.shape[0] * self.scale_factor),
+            )
 
             if self.scale_factor <= 1:
                 if self.interpolation is None:
                     scaled = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
                 else:
-                    scaled = cv2.resize(image, new_size, interpolation=self.interpolation)
+                    scaled = cv2.resize(
+                        image,
+                        new_size,
+                        interpolation=self.interpolation,
+                    )
             else:
                 if self.interpolation is None:
                     scaled = cv2.resize(image, new_size, interpolation=cv2.INTER_CUBIC)
                 else:
-                    scaled = cv2.resize(image, new_size, interpolation=self.interpolation)
+                    scaled = cv2.resize(
+                        image,
+                        new_size,
+                        interpolation=self.interpolation,
+                    )
 
             data[self.layer].append(AugmentationResult(self, scaled))
