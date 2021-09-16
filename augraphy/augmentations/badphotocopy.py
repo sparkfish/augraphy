@@ -379,8 +379,8 @@ class BadPhotoCopy(Augmentation):
         if self.hash_type == 4:
             gaussian_kernel = (3, 3)
             for _ in range(random.randint(5, 10)):
-                xloc = random.randint(0, xsize)
-                yloc = random.randint(0, ysize)
+                xloc = random.randint(0, xsize-1)
+                yloc = random.randint(0, ysize-1)
                 noise_img[yloc, xloc] = np.min(noise_img) / random.randint(1, 3)
 
         else:
