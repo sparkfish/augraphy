@@ -3,6 +3,8 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import addNoise
+from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -50,42 +52,11 @@ class PencilScribbles(Augmentation):
     def __repr__(self):
         return f"PencilScribbles(size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
 
-    def get_sobel(self, image):
-        """Computes the gradient of the image intensity function.
-
-        :param image: The image over which to create an edge mask.
-        :type image: numpy.array
-        """
-        gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
-        gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
-        gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
-        return gradient
-
-    def addNoise(self, image, intensity_range=(0.3, 0.5), color_range=(32, 128)):
-        """Applies random noise to the input image.
-
-        :param image: The image to noise.
-        :type image: numpy.array
-        :param intensity_range: Pair of bounds for intensity sample.
-        :type intensity_range: tuple, optional
-        :param color_range: Pair of bounds for 8-bit colors.
-        :type color_range: tuple, optional
-        """
-
-        intensity = random.uniform(intensity_range[0], intensity_range[1])
-        noise = (
-            lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
-        )
-        add_noise = np.vectorize(noise)
-
-        return add_noise(image)
-
     def apply_pencil_stroke(self, stroke_image, image):
         apply_mask_fn = lambda x, y: y if (x < 64) else x
         apply_mask = np.vectorize(apply_mask_fn)
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_BGR2GRAY)
-        noise_mask = self.addNoise(stroke_image, (0.3, 0.5), (32, 128))
+        noise_mask = addNoise(stroke_image, (0.3, 0.5), (32, 128))
 
         stroke_image = apply_mask(stroke_image, noise_mask)
 
@@ -94,8 +65,8 @@ class PencilScribbles(Augmentation):
 
         add_noise = np.vectorize(add_noise_fn)
         apply_mask = np.vectorize(apply_mask_fn)
-        sobel = self.get_sobel(stroke_image)
-        sobel = cv2.dilate(sobel, (5, 5), iterations=3)
+        sobelized = sobel(stroke_image)
+        sobelizedDilated = cv2.dilate(sobelized, (5, 5), iterations=3)
         stroke_image = add_noise(stroke_image, sobel)
 
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_GRAY2BGR)

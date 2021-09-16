@@ -3,6 +3,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -304,18 +305,6 @@ class BadPhotoCopy(Augmentation):
             return self._crimp(total)
         return self._crimp(total // parts)
 
-    def sobel(self, image):
-        """Computes the gradient of the image intensity function.
-
-        :param image: The image over which to create an edge mask.
-        :type image: numpy.array
-        """
-        gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
-        gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
-        gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
-        return gradient
-
     def apply_augmentation(self, image):
 
         # get image dimensions
@@ -343,12 +332,12 @@ class BadPhotoCopy(Augmentation):
         add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
         add_edge_noise = np.vectorize(add_edge_noise_fn)
 
-        image_sobel = self.sobel(image)
+        image_sobel = sobel(image)
         image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
         image_sobel[:, :][image_sobel[:, :] % 255 != 0] = 255
         image_sobel = cv2.dilate(image_sobel, (5, 5), iterations=2)
 
-        image_sobel_sobel = self.sobel(image_sobel)
+        image_sobel_sobel = sobel(image_sobel)
         image_sobel_sobel = cv2.dilate(image_sobel_sobel, (3, 3), iterations=2)
         image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
         image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)

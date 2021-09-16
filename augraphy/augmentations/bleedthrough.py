@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -70,14 +71,6 @@ class BleedThrough(Augmentation):
                     output[i][j] = img[i][j]
         return output
 
-    # Computes the gradient of the image intensity function.
-    def sobel(self, image):
-        gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
-        gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
-        gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
-        return gradient
-
     # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
         if (img.shape[0] != img_bleed.shape[0]) or (img.shape[1] != img_bleed.shape[1]):
@@ -112,8 +105,8 @@ class BleedThrough(Augmentation):
             else x
         )
         add_noise = np.vectorize(add_noise_fn)
-        sobel = self.sobel(img)
-        img_noise = np.double(add_noise(img, self.add_sp_noise(sobel)))
+        sobelized = sobel(img)
+        img_noise = np.double(add_noise(img, self.add_sp_noise(sobelized)))
         img_bleed = cv2.GaussianBlur(img_noise, ksize=ksize, sigmaX=sigmaX)
         return img_bleed
 

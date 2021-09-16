@@ -3,6 +3,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -32,18 +33,6 @@ class InkBleed(Augmentation):
     def __repr__(self):
         return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
-    def sobel(self, image):
-        """Computes the gradient of the image intensity function.
-
-        :param image: The image over which to create an edge mask.
-        :type image: numpy.array
-        """
-        gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
-        gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
-        gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
-        return gradient
-
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
@@ -57,9 +46,9 @@ class InkBleed(Augmentation):
             apply_mask_fn = lambda x, y, z: x if (z != 255 or x < 64) else y
             add_noise = np.vectorize(add_noise_fn)
             apply_mask = np.vectorize(apply_mask_fn)
-            sobel = self.sobel(image)
-            sobel = cv2.dilate(sobel, (3, 3), iterations=1)
-            noise_mask = add_noise(image, sobel)
+            sobelized = sobel(image)
+            sobelizedDilated = cv2.dilate(sobelized, (3, 3), iterations=1)
+            noise_mask = add_noise(image, sobelizedDilated)
             noise_mask = noise_mask.astype("uint8")
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
 

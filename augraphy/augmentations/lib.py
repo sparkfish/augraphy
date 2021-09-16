@@ -228,3 +228,16 @@ def binaryThreshold(
             raise TypeError("Invalid thresholding method.")
 
     return thresholded
+
+
+def sobel(image):
+    """Computes the gradient of the image intensity function.
+
+    :param image: The image over which to create an edge mask.
+    :type image: numpy.array
+    """
+    gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
+    gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
+    gradient = cv2.subtract(gradX, gradY)
+    gradient = cv2.convertScaleAbs(gradient)
+    return gradient
