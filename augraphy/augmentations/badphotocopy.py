@@ -47,7 +47,7 @@ class BadPhotoCopy(Augmentation):
         elif self.hash_type == 3:
             self.noise_density = (0.01, 0.2)
         elif self.hash_type == 4:
-            self.noise_density = (0.01, 0.2)
+            self.noise_density = (0.3, 0.5)
         elif self.hash_type == 5:
             self.noise_density = (0.1, 0.5)
 
@@ -228,11 +228,8 @@ class BadPhotoCopy(Augmentation):
         elif self.hash_type == 3:  # even noise on the whole page
             value = max(value, random.randint(190, 210))
 
-        elif self.hash_type == 4:  # parse and little noise
-            if random.randint(0, 1000) > 999:
-                value = 255 - random.randint(11, 30)
-            else:
-                value = 255 - random.randint(220, 230)
+        elif self.hash_type == 4:  # sparse and little noise
+            value = 255 - random.randint(220, 230)
 
         elif self.hash_type == 5:  # uniform pattern
             value = 255 - (value * 4)
@@ -313,7 +310,6 @@ class BadPhotoCopy(Augmentation):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             ysize, xsize = image.shape
-            dim = 2
 
         # initialize vectorized mapping functions
         # add random zero value noise
@@ -358,6 +354,7 @@ class BadPhotoCopy(Augmentation):
         kernel = random.choice([self.GAUSSIAN, self.BOX])
         transpose = random.choice([True, False])
 
+        # get mask of noise and resize it to image size
         mask = self.noise(shape, position, iteration, kernel, transpose)
         mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
 
@@ -367,7 +364,8 @@ class BadPhotoCopy(Augmentation):
         if random.choice([True, False]):
             mask = cv2.flip(mask, 1)
 
-        if self.hash_type != 3 and self.hash_type != 4:  # scale to 0-255
+        # scale to 0-255
+        if self.hash_type != 3 and self.hash_type != 4:
             mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
 
         # randomize noise type
@@ -377,9 +375,20 @@ class BadPhotoCopy(Augmentation):
             noise_img_type = 2
 
         noise_img = add_noise(mask).astype("uint8")
+
+        if self.hash_type == 4:
+            gaussian_kernel = (3, 3)
+            for _ in range(random.randint(5, 10)):
+                xloc = random.randint(0, xsize)
+                yloc = random.randint(0, ysize)
+                noise_img[yloc, xloc] = np.min(noise_img) / random.randint(1, 3)
+
+        else:
+            gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
+
         blurred = cv2.GaussianBlur(
             noise_img,
-            (random.choice([3, 5, 7]), random.choice([3, 5, 7])),
+            gaussian_kernel,
             0,
         )
 
