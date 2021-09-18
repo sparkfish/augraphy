@@ -3,6 +3,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import make_white_transparent
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -35,13 +36,21 @@ class ImageOverlay(Augmentation):
         xdim = background.shape[0] + (2 * self.foreground.shape[0])
         ydim = background.shape[1] + (2 * self.foreground.shape[1])
 
-        return np.zeros((xdim, ydim, 3))
+        return cv2.cvtColor(np.ones((xdim, ydim, 3), dtype=np.uint8), cv2.COLOR_RGB2RGBA)
 
     def layerForeground(self, ambient, xloc, yloc):
         """Put self.foreground at (xloc,yloc) on ambient"""
         xstop = xloc + self.foreground.shape[0]
         ystop = yloc + self.foreground.shape[1]
-        ambient[xloc:xstop, yloc:ystop] = self.foreground
+        fg = cv2.cvtColor(np.uint8(self.foreground), cv2.COLOR_RGB2RGBA)
+        bg = cv2.cvtColor(ambient, cv2.COLOR_RGB2RGBA)
+
+        alpha_fg = fg[:, :, 3] / 255.0
+        alpha_bg = 1 - alpha_fg
+        for c in range(0, 3):
+            ambient[xloc:xstop, yloc:ystop, c] = (alpha_bg * ambient[xloc:xstop, yloc:ystop, c]) + (
+                alpha_fg * fg[:, :, c]
+            )
         return ambient
 
     def overlay(self, background, foreground):
@@ -68,8 +77,8 @@ class ImageOverlay(Augmentation):
             yloc = random.randrange(0, ystop)
 
         else:
-            xloc = self.position[0]
-            yloc = self.position[1]
+            xloc = self.position[0] + xstart
+            yloc = self.position[1] + ystart
 
         # Place the foreground at (xloc,yloc)
         ambient = self.layerForeground(ambient, xloc, yloc)
@@ -80,9 +89,16 @@ class ImageOverlay(Augmentation):
         return cropped
 
     def __repr__(self):
-        repstring = "ImageOverlay(\n" f"foreground={self.foreground},\n" f"layer={self.layer},\n" f"p={self.p})"
+        repstring = (
+            "ImageOverlay(\n"
+            f"foreground={self.foreground},\n"
+            f"position={self.position},\n"
+            f"layer={self.layer},\n"
+            f"p={self.p})"
+        )
 
     def __call__(self, data, force=False):
         img = data[self.layer][-1].result
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
         overlaid = self.overlay(img, self.foreground)
         data[self.layer].append(AugmentationResult(self, overlaid))
