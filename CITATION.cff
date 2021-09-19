@@ -1,0 +1,7 @@
+cff-version: 1.2.0
+message: "If you use this software in a publication, please cite it as below."
+authors:
+- name: The Augraphy Project
+title: "augraphy"
+version: 3.0.0
+url: "https://github.com/sparkfish/augraphy"
