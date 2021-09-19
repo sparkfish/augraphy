@@ -3,6 +3,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import make_white_transparent
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.base.augmentationsequence import AugmentationSequence
 
@@ -202,7 +203,7 @@ class AugraphyPipeline:
 
         data["log"]["ink_color"] = ink_color
 
-        overlay = self.make_white_transparent(overlay, ink_color)
+        overlay = make_white_transparent(overlay, ink_color)
         # Split out the transparency mask from the colour info
         overlay_img = overlay[:, :, :3]  # Grab the BRG planes
         overlay_mask = overlay[:, :, 3:]  # And the alpha plane
@@ -223,21 +224,6 @@ class AugraphyPipeline:
         return np.uint8(
             cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0),
         )
-
-    def make_white_transparent(self, img, ink_color=0):
-        # Create the Ink Layer for the specified color.
-        img_bgra = cv2.cvtColor(
-            np.full((img.shape[0], img.shape[1], 3), ink_color, dtype="uint8"),
-            cv2.COLOR_BGR2BGRA,
-        )
-
-        # Convert to grayscale if not already.
-        if len(img.shape) > 2 and img.shape[2] > 1:
-            img = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
-
-        # Apply transparency mask based on grayscale.
-        img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
-        return img_bgra
 
     def __repr__(self):
         r = f"ink_phase = {repr(self.ink_phase)}\n\n"

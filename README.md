@@ -60,17 +60,6 @@ There are plenty of choices when it comes to [augmentation libraries](https://gi
 # Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-# Citations
-If you use Augraphy in your research, please cite the project:
-
-```
-@misc{Augraphy,
-  author = {Sparkfish LLC},
-  title = {Augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes.},
-  howpublished = {\url{https://github.com/sparkfish/augraphy}},
-}
-```
-
 # License
 Copyright 2021 Sparkfish LLC
 
