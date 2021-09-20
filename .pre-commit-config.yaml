@@ -49,4 +49,4 @@ repos:
       - "--max-line-length=120"
       - "--max-complexity=18"
       - "--select=B,C,E,F,W,T4,B9"
-      - "--ignore=E203,E501,E731,W503,F401,F403,F405,F841"
+      - "--ignore=C901,E203,E501,E731,W503,F401,F403,F405,F841"
