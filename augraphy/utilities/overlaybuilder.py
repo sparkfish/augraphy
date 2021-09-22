@@ -29,7 +29,7 @@ class OverlayBuilder:
         self.background = background
         self.ntimes = ntimes
         self.edge = edge
-        self.edgeOffset = edgeOffset
+        self.edgeOffset = max(0, edgeOffset)  # prevent negative
 
     def computeOffsets(self):
         """Determine where to place the foreground image copies"""
@@ -42,16 +42,82 @@ class OverlayBuilder:
         remainingWidth = xdim - (self.ntimes * imgWidth)
         remainingHeight = ydim - (self.ntimes * imgHeight)
 
-        offsetWidth = math.floor(remainingWidth / (self.ntimes + 1))
-        offsetHeight = math.floor(remainingHeight / (self.ntimes + 1))
+        # max to prevent negative offset
+        offsetWidth = max(0, math.floor(remainingWidth / (self.ntimes + 1)))
+        offsetHeight = max(0, math.floor(remainingHeight / (self.ntimes + 1)))
 
         return offsetWidth, offsetHeight
+
+    def applyOverlay(
+        self,
+        overlayBase,
+        overlayBase_gray,
+        foreground_gray,
+        fgHeight,
+        fgWidth,
+        bgHeight,
+        bgWidth,
+        offsetWidth,
+        offsetHeight,
+        ystart,
+        yend,
+        xstart,
+        xend,
+    ):
+        """Applies overlay from foreground to background"""
+
+        for i in range(self.ntimes):
+            base = overlayBase[ystart:yend, xstart:xend]
+            base_gray = overlayBase_gray[ystart:yend, xstart:xend]
+
+            # can be further vectorized here, need to think about it
+            for y in range(fgHeight):
+                for x in range(fgWidth):
+                    if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
+                        base[y, x] = self.foreground[y, x]
+
+            if self.edge == "left" or self.edge == "right":
+                # for next loop ystart and yend
+                ystart += fgHeight + offsetHeight
+                yend = ystart + fgHeight
+                # break when next ystart is > image y size
+                if ystart >= bgHeight - fgHeight:
+                    break
+            elif self.edge == "top" or self.edge == "bottom":
+                # for next loop xstart and xend
+                xstart += fgWidth + offsetWidth
+                xend = xstart + fgWidth
+                # break when next xstart is > image x size
+                if xstart >= bgWidth - fgWidth:
+                    break
 
     def buildOverlay(self):
         """Construct the overlay image containing foreground copies"""
 
         # overlaybase should be the background
         overlayBase = self.background
+
+        # foreground size (height & width)
+        fgHeight, fgWidth = self.foreground.shape[:2]
+
+        # background size (height & width)
+        bgHeight, bgWidth = self.background.shape[:2]
+
+        # if foreground size is larger than background, stop the operation and return background
+        if (fgWidth > bgWidth) or (fgHeight > bgHeight):
+            return overlayBase
+
+        # prevent offset > background size
+        if self.edge == "left" or self.edge == "right":
+            if self.edgeOffset > bgWidth - fgWidth:
+                self.edgeOffset = bgWidth - fgWidth
+        elif self.edge == "top" or self.edge == "bottom":
+            if self.edgeOffset > bgHeight - fgHeight:
+                self.edgeOffset = bgHeight - fgHeight
+
+        # compute offsets between foreground and background
+        offsetWidth, offsetHeight = self.computeOffsets()
+
         # convert background to gray
         if len(overlayBase.shape) > 2:
             overlayBase_gray = cv2.cvtColor(overlayBase, cv2.COLOR_BGR2GRAY)
@@ -64,81 +130,96 @@ class OverlayBuilder:
         else:
             foreground_gray = self.foreground
 
-        offsetWidth, offsetHeight = self.computeOffsets()
-
-        fgWidth = self.foreground.shape[1]
-        fgHeight = self.foreground.shape[0]
-
-        bgWidth = self.background.shape[1]
-        bgHeight = self.background.shape[0]
-
         if self.edge == "left":
-            yloc = offsetHeight
-            for i in range(self.ntimes):
-                base = overlayBase[
-                    yloc : (yloc + fgHeight),
-                    self.edgeOffset : (self.edgeOffset + fgWidth),
-                ]
-                base_gray = overlayBase_gray[
-                    yloc : (yloc + fgHeight),
-                    self.edgeOffset : (self.edgeOffset + fgWidth),
-                ]
-                # can be further vectorized here, need to think about it
-                for y in range(fgHeight):
-                    for x in range(fgWidth):
-                        if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
-                            base[y, x] = self.foreground[y, x]
-                yloc += fgHeight + offsetHeight
+
+            ystart = offsetHeight
+            yend = ystart + fgHeight
+            xstart = self.edgeOffset
+            xend = self.edgeOffset + fgWidth
+
+            self.applyOverlay(
+                overlayBase,
+                overlayBase_gray,
+                foreground_gray,
+                fgHeight,
+                fgWidth,
+                bgHeight,
+                bgWidth,
+                offsetWidth,
+                offsetHeight,
+                ystart,
+                yend,
+                xstart,
+                xend,
+            )
 
         elif self.edge == "right":
-            yloc = offsetHeight
-            for i in range(self.ntimes):
-                base = overlayBase[
-                    yloc : (yloc + fgHeight),
-                    (bgWidth - (self.edgeOffset + fgWidth)) : (bgWidth - self.edgeOffset),
-                ]
-                base_gray = overlayBase_gray[
-                    yloc : (yloc + fgHeight),
-                    (bgWidth - (self.edgeOffset + fgWidth)) : (bgWidth - self.edgeOffset),
-                ]
-                for y in range(fgHeight):
-                    for x in range(fgWidth):
-                        if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
-                            base[y, x] = self.foreground[y, x]
-                yloc += fgHeight + offsetHeight
+
+            ystart = offsetHeight
+            yend = ystart + fgHeight
+            xstart = bgWidth - self.edgeOffset - fgWidth
+            xend = bgWidth - self.edgeOffset
+
+            self.applyOverlay(
+                overlayBase,
+                overlayBase_gray,
+                foreground_gray,
+                fgHeight,
+                fgWidth,
+                bgHeight,
+                bgWidth,
+                offsetWidth,
+                offsetHeight,
+                ystart,
+                yend,
+                xstart,
+                xend,
+            )
 
         elif self.edge == "top":
-            xloc = offsetWidth
-            for i in range(self.ntimes):
-                base = overlayBase[
-                    self.edgeOffset : (self.edgeOffset + fgHeight),
-                    xloc : (xloc + fgWidth),
-                ]
-                base_gray = overlayBase_gray[
-                    self.edgeOffset : (self.edgeOffset + fgHeight),
-                    xloc : (xloc + fgWidth),
-                ]
-                for y in range(fgHeight):
-                    for x in range(fgWidth):
-                        if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
-                            base[y, x] = self.foreground[y, x]
-                xloc += fgWidth + offsetWidth
+
+            ystart = self.edgeOffset
+            yend = self.edgeOffset + fgHeight
+            xstart = offsetWidth
+            xend = offsetWidth + fgWidth
+
+            self.applyOverlay(
+                overlayBase,
+                overlayBase_gray,
+                foreground_gray,
+                fgHeight,
+                fgWidth,
+                bgHeight,
+                bgWidth,
+                offsetWidth,
+                offsetHeight,
+                ystart,
+                yend,
+                xstart,
+                xend,
+            )
 
         elif self.edge == "bottom":
-            xloc = offsetWidth
-            for i in range(self.ntimes):
-                base = overlayBase[
-                    (bgHeight - (self.edgeOffset + fgHeight)) : (bgHeight - self.edgeOffset),
-                    xloc : (xloc + fgWidth),
-                ]
-                base_gray = overlayBase_gray[
-                    (bgHeight - (self.edgeOffset + fgHeight)) : (bgHeight - self.edgeOffset),
-                    xloc : (xloc + fgWidth),
-                ]
-                for y in range(fgHeight):
-                    for x in range(fgWidth):
-                        if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
-                            base[y, x] = self.foreground[y, x]
-                xloc += fgWidth + offsetWidth
+
+            ystart = bgHeight - self.edgeOffset - fgHeight
+            yend = bgHeight - self.edgeOffset
+            xstart = offsetWidth
+            xend = offsetWidth + fgWidth
+
+            self.applyOverlay(
+                overlayBase,
+                overlayBase_gray,
+                foreground_gray,
+                fgHeight,
+                fgWidth,
+                bgHeight,
+                bgWidth,
+                offsetWidth,
+                offsetHeight,
+                ystart,
+                yend,
+                xstart,
+                xend,
+            )
 
         return overlayBase
