@@ -25,4 +25,3 @@ augmentation = BindingsAndFasteners(
 | `edge`          | Which edge of the page the foreground copies should be placed on.|
 | `edgeOffset`    | How far from the edge of the page to draw the copies.            |
 | `p`             | The probability this augmentation will be applied.               |
-
