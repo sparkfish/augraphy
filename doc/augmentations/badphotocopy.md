@@ -6,7 +6,6 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
 ```python
 augmentation = BadPhotocopy(
-	layer="ink",
 	noise_density=(0.1, 0.9),
 	max_iteration=(7, 9),
 	hash_type=0,
@@ -16,7 +15,6 @@ augmentation = BadPhotocopy(
 
 | Parameter       | Description                                                      |
 |-----------------|------------------------------------------------------------------|
-| `layer`		  | The image layer to apply the augmentation to.                    |
 | `noise_density` | Density of noise blobs, lower value generates sparser noise.     |
 | `max_iteration` | Iterations of noise value, higher value generates sparser noise. |
 | `hash_type`     | Types of hashes to generate olsen noise.                         |

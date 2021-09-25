@@ -10,8 +10,6 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 class BadPhotoCopy(Augmentation):
     """Uses olsen noise to generate an effect of dirty copier
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param noise_density: Pair of floats determining density of noises.
             Lower value generates sparser noise.
     :type noise_density: tuple, optional
@@ -27,15 +25,13 @@ class BadPhotoCopy(Augmentation):
 
     def __init__(
         self,
-        layer,
         noise_density=(0.1, 0.9),
-        max_iteration=(7, 7),
+        max_iteration=(7, 9),
         hash_type=0,
         p=0.5,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.noise_density = noise_density
         self.max_iteration = max_iteration
         self.hash_type = hash_type
@@ -57,7 +53,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy({self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
+        return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
 
     def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
         """
@@ -431,6 +427,6 @@ class BadPhotoCopy(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data["ink"][-1].result
             result = self.apply_augmentation(image)
-            data[self.layer].append(AugmentationResult(self, result))
+            data["ink"].append(AugmentationResult(self, result))
