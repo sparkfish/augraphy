@@ -200,7 +200,7 @@ class BindingsAndFasteners(Augmentation):
                     self.retrieve_foreground()
                     ob = OverlayBuilder(self.foreground, image, self.ntimes, self.edge, self.edgeOffset)
                 # if failed to download from Figshare, create some simple effect
-                except:
+                except Exception:
                     self.create_foreground(image)
                     ob = OverlayBuilder(self.foreground, image, self.ntimes, self.edge, self.edgeOffset)
 
