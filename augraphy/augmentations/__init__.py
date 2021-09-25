@@ -1,4 +1,5 @@
 from augraphy.augmentations.badphotocopy import BadPhotoCopy
+from augraphy.augmentations.bindingsandfasteners import BindingsAndFasteners
 from augraphy.augmentations.bleedthrough import BleedThrough
 from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
@@ -28,6 +29,7 @@ from augraphy.augmentations.subtlenoise import SubtleNoise
 
 __all__ = [
     "BadPhotoCopy",
+    "BindingsAndFasteners",
     "BleedThrough",
     "BookBinding",
     "Brightness",

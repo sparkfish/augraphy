@@ -74,7 +74,12 @@ class OverlayBuilder:
             for y in range(fgHeight):
                 for x in range(fgWidth):
                     if foreground_gray[y, x] < base_gray[y, x]:  # foreground is darker, get value from foreground
-                        base[y, x] = self.foreground[y, x]
+                        # foreground is colour but base in gray
+                        if len(self.foreground.shape) > len(base.shape):
+                            base[y, x] = foreground_gray[y, x]
+                        # same channel number
+                        else:
+                            base[y, x] = self.foreground[y, x]
 
             if self.edge == "left" or self.edge == "right":
                 # for next loop ystart and yend
