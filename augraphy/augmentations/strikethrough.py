@@ -69,15 +69,15 @@ class Strikethrough(Augmentation):
             self.strikethrough_thickness_range[0],
             self.strikethrough_thickness_range[1],
         )
-        image = cv2.blur(image, (5, 5))
-        image = image.astype("uint8")
-        if len(image.shape) > 2 and image.shape[2] == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        elif len(image.shape) > 2 and image.shape[2] == 4:
-            image = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        blurred = cv2.blur(image, (5, 5))
+        blurred = blurred.astype("uint8")
+        if len(blurred.shape) > 2 and blurred.shape[2] == 3:
+            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+        elif len(blurred.shape) > 2 and blurred.shape[2] == 4:
+            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGRA2GRAY)
 
         ret, thresh1 = cv2.threshold(
-            image,
+            blurred,
             0,
             255,
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
