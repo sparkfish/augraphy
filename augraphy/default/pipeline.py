@@ -11,19 +11,19 @@ from augraphy import *
 def default_augraphy_pipeline():
     ink_phase = AugmentationSequence(
         [
-            Dithering("ink"),
-            InkBleed(),
-            BleedThrough(),
-            Letterpress(),
+            Dithering(layer="ink"),
+            InkBleed(layer="ink"),
+            BleedThrough(layer="ink"),
+            Letterpress(layer="ink"),
             OneOf(
                 [
-                    LowInkRandomLines(use_consistent_lines=False),
-                    LowInkRandomLines(use_consistent_lines=True),
-                    LowInkPeriodicLines(use_consistent_lines=False),
-                    LowInkPeriodicLines(use_consistent_lines=True),
+                    LowInkRandomLines(layer="ink", use_consistent_lines=False),
+                    LowInkRandomLines(layer="ink", use_consistent_lines=True),
+                    LowInkPeriodicLines(layer="ink", use_consistent_lines=False),
+                    LowInkPeriodicLines(layer="ink", use_consistent_lines=True),
                 ],
             ),
-            GaussianBlur("ink"),
+            GaussianBlur(layer="ink"),
         ],
     )
 
@@ -34,15 +34,15 @@ def default_augraphy_pipeline():
                 [
                     AugmentationSequence(
                         [
-                            NoiseTexturize(),
-                            BrightnessTexturize(),
+                            NoiseTexturize(layer="paper"),
+                            BrightnessTexturize(layer="paper"),
                             GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
                         ],
                     ),
                     AugmentationSequence(
                         [
-                            BrightnessTexturize(),
-                            NoiseTexturize(),
+                            BrightnessTexturize(layer="paper"),
+                            NoiseTexturize(layer="paper"),
                             GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
                         ],
                     ),
@@ -54,12 +54,12 @@ def default_augraphy_pipeline():
 
     post_phase = AugmentationSequence(
         [
-            OneOf([PageBorder(), DirtyRollers()]),
-            OneOf([LightingGradient(), Brightness("post")]),
-            DirtyDrum(),
-            SubtleNoise(),
-            Jpeg(),
-            # Folding(),
+            OneOf([PageBorder(layer="post"), DirtyRollers(layer="post")]),
+            OneOf([LightingGradient(), Brightness(layer="post")]),
+            DirtyDrum(layer="post"),
+            SubtleNoise(layer="post"),
+            Jpeg(layer="post"),
+            Folding(layer="post"),
         ],
     )
 
