@@ -31,10 +31,8 @@ The end result is an image that mimics real documents.
 </p>
 
 ## Example Before / After Images
-<p align="center" width="100%">
-    <img src="images/AugraphyExampleInput.png">
-    <img src="images/AugraphyExampleOutput.png">
-</p>
+![examples](https://user-images.githubusercontent.com/74747193/135170284-8249fbab-2748-4230-821c-e56815e797cf.png)
+
 
 # Example Usage
 To use the default pipeline which contains all available augmentations and sensible defaults:

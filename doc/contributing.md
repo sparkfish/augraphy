@@ -2,6 +2,47 @@
 
 Have a feature request? Find a bug? Want to add your augmentation to the project? Feel free to submit a [pull request](https://github.com/sparkfish/augraphy/pulls), or open an [issue](https://github.com/sparkfish/augraphy/issues) to start the discussion.
 
+If you're new to the project, you may find [this post](https://medium.com/@proofconstruction/contributing-to-augraphy-875267d330d1) helpful when getting started. (If not, please open an Issue and let me know!)
+
+# Documentation
+When adding a new augmentation, please also add a markdown file in the `/doc` directory containing the following information:
+
+1. what the augmentation is intended to do
+2. a minimal example of constructing the augmentation
+3. a table containing constructor parameters and their descriptions
+4. a link to a Colab notebook where the augmentation is used
+
+and conforming to the template below.
+
+To produce the Colab notebook for part 4, please copy [this template notebook](https://colab.research.google.com/drive/1UPTbeNsMgpFZXAO8IYCX-Vg0VrOmM6Dh) and make your changes.
+
+## Documentation Template
+
+```markdown
+# MyNewAugmentation
+
+MyNewAugmentation frobs bits in the input image, producing an amazing new effect.
+
+**Example Usage:**
+
+```python
+augmentation = MyNewAugmentation(
+	param1=foo,
+	param2=bar,
+	param3=baz,
+	p=0.5,
+	)
+```
+
+| Parameter | Description                                                           |
+|-----------|-----------------------------------------------------------------------|
+| `param1`  | A short explanation of what this parameter changes or why we need it. |
+| `param2`  | Here too.                                                             |
+| `param3`  | And again here.                                                       |
+
+Click here for an [example Colab Notebook]().
+```
+
 # Code Quality Infrastructure
 As part of our effort to main a high quality of code in the repository, we now have some light continuous integration infrastructure in place.
 

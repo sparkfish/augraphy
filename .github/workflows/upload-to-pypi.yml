@@ -1,0 +1,31 @@
+name: Upload to PyPI
+
+on:
+  # Triggers the workflow when a release is created
+  push:
+    branches: [ rel ]
+  # Allow for manually running the job from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: "Install dependencies"
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools wheel twine
+
+      - name: "Build and uploads to PyPI"
+        run: |
+          python3 setup.py sdist bdist_wheel
+          python3 -m twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_GITHUB_ACTIONS_PUBLISHING_TOKEN }}
