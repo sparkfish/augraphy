@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="augraphy",
-    version="3.0.0",
+    version="4.0.0",
     author="Sparkfish LLC",
     author_email="packages@sparkfish.com",
     description="Augmentation pipeline for rendering synthetic paper printing and scanning processes",
@@ -25,7 +25,7 @@ setuptools.setup(
     install_requires=[
         "numpy >= 1.20.1",
         "opencv-python >= 4.5.1.48",
-        "sklearn >= 0.0",
+        "sklearn >= 1.0",
         "scipy >= 1.6.3",
     ],
 )
