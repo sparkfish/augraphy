@@ -194,7 +194,10 @@ def binaryThreshold(
         enable_otsu = 1
 
     # convert to grayscale
-    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if len(img) > 2:
+        grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        grayscale = img
 
     # otsu method:
     if enable_otsu:

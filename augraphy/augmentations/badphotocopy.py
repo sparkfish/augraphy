@@ -10,6 +10,7 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 class BadPhotoCopy(Augmentation):
     """Uses olsen noise to generate an effect of dirty copier
+
     :param layer: The image layer to apply the augmentation to.
     :type layer: string
     :param noise_density: Pair of floats determining density of noises.
@@ -431,6 +432,6 @@ class BadPhotoCopy(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data[self.layer][-1].result.copy()
             result = self.apply_augmentation(image)
             data[self.layer].append(AugmentationResult(self, result))

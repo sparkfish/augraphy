@@ -11,34 +11,40 @@ class NoiseTexturize(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
 
-    sigma: defines bounds of noise fluctuations
-    turbulence: defines how quickly big patterns will be replaced with the small ones. The lower
-    value - the more iterations will be performed during texture generation.
-    layer: the pipeline layer this Augmentation is applied in
-    p: the probability that this Augmentation will be applied
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
+    :param sigma_range: Defines bounds of noise fluctuations.
+    :type sigma_range: tuple, optional
+    :param turbulence_range: Defines how quickly big patterns will be
+        replaced with the small ones. The lower value -
+        the more iterations will be performed during texture generation.
+    :type turbulence_range: tuple, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
+
     """
 
     def __init__(
         self,
+        layer,
         sigma_range=(3, 10),
         turbulence_range=(2, 5),
         p=0.5,
-        layer="paper",
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.sigma_range = sigma_range
         self.turbulence_range = turbulence_range
-        self.layer = layer
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
+        return f"NoiseTexturize({self.layer}, sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data[self.layer][-1].result.copy()
 
             sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
             turbulence = random.randint(

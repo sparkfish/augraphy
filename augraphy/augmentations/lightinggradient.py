@@ -13,22 +13,33 @@ class LightingGradient(Augmentation):
     position and direction, and applies it to the image as a lighting or
     brightness gradient.
 
-    Args:
-      mask_size: tuple of integers (w, h) defining generated mask size
-      position: tuple of integers (x, y) defining the center of light strip position,
-        which is the reference point during rotating
-      direction: integer from 0 to 360 to indicate the rotation degree of light strip
-      max_brightness: integer that max brightness in the mask
-      min_brightness: integer that min brightness in the mask
-      mode: the way that brightness decay from max to min: linear or gaussian
-      linear_decay_rate: only valid in linear_static mode. Suggested value is within [0.2, 2]
-      p: float, the probability that this Augmentation will be applied.
-    Return:
-      light_mask: ndarray in float type consisting value from 0 to strength
+    :param mask_size: tuple of integers (w, h) defining generated mask size
+    :type mask_size: tuple, optional
+    :param position: tuple of integers (x, y) defining the center of light
+        strip position, which is the reference point during rotation.
+    :type position: tuple, optional
+    :param direction: integer from 0 to 360 to indicate the rotation
+        degree of light strip.
+    :type direction: int, optional
+    :param max_brightness: integer that max brightness in the mask.
+    :type max_brightness: int, optional
+    :param min_brightness: integer that min brightness in the mask
+    :type min_brightness: int, optional
+    :param mode: the way that brightness decay from max to min:
+        linear or gaussian
+    :type mode: string, optional
+    :param linear_decay_rate: only valid in linear_static mode.
+        Suggested value is within [0.2, 2].
+    :type linear_decay_rate: float, optional
+    :param transparency: Transparency of input image.
+    :type transparency: float, optional
+    :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
         self,
+        layer,
         light_position=None,
         direction=None,
         max_brightness=255,
@@ -40,6 +51,7 @@ class LightingGradient(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.light_position = light_position
         self.direction = direction
         self.max_brightness = max_brightness
@@ -50,12 +62,12 @@ class LightingGradient(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LightingGradient(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
+        return f"LightingGradient({self.layer}, light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["post"][-1].result
+            image = data[self.layer][-1].result.copy()
             if self.transparency is None:
                 transparency = random.uniform(0.5, 0.85)
             else:
@@ -77,7 +89,7 @@ class LightingGradient(Augmentation):
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
-            data["post"].append(AugmentationResult(self, frame))
+            data[self.layer].append(AugmentationResult(self, frame))
 
     def generate_parallel_light_mask(
         self,

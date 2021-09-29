@@ -8,7 +8,7 @@ class Dithering(Augmentation):
     """
     Applies Ordered or Floyd Steinberg dithering to the input image.
 
-    :param layer: The layer of image to apply dithering.
+    :param layer: The image layer to apply the augmentation to.
     :type layer: string
     :param dither: Types of dithering, ordered or Floyd Steinberg dithering.
     :type dither: string, optional

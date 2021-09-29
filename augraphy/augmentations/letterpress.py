@@ -12,6 +12,8 @@ from augraphy.base.augmentationresult import AugmentationResult
 class Letterpress(Augmentation):
     """Produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param count_range: Pair of ints determining the range from which the number
            of blobs to generate is sampled.
     :type count_range: tuple, optional
@@ -36,6 +38,7 @@ class Letterpress(Augmentation):
 
     def __init__(
         self,
+        layer,
         count_range=(1000, 2500),
         size_range=(60, 80),
         points_range=(200, 250),
@@ -46,6 +49,7 @@ class Letterpress(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.count_range = count_range
         self.size_range = size_range
         self.points_range = points_range
@@ -54,11 +58,11 @@ class Letterpress(Augmentation):
         self.value_range = value_range
 
     def __repr__(self):
-        return f"Letterpress(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress({self.layer}, count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["ink"][-1].result.copy()
+            image = data[self.layer][-1].result.copy()
             count = random.randint(self.count_range[0], self.count_range[1])
             noise_mask = np.copy(image)
 
@@ -79,4 +83,4 @@ class Letterpress(Augmentation):
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
             image = apply_mask(image, noise_mask)
 
-            data["ink"].append(AugmentationResult(self, image))
+            data[self.layer].append(AugmentationResult(self, image))

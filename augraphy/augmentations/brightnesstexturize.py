@@ -11,13 +11,13 @@ class BrightnessTexturize(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
 
+    :param layer: The image layer to apply the brightness texturization to
+    :type layer: string, optional
     :param range: Pair of ints determining the range from which to sample values
            for the brightness matrix.
     :type range: tuple, optional
     :param deviation: Additional variation for the uniform sample.
     :type deviation: float, optional
-    :param layer: The image layer to apply the brightness texturization to
-    :type layer: string, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -25,20 +25,20 @@ class BrightnessTexturize(Augmentation):
     def __init__(self, range=(0.9, 0.99), deviation=0.03, layer="paper", p=0.5):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.low = range[0]
         self.high = range[1]
         self.deviation = deviation
-        self.layer = layer
         self.range = range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturize(layer='{self.layer}', range={self.range}, deviation={self.deviation}, p={self.p})"
+        return f"BrightnessTexturize({self.layer}, range={self.range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = data[self.layer][-1].result
+            img = data[self.layer][-1].result.copy()
             value = random.uniform(self.low, self.high)
             hsv = cv2.cvtColor(img.astype("uint8"), cv2.COLOR_BGR2HSV)
             hsv = np.array(hsv, dtype=np.float64)

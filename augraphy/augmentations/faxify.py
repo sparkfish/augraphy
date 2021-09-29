@@ -11,6 +11,8 @@ from augraphy.base.augmentationresult import AugmentationResult
 class Faxify(Augmentation):
     """Emulates faxify effect in the image.
 
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param scale_range: Pair of ints determining the range from which to
            divide the resolution by.
     :type scale_range: tuple, optional
@@ -35,6 +37,7 @@ class Faxify(Augmentation):
 
     def __init__(
         self,
+        layer,
         scale_range=(1, 1),
         monochrome=1,
         monochrome_method="Otsu",
@@ -48,6 +51,7 @@ class Faxify(Augmentation):
 
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
@@ -72,7 +76,7 @@ class Faxify(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify({self.layer}, scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
     # rotate image based on the input angle
     def cv_rotate(self, image, angle):
@@ -187,7 +191,7 @@ class Faxify(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run() or True:
 
-            image = data["post"][-1].result
+            image = data[self.layer][-1].result.copy()
 
             # downscale image
             image_downscaled = self.downscale(image)
@@ -221,4 +225,4 @@ class Faxify(Augmentation):
             # upscale image
             image_faxify = cv2.resize(image_out, (image.shape[1], image.shape[0]))
 
-            data["post"].append(AugmentationResult(self, image_faxify))
+            data[self.layer].append(AugmentationResult(self, image_faxify))

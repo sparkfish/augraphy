@@ -8,6 +8,8 @@ class LowInkPeriodicLines(LowInkLine):
     """Creates a set of lines that repeat in a periodic fashion throughout the
     image.
 
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param count_range: Pair of ints determining the range from which to sample
            the number of lines to apply.
     :type count_range: tuple, optional
@@ -23,6 +25,7 @@ class LowInkPeriodicLines(LowInkLine):
 
     def __init__(
         self,
+        layer,
         count_range=(2, 5),
         period_range=(10, 30),
         use_consistent_lines=True,
@@ -30,12 +33,13 @@ class LowInkPeriodicLines(LowInkLine):
     ):
         """Constructor method"""
         super().__init__(use_consistent_lines=use_consistent_lines, p=p)
+        self.layer = layer
         self.count_range = count_range
         self.period_range = period_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkPeriodicLines(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return f"LowInkPeriodicLines({self.layer}, count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
         """Creates horizontal lines of some opacity over the input image, at
@@ -88,11 +92,11 @@ class LowInkPeriodicLines(LowInkLine):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["ink"][-1].result.copy()
+            image = data[self.layer][-1].result.copy()
             count = random.randint(self.count_range[0], self.count_range[1])
             period = random.randint(self.period_range[0], self.period_range[1])
 
             for i in range(count):
                 self.add_periodic_transparency_lines(image, count, period)
 
-            data["ink"].append(AugmentationResult(self, image))
+            data[self.layer].append(AugmentationResult(self, image))

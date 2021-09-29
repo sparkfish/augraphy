@@ -22,8 +22,8 @@ class Brightness(Augmentation):
     def __init__(self, layer, range=(0.8, 1.4), p=0.5):
         """Constructor method"""
         super().__init__(p=p)
-        self.range = range
         self.layer = layer
+        self.range = range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
@@ -33,9 +33,9 @@ class Brightness(Augmentation):
     def __call__(self, data, force=False):
         if force or self.should_run():
 
-            img = data[self.layer][-1].result
+            img = data[self.layer][-1].result.copy()
             value = random.uniform(self.range[0], self.range[1])
-            if self.layer == "ink":
+            if self.layer == "ink" or len(img.shape) < 3:
                 img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
             hsv = cv2.cvtColor(img.astype("uint8"), cv2.COLOR_BGR2HSV)
 

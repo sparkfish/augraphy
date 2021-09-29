@@ -13,6 +13,8 @@ class InkBleed(Augmentation):
     random noise to those edges. When followed by a blur, this creates a
     fuzzy edge that emulates an ink bleed effect.
 
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param intensity_range: Pair of floats determining the range from which
            noise intensity is sampled.
     :type intensity: tuple, optional
@@ -23,20 +25,27 @@ class InkBleed(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, intensity_range=(0.1, 0.2), color_range=(0, 224), p=0.5):
+    def __init__(
+        self,
+        layer,
+        intensity_range=(0.1, 0.2),
+        color_range=(0, 224),
+        p=0.5,
+    ):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.intensity_range = intensity_range
         self.color_range = color_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
+        return f"InkBleed({self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["ink"][-1].result
+            image = data[self.layer][-1].result.copy()
             intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
             add_noise_fn = (
                 lambda x, y: random.randint(self.color_range[0], self.color_range[1])
@@ -54,4 +63,4 @@ class InkBleed(Augmentation):
 
             image = apply_mask(image, noise_mask, sobel)
 
-            data["ink"].append(AugmentationResult(self, image))
+            data[self.layer].append(AugmentationResult(self, image))

@@ -13,6 +13,8 @@ class BleedThrough(Augmentation):
     """Emulates bleed through effect from the combination of ink bleed and
     gaussian blur operations.
 
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param intensity_range: Pair of floats determining the range from which
            noise intensity is sampled.
     :type intensity: tuple, optional
@@ -36,6 +38,7 @@ class BleedThrough(Augmentation):
 
     def __init__(
         self,
+        layer,
         intensity_range=(0.1, 0.2),
         color_range=(0, 224),
         ksize=(17, 17),
@@ -45,6 +48,7 @@ class BleedThrough(Augmentation):
         p=0.5,
     ):
         super().__init__(p=p)
+        self.layer = layer
         self.intensity_range = intensity_range
         self.color_range = color_range
         self.ksize = ksize
@@ -54,7 +58,7 @@ class BleedThrough(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
+        return f"BleedThrough({self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
 
     # Add salt and pepper noise
     def add_sp_noise(self, img, prob=0.05):
@@ -113,7 +117,7 @@ class BleedThrough(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["ink"][-1].result.copy()
+            image = data[self.layer][-1].result.copy()
             image_flip = cv2.flip(image, 0)
             image_flip = cv2.flip(image_flip, 1)
             image_bleed = self.generate_bleeding_ink(
@@ -126,4 +130,4 @@ class BleedThrough(Augmentation):
             image_bleed_offset = self.generate_offset(image_bleed, self.offsets)
             image_bleedthrough = self.blend(image, image_bleed_offset, self.alpha)
 
-            data["ink"].append(AugmentationResult(self, image_bleedthrough))
+            data[self.layer].append(AugmentationResult(self, image_bleedthrough))

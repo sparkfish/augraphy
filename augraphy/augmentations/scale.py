@@ -37,7 +37,7 @@ class Scale(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data[self.layer][-1].result.copy()
 
             new_size = (
                 round(image.shape[1] * self.scale_factor),

@@ -9,10 +9,10 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BookBinding(Augmentation):
-    # Creates a book binding effect with shadow and curved lines
+    """Creates a book binding effect with shadow and curved lines
 
-    """
-
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param radius_range: The range of radius in pixels
     :type range: tuple, optional
     :param curve_intensity_range: Intensity by which the page text should be curved
@@ -22,14 +22,20 @@ class BookBinding(Augmentation):
 
     """
 
-    def __init__(self, radius_range=(1, 100), curve_intensity_range=(0, 70), p=0.5):
-
+    def __init__(
+        self,
+        layer,
+        radius_range=(1, 100),
+        curve_intensity_range=(0, 70),
+        p=0.5,
+    ):
         super().__init__(p=p)
+        self.layer = layer
         self.radius_range = radius_range
         self.curve_intensity_range = curve_intensity_range
 
     def __repr__(self):
-        return f"BookBinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
+        return f"BookBinding({self.layer}, radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
         img_output = img.copy()
@@ -64,7 +70,7 @@ class BookBinding(Augmentation):
             self.curve_intensity_range[0],
             self.curve_intensity_range[1],
         )
-        image = data["post"][-1].result.copy()
+        image = data[self.layer][-1].result.copy()
         image = self.add_book_shadow(image, radius, angle)
         image = self.curve_page(image, curve_intensity)
-        data["post"].append(AugmentationResult(self, image))
+        data[self.layer].append(AugmentationResult(self, image))
