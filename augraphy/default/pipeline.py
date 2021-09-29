@@ -55,7 +55,7 @@ def default_augraphy_pipeline():
     post_phase = AugmentationSequence(
         [
             OneOf([PageBorder(layer="post"), DirtyRollers(layer="post")]),
-            OneOf([LightingGradient(), Brightness(layer="post")]),
+            OneOf([LightingGradient(layer="post"), Brightness(layer="post")]),
             DirtyDrum(layer="post"),
             SubtleNoise(layer="post"),
             Jpeg(layer="post"),
