@@ -43,4 +43,4 @@ class GaussianBlur(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"GaussianBlur({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"
+        return f"GaussianBlur(layer={self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"

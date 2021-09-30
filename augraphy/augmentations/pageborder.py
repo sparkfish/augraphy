@@ -44,7 +44,7 @@ class PageBorder(Augmentation):
         self.noise_intensity_range = noise_intensity_range
 
     def __repr__(self):
-        return f"PageBorder({self.layer}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
+        return f"PageBorder(layer={self.layer}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
 
     def add_corner_noise(self, border, intensity=0.2):
         ksize = (5, 5)

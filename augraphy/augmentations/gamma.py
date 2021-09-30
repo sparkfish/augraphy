@@ -32,7 +32,7 @@ class Gamma(Augmentation):
         self.range = range
 
     def __repr__(self):
-        return f"Gamma({self.layer}, range={self.range}, p={self.p})"
+        return f"Gamma(layer={self.layer}, range={self.range}, p={self.p})"
 
     def __call__(self, data, force=False):
         img = data[self.layer][-1].result.copy()

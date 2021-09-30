@@ -32,7 +32,7 @@ class DirtyRollers(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyRollers({self.layer}, line_width_range={self.line_width_range}, p={self.p})"
+        return f"DirtyRollers(layer={self.layer}, line_width_range={self.line_width_range}, p={self.p})"
 
     def apply_scanline_mask(self, img, mask, meta_mask):
         if random.choice([True, False]):

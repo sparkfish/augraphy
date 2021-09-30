@@ -40,7 +40,7 @@ class InkBleed(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleed({self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
+        return f"InkBleed(layer={self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

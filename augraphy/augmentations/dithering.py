@@ -32,7 +32,7 @@ class Dithering(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Dithering({self.layer}, dither={self.dither}, p={self.p})"
+        return f"Dithering(layer={self.layer}, dither={self.dither}, p={self.p})"
 
     # Apply Floyd Steinberg dithering algorithm
     def apply_Floyd_Steinberg(self, image, ysize, xsize):

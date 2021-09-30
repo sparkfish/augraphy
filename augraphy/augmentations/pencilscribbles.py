@@ -55,7 +55,7 @@ class PencilScribbles(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PencilScribbles({self.layer}, size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
+        return f"PencilScribbles(layer={self.layer}, size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
 
     def apply_pencil_stroke(self, stroke_image, image):
         apply_mask_fn = lambda x, y: y if (x < 64) else x

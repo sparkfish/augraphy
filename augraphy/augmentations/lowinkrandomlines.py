@@ -33,7 +33,7 @@ class LowInkRandomLines(LowInkLine):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LowInkRandomLines({self.layer}, count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
+        return f"LowInkRandomLines(layer={self.layer}, count_range={self.count_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

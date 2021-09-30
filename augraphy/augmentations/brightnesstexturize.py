@@ -33,7 +33,7 @@ class BrightnessTexturize(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturize({self.layer}, range={self.range}, deviation={self.deviation}, p={self.p})"
+        return f"BrightnessTexturize(layer={self.layer}, range={self.range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

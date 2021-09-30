@@ -58,7 +58,7 @@ class Letterpress(Augmentation):
         self.value_range = value_range
 
     def __repr__(self):
-        return f"Letterpress({self.layer}, count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress(layer={self.layer}, count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
     def __call__(self, data, force=False):
         if force or self.should_run():
