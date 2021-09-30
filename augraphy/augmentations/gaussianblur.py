@@ -21,20 +21,26 @@ class GaussianBlur(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, layer, kernels=[(3, 3)], sigmaX=0, p=0.5):
+    def __init__(
+        self,
+        layer,
+        kernels=[(3, 3)],
+        sigmaX=0,
+        p=0.5,
+    ):
         """Constructor method"""
         super().__init__(p=p)
+        self.layer = layer
         self.sigmaX = sigmaX
         self.kernels = kernels
-        self.layer = layer
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            img = np.double(data[self.layer][-1].result)
+            img = np.double(data[self.layer][-1].result.copy())
             img = cv2.GaussianBlur(img, random.choice(self.kernels), self.sigmaX)
             data[self.layer].append(AugmentationResult(self, img))
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"GaussianBlur({self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"
+        return f"GaussianBlur(layer={self.layer}, kernels={self.kernels}, sigmaX={self.sigmaX}, p={self.p})"

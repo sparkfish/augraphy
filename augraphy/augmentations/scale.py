@@ -32,12 +32,12 @@ class Scale(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Scale(layer={self.layer}, scale_factor={self.scale_factor}, interpolation={self.interpolation}, p={self.p})"
+        return f"Scale(layer=layer={self.layer}, scale_factor={self.scale_factor}, interpolation={self.interpolation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data[self.layer][-1].result.copy()
 
             new_size = (
                 round(image.shape[1] * self.scale_factor),

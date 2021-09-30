@@ -9,9 +9,10 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Strikethrough(Augmentation):
+    """Uses contours detection to detect text lines and add a smooth text strikethrough effect
 
-    """
-    Uses contours detection to detect text lines and add a smooth text strikethrough effect
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param num_lines_range: Pair of ints determining the number of lines to add strikethrough
     :type num_lines_range: int tuple, optional
     :param strikethrough_length_range: Pair of floats between 0 to 1 , to determine the length of strikethrough effect
@@ -24,6 +25,7 @@ class Strikethrough(Augmentation):
 
     def __init__(
         self,
+        layer,
         num_lines_range=(2, 7),
         strikethrough_length_range=(0.5, 1),
         strikethrough_thickness_range=(1, 3),
@@ -31,13 +33,14 @@ class Strikethrough(Augmentation):
     ):
 
         super().__init__(p=p)
+        self.layer = layer
         self.num_lines_range = num_lines_range
         self.strikethrough_length_range = strikethrough_length_range
         self.strikethrough_thickness_range = strikethrough_thickness_range
 
     def __repr__(self):
         return (
-            f"Strikethrough(num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
+            f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
 
@@ -62,7 +65,7 @@ class Strikethrough(Augmentation):
         return points
 
     def __call__(self, data, force=False):
-        image = data["ink"][-1].result.copy()
+        image = data[self.layer][-1].result.copy()
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         strikethrough_thickness = random.randint(
@@ -124,4 +127,4 @@ class Strikethrough(Augmentation):
                         lineType=cv2.LINE_AA,
                     )
 
-        data["ink"].append(AugmentationResult(self, strikethrough_img))
+        data[self.layer].append(AugmentationResult(self, strikethrough_img))

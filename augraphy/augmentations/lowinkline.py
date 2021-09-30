@@ -18,10 +18,13 @@ class LowInkLine(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, use_consistent_lines=True, p=0.5):
+    def __init__(
+        self,
+        use_consistent_lines=True,
+        p=0.5,
+    ):
         """Constructor method"""
         super().__init__(p=p)
-
         self.use_consistent_lines = use_consistent_lines
         inconsistent_transparency_line = lambda x: random.randint(0, 255)
         self.inconsistent_transparency_line = np.vectorize(

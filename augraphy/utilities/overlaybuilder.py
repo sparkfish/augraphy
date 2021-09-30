@@ -17,6 +17,8 @@ class OverlayBuilder:
     :type background: np.array
     :param ntimes: how many copies of the foreground image to draw
     :type ntimes: integer
+    :param nscales: Scales of foreground image size.
+    :type nscales: tuple, optional
     :param edge: which edge of the page the foreground copies should be
         placed on
     :type edge: string
@@ -24,10 +26,11 @@ class OverlayBuilder:
     :type edgeOffset: integer
     """
 
-    def __init__(self, foreground, background, ntimes, edge, edgeOffset):
+    def __init__(self, foreground, background, ntimes, nscales, edge, edgeOffset):
         self.foreground = foreground
         self.background = background
         self.ntimes = ntimes
+        self.nscales = nscales
         self.edge = edge
         self.edgeOffset = max(0, edgeOffset)  # prevent negative
 
@@ -101,6 +104,17 @@ class OverlayBuilder:
 
         # overlaybase should be the background
         overlayBase = self.background
+
+        # sensitivity up to 0.01 (for scale down)
+        min_value = max(1, self.nscales[0] * 100)
+        max_value = max(1, self.nscales[1] * 100)
+        new_fgHeight = int((self.foreground.shape[0] * random.randint(min_value, max_value)) / 100)
+        new_fgWidth = int((self.foreground.shape[1] * random.randint(min_value, max_value)) / 100)
+        self.foreground = cv2.resize(
+            self.foreground,
+            (int(new_fgWidth), int(new_fgHeight)),
+            interpolation=cv2.INTER_AREA,
+        )
 
         # foreground size (height & width)
         fgHeight, fgWidth = self.foreground.shape[:2]

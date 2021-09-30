@@ -9,6 +9,9 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 class Folding(Augmentation):
     """Emulates folding effect from perspective transformation
+
+    :param layer: The image layer to apply the augmentation to.
+    :type layer: string
     :param fold count: Number of applied foldings
     :type fold_count: int, optional
     :param fold_noise: Level of noise added to folding area. Range from
@@ -27,6 +30,7 @@ class Folding(Augmentation):
 
     def __init__(
         self,
+        layer,
         fold_count=2,
         fold_noise=0.1,
         gradient_width=(0.1, 0.2),
@@ -34,6 +38,7 @@ class Folding(Augmentation):
         p=0.5,
     ):
         super().__init__(p=p)
+        self.layer = layer
         self.fold_count = fold_count
         self.fold_noise = fold_noise
         self.gradient_width = gradient_width
@@ -41,7 +46,7 @@ class Folding(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Folding(fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
+        return f"Folding(layer={self.layer}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
 
     # Perspective transform based on 4 points
     def four_point_transform(self, image, pts, dst, xs, ys):
@@ -207,11 +212,7 @@ class Folding(Augmentation):
         #   1  = right side
 
         # get image dimension
-        if len(img.shape) > 2:
-            ysize, xsize, dim = img.shape
-        else:
-            ysize, xsize = img.shape
-            dim = 2
+        ysize, xsize = img.shape[:2]
 
         for y in range(ysize):
             for x in range(xsize):
@@ -291,7 +292,7 @@ class Folding(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data["post"][-1].result.copy()
+            image = data[self.layer][-1].result.copy()
 
             # get image dimension
             if len(image.shape) > 2:
@@ -311,4 +312,4 @@ class Folding(Augmentation):
                     self.fold_noise,
                 )
 
-            data["post"].append(AugmentationResult(self, image_fold))
+            data[self.layer].append(AugmentationResult(self, image_fold))

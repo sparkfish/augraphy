@@ -8,7 +8,7 @@ class Dithering(Augmentation):
     """
     Applies Ordered or Floyd Steinberg dithering to the input image.
 
-    :param layer: The layer of image to apply dithering.
+    :param layer: The image layer to apply the augmentation to.
     :type layer: string
     :param dither: Types of dithering, ordered or Floyd Steinberg dithering.
     :type dither: string, optional
@@ -32,7 +32,7 @@ class Dithering(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Dithering({self.layer}, dither={self.dither}, p={self.p})"
+        return f"Dithering(layer={self.layer}, dither={self.dither}, p={self.p})"
 
     # Apply Floyd Steinberg dithering algorithm
     def apply_Floyd_Steinberg(self, image, ysize, xsize):

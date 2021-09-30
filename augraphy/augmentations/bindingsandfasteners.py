@@ -12,6 +12,7 @@ from augraphy.utilities import *
 
 class BindingsAndFasteners(Augmentation):
     """Creates binding and fastener mark in the input image.
+
     :param layer: The image layer to apply the augmentation to.
     :type layer: string
     :param foreground: Path to foreground image.
@@ -21,6 +22,8 @@ class BindingsAndFasteners(Augmentation):
     :type effect_type: string, optional
     :param ntimes: Number of repetition to draw foreground image.
     :type ntimes: int, optional
+    :param nscales: Scales of foreground image size.
+    :type nscales: tuple, optional
     :param edge: Which edge of the page the foreground copies should be
         placed on.
     :type edge: string, optional
@@ -36,6 +39,7 @@ class BindingsAndFasteners(Augmentation):
         foreground=None,
         effect_type="punch_holes",
         ntimes=3,
+        nscales=(1, 1),
         edge="left",
         edgeOffset=50,
         p=0.5,
@@ -46,6 +50,7 @@ class BindingsAndFasteners(Augmentation):
         self.foreground = foreground
         self.effect_type = effect_type
         self.ntimes = ntimes
+        self.nscales = nscales
         self.edge = edge
         self.edgeOffset = max(0, edgeOffset)  # prevent negative
 
@@ -56,7 +61,7 @@ class BindingsAndFasteners(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BindingsAndFasteners({self.layer}, {self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
+        return f"BindingsAndFasteners(layer={self.layer}, {self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
 
     def create_foreground(self, image):
 
@@ -188,21 +193,21 @@ class BindingsAndFasteners(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result
+            image = data[self.layer][-1].result.copy()
 
             # if user input image
             if self.foreground and os.path.isfile(self.foreground):
                 self.foreground = cv2.imread(self.foreground)
-                ob = OverlayBuilder(self.foreground, image, self.ntimes, self.edge, self.edgeOffset)
+                ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
             else:
                 # user didn't input foreground or not readable file, try to download from Figshare
                 try:
                     self.retrieve_foreground()
-                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.edge, self.edgeOffset)
+                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
                 # if failed to download from Figshare, create some simple effect
                 except Exception:
                     self.create_foreground(image)
-                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.edge, self.edgeOffset)
+                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
 
             image_output = ob.buildOverlay()
 
