@@ -62,7 +62,7 @@ class LightingGradient(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LightingGradient({self.layer}, light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
+        return f"LightingGradient(layer={self.layer}, light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

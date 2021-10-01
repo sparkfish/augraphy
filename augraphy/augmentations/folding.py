@@ -46,7 +46,7 @@ class Folding(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Folding({self.layer}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
+        return f"Folding(layer={self.layer}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
 
     # Perspective transform based on 4 points
     def four_point_transform(self, image, pts, dst, xs, ys):

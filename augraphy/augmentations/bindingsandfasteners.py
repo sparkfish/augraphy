@@ -61,7 +61,7 @@ class BindingsAndFasteners(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BindingsAndFasteners({self.layer}, {self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
+        return f"BindingsAndFasteners(layer={self.layer}, {self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
 
     def create_foreground(self, image):
 

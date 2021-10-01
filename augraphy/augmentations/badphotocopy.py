@@ -58,7 +58,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy({self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
+        return f"BadPhotoCopy(layer={self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
 
     def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
         """

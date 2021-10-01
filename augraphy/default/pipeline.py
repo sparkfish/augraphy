@@ -23,7 +23,6 @@ def default_augraphy_pipeline():
                     LowInkPeriodicLines(layer="ink", use_consistent_lines=True),
                 ],
             ),
-            GaussianBlur(layer="ink"),
         ],
     )
 
@@ -36,14 +35,12 @@ def default_augraphy_pipeline():
                         [
                             NoiseTexturize(layer="paper"),
                             BrightnessTexturize(layer="paper"),
-                            GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
                         ],
                     ),
                     AugmentationSequence(
                         [
                             BrightnessTexturize(layer="paper"),
                             NoiseTexturize(layer="paper"),
-                            GaussianBlur("paper", [(3, 3), (3, 5), (5, 3), (5, 5)]),
                         ],
                     ),
                 ],

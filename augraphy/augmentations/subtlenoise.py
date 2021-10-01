@@ -33,7 +33,7 @@ class SubtleNoise(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"SubtleNoise({self.layer}, range={self.range}, p={self.p})"
+        return f"SubtleNoise(layer={self.layer}, range={self.range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):

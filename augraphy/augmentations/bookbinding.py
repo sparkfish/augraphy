@@ -35,7 +35,7 @@ class BookBinding(Augmentation):
         self.curve_intensity_range = curve_intensity_range
 
     def __repr__(self):
-        return f"BookBinding({self.layer}, radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
+        return f"BookBinding(layer={self.layer}, radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
         img_output = img.copy()

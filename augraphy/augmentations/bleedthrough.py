@@ -58,7 +58,7 @@ class BleedThrough(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThrough({self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
+        return f"BleedThrough(layer={self.layer}, intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
 
     # Add salt and pepper noise
     def add_sp_noise(self, img, prob=0.05):

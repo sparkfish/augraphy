@@ -40,7 +40,7 @@ class Strikethrough(Augmentation):
 
     def __repr__(self):
         return (
-            f"Strikethrough({self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
+            f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
 

@@ -76,7 +76,7 @@ class Faxify(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify({self.layer}, scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify(layer={self.layer}, scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
     # rotate image based on the input angle
     def cv_rotate(self, image, angle):

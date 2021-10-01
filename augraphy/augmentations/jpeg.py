@@ -31,7 +31,7 @@ class Jpeg(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Jpeg({self.layer}, quality_range={self.quality_range}, p={self.p})"
+        return f"Jpeg(layer={self.layer}, quality_range={self.quality_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
