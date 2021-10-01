@@ -27,6 +27,7 @@ def smooth(points, iter):
         points = chaikin(points)
     return points
 
+
 def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """Applies random noise to the input image.
 

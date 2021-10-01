@@ -4,9 +4,10 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-from augraphy.augmentations.lib import smooth
+
 
 class Strikethrough(Augmentation):
 
@@ -42,8 +43,6 @@ class Strikethrough(Augmentation):
             f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
-
-
 
     def __call__(self, data, force=False):
         image = data[self.layer][-1].result.copy()
