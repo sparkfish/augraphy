@@ -9,12 +9,11 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Strikethrough(Augmentation):
-    """Uses contours detection to detect text lines and add a smooth text strikethrough effect
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
+    """
+    Uses contours detection to detect text lines and add a smooth text strikethrough effect
     :param num_lines_range: Pair of ints determining the number of lines to add strikethrough
-    :type num_lines_range: int tuple, optional
+    :type range: int tuple, optional
     :param strikethrough_length_range: Pair of floats between 0 to 1 , to determine the length of strikethrough effect
     :type range: float tuple, optional
     :param strikethrough_thickness_range: Pair of ints, to determine the thickness of strikethrough line
@@ -25,7 +24,6 @@ class Strikethrough(Augmentation):
 
     def __init__(
         self,
-        layer,
         num_lines_range=(2, 7),
         strikethrough_length_range=(0.5, 1),
         strikethrough_thickness_range=(1, 3),
@@ -33,14 +31,13 @@ class Strikethrough(Augmentation):
     ):
 
         super().__init__(p=p)
-        self.layer = layer
         self.num_lines_range = num_lines_range
         self.strikethrough_length_range = strikethrough_length_range
         self.strikethrough_thickness_range = strikethrough_thickness_range
 
     def __repr__(self):
         return (
-            f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
+            f"Strikethrough(num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
 
@@ -65,22 +62,23 @@ class Strikethrough(Augmentation):
         return points
 
     def __call__(self, data, force=False):
-        image = data[self.layer][-1].result.copy()
+        image = data["ink"][-1].result.copy()
+        strikethrough_img = image.copy()
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         strikethrough_thickness = random.randint(
             self.strikethrough_thickness_range[0],
             self.strikethrough_thickness_range[1],
         )
-        blurred = cv2.blur(image, (5, 5))
-        blurred = blurred.astype("uint8")
-        if len(blurred.shape) > 2 and blurred.shape[2] == 3:
-            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
-        elif len(blurred.shape) > 2 and blurred.shape[2] == 4:
-            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGRA2GRAY)
+        image = cv2.blur(image, (5, 5))
+        image = image.astype("uint8")
+        if len(image.shape) > 2 and image.shape[2] == 3:
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        elif len(image.shape) > 2 and image.shape[2] == 4:
+            image = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
 
         ret, thresh1 = cv2.threshold(
-            blurred,
+            image,
             0,
             255,
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
@@ -93,7 +91,6 @@ class Strikethrough(Augmentation):
             cv2.CHAIN_APPROX_NONE,
         )
 
-        strikethrough_img = image.copy()
         for cnt in contours:
             choice = random.choice([False, True])
             if choice:
@@ -127,4 +124,4 @@ class Strikethrough(Augmentation):
                         lineType=cv2.LINE_AA,
                     )
 
-        data[self.layer].append(AugmentationResult(self, strikethrough_img))
+        data["ink"].append(AugmentationResult(self, strikethrough_img))
