@@ -6,7 +6,7 @@ import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
-
+from augraphy.augmentations.lib import smooth
 
 class Strikethrough(Augmentation):
 
@@ -24,6 +24,7 @@ class Strikethrough(Augmentation):
 
     def __init__(
         self,
+        layer,
         num_lines_range=(2, 7),
         strikethrough_length_range=(0.5, 1),
         strikethrough_thickness_range=(1, 3),
@@ -31,54 +32,36 @@ class Strikethrough(Augmentation):
     ):
 
         super().__init__(p=p)
+        self.layer = layer
         self.num_lines_range = num_lines_range
         self.strikethrough_length_range = strikethrough_length_range
         self.strikethrough_thickness_range = strikethrough_thickness_range
 
     def __repr__(self):
         return (
-            f"Strikethrough(num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
+            f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
 
-    def chaikin(self, points):
-        path = [points[0]]
-        percent = 0.25
-        for i in range(len(points) - 1):
-            p0 = points[i]
-            p1 = points[i + 1]
-            dx = p1[0] - p0[0]
-            dy = p1[1] - p0[1]
-            new_p0 = (p0[0] + dx * percent, p0[1] + dy * percent)
-            new_p1 = (p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent))
-            path.append(new_p0)
-            path.append(new_p1)
-        path.append(points[-1])
-        return path
 
-    def smooth(self, points, iter):
-        for i in range(iter):
-            points = self.chaikin(points)
-        return points
 
     def __call__(self, data, force=False):
-        image = data["ink"][-1].result.copy()
-        strikethrough_img = image.copy()
+        image = data[self.layer][-1].result.copy()
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         strikethrough_thickness = random.randint(
             self.strikethrough_thickness_range[0],
             self.strikethrough_thickness_range[1],
         )
-        image = cv2.blur(image, (5, 5))
-        image = image.astype("uint8")
-        if len(image.shape) > 2 and image.shape[2] == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        elif len(image.shape) > 2 and image.shape[2] == 4:
-            image = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+        blurred = cv2.blur(image, (5, 5))
+        blurred = blurred.astype("uint8")
+        if len(blurred.shape) > 2 and blurred.shape[2] == 3:
+            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGR2GRAY)
+        elif len(blurred.shape) > 2 and blurred.shape[2] == 4:
+            blurred = cv2.cvtColor(blurred, cv2.COLOR_BGRA2GRAY)
 
         ret, thresh1 = cv2.threshold(
-            image,
+            blurred,
             0,
             255,
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
@@ -91,6 +74,7 @@ class Strikethrough(Augmentation):
             cv2.CHAIN_APPROX_NONE,
         )
 
+        strikethrough_img = image.copy()
         for cnt in contours:
             choice = random.choice([False, True])
             if choice:
@@ -111,7 +95,7 @@ class Strikethrough(Augmentation):
                 points_count = random.randint(3, 10)
                 points = np.linspace(mid_start[0], mid_end[0], points_count)
                 points_list = [[int(x), (mid_start[1] + random.randint(-6, 6))] for x in points]
-                points_list = self.smooth(points_list, 8)
+                points_list = smooth(points_list, 8)
                 for i in range(len(points_list) - 1):
                     p1 = (int(points_list[i][0]), int(points_list[i][1]))
                     p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
@@ -124,4 +108,4 @@ class Strikethrough(Augmentation):
                         lineType=cv2.LINE_AA,
                     )
 
-        data["ink"].append(AugmentationResult(self, strikethrough_img))
+        data[self.layer].append(AugmentationResult(self, strikethrough_img))
