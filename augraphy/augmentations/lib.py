@@ -6,6 +6,28 @@ import numpy as np
 from sklearn.datasets import make_blobs
 
 
+def chaikin(points):
+    path = [points[0]]
+    percent = 0.25
+    for i in range(len(points) - 1):
+        p0 = points[i]
+        p1 = points[i + 1]
+        dx = p1[0] - p0[0]
+        dy = p1[1] - p0[1]
+        new_p0 = (p0[0] + dx * percent, p0[1] + dy * percent)
+        new_p1 = (p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent))
+        path.append(new_p0)
+        path.append(new_p1)
+    path.append(points[-1])
+    return path
+
+
+def smooth(points, iter):
+    for i in range(iter):
+        points = chaikin(points)
+    return points
+
+
 def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """Applies random noise to the input image.
 

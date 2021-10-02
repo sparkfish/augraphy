@@ -4,17 +4,17 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Strikethrough(Augmentation):
-    """Uses contours detection to detect text lines and add a smooth text strikethrough effect
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
+    """
+    Uses contours detection to detect text lines and add a smooth text strikethrough effect
     :param num_lines_range: Pair of ints determining the number of lines to add strikethrough
-    :type num_lines_range: int tuple, optional
+    :type range: int tuple, optional
     :param strikethrough_length_range: Pair of floats between 0 to 1 , to determine the length of strikethrough effect
     :type range: float tuple, optional
     :param strikethrough_thickness_range: Pair of ints, to determine the thickness of strikethrough line
@@ -43,26 +43,6 @@ class Strikethrough(Augmentation):
             f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
-
-    def chaikin(self, points):
-        path = [points[0]]
-        percent = 0.25
-        for i in range(len(points) - 1):
-            p0 = points[i]
-            p1 = points[i + 1]
-            dx = p1[0] - p0[0]
-            dy = p1[1] - p0[1]
-            new_p0 = (p0[0] + dx * percent, p0[1] + dy * percent)
-            new_p1 = (p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent))
-            path.append(new_p0)
-            path.append(new_p1)
-        path.append(points[-1])
-        return path
-
-    def smooth(self, points, iter):
-        for i in range(iter):
-            points = self.chaikin(points)
-        return points
 
     def __call__(self, data, force=False):
         image = data[self.layer][-1].result.copy()
@@ -114,7 +94,7 @@ class Strikethrough(Augmentation):
                 points_count = random.randint(3, 10)
                 points = np.linspace(mid_start[0], mid_end[0], points_count)
                 points_list = [[int(x), (mid_start[1] + random.randint(-6, 6))] for x in points]
-                points_list = self.smooth(points_list, 8)
+                points_list = smooth(points_list, 8)
                 for i in range(len(points_list) - 1):
                     p1 = (int(points_list[i][0]), int(points_list[i][1]))
                     p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
