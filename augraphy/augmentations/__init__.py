@@ -51,4 +51,5 @@ __all__ = [
     "PencilScribbles",
     "Strikethrough",
     "SubtleNoise",
+    "Strikethrough",
 ]
