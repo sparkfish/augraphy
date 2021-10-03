@@ -18,6 +18,7 @@ from augraphy.augmentations.lightinggradient import LightingGradient
 from augraphy.augmentations.lowinkblobs import LowInkBlobs
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
+from augraphy.augmentations.markup import Markup
 from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
@@ -52,4 +53,5 @@ __all__ = [
     "Strikethrough",
     "SubtleNoise",
     "Strikethrough",
+    "Markup",
 ]
