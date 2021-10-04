@@ -1,5 +1,6 @@
 import math
 import random
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -32,7 +33,7 @@ class Markup(Augmentation):
         num_lines_range=(2, 7),
         markup_length_range=(0.5, 1),
         markup_thickness_range=(1, 3),
-        marktup_type="strikethrough",
+        markup_type="strikethrough",
         markup_color=(0, 0, 0),
         p=0.5,
     ):
@@ -42,13 +43,13 @@ class Markup(Augmentation):
         self.num_lines_range = num_lines_range
         self.markup_length_range = markup_length_range
         self.markup_thickness_range = markup_thickness_range
-        self.markup_type = marktup_type
+        self.markup_type = markup_type
         self.markup_color = markup_color
 
     def __repr__(self):
         return (
             f"Markup(layer={self.layer}, num_lines_range={self.num_lines_range}, markup_length_range={self.markup_length_range}, "
-            f"markup_thickness_range={self.markup_thickness_range}, marktup_type{self.markup_type} p={self.p})"
+            f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type} p={self.p})"
         )
 
     def __call__(self, data, force=False):
@@ -83,13 +84,13 @@ class Markup(Augmentation):
             cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_NONE,
         )  # Each line is detected as a contour.
-
         markup_img = image.copy()
         for cnt in contours:
             choice = random.choice([False, True])  # adding randomization.
             if choice:
                 x, y, w, h = cv2.boundingRect(cnt)
-                if w < 100:  # avoiding too small contours (width less  100) /
+
+                if w < int(markup_img.shape[1] / 5):  # avoiding too small contours (width less  20% of the image width)
                     continue
                 if num_lines == 0:
                     break
@@ -101,15 +102,14 @@ class Markup(Augmentation):
 
                 w = int(w * markup_length)  # adjusting width according to markup length
                 x = int(x + (1 - markup_length) * w)  # adjusting starting-point according to markup length
-
-                if self.markup_type == "strikethrough":  # strikethrough settings
+                offset = 6
+                if self.markup_type == "strikethrough":  # for strikethrough we need center points
                     mid_start = [x, int(y + (h / 2))]
                     mid_end = [x + w, int(y + (h / 2))]
-                    offset = 6
-                else:  # underline settings
-                    mid_start = [x, y - 3]
-                    mid_end = [x + w, y - 3]
-                    offset = 2
+
+                else:  # for underline we need points corresponding to bottom part of text
+                    mid_start = [x, y + h]
+                    mid_end = [x + w, y + h]
 
                 points_count = random.randint(3, 10)  # dividing the line into points
                 points = np.linspace(mid_start[0], mid_end[0], points_count)
