@@ -1,3 +1,4 @@
+import itertools
 import random
 
 import cv2
@@ -22,6 +23,8 @@ class BadPhotoCopy(Augmentation):
     :type max_iteration: tuple, optional
     :param hash_type: Types of hashes to generate olsen noise.
     :type hash_type: int, optional
+    :param wave_pattern: To enable wave pattern in noise.
+    :type wave_pattern: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -32,6 +35,7 @@ class BadPhotoCopy(Augmentation):
         noise_density=(0.1, 0.9),
         max_iteration=(7, 7),
         hash_type=0,
+        wave_pattern=0,
         p=0.5,
     ):
         """Constructor method"""
@@ -40,6 +44,7 @@ class BadPhotoCopy(Augmentation):
         self.noise_density = noise_density
         self.max_iteration = max_iteration
         self.hash_type = hash_type
+        self.wave_pattern = wave_pattern
         self._SCALE_FACTOR = 2
         self.GAUSSIAN = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
         self.BOX = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) * 1 / 9
@@ -58,7 +63,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(layer={self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, p={self.p})"
+        return f"BadPhotoCopy(layer={self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
         """
@@ -137,32 +142,34 @@ class BadPhotoCopy(Augmentation):
         :param iteration: iterations to apply to the noise.
         :return:
         """
-        if iteration == 0:
-            # Base case.
-            self._apply_noise(pixels, x, y, width, height, iteration)
-            return
-        x_remainder = x & 1  # Adjust the x_remainder so we know how much more into the pixel are.
-        y_remainder = y & 1
 
-        self._olsen_noise(
-            pixels,
-            ((x + x_remainder) // self._SCALE_FACTOR) - x_remainder,
-            ((y + y_remainder) // self._SCALE_FACTOR) - y_remainder,
-            ((width + x_remainder) // self._SCALE_FACTOR) + self._blur_edge,
-            ((height + y_remainder) // self._SCALE_FACTOR) + self._blur_edge,
-            iteration - 1,
-            kernel=kernel,
-        )  # Recursive scope call.
+        if iteration > 0:
+            # Adjust the x_remainder so we know how much more into the pixel are.
+            x_remainder = x & 1
+            y_remainder = y & 1
 
-        self._scale_shift(
-            pixels,
-            width + self._blur_edge,
-            height + self._blur_edge,
-            self._SCALE_FACTOR,
-            x_remainder,
-            y_remainder,
-        )
-        self._apply_kernel(pixels, width, height, kernel=kernel)
+            # Recursive scope call.
+            self._olsen_noise(
+                pixels,
+                ((x + x_remainder) // self._SCALE_FACTOR) - x_remainder,
+                ((y + y_remainder) // self._SCALE_FACTOR) - y_remainder,
+                ((width + x_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+                ((height + y_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+                iteration - 1,
+                kernel=kernel,
+            )
+
+            self._scale_shift(
+                pixels,
+                width + self._blur_edge,
+                height + self._blur_edge,
+                self._SCALE_FACTOR,
+                x_remainder,
+                y_remainder,
+            )
+            self._apply_kernel(pixels, width, height, kernel=kernel)
+
+        # Base case.
         self._apply_noise(pixels, x, y, width, height, iteration)
 
     def _scale_shift(self, pixels, width, height, factor, shift_x, shift_y):
@@ -177,9 +184,11 @@ class BadPhotoCopy(Augmentation):
         :param shift_y:
         :return:
         """
-        for y in range(height - 1, -1, -1):
-            for x in range(width - 1, -1, -1):
-                pixels[x, y] = pixels[(x + shift_x) // factor, (y + shift_y) // factor]
+
+        coordinates = list(itertools.product(range(height - 1, -1, -1), range(width - 1, -1, -1)))
+        ys, xs = map(list, zip(*coordinates))
+        for (y, x) in coordinates:
+            pixels[x, y] = pixels[(x + shift_x) // factor, (y + shift_y) // factor]
 
     def _apply_noise(
         self,
@@ -190,16 +199,15 @@ class BadPhotoCopy(Augmentation):
         height,
         iteration,
     ):
+
         for i, m in np.ndenumerate(pixels):
+            y, x = i
+
             hash_value = self._hash_random(
-                i[0] + x_within_field,
-                i[1] + y_within_field,
+                x + x_within_field,
+                y + y_within_field,
                 iteration,
             )
-
-            if self.hash_type != 4:
-                hash_value &= 1 << (self.max_iteration[1] - iteration)
-
             pixels[i] += hash_value
 
     def _hash_random(self, *elements):
@@ -214,6 +222,10 @@ class BadPhotoCopy(Augmentation):
             hash_value ^= elements[i]
             hash_value = self._hash(hash_value)
             i += 1
+
+        if self.hash_type != 4:
+            hash_value &= 1 << (self.max_iteration[1] - elements[2])
+
         return hash_value
 
     def _hash(self, v):
@@ -307,6 +319,60 @@ class BadPhotoCopy(Augmentation):
             return self._crimp(total)
         return self._crimp(total // parts)
 
+    def apply_wave(self, mask):
+        """
+        applies wavy pattern mask to input mask
+        """
+
+        mask_rescaled = mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
+        mask_ysize, mask_xsize = mask_rescaled.shape
+
+        Fs = mask_xsize - 1
+        # frequency of wave
+        f = random.randint(1, 3)
+        sample = mask_xsize - 1
+        # x and y points
+        x = np.arange(sample)
+        y = np.sin(2 * np.pi * f * x / Fs)
+        # rescale 0 -1
+        y = ((y - np.min(y)) / (np.max(y) - np.min(y))) * (mask_ysize - 1)
+        img_wave = np.zeros((mask_ysize, mask_xsize))
+        for (x_point, y_point) in zip(x, y):
+            img_wave[int(y_point) :, int(x_point)] = 1
+
+        # get percentage of dark
+        top_left = np.sum(mask_rescaled[:10, :10]) / (100 * 255)
+        top_right = np.sum(mask_rescaled[:10, mask_xsize - 10 : mask_xsize]) / (100 * 255)
+        bottom_left = np.sum(mask_rescaled[mask_ysize - 10 : mask_ysize : 10, :10]) / (100 * 255)
+        bottom_right = np.sum(mask_rescaled[mask_ysize - 10 : mask_ysize, mask_xsize - 10 : mask_xsize]) / (100 * 255)
+
+        # top
+        if top_left < 0.3 and top_right < 0.3:
+            img_wave = np.flipud(img_wave)
+            mask = img_wave * mask
+        # right
+        elif top_right < 0.3 and bottom_right < 0.3:
+            img_wave = np.rot90(img_wave, 1)
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        # bottom
+        elif bottom_left < 0.3 and bottom_right < 0.3:
+            mask = img_wave * mask
+        # left
+        elif top_left < 0.3 and bottom_left < 0.3:
+            img_wave = np.rot90(img_wave, 3)
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        # other
+        else:
+            img_wave = np.rot90(img_wave, random.randint(0, 3))
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+
+        mask[img_wave == 0] = 255
+
+        return mask
+
     def apply_augmentation(self, image):
 
         # get image dimensions
@@ -363,6 +429,10 @@ class BadPhotoCopy(Augmentation):
         mask = self.noise(shape, position, iteration, kernel, transpose)
         mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
 
+        # apply mask
+        if self.wave_pattern:
+            mask = self.apply_wave(mask)
+
         # random flip mask vertically or horizontally
         if random.choice([True, False]):
             mask = cv2.flip(mask, 0)
@@ -372,12 +442,6 @@ class BadPhotoCopy(Augmentation):
         # scale to 0-255
         if self.hash_type != 3 and self.hash_type != 4:
             mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
-
-        # randomize noise type
-        noise_img_type = random.randint(0, 2)
-
-        if self.hash_type == 3 or self.hash_type == 4:
-            noise_img_type = 2
 
         noise_img = add_noise(mask).astype("uint8")
 
@@ -391,43 +455,49 @@ class BadPhotoCopy(Augmentation):
         else:
             gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
 
-        blurred = cv2.GaussianBlur(
-            noise_img,
-            gaussian_kernel,
-            0,
-        )
+        blurred = cv2.GaussianBlur(noise_img, gaussian_kernel, 0)
+
+        if self.hash_type == 3 or self.hash_type == 4:
+            # fixed noise type
+            noise_img_type = 2
+        else:
+            # randomize noise type
+            noise_img_type = random.randint(0, 2)
+
+        # type 0 and type 1 noise
+        if noise_img_type != 2:
+
+            _, thresh1 = cv2.threshold(
+                blurred,
+                random.randint(64, 128),
+                255,
+                cv2.THRESH_BINARY,
+            )
+
+            # type 0 noise
+            if noise_img_type == 0:
+                result = cv2.multiply(thresh1, image, scale=1 / 255)
+                result = remove_noise(image, result, image_sobel)
+
+            # type 1 noise
+            else:
+                grey_img = noise_img.copy()
+                grey_img[:, :][grey_img[:, :] == 0] = random.choice(
+                    [255, 255, 255, random.randint(196, 224)],
+                )
+
+                noise_img = cv2.multiply(grey_img, thresh1, scale=1 / 255)
+                result = cv2.multiply(noise_img, image, scale=1 / 255)
+                result = remove_noise(image, result, image_sobel)
 
         # type 2 noise
-        if noise_img_type == 2:
+        else:
+
             noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
             result = cv2.multiply(noise_img, image, scale=1 / 255)
             result = remove_noise(image, result, image_sobel)
-            return result
 
-        _, thresh1 = cv2.threshold(
-            blurred,
-            random.randint(64, 128),
-            255,
-            cv2.THRESH_BINARY,
-        )
-
-        # type 0 noise
-        if noise_img_type == 0:
-            result = cv2.multiply(thresh1, image, scale=1 / 255)
-            result = remove_noise(image, result, image_sobel)
-            return result
-
-        grey_img = noise_img.copy()
-        grey_img[:, :][grey_img[:, :] == 0] = random.choice(
-            [255, 255, 255, random.randint(196, 224)],
-        )
-
-        # type 1 noise
-        if noise_img_type == 1:
-            noise_img = cv2.multiply(grey_img, thresh1, scale=1 / 255)
-            result = cv2.multiply(noise_img, image, scale=1 / 255)
-            result = remove_noise(image, result, image_sobel)
-            return result
+        return result
 
     # Applies the Augmentation to input data.
     def __call__(self, data, force=False):
