@@ -4,6 +4,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import smooth
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
@@ -324,21 +325,53 @@ class BadPhotoCopy(Augmentation):
         applies wavy pattern mask to input mask
         """
 
+        # rescale mask from 0 to 255
         mask_rescaled = mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
         mask_ysize, mask_xsize = mask_rescaled.shape
+        img_wave = np.zeros_like(mask_rescaled)
 
-        Fs = mask_xsize - 1
-        # frequency of wave
-        f = random.randint(1, 3)
-        sample = mask_xsize - 1
-        # x and y points
-        x = np.arange(sample)
-        y = np.sin(2 * np.pi * f * x / Fs)
-        # rescale 0 -1
-        y = ((y - np.min(y)) / (np.max(y) - np.min(y))) * (mask_ysize - 1)
-        img_wave = np.zeros((mask_ysize, mask_xsize))
-        for (x_point, y_point) in zip(x, y):
-            img_wave[int(y_point) :, int(x_point)] = 1
+        # get mask size measurements
+        mask_y_one_quarter_size = int(mask_ysize / 4)
+        mask_y_third_quarter_size = int(mask_ysize * 3 / 4)
+        mask_y_one_twelve_size = int(mask_ysize / 12)
+        mask_x_one_twelve_size = int(mask_xsize / 12)
+
+        # generate points and at least 12 points
+        number_points = random.randint(12, 18)
+
+        # generate random x location
+        x_points = [
+            random.randint(mask_x_one_twelve_size, mask_xsize - mask_x_one_twelve_size)
+            for _ in range(number_points - 2)
+        ]
+        x_points.sort()
+
+        # 1st point
+        points = [(0, random.randint(mask_y_one_quarter_size, mask_y_third_quarter_size))]
+        for i in range(1, number_points - 1, 1):
+            # points between 1st and last point
+            points.append(
+                (x_points[i - 1], random.randint(mask_y_one_quarter_size, mask_y_third_quarter_size)),
+            )  # last point
+        # last point
+        points.append(
+            (mask_xsize - 1, random.randint(mask_y_one_quarter_size, mask_y_third_quarter_size)),
+        )  # last point
+
+        # smooth points
+        smooth_points = smooth(points, 10)
+
+        for (x_point, y_point) in smooth_points:
+            img_wave[: int(y_point), int(x_point)] = 1
+
+            # additional noise, to smooth the edges between wavy mask
+            p = random.randint(5, 15) / 10
+            for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
+                if p > 1:
+                    break
+                if random.random() > p:
+                    img_wave[y, int(x_point)] = 1
+                p += 0.005
 
         # get percentage of dark
         top_left = np.sum(mask_rescaled[:10, :10]) / (100 * 255)
@@ -348,20 +381,37 @@ class BadPhotoCopy(Augmentation):
 
         # top
         if top_left < 0.3 and top_right < 0.3:
-            img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # right
         elif top_right < 0.3 and bottom_right < 0.3:
-            img_wave = np.rot90(img_wave, 1)
+            img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
             mask = img_wave * mask
         # bottom
         elif bottom_left < 0.3 and bottom_right < 0.3:
+            img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # left
         elif top_left < 0.3 and bottom_left < 0.3:
+            img_wave = np.rot90(img_wave, 1)
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        # topleft
+        elif top_left < 0.3:
+            mask = img_wave * mask
+        # topright
+        elif top_right < 0.3:
             img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        # bottomleft
+        elif bottom_left < 0.3:
+            img_wave = np.rot90(img_wave, 1)
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        # bottomright
+        elif bottom_right < 0.3:
+            img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # other
         else:
