@@ -19,7 +19,7 @@ class Markup(Augmentation):
     :type range: float tuple, optional
     :param strikethrough_thickness_range: Pair of ints, to determine the thickness of strikethrough line
     :type range: int tuple, optional
-    :param marktup_type: choice of markup "strikethrough", "highlight" or "underline"
+    :param markup_type: choice of markup "strikethrough", "highlight" or "underline"
     :type choice: string
     :param markup_color: bgr color tuple
     :type tuple: int
