@@ -7,22 +7,40 @@ from sklearn.datasets import make_blobs
 
 
 def chaikin(points):
+    """
+
+    :param points: a list of more than 2 points, where each point is a tuple/array of len=2
+    :type points: array
+    """
+    # appending the first point in path
     path = [points[0]]
     percent = 0.25
     for i in range(len(points) - 1):
         p0 = points[i]
         p1 = points[i + 1]
+        # distance between x values of two subsequent points
         dx = p1[0] - p0[0]
+        # distance between y values of two subsequent points
         dy = p1[1] - p0[1]
+        # creating two new points having 25% and 75% distance from the previous point
         new_p0 = (p0[0] + dx * percent, p0[1] + dy * percent)
         new_p1 = (p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent))
         path.append(new_p0)
         path.append(new_p1)
+    # appending last point in path list
     path.append(points[-1])
     return path
 
 
 def smooth(points, iter):
+    """
+
+    :param points: a list of more than 2 points, where each point is a tuple/array of len=2
+    :type points: array
+    :param iter: number of times to apply chaikin algorithm
+    :type iter: int
+    :return:
+    """
     for i in range(iter):
         points = chaikin(points)
     return points
