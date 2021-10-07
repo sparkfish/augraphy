@@ -42,7 +42,6 @@ class Gamma(Augmentation):
         table = np.array(
             [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)],
         ).astype("uint8")
-        print(table.shape, img.shape)
         frame = cv2.LUT(img, table)
         data[self.layer].append(AugmentationResult(self, frame))
         # cv2.imwrite(os.path.join('test_outputs',str(round(value,4))+"gamma.jpg"),np.hstack((img,frame)))
