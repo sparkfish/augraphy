@@ -25,7 +25,7 @@ class PaperFactory(Augmentation):
         self,
         tile_texture_shape=(250, 250),
         texture_path="./paper_textures",
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
@@ -51,11 +51,11 @@ class PaperFactory(Augmentation):
         )
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
 
             if self.paper_textures:
-                shape = data["ink"][-1].result.shape
+                shape = image.shape
 
                 if random.choice([True, False]):
                     texture = self.get_texture(self.tile_texture_shape)
@@ -64,8 +64,7 @@ class PaperFactory(Augmentation):
                     texture = self.get_texture(shape)
                     paper = texture.copy()
 
-                data["paper_texture"] = texture
-                data["paper"].append(AugmentationResult(self, paper))
+                return paper
             else:
                 print("No paper image in the paper directory!")
 

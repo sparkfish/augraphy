@@ -4,15 +4,12 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class NoiseTexturize(Augmentation):
     """Creates a random noise based texture pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param sigma_range: Defines bounds of noise fluctuations.
     :type sigma_range: tuple, optional
     :param turbulence_range: Defines how quickly big patterns will be
@@ -26,25 +23,23 @@ class NoiseTexturize(Augmentation):
 
     def __init__(
         self,
-        layer,
         sigma_range=(3, 10),
         turbulence_range=(2, 5),
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.sigma_range = sigma_range
         self.turbulence_range = turbulence_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoiseTexturize(layer={self.layer}, sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
+        return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
 
             sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
             turbulence = random.randint(
@@ -60,7 +55,8 @@ class NoiseTexturize(Augmentation):
                 ratio = (ratio // turbulence) or 1
             cut = np.clip(result, 0, 255)
 
-            data[self.layer].append(AugmentationResult(self, cut.astype(np.uint8)))
+            cut = cut.astype(np.uint8)
+            return cut
 
     def noise(self, width, height, ratio, sigma):
         """The function generates an image, filled with gaussian nose. If ratio

@@ -17,17 +17,14 @@ class ImageOverlay(Augmentation):
     :type foreground: np.array
     :param position: a pair of x and y coordinates to place the foreground image
         If not given, the foreground will be randomly placed.
-    :type layer: pair of ints, optional
-    :param layer: The layer of image to overlay onto.
-    :type layer: string, optional
+    :type position: pair of ints, optional
     :param p: the probability this augmentation will be applied
     :type p: float, optional
     """
 
-    def __init__(self, foreground, position=(None, None), layer="post", p=0.5):
+    def __init__(self, foreground, position=(None, None), p=1):
         self.position = position
         self.foreground = foreground
-        self.layer = layer
         super().__init__(p=p)
 
     def workspace(self, background):
@@ -89,16 +86,10 @@ class ImageOverlay(Augmentation):
         return cropped
 
     def __repr__(self):
-        repstring = (
-            "ImageOverlay(\n"
-            f"foreground={self.foreground},\n"
-            f"position={self.position},\n"
-            f"layer={self.layer},\n"
-            f"p={self.p})"
-        )
+        repstring = "ImageOverlay(\n" f"foreground={self.foreground},\n" f"position={self.position},\n" f"p={self.p})"
 
-    def __call__(self, data, force=False):
-        img = data[self.layer][-1].result
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2RGBA)
-        overlaid = self.overlay(img, self.foreground)
-        data[self.layer].append(AugmentationResult(self, overlaid))
+    def __call__(self, image, force=False):
+        image = image.copy
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
+        overlaid = self.overlay(image, self.foreground)
+        return overlaid

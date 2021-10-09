@@ -1,5 +1,3 @@
-import time
-
 from augraphy.base.augmentation import Augmentation
 
 
@@ -20,17 +18,15 @@ class AugmentationSequence(Augmentation):
     def __repr__(self):
         output = "AugmentationSequence([\n"
         for aug in self.augmentations:
-            output += f"\t{repr(aug)}\n"
+            output += f"\t{repr(aug)},\n"
 
         output += "])"
         return output
 
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+            result = image
             for augmentation in self.augmentations:
-                start = time.process_time()  # time at start of execution
-                augmentation(data)
-                end = time.process_time()  # time at end of execution
-                elapsed = end - start  # execution duration
+                result = augmentation(result)
 
-                data["log"]["time"].append((augmentation, elapsed))
+            return result

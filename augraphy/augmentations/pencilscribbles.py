@@ -3,17 +3,14 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import addNoise
+from augraphy.augmentations.lib import add_noise as lib_add_noise
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class PencilScribbles(Augmentation):
     """Applies random pencil scribbles to image.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param size_range: Pair of floats determining the range for
            the size of the scribble to be created
     :type size_range: tuple, optional
@@ -36,17 +33,15 @@ class PencilScribbles(Augmentation):
 
     def __init__(
         self,
-        layer,
         size_range=(250, 400),
         count_range=(1, 10),
         stroke_count_range=(3, 6),
         thickness_range=(2, 6),
         brightness_change=128,
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.size_range = size_range
         self.count_range = count_range
         self.stroke_count_range = stroke_count_range
@@ -55,13 +50,13 @@ class PencilScribbles(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PencilScribbles(layer={self.layer}, size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
+        return f"PencilScribbles(size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
 
     def apply_pencil_stroke(self, stroke_image, image):
         apply_mask_fn = lambda x, y: y if (x < 64) else x
         apply_mask = np.vectorize(apply_mask_fn)
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_BGR2GRAY)
-        noise_mask = addNoise(stroke_image, (0.3, 0.5), (32, 128))
+        noise_mask = lib_add_noise(stroke_image, (0.3, 0.5), (32, 128))
 
         stroke_image = apply_mask(stroke_image, noise_mask)
 
@@ -153,9 +148,9 @@ class PencilScribbles(Augmentation):
         return target
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
 
             for i in range(random.randint(self.count_range[0], self.count_range[1])):
                 scribbles = np.full(image.shape, 255).astype("uint8")
@@ -163,4 +158,4 @@ class PencilScribbles(Augmentation):
                 scribbles = self.random_paste(strokes_img, scribbles)
                 image = cv2.multiply(scribbles, image, scale=1 / 255)
 
-            data[self.layer].append(AugmentationResult(self, image))
+            return image

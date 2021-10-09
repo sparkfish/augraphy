@@ -3,17 +3,14 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import addNoise
-from augraphy.augmentations.lib import applyBlob
+from augraphy.augmentations.lib import add_noise
+from augraphy.augmentations.lib import apply_blob
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Letterpress(Augmentation):
     """Produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param count_range: Pair of ints determining the range from which the number
            of blobs to generate is sampled.
     :type count_range: tuple, optional
@@ -38,18 +35,16 @@ class Letterpress(Augmentation):
 
     def __init__(
         self,
-        layer,
         count_range=(1000, 2500),
         size_range=(60, 80),
         points_range=(200, 250),
         std_range=(10, 75),
         features_range=(15, 25),
         value_range=(200, 250),
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.count_range = count_range
         self.size_range = size_range
         self.points_range = points_range
@@ -58,16 +53,16 @@ class Letterpress(Augmentation):
         self.value_range = value_range
 
     def __repr__(self):
-        return f"Letterpress(layer={self.layer}, count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
 
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
             count = random.randint(self.count_range[0], self.count_range[1])
             noise_mask = np.copy(image)
 
             for i in range(count):
-                noise_mask = applyBlob(
+                noise_mask = apply_blob(
                     noise_mask,
                     self.size_range,
                     self.points_range,
@@ -79,8 +74,8 @@ class Letterpress(Augmentation):
             apply_mask_fn = lambda x, y: y if (x < 128) else x
             apply_mask = np.vectorize(apply_mask_fn)
 
-            noise_mask = addNoise(noise_mask)
+            noise_mask = add_noise(noise_mask)
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
             image = apply_mask(image, noise_mask)
 
-            data[self.layer].append(AugmentationResult(self, image))
+            return image

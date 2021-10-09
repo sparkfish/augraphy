@@ -7,7 +7,6 @@ import numpy as np
 
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Markup(Augmentation):
@@ -29,17 +28,15 @@ class Markup(Augmentation):
 
     def __init__(
         self,
-        layer,
         num_lines_range=(2, 7),
         markup_length_range=(0.5, 1),
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
         markup_color=(0, 255, 0),
-        p=0.5,
+        p=1,
     ):
 
         super().__init__(p=p)
-        self.layer = layer
         self.num_lines_range = num_lines_range
         self.markup_length_range = markup_length_range
         self.markup_thickness_range = markup_thickness_range
@@ -48,12 +45,11 @@ class Markup(Augmentation):
 
     def __repr__(self):
         return (
-            f"Markup(layer={self.layer}, num_lines_range={self.num_lines_range}, markup_length_range={self.markup_length_range}, "
+            f"Markup(num_lines_range={self.num_lines_range}, markup_length_range={self.markup_length_range}, "
             f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type} p={self.p})"
         )
 
-    def __call__(self, data, force=False):
-        image = data[self.layer][-1].result.copy()
+    def __call__(self, image, layer=None, force=False):
         markup_img = image.copy()
         overlay = markup_img.copy()
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
@@ -147,4 +143,4 @@ class Markup(Augmentation):
         if self.markup_type == "highlight":
             markup_img = cv2.addWeighted(overlay, alpha, markup_img, 1 - alpha, 0)
 
-        data[self.layer].append(AugmentationResult(self, markup_img))
+        return markup_img

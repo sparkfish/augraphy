@@ -3,16 +3,13 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import binaryThreshold
+from augraphy.augmentations.lib import binary_threshold
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Faxify(Augmentation):
     """Emulates faxify effect in the image.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param scale_range: Pair of ints determining the range from which to
            divide the resolution by.
     :type scale_range: tuple, optional
@@ -37,7 +34,6 @@ class Faxify(Augmentation):
 
     def __init__(
         self,
-        layer,
         scale_range=(1, 1),
         monochrome=1,
         monochrome_method="Otsu",
@@ -46,12 +42,11 @@ class Faxify(Augmentation):
         half_kernel_size=2,
         angle=45,
         sigma=2,
-        p=0.5,
+        p=1,
     ):
 
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
@@ -76,7 +71,7 @@ class Faxify(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify(layer={self.layer}, scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
     # rotate image based on the input angle
     def cv_rotate(self, image, angle):
@@ -188,17 +183,16 @@ class Faxify(Augmentation):
         return image_downscaled
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run() or True:
-
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
 
             # downscale image
             image_downscaled = self.downscale(image)
 
             # applies monochrome
             if self.monochrome:
-                image_out = binaryThreshold(
+                image_out = binary_threshold(
                     image_downscaled,
                     enable_otsu=self.enable_otsu,
                     enable_simple=self.enable_simple,
@@ -225,4 +219,4 @@ class Faxify(Augmentation):
             # upscale image
             image_faxify = cv2.resize(image_out, (image.shape[1], image.shape[0]))
 
-            data[self.layer].append(AugmentationResult(self, image_faxify))
+            return image_faxify

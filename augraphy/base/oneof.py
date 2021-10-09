@@ -13,21 +13,22 @@ class OneOf(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, augmentations, p=0.5):
+    def __init__(self, augmentations, p=1):
         """Constructor method"""
         self.augmentations = augmentations
         self.augmentation_probabilities = self.computeProbability(self.augmentations)
         self.p = p
 
     # Randomly selects an Augmentation to apply to data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if self.augmentation_probabilities and (force or self.should_run()):
 
             # Randomly selects one Augmentation to apply.
             augmentation = random.choice(self.augmentations)
 
             # Applies the selected Augmentation.
-            augmentation(data, force=True)
+            image = augmentation(image, force=True)
+            return image
 
     # Constructs a string containing the representations
     # of each augmentation

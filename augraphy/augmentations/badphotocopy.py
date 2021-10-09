@@ -7,14 +7,11 @@ import numpy as np
 from augraphy.augmentations.lib import smooth
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BadPhotoCopy(Augmentation):
     """Uses olsen noise to generate an effect of dirty copier
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param noise_density: Pair of floats determining density of noises.
             Lower value generates sparser noise.
     :type noise_density: tuple, optional
@@ -32,16 +29,14 @@ class BadPhotoCopy(Augmentation):
 
     def __init__(
         self,
-        layer,
         noise_density=(0.1, 0.9),
         max_iteration=(7, 7),
         hash_type=0,
         wave_pattern=0,
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.noise_density = noise_density
         self.max_iteration = max_iteration
         self.hash_type = hash_type
@@ -64,7 +59,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(layer={self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
         """
@@ -550,8 +545,8 @@ class BadPhotoCopy(Augmentation):
         return result
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
+            result = image.copy()
             result = self.apply_augmentation(image)
-            data[self.layer].append(AugmentationResult(self, result))
+            return result

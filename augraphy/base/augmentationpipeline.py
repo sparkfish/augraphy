@@ -1,4 +1,5 @@
 import random
+import time
 
 import cv2
 import numpy as np
@@ -93,10 +94,7 @@ class AugraphyPipeline:
 
         if angle != 0:
             ink = self.rotate_image(ink, angle)
-        else:
-            ink = ink
-
-        data["image_rotated"] = ink.copy()
+            data["image_rotated"] = ink.copy()
 
         if len(ink.shape) > 2 and ink.shape[2] == 3:
             ink = cv2.cvtColor(ink, cv2.COLOR_BGR2GRAY)
@@ -126,7 +124,7 @@ class AugraphyPipeline:
                 np.full(
                     (ink.shape[0], ink.shape[1], 3),
                     paper_color,
-                    dtype="uint",
+                    dtype=np.uint8,
                 ),
             ),
         )
@@ -142,8 +140,8 @@ class AugraphyPipeline:
         if self.post_phase is None or self.post_phase == []:
             self.post_phase = AugmentationSequence([])
 
-        self.ink_phase(data)
-        self.paper_phase(data)
+        self.apply_phase(data, layer="ink", phase=self.ink_phase)
+        self.apply_phase(data, layer="paper", phase=self.paper_phase)
 
         # ink and paper phases always have at least one result by now
         data["post"].append(
@@ -157,11 +155,33 @@ class AugraphyPipeline:
             ),
         )
 
-        self.post_phase(data)
+        self.apply_phase(data, layer="post", phase=self.post_phase)
 
         data["output"] = data["post"][-1].result.astype("uint8")
 
         return data
+
+    def apply_phase(self, data, layer, phase):
+        """Applies every augmentation in a phase."""
+        for augmentation in phase.augmentations:
+            result = data[layer][-1].result.copy()
+            start = time.process_time()  # time at start of execution
+            result = augmentation(result, layer)
+            end = time.process_time()  # time at end of execution
+            elapsed = end - start  # execution duration
+
+            data["log"]["time"].append((augmentation, elapsed))
+
+            if result is None:
+                data[layer].append(
+                    AugmentationResult(
+                        augmentation,
+                        data[layer][-1].result.copy(),
+                        'This augmentation did not run, its "result" is unchanged.',
+                    ),
+                )
+            else:
+                data[layer].append(AugmentationResult(augmentation, result))
 
     def rotate_image(self, mat, angle):
         """Rotates an image (angle in degrees) and expands image to avoid

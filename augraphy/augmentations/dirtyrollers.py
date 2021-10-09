@@ -4,14 +4,11 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class DirtyRollers(Augmentation):
     """Emulates an effect created by certain document scanners.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param line_width_range: Pair of ints determining the range from which the
     width of a dirty roller line is sampled.
     :type line_width_range: tuple, optional
@@ -21,18 +18,16 @@ class DirtyRollers(Augmentation):
 
     def __init__(
         self,
-        layer,
         line_width_range=(8, 12),
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.line_width_range = line_width_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyRollers(layer={self.layer}, line_width_range={self.line_width_range}, p={self.p})"
+        return f"DirtyRollers(line_width_range={self.line_width_range}, p={self.p})"
 
     def apply_scanline_mask(self, img, mask, meta_mask):
         if random.choice([True, False]):
@@ -63,9 +58,8 @@ class DirtyRollers(Augmentation):
         return update(img, mask)
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
             line_width = random.randint(
                 self.line_width_range[0],
                 self.line_width_range[1],
@@ -90,7 +84,7 @@ class DirtyRollers(Augmentation):
             if rotate:
                 image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            data[self.layer].append(AugmentationResult(self, image))
+            return image
 
     def create_scanline_mask(self, width, height, line_width):
         grad_list = list()

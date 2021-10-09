@@ -6,7 +6,6 @@ import numpy as np
 
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Strikethrough(Augmentation):
@@ -25,27 +24,25 @@ class Strikethrough(Augmentation):
 
     def __init__(
         self,
-        layer,
         num_lines_range=(2, 7),
         strikethrough_length_range=(0.5, 1),
         strikethrough_thickness_range=(1, 3),
-        p=0.5,
+        p=1,
     ):
 
         super().__init__(p=p)
-        self.layer = layer
         self.num_lines_range = num_lines_range
         self.strikethrough_length_range = strikethrough_length_range
         self.strikethrough_thickness_range = strikethrough_thickness_range
 
     def __repr__(self):
         return (
-            f"Strikethrough(layer={self.layer}, num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
+            f"Strikethrough(num_lines_range={self.num_lines_range}, strikethrough_length_range={self.strikethrough_length_range}, "
             f"strikethrough_thickness_range={self.strikethrough_thickness_range} p={self.p})"
         )
 
-    def __call__(self, data, force=False):
-        image = data[self.layer][-1].result.copy()
+    def __call__(self, image, layer=None, force=False):
+        image = image.copy()
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         strikethrough_thickness = random.randint(
@@ -107,4 +104,4 @@ class Strikethrough(Augmentation):
                         lineType=cv2.LINE_AA,
                     )
 
-        data[self.layer].append(AugmentationResult(self, strikethrough_img))
+        return strikethrough_img
