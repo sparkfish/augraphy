@@ -4,14 +4,11 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class PageBorder(Augmentation):
     """Add border effect to sides of input image.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param side: One of the four sides of page i:e top,right,left,bottom.
                 By default it is "left"
     :type side: string , optional
@@ -28,23 +25,21 @@ class PageBorder(Augmentation):
 
     def __init__(
         self,
-        layer,
         side="random",
         width_range=(5, 30),
         pages=None,
         noise_intensity_range=(0.2, 0.5),
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.side = side
         self.width_range = width_range
         self.pages = pages
         self.noise_intensity_range = noise_intensity_range
 
     def __repr__(self):
-        return f"PageBorder(layer={self.layer}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
+        return f"PageBorder(width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, p={self.p})"
 
     def add_corner_noise(self, border, intensity=0.2):
         ksize = (5, 5)
@@ -98,10 +93,10 @@ class PageBorder(Augmentation):
         border = cv2.blur(border, (3, 3))
         return border
 
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            # print("Adding borders")
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
+
             noise_intensity = random.uniform(
                 self.noise_intensity_range[0],
                 self.noise_intensity_range[1],
@@ -153,4 +148,4 @@ class PageBorder(Augmentation):
                     (image, (cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE))),
                 )
 
-            data[self.layer].append(AugmentationResult(self, image))
+            return image

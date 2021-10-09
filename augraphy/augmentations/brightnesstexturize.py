@@ -4,15 +4,12 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BrightnessTexturize(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
 
-    :param layer: The image layer to apply the brightness texturization to
-    :type layer: string, optional
     :param range: Pair of ints determining the range from which to sample values
            for the brightness matrix.
     :type range: tuple, optional
@@ -22,10 +19,9 @@ class BrightnessTexturize(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, range=(0.9, 0.99), deviation=0.03, layer="paper", p=0.5):
+    def __init__(self, range=(0.9, 0.99), deviation=0.03, p=1):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.low = range[0]
         self.high = range[1]
         self.deviation = deviation
@@ -33,14 +29,14 @@ class BrightnessTexturize(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturize(layer={self.layer}, range={self.range}, deviation={self.deviation}, p={self.p})"
+        return f"BrightnessTexturize(range={self.range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            img = data[self.layer][-1].result.copy()
+            image = image.copy()
             value = random.uniform(self.low, self.high)
-            hsv = cv2.cvtColor(img.astype("uint8"), cv2.COLOR_BGR2HSV)
+            hsv = cv2.cvtColor(image.astype("uint8"), cv2.COLOR_BGR2HSV)
             hsv = np.array(hsv, dtype=np.float64)
 
             low = value - (value * self.deviation)  # *random.uniform(0, deviation)
@@ -69,6 +65,6 @@ class BrightnessTexturize(Augmentation):
 
             hsv = np.array(hsv, dtype=np.uint8)
             hsv = cv2.bitwise_not(hsv)
-            img = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+            image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
-            data[self.layer].append(AugmentationResult(self, img))
+            return image

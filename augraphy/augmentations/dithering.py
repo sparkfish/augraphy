@@ -1,15 +1,12 @@
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class Dithering(Augmentation):
     """
     Applies Ordered or Floyd Steinberg dithering to the input image.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param dither: Types of dithering, ordered or Floyd Steinberg dithering.
     :type dither: string, optional
     :param order: Order number for ordered dithering.
@@ -20,19 +17,17 @@ class Dithering(Augmentation):
 
     def __init__(
         self,
-        layer,
         dither="ordered",
         order=5,
-        p=0.5,
+        p=1,
     ):
         super().__init__(p=p)
-        self.layer = layer
         self.dither = dither
         self.order = order
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Dithering(layer={self.layer}, dither={self.dither}, p={self.p})"
+        return f"Dithering(dither={self.dither}, p={self.p})"
 
     # Apply Floyd Steinberg dithering algorithm
     def apply_Floyd_Steinberg(self, image, ysize, xsize):
@@ -140,13 +135,12 @@ class Dithering(Augmentation):
         return matrix
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
-
+            image = image.copy()
             if self.dither == "ordered":
                 image_dither = self.dither_Ordered(image, self.order)
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)
 
-            data[self.layer].append(AugmentationResult(self, image_dither))
+            return image_dither

@@ -5,7 +5,6 @@ import numpy as np
 from scipy.stats import norm
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class LightingGradient(Augmentation):
@@ -39,7 +38,6 @@ class LightingGradient(Augmentation):
 
     def __init__(
         self,
-        layer,
         light_position=None,
         direction=None,
         max_brightness=255,
@@ -47,11 +45,10 @@ class LightingGradient(Augmentation):
         mode="gaussian",
         linear_decay_rate=None,
         transparency=None,
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.light_position = light_position
         self.direction = direction
         self.max_brightness = max_brightness
@@ -62,12 +59,13 @@ class LightingGradient(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LightingGradient(layer={self.layer}, light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
+        return f"LightingGradient(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
+            image = image.copy()
+
             if self.transparency is None:
                 transparency = random.uniform(0.5, 0.85)
             else:
@@ -89,7 +87,7 @@ class LightingGradient(Augmentation):
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
-            data[self.layer].append(AugmentationResult(self, frame))
+            return frame
 
     def generate_parallel_light_mask(
         self,

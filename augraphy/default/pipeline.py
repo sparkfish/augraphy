@@ -11,16 +11,16 @@ from augraphy import *
 def default_augraphy_pipeline():
     ink_phase = AugmentationSequence(
         [
-            Dithering(layer="ink"),
-            InkBleed(layer="ink"),
-            BleedThrough(layer="ink"),
-            Letterpress(layer="ink"),
+            Dithering(p=0.5),
+            InkBleed(p=0.5),
+            BleedThrough(p=0.5),
+            Letterpress(p=0.5),
             OneOf(
                 [
-                    LowInkRandomLines(layer="ink", use_consistent_lines=False),
-                    LowInkRandomLines(layer="ink", use_consistent_lines=True),
-                    LowInkPeriodicLines(layer="ink", use_consistent_lines=False),
-                    LowInkPeriodicLines(layer="ink", use_consistent_lines=True),
+                    LowInkRandomLines(use_consistent_lines=False),
+                    LowInkRandomLines(use_consistent_lines=True),
+                    LowInkPeriodicLines(use_consistent_lines=False),
+                    LowInkPeriodicLines(use_consistent_lines=True),
                 ],
             ),
         ],
@@ -28,35 +28,36 @@ def default_augraphy_pipeline():
 
     paper_phase = AugmentationSequence(
         [
-            PaperFactory(),
+            PaperFactory(p=0.5),
             OneOf(
                 [
                     AugmentationSequence(
                         [
-                            NoiseTexturize(layer="paper"),
-                            BrightnessTexturize(layer="paper"),
+                            NoiseTexturize(),
+                            BrightnessTexturize(),
                         ],
                     ),
                     AugmentationSequence(
                         [
-                            BrightnessTexturize(layer="paper"),
-                            NoiseTexturize(layer="paper"),
+                            BrightnessTexturize(),
+                            NoiseTexturize(),
                         ],
                     ),
                 ],
+                p=0.5,
             ),
-            Brightness("paper"),
+            Brightness(p=0.5),
         ],
     )
 
     post_phase = AugmentationSequence(
         [
-            OneOf([PageBorder(layer="post"), DirtyRollers(layer="post")]),
-            OneOf([LightingGradient(layer="post"), Brightness(layer="post")]),
-            DirtyDrum(layer="post"),
-            SubtleNoise(layer="post"),
-            Jpeg(layer="post"),
-            Folding(layer="post"),
+            OneOf([PageBorder(), DirtyRollers()], p=0.5),
+            OneOf([LightingGradient(), Brightness()], p=0.5),
+            DirtyDrum(p=0.5),
+            SubtleNoise(p=0.5),
+            Jpeg(p=0.5),
+            Folding(p=0.5),
         ],
     )
 

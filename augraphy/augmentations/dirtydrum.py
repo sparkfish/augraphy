@@ -5,15 +5,12 @@ import numpy as np
 from PIL import Image
 
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 
 
 class DirtyDrum(Augmentation):
     """Emulates dirty drum effect by creating stripes of vertical and
     horizontal noises.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param line_width_range: Pair of ints determining the range from which the
            width of a dirty drum line is sampled.
     :type line_width_range: tuple, optional
@@ -31,15 +28,13 @@ class DirtyDrum(Augmentation):
 
     def __init__(
         self,
-        layer,
         line_width_range=(6, 18),
         ksize=(17, 17),
         sigmaX=0,
         alpha=0.5,
-        p=0.5,
+        p=1,
     ):
         super().__init__(p=p)
-        self.layer = layer
         self.line_width_range = line_width_range
         self.ksize = ksize
         self.sigmaX = sigmaX
@@ -47,7 +42,7 @@ class DirtyDrum(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyDrum(layer={self.layer}, line_width_range={self.line_width_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},p={self.p})"
+        return f"DirtyDrum(line_width_range={self.line_width_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},p={self.p})"
 
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_bleed, alpha):
@@ -175,10 +170,9 @@ class DirtyDrum(Augmentation):
         return img_dirty
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
-
+            image = image.copy()
             direction = random.choice([0, 1, 2])
 
             if direction == 0:
@@ -203,4 +197,4 @@ class DirtyDrum(Augmentation):
 
             image_dirty_drum = self.blend(image, image_dirty, self.alpha)
 
-            data[self.layer].append(AugmentationResult(self, image_dirty_drum))
+            return image_dirty_drum

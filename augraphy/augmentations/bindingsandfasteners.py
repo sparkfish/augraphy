@@ -4,17 +4,14 @@ import cv2
 import numpy as np
 
 from augraphy import *
-from augraphy.augmentations.lib import addNoise
+from augraphy.augmentations.lib import add_noise
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.utilities import *
 
 
 class BindingsAndFasteners(Augmentation):
     """Creates binding and fastener mark in the input image.
 
-    :param layer: The image layer to apply the augmentation to.
-    :type layer: string
     :param foreground: Path to foreground image.
     :type foreground: string, optional
     :param effect_type: Types of binding effect, select from either
@@ -35,18 +32,16 @@ class BindingsAndFasteners(Augmentation):
 
     def __init__(
         self,
-        layer,
         foreground=None,
         effect_type="punch_holes",
         ntimes=3,
         nscales=(1, 1),
         edge="left",
         edgeOffset=50,
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.layer = layer
         self.foreground = foreground
         self.effect_type = effect_type
         self.ntimes = ntimes
@@ -61,7 +56,7 @@ class BindingsAndFasteners(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BindingsAndFasteners(layer={self.layer}, {self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
+        return f"BindingsAndFasteners(foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
 
     def create_foreground(self, image):
 
@@ -83,9 +78,9 @@ class BindingsAndFasteners(Augmentation):
             cv2.circle(image_circle, circle_centroid, circle_radius, 255, -1)
 
             # applies noise
-            image_circle = addNoise(image_circle, intensity_range=(0.05, 0.05), color_range=(0, 255))
+            image_circle = add_noise(image_circle, intensity_range=(0.05, 0.05), color_range=(0, 255))
             image_circle = 255 - image_circle
-            image_circle = addNoise(image_circle, intensity_range=(0.3, 0.3), color_range=(0, 255))
+            image_circle = add_noise(image_circle, intensity_range=(0.3, 0.3), color_range=(0, 255))
 
             # gaussian blur
             image_circle = cv2.GaussianBlur(image_circle.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
@@ -112,9 +107,9 @@ class BindingsAndFasteners(Augmentation):
             image_rectangle[3:-3:, 4:-4] = 255
 
             # applies noise
-            image_rectangle = addNoise(image_rectangle, intensity_range=(0.05, 0.05), color_range=(0, 255))
+            image_rectangle = add_noise(image_rectangle, intensity_range=(0.05, 0.05), color_range=(0, 255))
             image_rectangle = 255 - image_rectangle
-            image_rectangle = addNoise(image_rectangle, intensity_range=(0.3, 0.3), color_range=(0, 255))
+            image_rectangle = add_noise(image_rectangle, intensity_range=(0.3, 0.3), color_range=(0, 255))
 
             # gaussian blur
             image_rectangle = cv2.GaussianBlur(image_rectangle.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
@@ -157,9 +152,9 @@ class BindingsAndFasteners(Augmentation):
             cv2.circle(image_clip, circle_centroid, circle_radius, 255, -1)
 
             # applies noise
-            image_clip = addNoise(image_clip, intensity_range=(0.05, 0.05), color_range=(0, 255))
+            image_clip = add_noise(image_clip, intensity_range=(0.05, 0.05), color_range=(0, 255))
             image_clip = 255 - image_clip
-            image_clip = addNoise(image_clip, intensity_range=(0.3, 0.3), color_range=(0, 255))
+            image_clip = add_noise(image_clip, intensity_range=(0.3, 0.3), color_range=(0, 255))
 
             # gaussian blur
             image_clip = cv2.GaussianBlur(image_clip.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
@@ -191,10 +186,9 @@ class BindingsAndFasteners(Augmentation):
         self.foreground = cv2.imread(foreground_path)
 
     # Applies the Augmentation to input data.
-    def __call__(self, data, force=False):
+    def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = data[self.layer][-1].result.copy()
-
+            image = image.copy()
             # if user input image
             if self.foreground and os.path.isfile(self.foreground):
                 self.foreground = cv2.imread(self.foreground)
@@ -211,4 +205,4 @@ class BindingsAndFasteners(Augmentation):
 
             image_output = ob.buildOverlay()
 
-            data[self.layer].append(AugmentationResult(self, image_output))
+            return image_output

@@ -21,7 +21,7 @@ class LowInkLine(Augmentation):
     def __init__(
         self,
         use_consistent_lines=True,
-        p=0.5,
+        p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)

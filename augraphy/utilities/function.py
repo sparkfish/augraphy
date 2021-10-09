@@ -7,13 +7,10 @@ class Function(Augmentation):
 
     :param fs: The function(s) to apply.
     :type fs: function or list of functions
-    :param layer: The layer this augmentation is applied in.
-    :type layer: string
     """
 
-    def __init__(self, fs, layer, p=0.5):
+    def __init__(self, fs, p=1):
         self.fs = fs
-        self.layer = layer
         super().__init__(p=p)
 
     def applyFs(self, fs, img):
@@ -29,8 +26,8 @@ class Function(Augmentation):
 
         return current
 
-    def __call__(self, data, force=False):
-        image = data[self.layer][-1].result.copy()
+    def __call__(self, image, force=False):
+        image = image.copy()
         output = self.applyFs(self.fs, image)
 
-        data[self.layer].append(AugmentationResult(self, output))
+        return output

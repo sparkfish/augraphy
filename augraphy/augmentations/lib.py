@@ -46,7 +46,7 @@ def smooth(points, iter):
     return points
 
 
-def addNoise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
+def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     """Applies random noise to the input image.
 
     :param image: The image to noise.
@@ -114,7 +114,7 @@ def _create_blob(
     return blob
 
 
-def applyBlob(
+def apply_blob(
     mask,
     size_range=(10, 20),
     points_range=(5, 25),
@@ -188,7 +188,7 @@ def applyBlob(
     return mask
 
 
-def binaryThreshold(
+def binary_threshold(
     img,
     enable_otsu=0,
     enable_simple=0,
