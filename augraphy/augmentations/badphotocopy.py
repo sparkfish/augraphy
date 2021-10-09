@@ -1,3 +1,4 @@
+import itertools
 import random
 
 import cv2
@@ -10,19 +11,19 @@ from augraphy.base.augmentationresult import AugmentationResult
 
 
 class BadPhotoCopy(Augmentation):
-    """Uses Perlin noise to generate an effect of dirty copier.
+    """Uses olsen noise to generate an effect of dirty copier
 
     :param layer: The image layer to apply the augmentation to.
     :type layer: string
-    :param nperiod: The number of periods of noise to generate along each
-                axis.
-    :type nperiod: tuple, optional
-    :param octaves: The number of octaves in the noise.
-    :type octaves: int, optional
-    :param persistence:The scaling factor between two octaves.
-    :type persistence: int, optional
-    :param lacunarity: The frequency factor between two octaves.
-    :type lacunarity: int, optional
+    :param noise_density: Pair of floats determining density of noises.
+            Lower value generates sparser noise.
+    :type noise_density: tuple, optional
+    :param max_iteration: Pair of ints determining the range of iterations for
+            the requested noise value. Higher value generates sparser
+            noise.
+    :type max_iteration: tuple, optional
+    :param hash_type: Types of hashes to generate olsen noise.
+    :type hash_type: int, optional
     :param wave_pattern: To enable wave pattern in noise.
     :type wave_pattern: int, optional
     :param p: The probability this Augmentation will be applied.
@@ -32,25 +33,292 @@ class BadPhotoCopy(Augmentation):
     def __init__(
         self,
         layer,
-        nperiod=(4, 4),
-        octaves=4,
-        persistence=0.5,
-        lacunarity=2,
+        noise_density=(0.1, 0.9),
+        max_iteration=(7, 7),
+        hash_type=0,
         wave_pattern=0,
         p=0.5,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.layer = layer
-        self.nperiod = nperiod
-        self.octaves = octaves
-        self.persistence = persistence
-        self.lacunarity = lacunarity
+        self.noise_density = noise_density
+        self.max_iteration = max_iteration
+        self.hash_type = hash_type
         self.wave_pattern = wave_pattern
+        self._SCALE_FACTOR = 2
+        self.GAUSSIAN = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]])
+        self.BOX = np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]]) * 1 / 9
+        self._blur_edge = 2  # extra pixels are needed for the blur (3 - 1).
+
+        if self.hash_type == 1:
+            self.noise_density = (0.01, 0.1)
+        elif self.hash_type == 2:
+            self.noise_density = (0.3, 0.3)
+        elif self.hash_type == 3:
+            self.noise_density = (0.01, 0.2)
+        elif self.hash_type == 4:
+            self.noise_density = (0.3, 0.5)
+        elif self.hash_type == 5:
+            self.noise_density = (0.1, 0.5)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(layer={self.layer}, nperiod={self.nperiod}, octaves={self.octaves}, persistence={self.persistence}, lacunarity={self.lacunarity}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(layer={self.layer}, noise_density={self.noise_density}, max_iteration={self.max_iteration}, hash_type={self.hash_type}, wave_pattern={self.wave_pattern}, p={self.p})"
+
+    def noise(self, shape, position=None, iteration=7, kernel=None, transpose=True):
+        """
+        Returns a block of noise within the specific parameters.
+        :param shape: shape of the noise block
+        :param position: requested position within the noise.
+        :param kwargs:  'iteration' number of iterations for the requested noise value.
+                        'kernel'=GAUSSIAN, BOX use gaussian or box matrix.
+                        'transpose'='True' transpose result.
+        :return:
+        """
+
+        # check position (starting coordinates) of noise
+        if position is None:
+            position = [0] * len(shape)
+        elif len(position) != len(shape):
+            raise ValueError("Offset and shape values do not match")
+
+        # initialize mask
+        x, y = np.array(position)
+        r_shape = self._required_dim(np.array(shape))
+        pixels = np.zeros(r_shape, dtype="uint8")
+
+        # check kernel
+        if kernel is None:
+            kernel = self.GAUSSIAN
+        elif kernel.shape != (3, 3):
+            raise NotImplementedError
+
+        # apply olsen noise
+        width, height = np.array(shape)
+        self._olsen_noise(
+            pixels,
+            x,
+            y,
+            width,
+            height,
+            iteration=iteration,
+            kernel=kernel,
+        )
+
+        # apply transpose
+        if transpose:
+            pixels = np.transpose(pixels[:width, :height])
+        else:
+            pixels = pixels[:width, :height]
+
+        return pixels
+
+    def _required_dim(self, dim):
+        """
+        Required Dim specifies the amount of extra edge pixels required to process the noise.
+        The largest amount is the dim, plus both edge blur bytes, plus the extra scaling factor, and the shift of 1.
+        :param dim:
+        :return:
+        """
+        return dim + self._blur_edge + self._SCALE_FACTOR + 1
+
+    def _olsen_noise(
+        self,
+        pixels,
+        x,
+        y,
+        width,
+        height,
+        iteration=7,
+        kernel=np.ones((3, 3)),
+    ):
+        """
+        Olsen Noise generation algorithm.
+        :param pixels: Pixel working space.
+        :param x: x location to use for the chunk
+        :param y: y location to use for the chunk
+        :param width: width of the chunk
+        :param height: height of the chunk
+        :param iteration: iterations to apply to the noise.
+        :return:
+        """
+
+        if iteration > 0:
+            # Adjust the x_remainder so we know how much more into the pixel are.
+            x_remainder = x & 1
+            y_remainder = y & 1
+
+            # Recursive scope call.
+            self._olsen_noise(
+                pixels,
+                ((x + x_remainder) // self._SCALE_FACTOR) - x_remainder,
+                ((y + y_remainder) // self._SCALE_FACTOR) - y_remainder,
+                ((width + x_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+                ((height + y_remainder) // self._SCALE_FACTOR) + self._blur_edge,
+                iteration - 1,
+                kernel=kernel,
+            )
+
+            self._scale_shift(
+                pixels,
+                width + self._blur_edge,
+                height + self._blur_edge,
+                self._SCALE_FACTOR,
+                x_remainder,
+                y_remainder,
+            )
+            self._apply_kernel(pixels, width, height, kernel=kernel)
+
+        # Base case.
+        self._apply_noise(pixels, x, y, width, height, iteration)
+
+    def _scale_shift(self, pixels, width, height, factor, shift_x, shift_y):
+        """
+        Scale_shift pixels located in width and height of the array by the factor given and shifted by shift_x, and shift_y
+        This process may be sped up applying np.kron or other accelerations later.
+        :param pixels:
+        :param width:
+        :param height:
+        :param factor:
+        :param shift_x:
+        :param shift_y:
+        :return:
+        """
+
+        coordinates = list(itertools.product(range(height - 1, -1, -1), range(width - 1, -1, -1)))
+        ys, xs = map(list, zip(*coordinates))
+        for (y, x) in coordinates:
+            pixels[x, y] = pixels[(x + shift_x) // factor, (y + shift_y) // factor]
+
+    def _apply_noise(
+        self,
+        pixels,
+        x_within_field,
+        y_within_field,
+        width,
+        height,
+        iteration,
+    ):
+
+        for i, m in np.ndenumerate(pixels):
+            y, x = i
+
+            hash_value = self._hash_random(
+                x + x_within_field,
+                y + y_within_field,
+                iteration,
+            )
+            pixels[i] += hash_value
+
+    def _hash_random(self, *elements):
+        """
+        XOR hash the hashed values of each element, in elements
+        :param elements: elements to be hashed and xor'ed together.
+        :return:
+        """
+        hash_value = 0
+        i = 0
+        while i < len(elements):
+            hash_value ^= elements[i]
+            hash_value = self._hash(hash_value)
+            i += 1
+
+        if self.hash_type != 4:
+            hash_value &= 1 << (self.max_iteration[1] - elements[2])
+
+        return hash_value
+
+    def _hash(self, v):
+        value = int(v)
+        original = value
+
+        if self.hash_type == 1:  # noise start from page border
+            value += original
+            value ^= value << 1
+            value = min(value, 255)
+
+        elif self.hash_type == 2:  # disontinuous noises
+            value += original * 5
+            value ^= value << 2
+            value = value % 255
+
+        elif self.hash_type == 3:  # even noise on the whole page
+            value = max(value, random.randint(190, 210))
+
+        elif self.hash_type == 4:  # sparse and little noise
+            value = 255 - random.randint(220, 230)
+
+        elif self.hash_type == 5:  # uniform pattern
+            value = 255 - (value * 4)
+            value = value % 128
+
+        else:  # totaly randomize
+            q = value & 3
+
+            if q == 3:
+                value += original
+                value ^= value << 32
+                value ^= original << 36
+                value += value >> 22
+            elif q == 2:
+                value += original
+                value ^= value << 22
+                value += value >> 34
+            elif q == 1:
+                value += original
+                value ^= value << 20
+                value += value >> 2
+            value ^= value << 6
+            value += value >> 10
+            value ^= value << 8
+            value += value >> 34
+            value ^= value << 50
+            value += value >> 12
+
+        return value
+
+    def _crimp(self, color):
+        """
+        crimps the values between 255 and 0. Required for some other convolutions like emboss where they go out of register.
+        :param color: color to crimp.
+        :return:
+        """
+        if color > 255:
+            return 255
+        if color < 0:
+            return 0
+        return int(color)
+
+    def _apply_kernel(self, pixels, width, height, kernel=np.ones((3, 3))):
+        """
+        Applies a convolution with the results pixel in the upper left-hand corner.
+        :param pixels:
+        :param width:
+        :param height:
+        :param kernel:
+        :return:
+        """
+        for index, m in np.ndenumerate(pixels[:width, :height]):
+            pixels[index] = self._convolve(pixels, index, kernel)
+
+    def _convolve(self, pixels, index, matrix):
+        """
+        Performs the convolution on that pixel by the given matrix. Note all values within the matrix are down and to the
+        right from the current pixel. None are up or to the left. This is by design.
+        :param pixels:
+        :param index:
+        :param matrix:
+        :return:
+        """
+        parts = 0
+        total = 0
+        for mi, m in np.ndenumerate(matrix):
+            parts += m  # keeps a running total for the parts.
+            total += m * pixels[index[0] + mi[0], index[1] + mi[1]]
+        if parts == 0:
+            return self._crimp(total)
+        return self._crimp(total // parts)
 
     def apply_wave(self, mask):
         """
@@ -155,82 +423,6 @@ class BadPhotoCopy(Augmentation):
 
         return mask
 
-    def interpolant(self, t):
-        """
-        Function to perform interpolation
-        """
-        return 6 * (t ** 5) - 15 * (t ** 4) + 10 * (t ** 3)
-
-    def perlin_noise_2d(
-        self,
-        input_size,
-        nperiod,
-        interpolant,
-    ):
-        """
-        Generate a 2D numpy array of perlin noise.
-        """
-
-        # prevent size mismatch issue
-        new_size = list(input_size).copy()
-        new_size[0] -= input_size[0] % nperiod[0]
-        new_size[1] -= input_size[1] % nperiod[1]
-
-        # prevent size <0
-        if new_size[0] <= 0 or new_size[1] <= 0:
-            return np.zeros((input_size))
-
-        delta = (nperiod[0] / new_size[0], nperiod[1] / new_size[1])
-        d = (new_size[0] // nperiod[0], new_size[1] // nperiod[1])
-        grid = np.mgrid[0 : nperiod[0] : delta[0], 0 : nperiod[1] : delta[1]].transpose(1, 2, 0) % 1
-
-        # Gradients
-        angles = 2 * np.pi * np.random.rand(nperiod[0] + 1, nperiod[1] + 1)
-        gradients = np.dstack((np.cos(angles), np.sin(angles)))
-        gradients = gradients.repeat(d[0], 0).repeat(d[1], 1)
-        g00 = gradients[: -d[0], : -d[1]]
-        g10 = gradients[d[0] :, : -d[1]]
-        g01 = gradients[: -d[0], d[1] :]
-        g11 = gradients[d[0] :, d[1] :]
-
-        # Ramps
-        n00 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1])) * g00, 2)
-        n10 = np.sum(np.dstack((grid[:, :, 0] - 1, grid[:, :, 1])) * g10, 2)
-        n01 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1] - 1)) * g01, 2)
-        n11 = np.sum(np.dstack((grid[:, :, 0] - 1, grid[:, :, 1] - 1)) * g11, 2)
-
-        # Interpolation
-        t = interpolant(grid)
-        n0 = n00 * (1 - t[:, :, 0]) + t[:, :, 0] * n10
-        n1 = n01 * (1 - t[:, :, 0]) + t[:, :, 0] * n11
-        out = np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1)
-
-        return cv2.resize(out, (input_size[1], input_size[0]), interpolation=cv2.INTER_AREA)
-
-    def generate_perlin_noise(
-        self,
-        input_size,
-        nperiod,
-        interpolant,
-        octaves=4,
-        persistence=0.5,
-        lacunarity=2,
-    ):
-        """
-        Main function to generate noise
-        """
-
-        noise = np.zeros(input_size)
-        frequency = 1
-        amplitude = 1
-        for _ in range(octaves):
-            nperiods = (int(frequency * nperiod[0]), int(frequency * nperiod[1]))
-            out = self.perlin_noise_2d(input_size, nperiods, interpolant)
-            noise += amplitude * out
-            frequency *= lacunarity
-            amplitude *= persistence
-        return noise
-
     def apply_augmentation(self, image):
 
         # get image dimensions
@@ -268,20 +460,23 @@ class BadPhotoCopy(Augmentation):
         image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
 
         # create mask of noises
-        shape = (ysize, xsize)
+        shape = (
+            random.randint(
+                np.ceil(ysize * self.noise_density[0]),
+                np.ceil(ysize * self.noise_density[1]),
+            ),
+            random.randint(
+                np.ceil(xsize * self.noise_density[0]),
+                np.ceil(xsize * self.noise_density[1]),
+            ),
+        )
+        position = (random.randint(0, shape[1]), random.randint(0, shape[0]))
+        iteration = random.randint(self.max_iteration[0], self.max_iteration[1])
+        kernel = random.choice([self.GAUSSIAN, self.BOX])
+        transpose = random.choice([True, False])
 
         # get mask of noise and resize it to image size
-        mask = self.generate_perlin_noise(
-            shape,
-            nperiod=self.nperiod,
-            interpolant=self.interpolant,
-            octaves=self.octaves,
-            persistence=self.persistence,
-            lacunarity=self.lacunarity,
-        )
-
-        mask += random.randint(30, 60)
-        mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
+        mask = self.noise(shape, position, iteration, kernel, transpose)
         mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
 
         # apply mask
@@ -294,13 +489,30 @@ class BadPhotoCopy(Augmentation):
         if random.choice([True, False]):
             mask = cv2.flip(mask, 1)
 
-        # add noise and blur
+        # scale to 0-255
+        if self.hash_type != 3 and self.hash_type != 4:
+            mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
+
         noise_img = add_noise(mask).astype("uint8")
-        gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
+
+        if self.hash_type == 4:
+            gaussian_kernel = (3, 3)
+            for _ in range(random.randint(5, 10)):
+                xloc = random.randint(0, xsize - 1)
+                yloc = random.randint(0, ysize - 1)
+                noise_img[yloc, xloc] = np.min(noise_img) / random.randint(1, 3)
+
+        else:
+            gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
+
         blurred = cv2.GaussianBlur(noise_img, gaussian_kernel, 0)
 
-        # randomize noise type
-        noise_img_type = random.randint(0, 2)
+        if self.hash_type == 3 or self.hash_type == 4:
+            # fixed noise type
+            noise_img_type = 2
+        else:
+            # randomize noise type
+            noise_img_type = random.randint(0, 2)
 
         # type 0 and type 1 noise
         if noise_img_type != 2:
