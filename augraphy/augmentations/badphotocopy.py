@@ -11,6 +11,8 @@ from augraphy.base.augmentation import Augmentation
 class BadPhotoCopy(Augmentation):
     """Uses Perlin noise to generate an effect of dirty copier.
 
+    :param intensity: Intensity range of noise, lower value get darker effect.
+    :type intensity: tuple, optional
     :param nperiod: The number of periods of noise to generate along each
                 axis.
     :type nperiod: tuple, optional
@@ -28,8 +30,9 @@ class BadPhotoCopy(Augmentation):
 
     def __init__(
         self,
-        nperiod=(4, 4),
-        octaves=4,
+        intensity=(30, 60),
+        nperiod=(random.randint(1, 4), random.randint(1, 4)),
+        octaves=1,
         persistence=0.5,
         lacunarity=2,
         wave_pattern=0,
@@ -37,15 +40,21 @@ class BadPhotoCopy(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.intensity = intensity
         self.nperiod = nperiod
         self.octaves = octaves
         self.persistence = persistence
         self.lacunarity = lacunarity
         self.wave_pattern = wave_pattern
 
+        # clamp betweem 0 - 255
+        self.intensity = list(self.intensity)
+        self.intensity[0] = max(0, min(self.intensity[0], 255))
+        self.intensity[1] = max(0, min(self.intensity[1], 255))
+
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(nperiod={self.nperiod}, octaves={self.octaves}, persistence={self.persistence}, lacunarity={self.lacunarity}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(intensity={self.intensity}, nperiod={self.nperiod}, octaves={self.octaves}, persistence={self.persistence}, lacunarity={self.lacunarity}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def apply_wave(self, mask):
         """
@@ -188,14 +197,20 @@ class BadPhotoCopy(Augmentation):
         g01 = gradients[: -d[0], d[1] :]
         g11 = gradients[d[0] :, d[1] :]
 
+        # resolve size inconsistentcy isssue
+        g_ysize, g_xsize = g00.shape[:2]
+        grid_new = np.zeros((g_ysize, g_xsize, grid.shape[2]))
+        for i in range(grid.shape[2]):
+            grid_new[:, :, i] = cv2.resize(grid[:, :, i], (g_xsize, g_ysize), interpolation=cv2.INTER_AREA)
+
         # Ramps
-        n00 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1])) * g00, 2)
-        n10 = np.sum(np.dstack((grid[:, :, 0] - 1, grid[:, :, 1])) * g10, 2)
-        n01 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1] - 1)) * g01, 2)
-        n11 = np.sum(np.dstack((grid[:, :, 0] - 1, grid[:, :, 1] - 1)) * g11, 2)
+        n00 = np.sum(np.dstack((grid_new[:, :, 0], grid_new[:, :, 1])) * g00, 2)
+        n10 = np.sum(np.dstack((grid_new[:, :, 0] - 1, grid_new[:, :, 1])) * g10, 2)
+        n01 = np.sum(np.dstack((grid_new[:, :, 0], grid_new[:, :, 1] - 1)) * g01, 2)
+        n11 = np.sum(np.dstack((grid_new[:, :, 0] - 1, grid_new[:, :, 1] - 1)) * g11, 2)
 
         # Interpolation
-        t = interpolant(grid)
+        t = interpolant(grid_new)
         n0 = n00 * (1 - t[:, :, 0]) + t[:, :, 0] * n10
         n1 = n01 * (1 - t[:, :, 0]) + t[:, :, 0] * n11
         out = np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1)
@@ -207,7 +222,7 @@ class BadPhotoCopy(Augmentation):
         input_size,
         nperiod,
         interpolant,
-        octaves=4,
+        octaves=1,
         persistence=0.5,
         lacunarity=2,
     ):
@@ -234,19 +249,6 @@ class BadPhotoCopy(Augmentation):
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
             ysize, xsize = image.shape
-
-        # initialize vectorized mapping functions
-        # add random zero value noise
-        add_noise_fn = lambda x: 0 if (x <= random.randint(0, 224)) else 255
-        add_noise = np.vectorize(add_noise_fn)
-
-        # remove noise by using min
-        remove_noise_fn = (
-            lambda original, noised, mask: min(original, noised + mask)
-            if (np.uint(noised) + np.uint(mask) <= 255)
-            else original
-        )
-        remove_noise = np.vectorize(remove_noise_fn)
 
         # add random noise range from 0-128
         add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
@@ -275,11 +277,15 @@ class BadPhotoCopy(Augmentation):
             lacunarity=self.lacunarity,
         )
 
-        mask += random.randint(30, 60)
-        mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
-        mask = cv2.resize(mask, (image.shape[1], image.shape[0]))
+        # rescale to 0 -255
+        mask = ((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255
+        if self.intensity[0] > self.intensity[1]:
+            self.intensity[0] = self.intensity[1]
+        mask += random.randint(self.intensity[0], self.intensity[1])
+        mask[mask > 255] = 255
+        mask = cv2.resize(mask, (image.shape[1], image.shape[0])).astype("uint8")
 
-        # apply mask
+        # apply wave pattern to mask
         if self.wave_pattern:
             mask = self.apply_wave(mask)
 
@@ -289,46 +295,24 @@ class BadPhotoCopy(Augmentation):
         if random.choice([True, False]):
             mask = cv2.flip(mask, 1)
 
-        # add noise and blur
-        noise_img = add_noise(mask).astype("uint8")
+        # add dotted noise effect to mask (unsmoothen)
+        noise_mask = np.random.random((ysize, xsize)) * 225
+        mask[mask > noise_mask] = 255
+        noise_img = mask
+
+        # add blur
         gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
         blurred = cv2.GaussianBlur(noise_img, gaussian_kernel, 0)
+        noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
+        result = cv2.multiply(noise_img, image, scale=1 / 255)
 
-        # randomize noise type
-        noise_img_type = random.randint(0, 2)
-
-        # type 0 and type 1 noise
-        if noise_img_type != 2:
-
-            _, thresh1 = cv2.threshold(
-                blurred,
-                random.randint(64, 128),
-                255,
-                cv2.THRESH_BINARY,
-            )
-
-            # type 0 noise
-            if noise_img_type == 0:
-                result = cv2.multiply(thresh1, image, scale=1 / 255)
-                result = remove_noise(image, result, image_sobel)
-
-            # type 1 noise
-            else:
-                grey_img = noise_img.copy()
-                grey_img[:, :][grey_img[:, :] == 0] = random.choice(
-                    [255, 255, 255, random.randint(196, 224)],
-                )
-
-                noise_img = cv2.multiply(grey_img, thresh1, scale=1 / 255)
-                result = cv2.multiply(noise_img, image, scale=1 / 255)
-                result = remove_noise(image, result, image_sobel)
-
-        # type 2 noise
-        else:
-
-            noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
-            result = cv2.multiply(noise_img, image, scale=1 / 255)
-            result = remove_noise(image, result, image_sobel)
+        # merge sobel mask and noise mask to image
+        image_copy = image.copy()
+        result_new = result.astype("int") + image_sobel.astype("int")
+        image[image > result_new] = 0
+        result_new[result_new > 255] = 0
+        result_new[result_new > image_copy] = 0
+        result = image + result_new
 
         return result
 
