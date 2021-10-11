@@ -1,15 +1,25 @@
 # Paper Factory
 
-Paper Factory randomly replaces the starting paper image with a texture chosen from a directory, resized or cropped and tiled to fit the dimensions of the input image.
+`PaperFactory` randomly replaces the starting paper image with a texture chosen from a directory, resized or cropped and tiled to fit the dimensions of the input image.
+
+`PaperFactory` can be used as part of an Augraphy pipeline (within the paper phase), or can be used as a standalone callable. In the latter case, it returns the paper image.
 
 **Example Usage:**
 
 ```python
-augmentation = PaperFactory(
+pf1 = PaperFactory(
 	tile_texture_shape=(250,250),
 	texture_path="./paper_textures"
 	p=0.5
     )
+
+paper_phase = [pf1, BrightnessTexturize(p=0.5)]
+```
+
+```python
+pf2 = PaperFactory()
+
+paper_image = pf2(input_image)
 ```
 
 | Parameter            | Description                                                                                                                                 |

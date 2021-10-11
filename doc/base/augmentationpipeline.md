@@ -6,13 +6,16 @@ The Augraphy Pipeline contains "phases" or "layers" of image augmentations and t
 
 **Example Usage:**
 ```python
-ink_phase = [InkBleed(), Letterpress(), GaussianBlur("ink")]
+ink_phase = [InkBleed(), Letterpress(), GaussianBlur()]
 
 paper_phase = [PaperFactory(), NoiseTexturize(), BrightnessTexturize()]
 
 post_phase = [DirtyRollers(), DirtyDrum, Jpeg()]
 
 pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+data = pipeline.augment(image)
+augmented_image = data['output']
 ```
 
 | Parameter           | Description                                                             |
@@ -26,7 +29,7 @@ pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 
 ## The Data Dictionary
 
-The output of the pipeline will be a dictionary containing the image at various stages of processing along with augmentations applied. Additional metadata can be added by augmentations in the pipeline. In the example usage above, the `pipeline` variable contains this dictionary of results.
+To apply a pipeline, use the `augment` method on an image. The output of an applied pipeline will be a dictionary containing the image at various stages of processing along with augmentations applied. Additional metadata can be added by augmentations in the pipeline. In the example usage above, the `data` variable contains this dictionary of results.
 
 | Key                     | Description                                                                                                          |
 |-------------------------|----------------------------------------------------------------------------------------------------------------------|

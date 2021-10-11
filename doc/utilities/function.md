@@ -10,7 +10,6 @@ def scaleUp2(img):
 
 augmentation = Function(
 	scaleUp2,
-	layer="post",
 	p=0.5,
 	)
 ```
@@ -18,5 +17,4 @@ augmentation = Function(
 | Parameter | Description                                             |
 |-----------|---------------------------------------------------------|
 | `fs`      | The function or list of functions to apply.             |
-| `layer`   | The pipeline layer this augmentation is applied in.     |
 | `p`       | The probability that this augmentation will be applied. |

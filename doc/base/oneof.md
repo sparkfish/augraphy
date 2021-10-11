@@ -1,18 +1,30 @@
 # OneOf
 
-Augmentation list that will execute one of the specified augmentations randomly. Probabilities for the specified augmentations will be used as weights for which one will be selected, and the probability at the OneOf level will be used to determine if any are selected.
+`OneOf` is a wrapper around a list of augmentations, which randomly picks one to execute.
+
+`OneOf` may be used just like any other augmentation, either within a pipeline or as a standalone callable.
 
 **Example Usage:**
 
 ```python
-augmentation = OneOf(
+one_of = OneOf(
 	augmentations=[
 		# Add Augmentations Here
-		Bleedthrough(p=1),
-		GaussianBlur(p=0.75)
+		Bleedthrough(),
+		Brightness()
         ],
 	p=0.5
     )
+
+ink_phase = [one_of, Letterpress(p=0.5), Gamma(p=0.25)]
+
+pipeline = AugraphyPipeline(ink_phase, ...)
+```
+
+```python
+pick_one = OneOf([Bleedthrough(), Brightness(), Letterpress()])
+
+augmented = pick_one(image)
 ```
 
 | Parameter       | Description                                                                                  |

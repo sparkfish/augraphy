@@ -2,17 +2,28 @@
 
 Augmentation Sequence creates a sequence of augmentations that will be executed in order.
 
+Sequences can be used as part of an Augraphy pipeline, within which we call them "phases", or can be used as standalone callables.
+
 **Example Usage:**
 
 ```python
-sequence = AugmentationSequence(
+ink_phase = AugmentationSequence(
 	augmentations=[
 		# Add Augmentations Here
-		Bleedthrough(p=1),
-		GaussianBlur(p=0.75)
+		Bleedthrough(),
+		Brightness()
 		],
 	p=0.5
 	)
+
+pipeline = AugraphyPipeline(ink_phase, ...)
+```
+
+
+```python
+sequence2 = AugmentationSequence([Bleedthrough(), Brightness()])
+
+augmented = sequence2(image)
 ```
 
 | Parameter       | Description                                                        |

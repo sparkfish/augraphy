@@ -1,6 +1,6 @@
 # ImageOverlay
 
-The ImageOverlay augmentation places a foreground image randomly over the document.
+The `ImageOverlay` augmentation places a foreground image on the document, at a specified location or randomly.
 
 **Example Usage:**
 
@@ -9,7 +9,7 @@ paperclip = cv2.imread("paperclip.png")
 
 augmentation = ImageOverlay(
 	foreground=paperclip,
-	layer="post",
+	position=(350,170)
 	p=0.5,
 	)
 ```
@@ -17,5 +17,5 @@ augmentation = ImageOverlay(
 | Parameter    | Description                                             |
 |--------------|---------------------------------------------------------|
 | `foreground` | The image you want to overlay on the document.          |
-| `layer`      | The layer of image to apply the overlay to.             |
+| `position`   | Pair of coordinates to place the image at, optionally   |
 | `p`          | The probability that this augmentation will be applied. |

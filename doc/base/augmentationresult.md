@@ -1,11 +1,11 @@
 # Augmentation Result
 
-Contains the result of an augmentation's application, and the augmentation itself. Augmentations add these to the pipeline data dictionary during pipeline execution.
+Contains the result of an augmentation's application, and the augmentation itself. These are added to the pipeline data dictionary during pipeline execution.
 
 **Example Usage:**
 
 ```python
-data[layer].append(AugmentationResult(self, augmentation))
+data[layer].append(AugmentationResult(augmentation, result, metadata=None))
 ```
 | Parameter      | Description                                   |
 |----------------|-----------------------------------------------|
