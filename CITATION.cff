@@ -2,6 +2,6 @@ cff-version: 1.2.0
 message: "If you use this software in a publication, please cite it as below."
 authors:
 - name: The Augraphy Project
-title: "augraphy"
-version: 3.0.0
+title: "Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes"
+version: 5.0.0
 url: "https://github.com/sparkfish/augraphy"
