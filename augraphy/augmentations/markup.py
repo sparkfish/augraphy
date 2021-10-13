@@ -74,7 +74,7 @@ class Markup(Augmentation):
         dilation = cv2.dilate(
             thresh1,
             rect_kernel,
-            iterations=1,
+            iterations=2,
         )
         # Applying dilate operation to connect text lines horizontaly.
         contours, hierarchy = cv2.findContours(
@@ -104,8 +104,6 @@ class Markup(Augmentation):
                 x = int(x + (1 - markup_length) * w)
                 # offset to interpolate markup effect up/down
                 offset = 6
-                # Transparency factor.
-                alpha = 0.5
 
                 # for strikethrough we need center points
                 if self.markup_type == "strikethrough":
@@ -113,8 +111,8 @@ class Markup(Augmentation):
                     ending_point = [x + w, int(y + (h / 2))]
                 else:
                     # for underline and highlight we need points corresponding to bottom part of text
-                    starting_point = [x, y]
-                    ending_point = [x + w, y]
+                    starting_point = [x, y + h]
+                    ending_point = [x + w, y + h]
 
                 # dividing the line into points
                 points_count = random.randint(3, 10)
@@ -126,7 +124,7 @@ class Markup(Augmentation):
                 for i in range(len(points_list) - 1):
                     p1 = (int(points_list[i][0]), int(points_list[i][1]))
                     if self.markup_type == "highlight":
-                        p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] + h))
+                        p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] - h))
                         # A filled rectangle
                         overlay = cv2.rectangle(overlay, p1, p2, self.markup_color, -1)
                     else:
@@ -141,6 +139,6 @@ class Markup(Augmentation):
                         )
 
         if self.markup_type == "highlight":
-            markup_img = cv2.addWeighted(overlay, alpha, markup_img, 1 - alpha, 0)
+            markup_img = cv2.addWeighted(overlay, 0.5, markup_img, 1 - 0.5, 0)
 
         return markup_img
