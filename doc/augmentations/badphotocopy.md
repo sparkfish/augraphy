@@ -6,6 +6,7 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
 ```python
 augmentation = BadPhotocopy(
+	noise_type=0,
 	intensity=(30,60),
 	nperiod = (4,4),
 	octaves = 4,
@@ -18,6 +19,7 @@ augmentation = BadPhotocopy(
 
 | Parameter       | Description                                                      |
 |-----------------|------------------------------------------------------------------|
+| `noise_type`    | Types of noises to generate different mask patterns.             |
 | `intensity`     | Intensity range of noise, lower value get darker effect.         |
 | `nperiod`		  | The number of periods of noise to generate along each axis.      |
 | `octaves`       | The number of octaves in the noise.                              |
