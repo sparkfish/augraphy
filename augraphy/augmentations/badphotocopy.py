@@ -353,7 +353,7 @@ class BadPhotoCopy(Augmentation):
         result_new[result_new > image_copy] = 0
         result = image + result_new
 
-        return result
+        return result.astype("uint8")
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
