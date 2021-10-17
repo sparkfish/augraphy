@@ -55,13 +55,14 @@ class PageBorder(Augmentation):
             for i in range(reps):
                 if random.random() < intensity:
                     d = int(random.uniform(1, 5))
-                    border[x, min(X - 1, y + d), :] = (0, 0, 0)
+                    border[x, min(X - 1, y + d)] = 0
                     d = int(random.uniform(1, 5))
-                    border[x, max(0, y - d), :] = (0, 0, 0)
+                    border[x, max(0, y - d)] = 0
         return border
 
     def create_border(
         self,
+        channel,
         border_width,
         border_height,
         num_pages=None,
@@ -69,7 +70,10 @@ class PageBorder(Augmentation):
     ):
 
         pad = 0
-        border = np.ones((border_height, border_width + pad, 3))
+        if channel > 2:
+            border = np.ones((border_height, border_width + pad, channel))
+        else:
+            border = np.ones((border_height, border_width + pad))
         border = border * 255
         color = (0, 0, 0)
         if num_pages is None:
@@ -102,10 +106,12 @@ class PageBorder(Augmentation):
                 self.noise_intensity_range[1],
             )
             border_width = random.randint(self.width_range[0], self.width_range[1])
-            if len(image.shape) >= 3:
-                H, W, C = image.shape
+
+            height, width = image.shape[:2]
+            if len(image.shape) > 2:
+                channel = image.shape[2]
             else:
-                H, W = image.shape
+                channel = 1
 
             if self.side == "random":
                 side = random.choice(["left", "right", "top", "bottom"])
@@ -114,8 +120,9 @@ class PageBorder(Augmentation):
 
             if side == "left":
                 border = self.create_border(
+                    channel,
                     border_width,
-                    H,
+                    height,
                     self.pages,
                     noise_intensity,
                 )
@@ -123,24 +130,27 @@ class PageBorder(Augmentation):
                 image = np.hstack((border, image))
             elif side == "right":
                 border = self.create_border(
+                    channel,
                     border_width,
-                    H,
+                    height,
                     self.pages,
                     noise_intensity,
                 )
                 image = np.hstack((image, np.fliplr(border)))
             elif side == "top":
                 border = self.create_border(
+                    channel,
                     border_width,
-                    W,
+                    width,
                     self.pages,
                     noise_intensity,
                 )
                 image = np.vstack((cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE), image))
             elif side == "bottom":
                 border = self.create_border(
+                    channel,
                     border_width,
-                    W,
+                    width,
                     self.pages,
                     noise_intensity,
                 )

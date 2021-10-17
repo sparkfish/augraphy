@@ -73,8 +73,8 @@ class Letterpress(Augmentation):
 
             apply_mask_fn = lambda x, y: y if (x < 128) else x
             apply_mask = np.vectorize(apply_mask_fn)
-
-            noise_mask = add_noise(noise_mask)
+            # gaussian blur need uint8 input
+            noise_mask = add_noise(noise_mask).astype("uint8")
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
             image = apply_mask(image, noise_mask)
 
