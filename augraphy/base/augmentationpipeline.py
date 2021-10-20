@@ -96,11 +96,6 @@ class AugraphyPipeline:
             ink = self.rotate_image(ink, angle)
             data["image_rotated"] = ink.copy()
 
-        if len(ink.shape) > 2 and ink.shape[2] == 3:
-            ink = cv2.cvtColor(ink, cv2.COLOR_BGR2GRAY)
-        elif len(ink.shape) > 2 and ink.shape[2] == 4:
-            ink = cv2.cvtColor(ink, cv2.COLOR_BGRA2GRAY)
-
         data["pipeline"] = self
         data["ink"] = list()
         data["paper"] = list()
@@ -216,6 +211,11 @@ class AugraphyPipeline:
     def print_ink_to_paper(self, data, overlay, background):
         """Applies the ink layer to the paper layer."""
 
+        # prevent inconsistency in size between background and overlay
+        if overlay.shape[:2] != background.shape[:2]:
+            overlay_y, overlay_x = overlay.shape[:2]
+            background = cv2.resize(background, (overlay_x, overlay_y), interpolation=cv2.INTER_AREA)
+
         if (self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0):
             ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
         else:
@@ -232,8 +232,10 @@ class AugraphyPipeline:
         background_mask = 255 - overlay_mask
 
         # Turn the masks into three channel, so we can use them as weights
-        overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
-        background_mask = cv2.cvtColor(background_mask, cv2.COLOR_GRAY2BGR)
+        if len(overlay.shape) > 2:
+            overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
+        if len(background_mask.shape) > 2:
+            background_mask = cv2.cvtColor(background_mask, cv2.COLOR_GRAY2BGR)
 
         # Create a masked out face image, and masked out overlay
         # We convert the images to floating point in range 0.0 - 1.0
