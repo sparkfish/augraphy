@@ -188,6 +188,11 @@ class BindingsAndFasteners(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+
+            # reset foreground when the same class instance called twice
+            if not isinstance(self.foreground, str):
+                self.foreground = None
+
             image = image.copy()
             # if user input image
             if self.foreground and os.path.isfile(self.foreground):

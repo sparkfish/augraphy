@@ -35,14 +35,17 @@ class PaperFactory(Augmentation):
         for file in glob.glob(f"{texture_path}/*"):
             texture = cv2.imread(file)
 
-            if len(texture.shape) > 2 and texture.shape[2] == 4:
-                texture = cv2.cvtColor(texture, cv2.COLOR_BGRA2BGR)
-            elif len(texture.shape) > 2 and texture.shape[2] == 3:
-                pass
-            else:
-                texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+            # prevent invalid image file
+            if hasattr(texture, "dtype") and texture.dtype == np.uint8:
 
-            self.paper_textures.append(cv2.imread(file))
+                if len(texture.shape) > 2 and texture.shape[2] == 4:
+                    texture = cv2.cvtColor(texture, cv2.COLOR_BGRA2BGR)
+                elif len(texture.shape) > 2 and texture.shape[2] == 3:
+                    pass
+                else:
+                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+
+                self.paper_textures.append(cv2.imread(file))
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
