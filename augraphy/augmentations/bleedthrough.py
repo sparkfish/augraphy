@@ -75,7 +75,7 @@ class BleedThrough(Augmentation):
         if (img.shape[0] != img_bleed.shape[0]) or (img.shape[1] != img_bleed.shape[1]):
             return img
         img_PIL = Image.fromarray(img)
-        img_bleed_PIL = Image.fromarray(img_bleed)
+        img_bleed_PIL = Image.fromarray(img_bleed.astype('uint8'))
         img_PIL = img_PIL.convert("RGBA")
         img_bleed_PIL = img_bleed_PIL.convert("RGBA")
         img_blended = Image.blend(img_PIL, img_bleed_PIL, alpha=alpha)
