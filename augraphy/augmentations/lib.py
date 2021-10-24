@@ -279,6 +279,7 @@ def sobel(image):
     :param image: The image over which to create an edge mask.
     :type image: numpy.array
     """
+
     gradX = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
     gradY = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
     gradient = cv2.subtract(gradX, gradY)
@@ -300,3 +301,81 @@ def make_white_transparent(img, ink_color=0):
     # Apply transparency mask based on grayscale.
     img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
     return img_bgra
+
+
+def mixed_blend(img_source, img_background):
+    """Blend 2 images using mixed gradients blend"""
+
+    # get background size
+    ysize, xsize = img_background.shape[:2]
+
+    # get source size
+    sysize, sxsize = img_source.shape[:2]
+
+    # if source size is different, resize it
+    if sysize != ysize or sxsize != xsize:
+        img_source = cv2.resize(img_source, (xsize, ysize), interpolation=cv2.INTER_AREA)
+
+    # get source image channels
+    if len(img_source) > 2:
+        source_channel = img_source.shape[2]
+    else:
+        source_channel = 0
+
+    # get background image channels
+    if len(img_background) > 2:
+        background_channel = img_background.shape[2]
+    else:
+        background_channel = 0
+
+    img_source = img_source.astype("int")
+    img_background = img_background.astype("int")
+    img_outcome = img_background.copy().astype("int")
+
+    # for shifting
+    y_shifts = [0, 0, 1, -1]
+    x_shifts = [1, -1, 0, 0]
+
+    for y in range(1, ysize - 1, 1):
+        for x in range(1, xsize - 1, 1):
+            for x_shift, y_shift in zip(x_shifts, y_shifts):
+
+                # source
+                # multiple channels
+                if source_channel:
+                    for i in range(source_channel):
+                        source_difference = img_source[y, x, i] - img_source[y + y_shift, x + x_shift, i]
+                # single channel
+                else:
+                    source_difference = img_source[y, x] - img_source[y + y_shift, x + x_shift]
+
+                # background
+                # multiple channels
+                if background_channel:
+                    for i in range(background_channel):
+                        background_difference = img_background[y, x, i] - img_background[y + y_shift, x + x_shift, i]
+                # single channel
+                else:
+                    background_difference = img_background[y, x] - img_background[y + y_shift, x + x_shift]
+
+                # output
+                # dominant source difference
+                if abs(source_difference) > abs(background_difference):
+                    if source_channel:
+                        for i in range(source_channel):
+                            img_outcome[y, x, i] += source_difference
+                    else:
+                        img_outcome[y, x] += source_difference
+                # dominant background difference
+                else:
+                    if source_channel:
+                        for i in range(source_channel):
+                            img_outcome[y, x, i] += background_difference
+                    else:
+                        img_outcome[y, x] += background_difference
+
+    img_outcome[img_outcome > 255] = 255
+    img_outcome[img_outcome < 0] = 0
+    img_outcome = img_outcome.astype("uint8")
+
+    return img_outcome
