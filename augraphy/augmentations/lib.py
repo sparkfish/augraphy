@@ -307,345 +307,114 @@ def make_white_transparent(img, ink_color=0):
     return img_bgra
 
 
-def mixed_blend_crude(img_source, img_background):
-    """Blend 2 images using mixed gradients blend, very crude but fast"""
+def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE):
+    """
+    :param img_source: Foreground image to apply blending.
+    :type img_source: numpy array
+    :param img_background: Background image to apply blending.
+    :type img_background: numpy array
+    :param center: Location (x,y) of foreground centroid in background image.
+    :type center: tuple
+    :param blend_type: Blend types, cv2.MIXED_CLONE or cv2.NORMAL_CLONE.
+    :type blend_type: CV2 types
+    """
 
-    # get background size
-    ysize, xsize = img_background.shape[:2]
+    # background size
+    ysize_background, xsize_background = img_background.shape[:2]
 
-    # get source size
-    sysize, sxsize = img_source.shape[:2]
+    # if no center location is provided, generate random center location
+    if center is None:
+        center = [random.randint(10, xsize_background - 10), random.randint(10, ysize_background - 10)]
 
-    # if source size is different, resize it
-    if sysize != ysize or sxsize != xsize:
-        img_source = cv2.resize(img_source, (xsize, ysize), interpolation=cv2.INTER_AREA)
+    # make sure blend type is correct
+    if blend_type != cv2.MIXED_CLONE or blend_type != cv2.NORMAL_CLONE:
+        blend_type = cv2.MIXED_CLONE
 
-    # get source image channels
-    if len(img_source) > 2:
-        source_channel = img_source.shape[2]
-    else:
-        source_channel = 0
+    # get center x and y
+    center_x, center_y = center
 
-    # get background image channels
-    if len(img_background) > 2:
-        background_channel = img_background.shape[2]
-    else:
-        background_channel = 0
+    # source size
+    ysize_source, xsize_source = img_source.shape[:2]
 
-    img_source = img_source.astype("int")
-    img_background = img_background.astype("int")
-    img_outcome = img_background.copy().astype("int")
+    # center point of source
+    ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
 
-    # for shifting
-    y_shifts = [0, 0, 1, -1]
-    x_shifts = [1, -1, 0, 0]
+    # to prevent having no overlap between source and background image
+    # check width max size
+    if center_x - xsize_half_source >= xsize_background:
+        # at least 10 pixel overlapping area
+        center_x = xsize_background + xsize_half_source - 10
+    # check width min size
+    elif center_x + xsize_half_source < 0:
+        # at least 10 pixel overlapping area
+        center_x = 10 - xsize_half_source
+    # check height max size
+    if center_y - ysize_half_source >= ysize_background:
+        # at least 10 pixel overlapping area
+        center_y = ysize_background + ysize_half_source - 10
+    # check height min size
+    elif center_y + ysize_half_source < 0:
+        # at least 10 pixel overlapping area
+        center_y = 10 - ysize_half_source
 
-    for y in range(1, ysize - 1, 1):
-        for x in range(1, xsize - 1, 1):
-            for x_shift, y_shift in zip(x_shifts, y_shifts):
+    # if source x exceed background width
+    if center_x + xsize_half_source > xsize_background:
 
-                # source
-                # multiple channels
-                if source_channel:
-                    for i in range(source_channel):
-                        source_difference = img_source[y, x, i] - img_source[y + y_shift, x + x_shift, i]
-                # single channel
-                else:
-                    source_difference = img_source[y, x] - img_source[y + y_shift, x + x_shift]
+        # get new patch image to not exceed background width
+        img_source = img_source[:, : -(center_x + xsize_half_source - xsize_background)]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [xsize_background - xsize_half_source, center[1]]
 
-                # background
-                # multiple channels
-                if background_channel:
-                    for i in range(background_channel):
-                        background_difference = img_background[y, x, i] - img_background[y + y_shift, x + x_shift, i]
-                # single channel
-                else:
-                    background_difference = img_background[y, x] - img_background[y + y_shift, x + x_shift]
+    # if source x < 0
+    if center_x - xsize_half_source < 0:
 
-                # output
-                # dominant source difference
-                if abs(source_difference) > abs(background_difference):
-                    if source_channel:
-                        for i in range(source_channel):
-                            img_outcome[y, x, i] += source_difference
-                    else:
-                        img_outcome[y, x] += source_difference
-                # dominant background difference
-                else:
-                    if source_channel:
-                        for i in range(source_channel):
-                            img_outcome[y, x, i] += background_difference
-                    else:
-                        img_outcome[y, x] += background_difference
+        # get new patch image to not exceed background width
+        img_source = img_source[:, abs(center_x - xsize_half_source) :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [xsize_half_source, center[1]]
 
-    img_outcome[img_outcome > 255] = 255
-    img_outcome[img_outcome < 0] = 0
-    img_outcome = img_outcome.astype("uint8")
+    # if source y exceed background height
+    if center_y + ysize_half_source > ysize_background:
 
-    return img_outcome
+        # get new patch image to not exceed background width
+        img_source = img_source[: -(center_y + ysize_half_source - ysize_background), :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
 
+        # update new center
+        center = [center[0], ysize_background - ysize_half_source]
 
-def mixed_blend_colour(img_source, img_background):
-    """Blend 2 images using precise mixed gradients blending approach"""
+    # if source y < 0
+    if center_y - ysize_half_source < 0:
 
-    # get background gray
-    if len(img_background.shape) > 2:
-        img_background_gray = cv2.cvtColor(img_background, cv2.COLOR_BGR2GRAY)
-    else:
-        img_background_gray = img_background
+        # get new patch image to not exceed background width
+        img_source = img_source[abs(center_y - ysize_half_source) :, :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [center[0], ysize_half_source]
 
-    # get source gray
-    if len(img_source.shape) > 2:
-        img_source_gray = cv2.cvtColor(img_source, cv2.COLOR_BGR2GRAY)
-    else:
-        img_source_gray = img_source
+    # mask to map source to background, should same with size of source
+    img_mask = np.ones((ysize_source, xsize_source), dtype="uint8") * 255
 
-    if np.sum(img_background_gray - img_source_gray) < 10:
-        return img_background
+    # arguments
+    # source image
+    # background image
+    # mask (same size with source)
+    # centroid of source image in background image
+    # blend types
+    img_blend = cv2.seamlessClone(img_source, img_background, img_mask, center, blend_type)
 
-    # scale to 0-1
-    img_source = (1 / 255) * img_source.astype("float")
-    img_background = (1 / 255) * img_background.astype("float")
-
-    # get all pixels location
-    y_loc, x_loc = np.where(img_background_gray >= 0)
-
-    # get background size
-    ysize, xsize = img_background.shape[:2]
-
-    # get source size
-    sysize, sxsize = img_source.shape[:2]
-
-    # number of variables to be solved
-    var = ysize * xsize
-
-    # matrix that maps each pixel to a variable number
-    im2var = np.zeros((ysize, xsize)).astype("int")
-    i = 0
-    for j in range(var):
-        im2var[y_loc[j], x_loc[j]] = i
-        i += 1
-
-    img_blend = img_background.copy()
-
-    # initialization
-    img_outcome = np.zeros_like(img_background).astype("float")
-    #    img_A = np.zeros((var, var))
-    img_A = lil_matrix((var, var))  # sparse version
-
-    # background
-    # top
-    img_background_top_shift = np.zeros_like(img_background).astype("float")
-    img_background_top_shift[1:, :] = img_background[1:, :] - img_background[:-1, :]
-    # bottom
-    img_background_bottom_shift = np.zeros_like(img_background).astype("float")
-    img_background_bottom_shift[:-1, :] = img_background[:-1, :] - img_background[1:, :]
-    # left
-    img_background_left_shift = np.zeros_like(img_background).astype("float")
-    img_background_left_shift[:, 1:] = img_background[:, 1:] - img_background[:, :-1]
-    # right
-    img_background_right_shift = np.zeros_like(img_background).astype("float")
-    img_background_right_shift[:, :-1] = img_background[:, :-1] - img_background[:, 1:]
-
-    # source
-    # top
-    img_source_top_shift = np.zeros_like(img_background).astype("float")
-    img_source_top_shift[1:, :] = img_source[1:, :] - img_source[:-1, :]
-    # bottom
-    img_source_bottom_shift = np.zeros_like(img_background).astype("float")
-    img_source_bottom_shift[:-1, :] = img_source[:-1, :] - img_source[1:, :]
-    # left
-    img_source_left_shift = np.zeros_like(img_background).astype("float")
-    img_source_left_shift[:, 1:] = img_source[:, 1:] - img_source[:, :-1]
-    # right
-    img_source_right_shift = np.zeros_like(img_background).astype("float")
-    img_source_right_shift[:, :-1] = img_source[:, :-1] - img_source[:, 1:]
-
-    # top
-    top_background_dominant = np.where(abs(img_background_top_shift) > abs(img_source_top_shift))
-    top_source_dominant = np.where(abs(img_source_top_shift) > abs(img_background_top_shift))
-    img_outcome_tem1 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem2 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem1[top_source_dominant[:2]] += img_source_top_shift[top_source_dominant[:2]]
-    img_outcome_tem2[top_background_dominant[:2]] += img_background_top_shift[top_background_dominant[:2]]
-    img_outcome_tem1_sum = np.sum(abs(img_outcome_tem1), 2)
-    img_outcome_tem2[img_outcome_tem1_sum != 0] = 0
-    img_outcome += img_outcome_tem1 + img_outcome_tem2
-
-    # bottom
-    bottom_background_dominant = np.where(abs(img_background_bottom_shift) > abs(img_source_bottom_shift))
-    bottom_source_dominant = np.where(abs(img_source_bottom_shift) > abs(img_background_bottom_shift))
-    img_outcome_tem1 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem2 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem1[bottom_source_dominant[:2]] += img_source_bottom_shift[bottom_source_dominant[:2]]
-    img_outcome_tem2[bottom_background_dominant[:2]] += img_background_bottom_shift[bottom_background_dominant[:2]]
-    img_outcome_tem1_sum = np.sum(abs(img_outcome_tem1), 2)
-    img_outcome_tem2[img_outcome_tem1_sum != 0] = 0
-    img_outcome += img_outcome_tem1 + img_outcome_tem2
-
-    # left
-    left_background_dominant = np.where(abs(img_background_left_shift) > abs(img_source_left_shift))
-    left_source_dominant = np.where(abs(img_source_left_shift) > abs(img_background_left_shift))
-    img_outcome_tem1 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem2 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem1[left_source_dominant[:2]] += img_source_left_shift[left_source_dominant[:2]]
-    img_outcome_tem2[left_background_dominant[:2]] += img_background_left_shift[left_background_dominant[:2]]
-    img_outcome_tem1_sum = np.sum(abs(img_outcome_tem1), 2)
-    img_outcome_tem2[img_outcome_tem1_sum != 0] = 0
-    img_outcome += img_outcome_tem1 + img_outcome_tem2
-
-    # right
-    right_background_dominant = np.where(abs(img_background_right_shift) > abs(img_source_right_shift))
-    right_source_dominant = np.where(abs(img_source_right_shift) > abs(img_background_right_shift))
-    img_outcome_tem1 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem2 = np.zeros_like(img_background).astype("float")
-    img_outcome_tem1[right_source_dominant[:2]] += img_source_right_shift[right_source_dominant[:2]]
-    img_outcome_tem2[right_background_dominant[:2]] += img_background_right_shift[right_background_dominant[:2]]
-    img_outcome_tem1_sum = np.sum(abs(img_outcome_tem1), 2)
-    img_outcome_tem2[img_outcome_tem1_sum != 0] = 0
-    img_outcome += img_outcome_tem1 + img_outcome_tem2
-
-    # convert to array
-    img_outcome_array = img_outcome.reshape(ysize * xsize, 3)
-
-    # get all coordinates
-    all_y = np.concatenate(
-        (
-            top_background_dominant[0],
-            top_source_dominant[0],
-            bottom_background_dominant[0],
-            bottom_source_dominant[0],
-            left_background_dominant[0],
-            left_source_dominant[0],
-            right_background_dominant[0],
-            right_source_dominant[0],
-        ),
-        axis=0,
-    )
-
-    all_x = np.concatenate(
-        (
-            top_background_dominant[1],
-            top_source_dominant[1],
-            bottom_background_dominant[1],
-            bottom_source_dominant[1],
-            left_background_dominant[1],
-            left_source_dominant[1],
-            right_background_dominant[1],
-            right_source_dominant[1],
-        ),
-        axis=0,
-    )
-
-    # all index
-    index_all = im2var[all_y, all_x]
-
-    # shifted index
-    # top
-    all_y_minus_1 = all_y - 1
-    all_x_y_minus_1 = all_x.copy()
-    all_y_top = all_y.copy()
-    all_x_top = all_x.copy()
-
-    # bottom
-    all_y_plus_1 = all_y + 1
-    all_x_y_plus_1 = all_x.copy()
-    all_y_bottom = all_y.copy()
-    all_x_bottom = all_x.copy()
-
-    # left
-    all_x_minus_1 = all_x - 1
-    all_y_x_minus_1 = all_y.copy()
-    all_y_left = all_y.copy()
-    all_x_left = all_x.copy()
-
-    # right
-    all_x_plus_1 = all_x + 1
-    all_y_x_plus_1 = all_y.copy()
-    all_y_right = all_y.copy()
-    all_x_right = all_x.copy()
-
-    # delete inappropriate index
-    # shift top
-    delete_y_minus_1 = np.where(all_y_minus_1 < 0)
-    all_y_minus_1 = np.delete(all_y_minus_1, delete_y_minus_1)
-    all_x_y_minus_1 = np.delete(all_x_y_minus_1, delete_y_minus_1)
-    all_y_top = np.delete(all_y_top, delete_y_minus_1)
-    all_x_top = np.delete(all_x_top, delete_y_minus_1)
-
-    # shift bottom
-    delete_y_plus_1 = np.where(all_y_plus_1 > ysize - 1)
-    all_y_plus_1 = np.delete(all_y_plus_1, delete_y_plus_1)
-    all_x_y_plus_1 = np.delete(all_x_y_plus_1, delete_y_plus_1)
-    all_y_bottom = np.delete(all_y_bottom, delete_y_plus_1)
-    all_x_bottom = np.delete(all_x_bottom, delete_y_plus_1)
-
-    # shift left
-    delete_x_minus_1 = np.where(all_x_minus_1 < 0)
-    all_x_minus_1 = np.delete(all_x_minus_1, delete_x_minus_1)
-    all_y_x_minus_1 = np.delete(all_y_x_minus_1, delete_x_minus_1)
-    all_x_left = np.delete(all_x_left, delete_x_minus_1)
-    all_y_left = np.delete(all_y_left, delete_x_minus_1)
-
-    # shift right
-    delete_x_plus_1 = np.where(all_x_plus_1 > xsize - 1)
-    all_x_plus_1 = np.delete(all_x_plus_1, delete_x_plus_1)
-    all_y_x_plus_1 = np.delete(all_y_x_plus_1, delete_x_plus_1)
-    all_x_right = np.delete(all_x_right, delete_x_plus_1)
-    all_y_right = np.delete(all_y_right, delete_x_plus_1)
-
-    # get index of shifted
-    # top
-    index_y_minus_1 = im2var[all_y_minus_1, all_x_y_minus_1]
-    index_x_for_y_minus_1 = im2var[all_y_top, all_x_top]
-    # bottom
-    index_y_plus_1 = im2var[all_y_plus_1, all_x_y_plus_1]
-    index_x_for_y_plus_1 = im2var[all_y_bottom, all_x_bottom]
-    # left
-    index_x_minus_1 = im2var[all_y_x_minus_1, all_x_minus_1]
-    index_y_for_x_minus_1 = im2var[all_y_left, all_x_left]
-    # right
-    index_x_plus_1 = im2var[all_y_x_plus_1, all_x_plus_1]
-    index_y_for_x_plus_1 = im2var[all_y_right, all_x_right]
-
-    # set value to -1 for shifted index
-    img_A[index_all, index_all] = 4
-    img_A[index_y_minus_1, index_x_for_y_minus_1] = -1
-    img_A[index_y_plus_1, index_x_for_y_plus_1] = -1
-    img_A[index_y_for_x_minus_1, index_x_minus_1] = -1
-    img_A[index_y_for_x_plus_1, index_x_plus_1] = -1
-
-    # reshape
-    b_size_y, b_size_x = img_outcome_array.shape
-    b1 = img_outcome_array[:, 0].reshape(b_size_y, 1)
-    b2 = img_outcome_array[:, 1].reshape(b_size_y, 1)
-    b3 = img_outcome_array[:, 2].reshape(b_size_y, 1)
-
-    # solve ax=b, where x = a^-1 dot b
-    inv_A = inv(csr_matrix(img_A))
-    vb = inv_A.dot(b1)
-    vg = inv_A.dot(b2)
-    vr = inv_A.dot(b3)
-
-    # scale min max
-    vr = (vr - min(vr)) / (max(vr) - min(vr))
-    vg = (vg - min(vg)) / (max(vg) - min(vg))
-    vb = (vb - min(vb)) / (max(vb) - min(vb))
-
-    # remove negative value
-    vr[vr < 0] = 0
-    vg[vg < 0] = 0
-    vb[vb < 0] = 0
-
-    # copy the values over to the target image to the area to be blended
-    e = 0
-    for i in range(var):
-        y = y_loc[i]
-        x = x_loc[i]
-
-        img_blend[y, x, 0] = vb[e]
-        img_blend[y, x, 1] = vg[e]
-        img_blend[y, x, 2] = vr[e]
-        e += 1
-
-    return (img_blend * 255).astype("uint8")
+    return img_blend
