@@ -3,10 +3,6 @@ import random
 
 import cv2
 import numpy as np
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import lil_matrix
-from scipy.sparse.linalg import inv
 from sklearn.datasets import make_blobs
 
 
@@ -326,10 +322,6 @@ def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE
     if center is None:
         center = [random.randint(10, xsize_background - 10), random.randint(10, ysize_background - 10)]
 
-    # make sure blend type is correct
-    if blend_type != cv2.MIXED_CLONE or blend_type != cv2.NORMAL_CLONE:
-        blend_type = cv2.MIXED_CLONE
-
     # get center x and y
     center_x, center_y = center
 
@@ -338,6 +330,31 @@ def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE
 
     # center point of source
     ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+
+    # if source size is > background size, crop only the fitting size
+    if center_y - ysize_half_source < 0 and center_y + ysize_half_source > ysize_background:
+        img_source = img_source[
+            -(center_y - ysize_half_source) : ysize_source - (center_y + ysize_half_source - ysize_background), :
+        ]
+        # new size after cropping
+        # source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # center point of source
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+
+    if center_x - xsize_half_source < 0 and center_x + xsize_half_source > xsize_background:
+        img_source = img_source[
+            :, -(center_x - xsize_half_source) : xsize_source - (center_x + xsize_half_source - xsize_background)
+        ]
+        # new size after cropping
+        # source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # center point of source
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+
+    # make sure blend type is correct
+    if blend_type != cv2.MIXED_CLONE or blend_type != cv2.NORMAL_CLONE:
+        blend_type = cv2.MIXED_CLONE
 
     # to prevent having no overlap between source and background image
     # check width max size
