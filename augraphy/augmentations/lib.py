@@ -334,7 +334,8 @@ def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE
     # if source size is > background size, crop only the fitting size
     if center_y - ysize_half_source < 0 and center_y + ysize_half_source > ysize_background:
         img_source = img_source[
-            -(center_y - ysize_half_source) : ysize_source - (center_y + ysize_half_source - ysize_background), :
+            -(center_y - ysize_half_source) : ysize_source - (center_y + ysize_half_source - ysize_background),
+            :,
         ]
         # new size after cropping
         # source size
@@ -344,7 +345,8 @@ def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE
 
     if center_x - xsize_half_source < 0 and center_x + xsize_half_source > xsize_background:
         img_source = img_source[
-            :, -(center_x - xsize_half_source) : xsize_source - (center_x + xsize_half_source - xsize_background)
+            :,
+            -(center_x - xsize_half_source) : xsize_source - (center_x + xsize_half_source - xsize_background),
         ]
         # new size after cropping
         # source size
