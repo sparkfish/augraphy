@@ -303,79 +303,137 @@ def make_white_transparent(img, ink_color=0):
     return img_bgra
 
 
-def mixed_blend(img_source, img_background):
-    """Blend 2 images using mixed gradients blend"""
+def cv_blend(img_source, img_background, center=None, blend_type=cv2.MIXED_CLONE):
+    """
+    :param img_source: Foreground image to apply blending.
+    :type img_source: numpy array
+    :param img_background: Background image to apply blending.
+    :type img_background: numpy array
+    :param center: Location (x,y) of foreground centroid in background image.
+    :type center: tuple
+    :param blend_type: Blend types, cv2.MIXED_CLONE or cv2.NORMAL_CLONE.
+    :type blend_type: CV2 types
+    """
 
-    # get background size
-    ysize, xsize = img_background.shape[:2]
+    # background size
+    ysize_background, xsize_background = img_background.shape[:2]
 
-    # get source size
-    sysize, sxsize = img_source.shape[:2]
+    # if no center location is provided, generate random center location
+    if center is None:
+        center = [random.randint(10, xsize_background - 10), random.randint(10, ysize_background - 10)]
 
-    # if source size is different, resize it
-    if sysize != ysize or sxsize != xsize:
-        img_source = cv2.resize(img_source, (xsize, ysize), interpolation=cv2.INTER_AREA)
+    # get center x and y
+    center_x, center_y = center
 
-    # get source image channels
-    if len(img_source) > 2:
-        source_channel = img_source.shape[2]
-    else:
-        source_channel = 0
+    # source size
+    ysize_source, xsize_source = img_source.shape[:2]
 
-    # get background image channels
-    if len(img_background) > 2:
-        background_channel = img_background.shape[2]
-    else:
-        background_channel = 0
+    # center point of source
+    ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
 
-    img_source = img_source.astype("int")
-    img_background = img_background.astype("int")
-    img_outcome = img_background.copy().astype("int")
+    # if source size is > background size, crop only the fitting size
+    if center_y - ysize_half_source < 0 and center_y + ysize_half_source > ysize_background:
+        img_source = img_source[
+            -(center_y - ysize_half_source) : ysize_source - (center_y + ysize_half_source - ysize_background),
+            :,
+        ]
+        # new size after cropping
+        # source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # center point of source
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
 
-    # for shifting
-    y_shifts = [0, 0, 1, -1]
-    x_shifts = [1, -1, 0, 0]
+    if center_x - xsize_half_source < 0 and center_x + xsize_half_source > xsize_background:
+        img_source = img_source[
+            :,
+            -(center_x - xsize_half_source) : xsize_source - (center_x + xsize_half_source - xsize_background),
+        ]
+        # new size after cropping
+        # source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # center point of source
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
 
-    for y in range(1, ysize - 1, 1):
-        for x in range(1, xsize - 1, 1):
-            for x_shift, y_shift in zip(x_shifts, y_shifts):
+    # make sure blend type is correct
+    if blend_type != cv2.MIXED_CLONE or blend_type != cv2.NORMAL_CLONE:
+        blend_type = cv2.MIXED_CLONE
 
-                # source
-                # multiple channels
-                if source_channel:
-                    for i in range(source_channel):
-                        source_difference = img_source[y, x, i] - img_source[y + y_shift, x + x_shift, i]
-                # single channel
-                else:
-                    source_difference = img_source[y, x] - img_source[y + y_shift, x + x_shift]
+    # to prevent having no overlap between source and background image
+    # check width max size
+    if center_x - xsize_half_source >= xsize_background:
+        # at least 10 pixel overlapping area
+        center_x = xsize_background + xsize_half_source - 10
+    # check width min size
+    elif center_x + xsize_half_source < 0:
+        # at least 10 pixel overlapping area
+        center_x = 10 - xsize_half_source
+    # check height max size
+    if center_y - ysize_half_source >= ysize_background:
+        # at least 10 pixel overlapping area
+        center_y = ysize_background + ysize_half_source - 10
+    # check height min size
+    elif center_y + ysize_half_source < 0:
+        # at least 10 pixel overlapping area
+        center_y = 10 - ysize_half_source
 
-                # background
-                # multiple channels
-                if background_channel:
-                    for i in range(background_channel):
-                        background_difference = img_background[y, x, i] - img_background[y + y_shift, x + x_shift, i]
-                # single channel
-                else:
-                    background_difference = img_background[y, x] - img_background[y + y_shift, x + x_shift]
+    # if source x exceed background width
+    if center_x + xsize_half_source > xsize_background:
 
-                # output
-                # dominant source difference
-                if abs(source_difference) > abs(background_difference):
-                    if source_channel:
-                        for i in range(source_channel):
-                            img_outcome[y, x, i] += source_difference
-                    else:
-                        img_outcome[y, x] += source_difference
-                # dominant background difference
-                else:
-                    if source_channel:
-                        for i in range(source_channel):
-                            img_outcome[y, x, i] += background_difference
-                    else:
-                        img_outcome[y, x] += background_difference
+        # get new patch image to not exceed background width
+        img_source = img_source[:, : -(center_x + xsize_half_source - xsize_background)]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [xsize_background - xsize_half_source, center[1]]
 
-    img_outcome[img_outcome > 255] = 255
-    img_outcome[img_outcome < 0] = 0
-    img_outcome = img_outcome.astype("uint8")
+    # if source x < 0
+    if center_x - xsize_half_source < 0:
 
-    return img_outcome
+        # get new patch image to not exceed background width
+        img_source = img_source[:, abs(center_x - xsize_half_source) :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [xsize_half_source, center[1]]
+
+    # if source y exceed background height
+    if center_y + ysize_half_source > ysize_background:
+
+        # get new patch image to not exceed background width
+        img_source = img_source[: -(center_y + ysize_half_source - ysize_background), :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+
+        # update new center
+        center = [center[0], ysize_background - ysize_half_source]
+
+    # if source y < 0
+    if center_y - ysize_half_source < 0:
+
+        # get new patch image to not exceed background width
+        img_source = img_source[abs(center_y - ysize_half_source) :, :]
+        # get new source size
+        ysize_source, xsize_source = img_source.shape[:2]
+        # half new source size
+        ysize_half_source, xsize_half_source = int(ysize_source / 2), int(xsize_source / 2)
+        # update new center
+        center = [center[0], ysize_half_source]
+
+    # mask to map source to background, should same with size of source
+    img_mask = np.ones((ysize_source, xsize_source), dtype="uint8") * 255
+
+    # arguments
+    # source image
+    # background image
+    # mask (same size with source)
+    # centroid of source image in background image
+    # blend types
+    img_blend = cv2.seamlessClone(img_source, img_background, img_mask, center, blend_type)
+
+    return img_blend
