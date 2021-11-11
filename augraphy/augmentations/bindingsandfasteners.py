@@ -12,6 +12,8 @@ from augraphy.utilities import *
 class BindingsAndFasteners(Augmentation):
     """Creates binding and fastener mark in the input image.
 
+    :param overlay_types: Types of overlay method, min, max or mix.
+    :type overlay_types: string
     :param foreground: Path to foreground image.
     :type foreground: string, optional
     :param effect_type: Types of binding effect, select from either
@@ -24,30 +26,32 @@ class BindingsAndFasteners(Augmentation):
     :param edge: Which edge of the page the foreground copies should be
         placed on.
     :type edge: string, optional
-    :param edgeOffset: How far from the edge of the page to draw the copies.
-    :type edgeOffset: int, optional
+    :param edge_offset: How far from the edge of the page to draw the copies.
+    :type edge_offset: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
+        overlay_types="mix",
         foreground=None,
         effect_type="punch_holes",
         ntimes=3,
         nscales=(1, 1),
         edge="left",
-        edgeOffset=50,
+        edge_offset=50,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.overlay_types = overlay_types
         self.foreground = foreground
         self.effect_type = effect_type
         self.ntimes = ntimes
         self.nscales = nscales
         self.edge = edge
-        self.edgeOffset = max(0, edgeOffset)  # prevent negative
+        self.edge_offset = max(0, edge_offset)  # prevent negative
 
         # check for valid effect types
         if self.effect_type not in ["punch_holes", "binding_holes", "clips"]:
@@ -56,7 +60,7 @@ class BindingsAndFasteners(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BindingsAndFasteners(foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edgeOffset={self.edgeOffset}, p={self.p})"
+        return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, p={self.p})"
 
     def create_foreground(self, image):
 
@@ -197,16 +201,40 @@ class BindingsAndFasteners(Augmentation):
             # if user input image
             if self.foreground and os.path.isfile(self.foreground):
                 self.foreground = cv2.imread(self.foreground)
-                ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
+                ob = OverlayBuilder(
+                    self.overlay_types,
+                    self.foreground,
+                    image,
+                    self.ntimes,
+                    self.nscales,
+                    self.edge,
+                    self.edge_offset,
+                )
             else:
                 # user didn't input foreground or not readable file, try to download from Figshare
                 try:
                     self.retrieve_foreground()
-                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
+                    ob = OverlayBuilder(
+                        self.overlay_types,
+                        self.foreground,
+                        image,
+                        self.ntimes,
+                        self.nscales,
+                        self.edge,
+                        self.edge_offset,
+                    )
                 # if failed to download from Figshare, create some simple effect
                 except Exception:
                     self.create_foreground(image)
-                    ob = OverlayBuilder(self.foreground, image, self.ntimes, self.nscales, self.edge, self.edgeOffset)
+                    ob = OverlayBuilder(
+                        self.overlay_types,
+                        self.foreground,
+                        image,
+                        self.ntimes,
+                        self.nscales,
+                        self.edge,
+                        self.edge_offset,
+                    )
 
             image_output = ob.buildOverlay()
 
