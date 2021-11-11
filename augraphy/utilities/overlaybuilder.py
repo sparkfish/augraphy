@@ -38,7 +38,7 @@ class OverlayBuilder:
         self.edge_offset = max(0, edge_offset)  # prevent negative
 
         # set valid overlay types
-        if overlay_types != "mix" and overlay_types != "min" and overlay_types != "min":
+        if overlay_types != "mix" and overlay_types != "min" and overlay_types != "max":
             self.overlay_types = "mix"
 
     def compute_offsets(self):
