@@ -22,6 +22,7 @@ class Letterpress(Augmentation):
     :type value_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
+
     """
 
     def __init__(
@@ -66,7 +67,7 @@ class Letterpress(Augmentation):
             # remove decimals
             generated_points = generated_points.astype("int")
 
-            # delete invalid points (smalelr or bigger than image size)
+            # delete invalid points (smaller or bigger than image size)
             ind_delete = np.where(generated_points[:, 0] < 0)
             generated_points = np.delete(generated_points, ind_delete, axis=0)
             ind_delete = np.where(generated_points[:, 1] < 0)
@@ -76,7 +77,7 @@ class Letterpress(Augmentation):
             ind_delete = np.where(generated_points[:, 1] > xsize - 1)
             generated_points = np.delete(generated_points, ind_delete, axis=0)
 
-            # initialize mask and insert
+            # initialize mask and insert value
             noise_mask = np.zeros_like(image, dtype="uint8")
             for i in range(generated_points.shape[0]):
                 noise_mask[generated_points[i][0], generated_points[i][1]] = random.randint(
@@ -93,47 +94,3 @@ class Letterpress(Augmentation):
             image = apply_mask(image, noise_mask)
 
             return image
-
-
-# usage example
-if __name__ == "__main__":
-
-    from matplotlib import pyplot as plt
-    from time import time
-
-    # create a blank image
-    image = np.full((1500, 1500), 255, dtype="uint8")
-
-    # insert text into image
-    for y in range(200, 1300, 200):
-        cv2.putText(
-            image,
-            "Lorem ipsum",
-            (250, y),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            5,
-            0,
-            40,
-        )
-
-    # create letterpress object
-    letterpress = Letterpress(
-        n_samples=(300, 400),
-        n_clusters=(1000, 1000),
-        std_range=(1000, 2000),
-        value_range=(230, 255),
-    )
-
-    start_time = time()
-
-    # apply letterpress
-    image_output = letterpress(image)
-
-    elapsed_time = time() - start_time
-
-    # processing time per image
-    print("Elapsed time = " + str(elapsed_time) + " seconds")
-
-    # display output
-    plt.figure()
-    plt.imshow(image_output, cmap="gray")
