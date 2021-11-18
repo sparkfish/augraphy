@@ -3,6 +3,7 @@ import random
 
 import cv2
 import numpy as np
+from PIL import Image
 
 
 class OverlayBuilder:
@@ -26,9 +27,21 @@ class OverlayBuilder:
     :type edge: string
     :param edge_offset: how far from the edge of the page to draw the copies
     :type edge_offset: integer
+    :param alpha: alpha value for alpha overlay type.
+    :type alpha: float
     """
 
-    def __init__(self, overlay_types, foreground, background, ntimes, nscales, edge, edge_offset):
+    def __init__(
+        self,
+        overlay_types,
+        foreground,
+        background,
+        ntimes=1,
+        nscales=(1, 1),
+        edge="center",
+        edge_offset=0,
+        alpha=0.3,
+    ):
         self.overlay_types = overlay_types
         self.foreground = foreground
         self.background = background
@@ -36,10 +49,15 @@ class OverlayBuilder:
         self.nscales = nscales
         self.edge = edge
         self.edge_offset = max(0, edge_offset)  # prevent negative
+        self.alpha = alpha
 
         # set valid overlay types
-        if overlay_types != "mix" and overlay_types != "min" and overlay_types != "max":
+        if overlay_types not in ["min", "max", "mix", "alpha"]:
             self.overlay_types = "mix"
+
+        # set valid edge type
+        if edge not in ["center", "random", "left", "right", "top", "bottom"]:
+            self.edge = "center"
 
     def compute_offsets(self):
         """Determine where to place the foreground image copies"""
@@ -206,22 +224,51 @@ class OverlayBuilder:
             # crop a section of background
             base = overlay_background[ystart:yend, xstart:xend]
             base_gray = overlay_background_gray[ystart:yend, xstart:xend]
+            base_y, base_x = base.shape[:2]
 
             # center of overlay
-            center = (xstart + int(fg_width / 2), ystart + int(fg_height / 2))
+            if bg_width > fg_width:
+                center_x = xstart + int(fg_width / 2)
+            else:
+                center_x = xstart + int(bg_width / 2)
+            if bg_height > fg_height:
+                center_y = ystart + int(fg_height / 2)
+            else:
+                center_y = ystart + int(bg_height / 2)
+            center = (center_x, center_y)
 
             # check for size mismatch issue
             new_foreground, center = self.check_size(self.foreground, overlay_background, center)
 
-            # convert foreground to gray
+            # new foreground height and width
+            fg_height, fg_width = new_foreground.shape[:2]
+
+            # check if new foreground size > width or height
+            half_width = int((xend - xstart) / 2)
+            half_height = int((yend - ystart) / 2)
+            foreground_half_width = int(fg_width / 2)
+            foreground_half_height = int(fg_height / 2)
+            if foreground_half_width > half_width:
+                half_difference = foreground_half_width - half_width
+                new_foreground = new_foreground[:, half_difference:-half_difference]
+            if foreground_half_height > half_height:
+                half_difference = foreground_half_height - half_height
+                new_foreground = new_foreground[half_difference:-half_difference, :]
+
+            # resize new_foreground to cropped background size
+            if self.overlay_types != "mix":
+                new_foreground = cv2.resize(new_foreground, (base_x, base_y), interpolation=cv2.INTER_AREA)
+
+            # get new size of foreground again
+            fg_height, fg_width = new_foreground.shape[:2]
+
+            # convert foreground to gray again
             if len(new_foreground.shape) > 2:
                 new_foreground_gray = cv2.cvtColor(new_foreground, cv2.COLOR_BGR2GRAY)
             else:
                 new_foreground_gray = new_foreground
 
-            # new foreground height and width
-            fg_height, fg_width = new_foreground_gray.shape
-
+            # min or max overlay types
             if self.overlay_types == "min" or self.overlay_types == "max":
                 # can be further vectorized here, need to think about it
                 for y in range(fg_height):
@@ -239,9 +286,17 @@ class OverlayBuilder:
                             else:
                                 base[y, x] = new_foreground[y, x]
 
+            # mix overlay type
             elif self.overlay_types == "mix":
 
                 img_mask = np.ones((fg_height, fg_width), dtype="uint8") * 255
+
+                # convert gray to bgr (seamlessClone need bgr format)
+                if len(new_foreground.shape) < 3:
+                    new_foreground = cv2.cvtColor(new_foreground, cv2.COLOR_GRAY2BGR)
+                if len(overlay_background.shape) < 3:
+                    overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_GRAY2BGR)
+
                 overlay_background = cv2.seamlessClone(
                     new_foreground,
                     overlay_background,
@@ -250,6 +305,25 @@ class OverlayBuilder:
                     cv2.MIXED_CLONE,
                 )
 
+                # convert from bgr back to gray
+                if len(new_foreground.shape) < 3:
+                    overlay_background = cv2.cvtColor(new_foreground, cv2.COLOR_BGR2GRAY)
+
+            # alpha overlay type
+            elif self.overlay_types == "alpha":
+
+                img_background_PIL = Image.fromarray(base)
+                img_foreground_PIL = Image.fromarray(new_foreground)
+                img_background_PIL = img_background_PIL.convert("RGBA")
+                img_foreground_PIL = img_foreground_PIL.convert("RGBA")
+                img_blended = Image.blend(img_background_PIL, img_foreground_PIL, alpha=self.alpha)
+                # colour image
+                if len(base.shape) > 2:
+                    overlay_background[ystart:yend, xstart:xend] = np.array(img_blended, dtype="uint8")[:, :, :3]
+                # gray image
+                else:
+                    overlay_background[ystart:yend, xstart:xend] = np.array(img_blended, dtype="uint8")[:, :, 0]
+
             # get original height and width from foreground
             fg_height, fg_width = self.foreground.shape[:2]
 
@@ -257,7 +331,7 @@ class OverlayBuilder:
                 # for next loop ystart and yend
                 ystart += fg_height + offset_height
                 yend = ystart + fg_height
-                if self.overlay_types == "min" or self.overlay_types == "max":
+                if self.overlay_types != "mix":
                     # break when next ystart is > image y size
                     if ystart >= bg_height - fg_height:
                         break
@@ -266,7 +340,7 @@ class OverlayBuilder:
                 # for next loop xstart and xend
                 xstart += fg_width + offset_width
                 xend = xstart + fg_width
-                if self.overlay_types == "min" or self.overlay_types == "max":
+                if self.overlay_types != "mix":
                     # break when next xstart is > image x size
                     if xstart >= bg_width - fg_width:
                         break
@@ -281,8 +355,11 @@ class OverlayBuilder:
         # sensitivity up to 0.01 (for scale down)
         min_value = max(1, self.nscales[0] * 100)
         max_value = max(1, self.nscales[1] * 100)
-        new_fg_height = int((self.foreground.shape[0] * random.randint(min_value, max_value)) / 100)
-        new_fg_width = int((self.foreground.shape[1] * random.randint(min_value, max_value)) / 100)
+        random_height_scale = random.randint(min_value, max_value)
+        random_width_scale = random.randint(min_value, max_value)
+
+        new_fg_height = int((self.foreground.shape[0] * random_height_scale) / 100)
+        new_fg_width = int((self.foreground.shape[1] * random_width_scale) / 100)
         self.foreground = cv2.resize(
             self.foreground,
             (int(new_fg_width), int(new_fg_height)),
@@ -330,10 +407,18 @@ class OverlayBuilder:
             xend = xstart + fg_width
 
         elif self.edge == "center":
-            ystart = int(bg_height / 2) - int(fg_height / 2)
-            yend = ystart + fg_height
-            xstart = int(bg_width / 2) - int(fg_width / 2)
-            xend = xstart + fg_width
+            if bg_height > fg_height:
+                ystart = int(bg_height / 2) - int(fg_height / 2)
+                yend = ystart + fg_height
+            else:
+                ystart = 0
+                yend = bg_height
+            if bg_width > fg_width:
+                xstart = int(bg_width / 2) - int(fg_width / 2)
+                xend = xstart + fg_width
+            else:
+                xstart = 0
+                xend = bg_width
 
         # apply overlay
         overlay_background = self.apply_overlay(
@@ -368,18 +453,19 @@ if __name__ == "__main__":
     img_foreground = cv2.imread(foreground_path)
 
     # create background (black stripes image)
-    img_background = np.ones((1000, 1000, 3), dtype="uint8") * 255
-    img_background[4::4, :] = 0
+    img_background = np.ones((1000, 1000, 3), dtype="uint8") * 200
 
     # create overlay object
-    ob_mix = OverlayBuilder("mix", img_foreground, img_background.copy(), 4, (3, 5), "random", 0)
+    ob_mix = OverlayBuilder("mix", img_foreground, img_background.copy(), 40, (3, 5), "random", 10)
     ob_min = OverlayBuilder("min", img_foreground, img_background.copy(), 4, (3, 5), "center", 0)
     ob_max = OverlayBuilder("max", img_foreground, img_background.copy(), 4, (3, 5), "left", 10)
+    ob_alpha = OverlayBuilder("alpha", img_foreground, img_background.copy(), 40, (3, 5), "random", 0)
 
     # performs overlay
     image_output_mix = ob_mix.build_overlay()
     image_output_min = ob_min.build_overlay()
     image_output_max = ob_max.build_overlay()
+    image_output_alpha = ob_alpha.build_overlay()
 
     # plot examples
     plt.figure()
@@ -393,3 +479,7 @@ if __name__ == "__main__":
     plt.figure()
     plt.imshow(cv2.cvtColor(image_output_max, cv2.COLOR_BGR2RGB))
     plt.title("Max blend and blend at left side")
+
+    plt.figure()
+    plt.imshow(cv2.cvtColor(image_output_alpha, cv2.COLOR_BGR2RGB))
+    plt.title("Alpha blend and random location")

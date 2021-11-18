@@ -2,80 +2,95 @@ import random
 
 import cv2
 import numpy as np
+from sklearn.datasets import make_blobs
 
-from augraphy.augmentations.lib import add_noise
-from augraphy.augmentations.lib import apply_blob
 from augraphy.base.augmentation import Augmentation
 
 
 class Letterpress(Augmentation):
     """Produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
-    :param count_range: Pair of ints determining the range from which the number
-           of blobs to generate is sampled.
-    :type count_range: tuple, optional
-    :param size_range: Pair of ints determining the range from which the
-           diameter of a blob is sampled.
-    :type size_range: tuple, optional
-    :param points_range: Pair of ints determining the range from which the
-           number of points in a blob is sampled.
-    :type points_range: tuple, optional
+    :param n_samples: Pair of ints determining number of points in a cluster.
+    :type n_samples: tuple, optional
+    :param n_clusters: Pair of ints determining number of clusters.
+    :type n_clusters: tuple, optional
     :param std_range: Pair of ints determining the range from which the
            standard deviation of the blob distribution is sampled.
     :type std_range: tuple, optional
-    :param features_range: Pair of ints determining the range from which the
-           number of features in the blob is sampled.
-    :type features_range: tuple, optional
     :param value_range: Pair of ints determining the range from which the
            value of a point in the blob is sampled.
     :type value_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
+
     """
 
     def __init__(
         self,
-        count_range=(1000, 2500),
-        size_range=(60, 80),
-        points_range=(200, 250),
-        std_range=(10, 75),
-        features_range=(15, 25),
-        value_range=(200, 250),
+        n_samples=(100, 200),
+        n_clusters=(500, 1000),
+        std_range=(500, 500),
+        value_range=(200, 255),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.count_range = count_range
-        self.size_range = size_range
-        self.points_range = points_range
+        self.n_samples = n_samples
+        self.n_clusters = n_clusters
         self.std_range = std_range
-        self.features_range = features_range
         self.value_range = value_range
 
     def __repr__(self):
-        return f"Letterpress(count_range={self.count_range}, size_range={self.size_range}, points_range={self.points_range}, std_range={self.std_range}, features_range={self.features_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress(n_samples={self.n_samples}, n_cluster={self.size_range}, std_range={self.std_range}, value_range={self.value_range}, p={self.p})"
 
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            count = random.randint(self.count_range[0], self.count_range[1])
-            noise_mask = np.copy(image)
+            ysize, xsize = image.shape[:2]
+            max_box_size = max(ysize, xsize)
 
-            for i in range(count):
-                noise_mask = apply_blob(
-                    noise_mask,
-                    self.size_range,
-                    self.points_range,
-                    self.std_range,
-                    self.features_range,
-                    self.value_range,
+            noise_mask = np.copy(image)
+            n_samples = [
+                random.randint(self.n_samples[0], self.n_samples[1])
+                for _ in range(random.randint(self.n_clusters[0], self.n_clusters[1]))
+            ]
+            std = random.randint(self.std_range[0], self.std_range[1]) / 100
+
+            # generate clusters of blobs
+            generated_points, point_group = make_blobs(
+                n_samples=n_samples,
+                center_box=(0, max_box_size),
+                cluster_std=std,
+                n_features=2,
+            )
+
+            # remove decimals
+            generated_points = generated_points.astype("int")
+
+            # delete invalid points (smaller or bigger than image size)
+            ind_delete = np.where(generated_points[:, 0] < 0)
+            generated_points = np.delete(generated_points, ind_delete, axis=0)
+            ind_delete = np.where(generated_points[:, 1] < 0)
+            generated_points = np.delete(generated_points, ind_delete, axis=0)
+            ind_delete = np.where(generated_points[:, 0] > ysize - 1)
+            generated_points = np.delete(generated_points, ind_delete, axis=0)
+            ind_delete = np.where(generated_points[:, 1] > xsize - 1)
+            generated_points = np.delete(generated_points, ind_delete, axis=0)
+
+            # initialize mask and insert value
+            noise_mask = np.zeros_like(image, dtype="uint8")
+            for i in range(generated_points.shape[0]):
+                noise_mask[generated_points[i][0], generated_points[i][1]] = random.randint(
+                    self.value_range[0],
+                    self.value_range[1],
                 )
 
+            # gaussian blur need uint8 input
+            noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+
+            # apply noise to image
             apply_mask_fn = lambda x, y: y if (x < 128) else x
             apply_mask = np.vectorize(apply_mask_fn)
-            # gaussian blur need uint8 input
-            noise_mask = add_noise(noise_mask).astype("uint8")
-            noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
             image = apply_mask(image, noise_mask)
 
             return image
