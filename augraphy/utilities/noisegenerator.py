@@ -5,8 +5,7 @@ from sklearn.datasets import make_blobs
 
 
 class NoiseGenerator:
-    """ Core object to generate mask of noise.
-    """
+    """Core object to generate mask of noise."""
 
     def __init__(self, noise_type=1):
         self.noise_type = noise_type
