@@ -2,21 +2,6 @@
 
 The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
-**Example Usage:**
-
-```python
-augmentation = BadPhotocopy(
-	noise_type=0,
-	intensity=(30,60),
-	nperiod = (4,4),
-	octaves = 4,
-	persistence = 0.5,
-	lacunarity = 2,
-	wave_pattern=1,
-	p=0.5
-	)
-```
-
 | Parameter       | Description                                                      |
 |-----------------|------------------------------------------------------------------|
 | `noise_type`    | Types of noises to generate different mask patterns.             |
@@ -29,3 +14,59 @@ augmentation = BadPhotocopy(
 | `p`             | The probability this augmentation will be applied.               |
 
 Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_n7atcI-xVSpnV17YuzZhd9ISe735fBo?usp=sharing)
+
+**Example Usage:**
+```python
+    from matplotlib import pyplot as plt
+    from time import time
+
+    start_time = time()
+
+    # create a blank image
+    image = np.full((1500, 1500,3), 255, dtype="uint8")
+
+    # insert text into image
+    for y in range(200, 1300, 100):
+        cv2.putText(
+            image,
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+            (250, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            0,
+            3,
+        )
+
+
+    BadPhotoCopy_type_1 = BadPhotoCopy(noise_type=1, noise_sparsity=(0.7,0.7), noise_concentration=(0.5,0.5))
+    BadPhotoCopy_type_2 = BadPhotoCopy(noise_type=2, noise_sparsity=(0.5,0.5), noise_concentration=(0.5,0.5))
+    BadPhotoCopy_type_3 = BadPhotoCopy(noise_type=3, noise_sparsity=(0.5,0.5), noise_concentration=(0.5,0.5))
+    BadPhotoCopy_type_4 = BadPhotoCopy(noise_type=4, noise_sparsity=(0.5,0.5), noise_concentration=(0.99,0.99))
+    BadPhotoCopy_type_5 = BadPhotoCopy(noise_type=5, noise_sparsity=(0.2,0.9), noise_concentration=(0.6,0.9), wave_pattern=1)
+    BadPhotoCopy_type_6 = BadPhotoCopy(noise_type=6, noise_sparsity=(0.6,0.99), noise_concentration=(0.6,0.9), wave_pattern=1)
+    BadPhotoCopy_type_7 = BadPhotoCopy(noise_type=7, noise_sparsity=(0.2,0.9), noise_concentration=(0.6,0.9), wave_pattern=1)
+    BadPhotoCopy_type_8 = BadPhotoCopy(noise_type=8, noise_sparsity=(0.6,0.99), noise_concentration=(0.6,0.9), wave_pattern=1)
+
+
+    img_BadPhotoCopy_type_1 = BadPhotoCopy_type_1(image)
+    img_BadPhotoCopy_type_2 = BadPhotoCopy_type_2(image)
+    img_BadPhotoCopy_type_3 = BadPhotoCopy_type_3(image)
+    img_BadPhotoCopy_type_4 = BadPhotoCopy_type_4(image)
+    img_BadPhotoCopy_type_5 = BadPhotoCopy_type_5(image)
+    img_BadPhotoCopy_type_6 = BadPhotoCopy_type_6(image)
+    img_BadPhotoCopy_type_7 = BadPhotoCopy_type_7(image)
+    img_BadPhotoCopy_type_8 = BadPhotoCopy_type_8(image)
+
+
+    elapsed_time = time() - start_time
+    # processing time
+    print("Elapsed time = " + str(elapsed_time) + " seconds")
+
+
+    # display output
+    for i in range(8):
+        plt.figure()
+        eval("plt.imshow(img_BadPhotoCopy_type_" + str(i + 1) + ", cmap='gray')")
+        plt.title("BadPhotoCopy type " + str(i + 1))
+
+```
