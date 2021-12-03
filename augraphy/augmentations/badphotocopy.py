@@ -6,6 +6,7 @@ import numpy as np
 from augraphy.augmentations.lib import smooth
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
+from augraphy.utilities.noisegenerator import NoiseGenerator
 
 
 class BadPhotoCopy(Augmentation):
@@ -13,17 +14,12 @@ class BadPhotoCopy(Augmentation):
 
     :param noise_type: Types of noises to generate different mask patterns.
     :type noise_type: int, optional
-    :param intensity: Intensity range of noise, lower value get darker effect.
-    :type intensity: tuple, optional
-    :param nperiod: The number of periods of noise to generate along each
-                axis.
-    :type nperiod: tuple, optional
-    :param octaves: The number of octaves in the noise.
-    :type octaves: int, optional
-    :param persistence:The scaling factor between two octaves.
-    :type persistence: int, optional
-    :param lacunarity: The frequency factor between two octaves.
-    :type lacunarity: int, optional
+    :param noise_value: Intensity range of noise, lower value get darker effect.
+    :type noise_value: tuple, optional
+    :param noise_sparsity: Pair of floats determining sparseness of noise.
+    :type noise_sparsity: tuple, optional
+    :param noise_concentration: Pair of floats determining concentration of noise.
+    :type noise_concentration: tuple, optional
     :param wave_pattern: To enable wave pattern in noise.
     :type wave_pattern: int, optional
     :param p: The probability this Augmentation will be applied.
@@ -33,43 +29,39 @@ class BadPhotoCopy(Augmentation):
     def __init__(
         self,
         noise_type=0,
-        intensity=(30, 60),
-        nperiod=(random.randint(1, 4), random.randint(1, 4)),
-        octaves=1,
-        persistence=0.5,
-        lacunarity=2,
+        noise_value=(30, 60),
+        noise_sparsity=(0.4, 0.6),
+        noise_concentration=(0.4, 0.6),
         wave_pattern=0,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.noise_type = noise_type
-        self.intensity = intensity
-        self.nperiod = nperiod
-        self.octaves = octaves
-        self.persistence = persistence
-        self.lacunarity = lacunarity
+        self.noise_value = noise_value
+        self.noise_sparsity = noise_sparsity
+        self.noise_concentration = noise_concentration
         self.wave_pattern = wave_pattern
 
-        # clamp betweem 0 - 255
-        self.intensity = list(self.intensity)
-        self.intensity[0] = max(0, min(self.intensity[0], 255))
-        self.intensity[1] = max(0, min(self.intensity[1], 255))
+        # clamp values
+        # noise value range from 0-255
+        self.noise_value = list(self.noise_value)
+        self.noise_value[0] = np.clip(self.noise_value[0], 0, 255)
+        self.noise_value[1] = np.clip(self.noise_value[1], 0, 255)
 
-        if self.noise_type == 1:
-            self.nperiod = (1, 1)
-        elif self.noise_type == 2:
-            self.nperiod = nperiod = (random.randint(2, 100), random.randint(2, 100))
-        elif noise_type == 3:
-            self.nperiod = (random.randint(250, 350), random.randint(250, 350))
-            self.intensity = (100, 150)
-        elif noise_type == 4:
-            self.nperiod = (301, 301)
-            self.intensity = (200, 250)
+        # sparsity range from 0-1
+        self.noise_sparsity = list(self.noise_sparsity)
+        self.noise_sparsity[0] = np.clip(self.noise_sparsity[0], 0, 1)
+        self.noise_sparsity[1] = np.clip(self.noise_sparsity[1], 0, 1)
+
+        # concentration range from 0-1
+        self.noise_concentration = list(self.noise_concentration)
+        self.noise_concentration[0] = np.clip(self.noise_concentration[0], 0, 1)
+        self.noise_concentration[1] = np.clip(self.noise_concentration[1], 0, 1)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(noise_type={self.noise_type}, intensity={self.intensity}, nperiod={self.nperiod}, octaves={self.octaves}, persistence={self.persistence}, lacunarity={self.lacunarity}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(noise_type={self.noise_type}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def apply_wave(self, mask):
         """
@@ -121,130 +113,35 @@ class BadPhotoCopy(Augmentation):
                     if random.random() > 0.95:
                         break
 
-        # get noise intensity of each side
-        top = np.sum(mask_rescaled[:10, :mask_xsize]) / (10 * mask_xsize * 255)
-        right = np.sum(mask_rescaled[:mask_ysize, mask_xsize - 10 : mask_xsize]) / (10 * mask_ysize * 255)
-        bottom = np.sum(mask_rescaled[mask_ysize - 10 : mask_ysize, :mask_xsize]) / (10 * mask_xsize * 255)
-        left = np.sum(mask_rescaled[:mask_ysize, :10]) / (10 * mask_ysize * 255)
-
-        # get side with highest noise intensity (lower value due to darkest area)
-        min_noise = min([top, right, bottom, left])
-
         # top (noise concentrated at top edge)
-        if top == min_noise:
+        if self.noise_type == 7:
             mask = img_wave * mask
-        # top (noise concentrated at right edge)
-        elif right == min_noise:
+        # right (noise concentrated at right edge)
+        elif self.noise_type == 6:
             img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
             mask = img_wave * mask
         # bottom (noise concentrated at bottom edge)
-        elif bottom == min_noise:
+        elif self.noise_type == 8:
             img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # left (noise concentrated at left edge)
-        elif left == min_noise:
+        elif self.noise_type == 5:
             img_wave = np.rot90(img_wave, 1)
+            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            mask = img_wave * mask
+        else:
+            img_wave = np.rot90(img_wave, random.randint(0, 3))
             img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
             mask = img_wave * mask
 
         # reset 0 area to white (white is background)
         mask[img_wave == 0] = 255
 
-        # blue  the mask
+        # blur  the mask
         mask = cv2.GaussianBlur(mask, (5, 5), cv2.BORDER_DEFAULT)
 
         return mask
-
-    def interpolant(self, t):
-        """
-        Function to perform interpolation
-        """
-        return 6 * (t ** 5) - 15 * (t ** 4) + 10 * (t ** 3)
-
-    def perlin_noise_2d(
-        self,
-        input_size,
-        nperiod,
-        interpolant,
-    ):
-        """
-        Generate a 2D numpy array of perlin noise.
-        """
-
-        # prevent size mismatch issue
-        new_size = list(input_size).copy()
-        new_size[0] -= input_size[0] % nperiod[0]
-        new_size[1] -= input_size[1] % nperiod[1]
-
-        # prevent size <0
-        if new_size[0] <= 0 or new_size[1] <= 0:
-            return np.zeros((input_size))
-
-        delta = (nperiod[0] / new_size[0], nperiod[1] / new_size[1])
-        d = (new_size[0] // nperiod[0], new_size[1] // nperiod[1])
-        grid = np.mgrid[0 : nperiod[0] : delta[0], 0 : nperiod[1] : delta[1]].transpose(1, 2, 0) % 1
-
-        # Gradients
-        if self.noise_type == 1:
-            rperiod = np.zeros((nperiod[0] + 1, nperiod[1] + 1))
-            rperiod[1, :] = np.random.rand(1, nperiod[1] + 1)
-        elif self.noise_type == 2:
-            rperiod = np.zeros((nperiod[0] + 1, nperiod[1] + 1))
-            rperiod[1, :] = 1
-        else:
-            rperiod = np.random.rand(nperiod[0] + 1, nperiod[1] + 1)
-        angles = 2 * np.pi * rperiod
-        gradients = np.dstack((np.cos(angles), np.sin(angles)))
-        gradients = gradients.repeat(d[0], 0).repeat(d[1], 1)
-        g00 = gradients[: -d[0], : -d[1]]
-        g10 = gradients[d[0] :, : -d[1]]
-        g01 = gradients[: -d[0], d[1] :]
-        g11 = gradients[d[0] :, d[1] :]
-
-        # resolve size inconsistentcy isssue
-        g_ysize, g_xsize = g00.shape[:2]
-        grid_new = np.zeros((g_ysize, g_xsize, grid.shape[2]))
-        for i in range(grid.shape[2]):
-            grid_new[:, :, i] = cv2.resize(grid[:, :, i], (g_xsize, g_ysize), interpolation=cv2.INTER_AREA)
-
-        # Ramps
-        n00 = np.sum(np.dstack((grid_new[:, :, 0], grid_new[:, :, 1])) * g00, 2)
-        n10 = np.sum(np.dstack((grid_new[:, :, 0] - 1, grid_new[:, :, 1])) * g10, 2)
-        n01 = np.sum(np.dstack((grid_new[:, :, 0], grid_new[:, :, 1] - 1)) * g01, 2)
-        n11 = np.sum(np.dstack((grid_new[:, :, 0] - 1, grid_new[:, :, 1] - 1)) * g11, 2)
-
-        # Interpolation
-        t = interpolant(grid_new)
-        n0 = n00 * (1 - t[:, :, 0]) + t[:, :, 0] * n10
-        n1 = n01 * (1 - t[:, :, 0]) + t[:, :, 0] * n11
-        out = np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1)
-
-        return cv2.resize(out, (input_size[1], input_size[0]), interpolation=cv2.INTER_AREA)
-
-    def generate_perlin_noise(
-        self,
-        input_size,
-        nperiod,
-        interpolant,
-        octaves=1,
-        persistence=0.5,
-        lacunarity=2,
-    ):
-        """
-        Main function to generate noise
-        """
-
-        noise = np.zeros(input_size)
-        frequency = 1
-        amplitude = 1
-        for _ in range(octaves):
-            nperiods = (int(frequency * nperiod[0]), int(frequency * nperiod[1]))
-            out = self.perlin_noise_2d(input_size, nperiods, interpolant)
-            noise += amplitude * out
-            frequency *= lacunarity
-            amplitude *= persistence
-        return noise
 
     def apply_augmentation(self, image):
 
@@ -269,58 +166,28 @@ class BadPhotoCopy(Augmentation):
         image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
         image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
 
-        # create mask of noises
-        shape = (ysize, xsize)
-
         # get mask of noise and resize it to image size
-        mask = self.generate_perlin_noise(
-            shape,
-            nperiod=self.nperiod,
-            interpolant=self.interpolant,
-            octaves=self.octaves,
-            persistence=self.persistence,
-            lacunarity=self.lacunarity,
+        noise_generator = NoiseGenerator(noise_type=self.noise_type)
+        mask = noise_generator.generate_noise(
+            noise_value=self.noise_value,
+            noise_sparsity=self.noise_sparsity,
+            noise_concentration=self.noise_concentration,
         )
 
-        # adjust mask location for noise type = 1
-        if self.noise_type == 1:
-            mask_ysize, mask_xsize = mask.shape[:2]
-            mask = mask[int(mask_ysize / 4) : int(mask_ysize / 4) * 3, :]
-
         # randomly rotate mask
-        mask = np.rot90(mask, random.randint(0, 3))
+        if self.noise_type != 5 and self.noise_type != 6 and self.noise_type != 7 and self.noise_type != 8:
+            mask = np.rot90(mask, random.randint(0, 3))
 
         # new size after rotation
         mask_ysize, mask_xsize = mask.shape[:2]
 
         # rescale to 0 -255
         mask = ((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255
-        if self.intensity[0] > self.intensity[1]:
-            self.intensity[0] = self.intensity[1]
+        if self.noise_value[0] > self.noise_value[1]:
+            self.noise_value[0] = self.noise_value[1]
 
         # creates random small dot of noises
-        if self.noise_type == 4:
-            for _ in range(random.randint(10, 30)):
-                region_size_x = random.randint(2, 6)
-                region_size_y = random.randint(2, 6)
-                offset = 12
-                half_offset = int(offset / 2)
-                # y start and y end
-                ys = random.randint(0 + offset, mask_ysize - region_size_y - 1 - offset)
-                ye = ys + region_size_y
-                # x start and x end
-                xs = random.randint(0 + offset, mask_xsize - region_size_x - 1 - offset)
-                xe = xs + region_size_x
-                mask[ys:ye, xs:xe] = (mask[ys:ye, xs:xe] / 10) - random.randint(self.intensity[0], self.intensity[1])
-                larger_region = mask[ys - half_offset : ye + half_offset, xs - half_offset : xe + half_offset]
-                larger_region = cv2.GaussianBlur(larger_region, (21, 21), cv2.BORDER_DEFAULT)
-            mask = mask.astype("int") + random.randint(self.intensity[0], self.intensity[1])
-            mask[mask < 0] = 0
-            mask += random.randint(30, 120)
-            mask[mask > 255] = 255
-            mask = mask.astype("uint8")
-        else:
-            mask += random.randint(self.intensity[0], self.intensity[1])
+        mask += random.randint(self.noise_value[0], self.noise_value[1])
         mask[mask > 255] = 255
         mask = cv2.resize(mask, (image.shape[1], image.shape[0])).astype("uint8")
 
@@ -346,12 +213,13 @@ class BadPhotoCopy(Augmentation):
         result = cv2.multiply(noise_img, image, scale=1 / 255)
 
         # merge sobel mask and noise mask to image
+        image_original = image.copy()
         image_copy = image.copy()
         result_new = result.astype("int") + image_sobel.astype("int")
-        image[image > result_new] = 0
+        image_original[image_original > result_new] = 0
         result_new[result_new > 255] = 0
         result_new[result_new > image_copy] = 0
-        result = image + result_new
+        result = image_original + result_new
 
         return result.astype("uint8")
 
