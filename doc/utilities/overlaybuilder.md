@@ -4,7 +4,7 @@ The OverlayBuilder class creates an image mask containing other images, like hol
 
 | Parameter       | Description                                                      |
 |-----------------|------------------------------------------------------------------|
-| `overlay_types` | Types of overlay method, min, max, mix or alpha.                 |
+| `overlay_types` | Types of overlay method。                                         |
 | `foreground`    | The image to overlay on the background document.                 |
 | `background`    | The document.                                                    |
 | `ntimes`        | Number copies of the foreground image to draw.                   |
@@ -38,13 +38,13 @@ The OverlayBuilder class creates an image mask containing other images, like hol
     ob_mix = OverlayBuilder("mix", img_foreground, img_background.copy(), 40, (3, 5), "random", 10)
     ob_min = OverlayBuilder("min", img_foreground, img_background.copy(), 4, (3, 5), "center", 0)
     ob_max = OverlayBuilder("max", img_foreground, img_background.copy(), 4, (3, 5), "left", 10)
-    ob_alpha = OverlayBuilder("alpha", img_foreground, img_background.copy(), 40, (3, 5), "random", 0)
+    ob_normal = OverlayBuilder("normal", img_foreground, img_background.copy(), 40, (3, 5), "random", 0)
 
     # performs overlay
     image_output_mix = ob_mix.build_overlay()
     image_output_min = ob_min.build_overlay()
     image_output_max = ob_max.build_overlay()
-    image_output_alpha = ob_alpha.build_overlay()
+    image_output_normal = ob_normal.build_overlay()
 
     # plot examples
     plt.figure()
@@ -60,7 +60,7 @@ The OverlayBuilder class creates an image mask containing other images, like hol
     plt.title("Max blend and blend at left side")
 
     plt.figure()
-    plt.imshow(cv2.cvtColor(image_output_alpha, cv2.COLOR_BGR2RGB))
-    plt.title("Alpha blend and random location")
+    plt.imshow(cv2.cvtColor(image_output_normal, cv2.COLOR_BGR2RGB))
+    plt.title("Normal blend and random location")
 
 ```
