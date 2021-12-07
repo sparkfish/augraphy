@@ -3,7 +3,6 @@ import random
 
 import cv2
 import numpy as np
-from PIL import Image
 
 
 class OverlayBuilder:
@@ -54,6 +53,28 @@ class OverlayBuilder:
         # set valid edge type
         if edge not in ["center", "random", "left", "right", "top", "bottom"]:
             self.edge = "center"
+
+        # set valid overlay types
+        if overlay_types not in [
+            "min",
+            "max",
+            "mix",
+            "normal",
+            "lighten",
+            "darken",
+            "addition",
+            "subtract",
+            "difference",
+            "screen",
+            "dodge",
+            "multiply",
+            "divide",
+            "hard_light",
+            "grain_extract",
+            "grain_merge",
+            "overlay",
+        ]:
+            self.overlay_types = "mix"
 
     def compute_offsets(self):
         """Determine where to place the foreground image copies"""
@@ -260,8 +281,8 @@ class OverlayBuilder:
         # add patch of blended image back to background
         overlay_background[ystart:yend, xstart:xend] = img_blended_norm
 
-    def lighten_blend(self, overlay_background, base, new_foreground, xstart, xend, ystart, yend):
-        """Apply blending using input alpha value - lighten only method"""
+    def various_blend(self, overlay_background, base, new_foreground, xstart, xend, ystart, yend):
+        """Apply blending using input alpha value - multiple methods"""
 
         # convert to float (0-1)
         base_norm = base / 255.0
@@ -283,125 +304,69 @@ class OverlayBuilder:
         ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha)
 
         # compute alpha value
-        comp_value = np.maximum(base_norm[:, :, :3], foreground_norm[:, :, :3])
+        if self.overlay_types == "lighten":
+            comp_value = np.maximum(base_norm[:, :, :3], foreground_norm[:, :, :3])
+
+        elif self.overlay_types == "darken":
+            comp_value = np.minimum(base_norm[:, :, :3], foreground_norm[:, :, :3])
+
+        elif self.overlay_types == "addition":
+            comp_value = base_norm[:, :, :3] + foreground_norm[:, :, :3]
+
+        elif self.overlay_types == "subtract":
+            comp_value = base_norm[:, :, :3] - foreground_norm[:, :, :3]
+
+        elif self.overlay_types == "difference":
+            comp_value = abs(base_norm[:, :, :3] - foreground_norm[:, :, :3])
+
+        elif self.overlay_types == "screen":
+            comp_value = 1.0 - (1.0 - base_norm[:, :, :3]) * (1.0 - foreground_norm[:, :, :3])
+
+        elif self.overlay_types == "dodge":
+            comp_value = np.minimum(base_norm[:, :, :3] / (1.0 - foreground_norm[:, :, :3]), 1.0)
+
+        elif self.overlay_types == "multiply":
+            comp_value = np.clip(base_norm[:, :, :3] * foreground_norm[:, :, :3], 0.0, 1.0)
+
+        elif self.overlay_types == "divide":
+            comp_value = np.minimum(
+                (256.0 / 255.0 * base_norm[:, :, :3]) / (1.0 / 255.0 + foreground_norm[:, :, :3]),
+                1.0,
+            )
+
+        elif self.overlay_types == "hard_light":
+            base_greater = np.greater(base_norm[:, :, :3], 0.5)
+            foreground_greater = np.greater(foreground_norm[:, :, :3], 0.5)
+            min_element = np.minimum(base_norm[:, :, :3] * (foreground_norm[:, :, :3] * 2.0), 1.0)
+            inverse_min_element = np.minimum(
+                1.0 - ((1.0 - base_norm[:, :, :3]) * (1.0 - (foreground_norm[:, :, :3] - 0.5) * 2.0)),
+                1.0,
+            )
+            comp_value = (base_greater * inverse_min_element) + (np.logical_not(foreground_greater) * min_element)
+
+        elif self.overlay_types == "grain_extract":
+            comp_value = np.clip(base_norm[:, :, :3] - foreground_norm[:, :, :3] + 0.5, 0.0, 1.0)
+
+        elif self.overlay_types == "grain_merge":
+            comp_value = np.clip(base_norm[:, :, :3] + foreground_norm[:, :, :3] - 0.5, 0.0, 1.0)
+
+        elif self.overlay_types == "overlay":
+            base_less = np.less(base_norm[:, :, :3], 0.5)
+            base_greater_equal = np.greater_equal(base_norm[:, :, :3], 0.5)
+            base_foreground_product = 2 * base_norm[:, :, :3] * foreground_norm[:, :, :3]
+            inverse_base_foreground_product = 1 - (2 * (1 - base_norm[:, :, :3]) * (1 - foreground_norm[:, :, :3]))
+            comp_value = (base_less * base_foreground_product) + (base_greater_equal * inverse_base_foreground_product)
 
         # get reshaped ratio
         ratio_rs = np.reshape(np.repeat(ratio, 3), (base_norm.shape[0], base_norm.shape[1], 3))
 
         # blend image
-        img_blended = (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
+        if self.overlay_types == "addition" or self.overlay_types == "subtract":
+            # clip value for addition or subtract
+            img_blended = np.clip((comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs)), 0.0, 1.0)
 
-        # get blended image in uint8
-        img_blended = (img_blended * 255).astype("uint8")
-
-        # add patch of blended image back to background
-        overlay_background[ystart:yend, xstart:xend] = img_blended
-
-    def darken_blend(self, overlay_background, base, new_foreground, xstart, xend, ystart, yend):
-        """Apply blending using input alpha value - darken only method"""
-
-        # convert to float (0-1)
-        base_norm = base / 255.0
-        foreground_norm = new_foreground / 255.0
-
-        # get alpha layer (if any)
-        if len(base_norm.shape) > 3:
-            img_base_alpha = base_norm[:, :, 3]
         else:
-            img_base_alpha = np.ones((base_norm.shape[0], base_norm.shape[1]), dtype="float")
-
-        # get alpha layer (if any)
-        if len(foreground_norm.shape) > 3:
-            img_foreground_alpha = foreground_norm[:, :, 3]
-        else:
-            img_foreground_alpha = np.ones((foreground_norm.shape[0], foreground_norm.shape[1]), dtype="float")
-
-        # compose alpha ratio from background and foreground alpha value
-        ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha)
-
-        # compute alpha value
-        comp_value = np.minimum(base_norm[:, :, :3], foreground_norm[:, :, :3])
-
-        # get reshaped ratio
-        ratio_rs = np.reshape(np.repeat(ratio, 3), (base_norm.shape[0], base_norm.shape[1], 3))
-
-        # blend image
-        img_blended = (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
-
-        # get blended image in uint8
-        img_blended = (img_blended * 255).astype("uint8")
-
-        # add patch of blended image back to background
-        overlay_background[ystart:yend, xstart:xend] = img_blended
-
-    def addition_blend(self, overlay_background, base, new_foreground, xstart, xend, ystart, yend):
-        """Apply blending using input alpha value - additon method"""
-
-        # convert to float (0-1)
-        base_norm = base / 255.0
-        foreground_norm = new_foreground / 255.0
-
-        # get alpha layer (if any)
-        if len(base_norm.shape) > 3:
-            img_base_alpha = base_norm[:, :, 3]
-        else:
-            img_base_alpha = np.ones((base_norm.shape[0], base_norm.shape[1]), dtype="float")
-
-        # get alpha layer (if any)
-        if len(foreground_norm.shape) > 3:
-            img_foreground_alpha = foreground_norm[:, :, 3]
-        else:
-            img_foreground_alpha = np.ones((foreground_norm.shape[0], foreground_norm.shape[1]), dtype="float")
-
-        # compose alpha ratio from background and foreground alpha value
-        ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha)
-
-        # compute alpha value
-        comp_value = base_norm[:, :, :3] + foreground_norm[:, :, :3]
-
-        # get reshaped ratio
-        ratio_rs = np.reshape(np.repeat(ratio, 3), (base_norm.shape[0], base_norm.shape[1], 3))
-
-        # blend image
-        img_blended = np.clip((comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs)), 0.0, 1.0)
-
-        # get blended image in uint8
-        img_blended = (img_blended * 255).astype("uint8")
-
-        # add patch of blended image back to background
-        overlay_background[ystart:yend, xstart:xend] = img_blended
-
-    def difference_blend(self, overlay_background, base, new_foreground, xstart, xend, ystart, yend):
-        """Apply blending using input alpha value - difference method"""
-
-        # convert to float (0-1)
-        base_norm = base / 255.0
-        foreground_norm = new_foreground / 255.0
-
-        # get alpha layer (if any)
-        if len(base_norm.shape) > 3:
-            img_base_alpha = base_norm[:, :, 3]
-        else:
-            img_base_alpha = np.ones((base_norm.shape[0], base_norm.shape[1]), dtype="float")
-
-        # get alpha layer (if any)
-        if len(foreground_norm.shape) > 3:
-            img_foreground_alpha = foreground_norm[:, :, 3]
-        else:
-            img_foreground_alpha = np.ones((foreground_norm.shape[0], foreground_norm.shape[1]), dtype="float")
-
-        # compose alpha ratio from background and foreground alpha value
-        ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha)
-
-        # compute alpha value
-        comp_value = base_norm[:, :, :3] - foreground_norm[:, :, :3]
-        comp_value = abs(comp_value)
-
-        # get reshaped ratio
-        ratio_rs = np.reshape(np.repeat(ratio, 3), (base_norm.shape[0], base_norm.shape[1], 3))
-
-        # blend image
-        img_blended = (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
+            img_blended = (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
 
         # get blended image in uint8
         img_blended = (img_blended * 255).astype("uint8")
@@ -504,21 +469,11 @@ class OverlayBuilder:
             elif self.overlay_types == "normal":
                 self.normal_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
 
-            # lighten only overlay type using alpha value
-            elif self.overlay_types == "lighten_only":
-                self.lighten_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
-
-            # darken only overlay type using alpha value
-            elif self.overlay_types == "darken_only":
-                self.darken_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
-
-            # addition overlay type using alpha value
-            elif self.overlay_types == "addition":
-                self.addition_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
-
-            # difference overlay type using alpha value
-            elif self.overlay_types == "difference":
-                self.difference_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
+            # overlay types:
+            # lighten, darken, addition, subtract, difference, screen, dodge
+            # multiply, divide, hard_light, grain_extract, grain_merge, overlay
+            else:
+                self.various_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
 
             # get original height and width from foreground
             fg_height, fg_width = self.foreground.shape[:2]
