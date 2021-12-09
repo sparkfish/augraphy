@@ -53,12 +53,12 @@ The Markup augmentation uses contours detection to detect text lines and add a s
                               markup_thickness_range=(1, 3),
                               markup_type="underline",
                               markup_color=(255, 0, 0))
-    
-    
+
+
     img_strikethrough = markup_strikethrough(image)
     img_highlight = markup_highlight(image)
     img_underline = markup_underline(image)
-    
+
     elapsed_time = time() - start_time
     # processing time
     print("Elapsed time = " + str(elapsed_time) + " seconds")
@@ -68,11 +68,11 @@ The Markup augmentation uses contours detection to detect text lines and add a s
     plt.figure()
     plt.imshow(img_strikethrough)
     plt.title("Strikethrough")
-    
+
     plt.figure()
     plt.imshow(img_highlight)
     plt.title("Highlight")
-    
+
     plt.figure()
     plt.imshow(img_underline)
     plt.title("Underline")
