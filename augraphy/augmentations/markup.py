@@ -7,21 +7,22 @@ import numpy as np
 
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
+from augraphy.utilities import *
 
 
 class Markup(Augmentation):
-    """
-    Uses contours detection to detect text lines and add a smooth text strikethrough effect
-    :param num_lines_range: Pair of ints determining the number of lines to add strikethrough
-    :type range: int tuple, optional
-    :param strikethrough_length_range: Pair of floats between 0 to 1 , to determine the length of strikethrough effect
-    :type range: float tuple, optional
-    :param strikethrough_thickness_range: Pair of ints, to determine the thickness of strikethrough line
-    :type range: int tuple, optional
-    :param markup_type: choice of markup "strikethrough", "highlight" or "underline"
-    :type choice: string
-    :param markup_color: bgr color tuple
-    :type tuple: int
+    """Uses contours detection to detect text lines and add a smooth text strikethrough, highlight or underline effect.
+
+    :param num_lines_range: Pair of ints determining the number of added markup effect.
+    :type num_lines_range: int tuple, optional
+    :param markup_length_range: Pair of floats between 0 to 1 , to determine the length of added markup effect.
+    :type markup_length_range: float tuple, optional
+    :param markup_thickness_range: Pair of ints, to determine the thickness of added markup effect.
+    :type markup_thickness_range: int tuple, optional
+    :param markup_type: Choice of markup "strikethrough", "highlight" or "underline".
+    :type markup_type: string
+    :param markup_color: bgr color tuple.
+    :type markup_color: tuple of ints
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -121,16 +122,19 @@ class Markup(Augmentation):
                 # adding a smoothing effect in points using chaikin's algorithm
                 points_list = smooth(points_list, 8)
 
+                # initialize mask for highlight
+                markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
+
                 for i in range(len(points_list) - 1):
                     p1 = (int(points_list[i][0]), int(points_list[i][1]))
                     if self.markup_type == "highlight":
                         p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] - h))
                         # A filled rectangle
-                        overlay = cv2.rectangle(overlay, p1, p2, self.markup_color, -1)
+                        markup_mask = cv2.rectangle(markup_mask, p1, p2, self.markup_color, -1)
                     else:
                         p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
-                        markup_img = cv2.line(
-                            markup_img,
+                        markup_mask = cv2.line(
+                            markup_mask,
                             p1,
                             p2,
                             self.markup_color,
@@ -138,7 +142,22 @@ class Markup(Augmentation):
                             lineType=cv2.LINE_AA,
                         )
 
-        if self.markup_type == "highlight":
-            markup_img = cv2.addWeighted(overlay, 0.5, markup_img, 1 - 0.5, 0)
+        # smoothen highlight mask to make it more realistic
+        markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
+
+        # create overlay builder
+        overlay_builder = OverlayBuilder(
+            "darken",
+            markup_mask,
+            markup_img,
+            1,
+            (1, 1),
+            "center",
+            0,
+            alpha=1,
+        )
+
+        # overlay image
+        markup_img = overlay_builder.build_overlay()
 
         return markup_img
