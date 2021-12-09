@@ -25,7 +25,7 @@ class Markup(Augmentation):
     :param markup_color: bgr color tuple.
     :type markup_color: tuple of ints
 
-    
+
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
