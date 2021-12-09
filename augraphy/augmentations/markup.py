@@ -11,6 +11,7 @@ from augraphy.utilities import *
 
 
 class Markup(Augmentation):
+
     """Uses contours detection to detect text lines and add a smooth text strikethrough, highlight or underline effect.
 
     :param num_lines_range: Pair of ints determining the number of added markup effect.
@@ -23,6 +24,8 @@ class Markup(Augmentation):
     :type markup_type: string
     :param markup_color: bgr color tuple.
     :type markup_color: tuple of ints
+
+    
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
