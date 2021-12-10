@@ -236,6 +236,6 @@ class BindingsAndFasteners(Augmentation):
                         self.edge_offset,
                     )
 
-            image_output = ob.buildOverlay()
+            image_output = ob.build_overlay()
 
             return image_output

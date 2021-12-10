@@ -10,7 +10,7 @@ from augraphy.utilities.noisegenerator import NoiseGenerator
 
 
 class BadPhotoCopy(Augmentation):
-    """Uses Perlin noise to generate an effect of dirty copier.
+    """Uses added noise to generate an effect of dirty copier.
 
     :param noise_type: Types of noises to generate different mask patterns.
     :type noise_type: int, optional
