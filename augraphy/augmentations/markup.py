@@ -24,6 +24,8 @@ class Markup(Augmentation):
     :type markup_type: string
     :param markup_color: bgr color tuple.
     :type markup_color: tuple of ints
+    :param repetitions: determines how many time a markup should be drawn
+    :type markup_color: int
 
 
     :param p: The probability that this Augmentation will be applied.
@@ -37,6 +39,8 @@ class Markup(Augmentation):
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
         markup_color=(0, 255, 0),
+        single_word_mode=False,
+        repetitions=1,
         p=1,
     ):
 
@@ -46,6 +50,7 @@ class Markup(Augmentation):
         self.markup_thickness_range = markup_thickness_range
         self.markup_type = markup_type
         self.markup_color = markup_color
+        self.repetitions = repetitions
 
     def __repr__(self):
         return (
@@ -87,6 +92,9 @@ class Markup(Augmentation):
             cv2.CHAIN_APPROX_NONE,
         )  # Each line is detected as a contour.
 
+        # initialize mask for markup
+        markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
+
         for cnt in contours:
             # adding randomization.
             choice = random.choice([False, True])
@@ -97,6 +105,7 @@ class Markup(Augmentation):
                     continue
                 if num_lines == 0:
                     break
+                print(num_lines)
                 num_lines = num_lines - 1
                 markup_length = random.uniform(
                     self.markup_length_range[0],
@@ -118,35 +127,47 @@ class Markup(Augmentation):
                     starting_point = [x, y + h]
                     ending_point = [x + w, y + h]
 
-                # dividing the line into points
-                points_count = random.randint(3, 10)
-                points = np.linspace(starting_point[0], ending_point[0], points_count)
-                points_list = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
-                # adding a smoothing effect in points using chaikin's algorithm
-                points_list = smooth(points_list, 8)
+                all_points_lists = []
+                for i in range(self.repetitions):
+                    # # dividing the line into points
+                    points_count = random.randint(3, 10)  # dividing the line into points
+                    points = np.linspace(starting_point[0], ending_point[0], points_count)
+                    relative_start_point = starting_point[1] if i % 2 else ending_point[1]
+                    points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
+                    points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm
+                    all_points_lists.append(points)
 
-                # initialize mask for highlight
-                markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
+                # points_count = random.randint(3, 10)
+                # points = np.linspace(starting_point[0], ending_point[0], points_count)
+                # points_list = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
+                # # adding a smoothing effect in points using chaikin's algorithm
+                # points_list = smooth(points_list, 8)
 
-                for i in range(len(points_list) - 1):
-                    p1 = (int(points_list[i][0]), int(points_list[i][1]))
-                    if self.markup_type == "highlight":
-                        p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] - h))
-                        # A filled rectangle
-                        markup_mask = cv2.rectangle(markup_mask, p1, p2, self.markup_color, -1)
-                    else:
-                        p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
-                        markup_mask = cv2.line(
-                            markup_mask,
-                            p1,
-                            p2,
-                            self.markup_color,
-                            markup_thickness,
-                            lineType=cv2.LINE_AA,
-                        )
+                for k in range(len(all_points_lists)):
+                    points_list = all_points_lists[k]
+                    for i in range(len(points_list) - 1):
+                        p1 = (int(points_list[i][0]), int(points_list[i][1]))
+                        if self.markup_type == "highlight":
+                            p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] - h))
+                            # A filled rectangle
+                            markup_mask = cv2.rectangle(markup_mask, p1, p2, self.markup_color, -1)
+                        else:
+                            p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
+                            markup_mask = cv2.line(
+                                markup_mask,
+                                p1,
+                                p2,
+                                self.markup_color,
+                                markup_thickness,
+                                lineType=cv2.LINE_AA,
+                            )
 
         # smoothen highlight mask to make it more realistic
-        markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
+        if self.markup_type == "highlight":
+            alpha = 0.5
+            markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
+        else:
+            alpha = 1
 
         # create overlay builder
         overlay_builder = OverlayBuilder(
@@ -157,9 +178,8 @@ class Markup(Augmentation):
             (1, 1),
             "center",
             0,
-            alpha=1,
+            alpha=alpha,
         )
-
         # overlay image
         markup_img = overlay_builder.build_overlay()
 
