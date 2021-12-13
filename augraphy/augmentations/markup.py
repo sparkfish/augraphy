@@ -1,4 +1,5 @@
 import math
+import os
 import random
 from pathlib import Path
 
@@ -8,7 +9,7 @@ import numpy as np
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
-import os
+
 
 class Markup(Augmentation):
 
@@ -53,7 +54,7 @@ class Markup(Augmentation):
         self.markup_type = markup_type
         self.markup_color = markup_color
         self.repetitions = repetitions
-        self.single_word_mode=single_word_mode
+        self.single_word_mode = single_word_mode
 
     def __repr__(self):
         return (
@@ -83,7 +84,7 @@ class Markup(Augmentation):
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
         )
 
-        if self.single_word_mode == False:
+        if self.single_word_mode is False:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
         else:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 1))
