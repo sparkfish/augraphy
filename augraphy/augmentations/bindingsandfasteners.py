@@ -14,8 +14,8 @@ class BindingsAndFasteners(Augmentation):
 
     :param overlay_types: Types of overlay method, min, max or mix.
     :type overlay_types: string
-    :param foreground: Path to foreground image.
-    :type foreground: string, optional
+    :param foreground: Path to foreground image or the foreground image.
+    :type foreground: string or numpy array, optional
     :param effect_type: Types of binding effect, select from either
         "punch_holes", binding_holes" or "clips".
     :type effect_type: string, optional
@@ -194,12 +194,12 @@ class BindingsAndFasteners(Augmentation):
         if force or self.should_run():
 
             # reset foreground when the same class instance called twice
-            if not isinstance(self.foreground, str):
+            if not isinstance(self.foreground, str) and not isinstance(self.foreground, np.ndarray):
                 self.foreground = None
 
             image = image.copy()
-            # if user input image
-            if self.foreground and os.path.isfile(self.foreground):
+            # if user input image path
+            if isinstance(self.foreground, str) and os.path.isfile(self.foreground):
                 self.foreground = cv2.imread(self.foreground)
                 ob = OverlayBuilder(
                     self.overlay_types,
@@ -209,7 +209,21 @@ class BindingsAndFasteners(Augmentation):
                     self.nscales,
                     self.edge,
                     self.edge_offset,
+                    1,
                 )
+            # if user input image
+            elif isinstance(self.foreground, np.ndarray):
+                ob = OverlayBuilder(
+                    self.overlay_types,
+                    self.foreground,
+                    image,
+                    self.ntimes,
+                    self.nscales,
+                    self.edge,
+                    self.edge_offset,
+                    1,
+                )
+
             else:
                 # user didn't input foreground or not readable file, try to download from Figshare
                 try:
@@ -222,6 +236,7 @@ class BindingsAndFasteners(Augmentation):
                         self.nscales,
                         self.edge,
                         self.edge_offset,
+                        1,
                     )
                 # if failed to download from Figshare, create some simple effect
                 except Exception:
@@ -234,6 +249,7 @@ class BindingsAndFasteners(Augmentation):
                         self.nscales,
                         self.edge,
                         self.edge_offset,
+                        1,
                     )
 
             image_output = ob.build_overlay()

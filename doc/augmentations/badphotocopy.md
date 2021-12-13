@@ -13,7 +13,6 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 | `wave_pattern`  | To enable wave pattern in noise.                                 |
 | `p`             | The probability this augmentation will be applied.               |
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_n7atcI-xVSpnV17YuzZhd9ISe735fBo?usp=sharing)
 
 **Example Usage:**
 ```python
@@ -70,3 +69,6 @@ Click here for an [example Colab Notebook](https://colab.research.google.com/dri
         plt.title("BadPhotoCopy type " + str(i + 1))
 
 ```
+
+
+Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_n7atcI-xVSpnV17YuzZhd9ISe735fBo?usp=sharing)

@@ -2,18 +2,6 @@
 
 The Letterpress augmentation produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
-**Example Usage:**
-
-```python
-augmentation = Letterpress(
-	n_samples = (200,300),
-	n_clusters = (500,1000),
-	std_range=(1000, 2000),
-	value_range=(230, 255)
-	p=1
-	)
-```
-
 | Parameter        | Description                                                                      |
 |------------------|----------------------------------------------------------------------------------|
 | `n_samples`      | Pair of ints determining number of points in a cluster.                          |
@@ -23,6 +11,7 @@ augmentation = Letterpress(
 | `p`              | The probability this augmentation will be applied.                               |
 
 
+**Example Usage:**
 ```python
     # Usage Example:
 
@@ -67,6 +56,5 @@ augmentation = Letterpress(
     plt.imshow(image_output, cmap="gray")
 
 ```
-
 
 Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1qp_ZnbdP0A4eIhxkF0h7Dduw_9gtAhti?usp=sharing)
