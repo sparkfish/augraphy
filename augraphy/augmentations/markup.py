@@ -8,7 +8,7 @@ import numpy as np
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
-
+import os
 
 class Markup(Augmentation):
 
@@ -25,7 +25,9 @@ class Markup(Augmentation):
     :param markup_color: bgr color tuple.
     :type markup_color: tuple of ints
     :param repetitions: determines how many time a markup should be drawn
-    :type markup_color: int
+    :type repetitions: int
+    :param single_word_mode: set true to draw markup on a single word only
+    :type single_word_mode: boolean
 
 
     :param p: The probability that this Augmentation will be applied.
@@ -51,6 +53,7 @@ class Markup(Augmentation):
         self.markup_type = markup_type
         self.markup_color = markup_color
         self.repetitions = repetitions
+        self.single_word_mode=single_word_mode
 
     def __repr__(self):
         return (
@@ -79,12 +82,25 @@ class Markup(Augmentation):
             255,
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
         )
-        rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
+
+        if self.single_word_mode == False:
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
+        else:
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 1))
+            self.markup_length_range = (1, 1)
+
+        # dilating the threshold image to combine horizontal lines
         dilation = cv2.dilate(
             thresh1,
-            rect_kernel,
+            kernel,
             iterations=2,
         )
+        dilation = cv2.erode(
+            dilation,
+            None,
+            iterations=1,
+        )
+
         # Applying dilate operation to connect text lines horizontaly.
         contours, hierarchy = cv2.findContours(
             dilation,
@@ -101,7 +117,7 @@ class Markup(Augmentation):
             if choice:
                 x, y, w, h = cv2.boundingRect(cnt)
                 # avoiding too small contours (width less  20% of the image width)
-                if w < int(markup_img.shape[1] / 5):
+                if w < int(markup_img.shape[1] / 10):
                     continue
                 if num_lines == 0:
                     break
@@ -127,6 +143,7 @@ class Markup(Augmentation):
                     starting_point = [x, y + h]
                     ending_point = [x + w, y + h]
 
+                # Generating markup repetition points
                 all_points_lists = []
                 for i in range(self.repetitions):
                     # # dividing the line into points
@@ -136,12 +153,6 @@ class Markup(Augmentation):
                     points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
                     points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm
                     all_points_lists.append(points)
-
-                # points_count = random.randint(3, 10)
-                # points = np.linspace(starting_point[0], ending_point[0], points_count)
-                # points_list = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
-                # # adding a smoothing effect in points using chaikin's algorithm
-                # points_list = smooth(points_list, 8)
 
                 for k in range(len(all_points_lists)):
                     points_list = all_points_lists[k]
