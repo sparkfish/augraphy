@@ -30,7 +30,7 @@ class Brightness(Augmentation):
         if force or self.should_run():
             image = image.copy()
             value = random.uniform(self.range[0], self.range[1])
-            if layer == "ink" or len(image.shape) < 3:
+            if len(image.shape) < 3:
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
             hsv = cv2.cvtColor(image.astype("uint8"), cv2.COLOR_BGR2HSV)
 
