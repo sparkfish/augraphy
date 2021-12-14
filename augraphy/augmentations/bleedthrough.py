@@ -56,24 +56,16 @@ class BleedThrough(Augmentation):
     def __repr__(self):
         return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
 
-    # Add salt and pepper noise
-    def add_sp_noise(self, img, prob=0.05):
-        output = np.zeros_like(img)
-        thres = 1 - prob
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                rdn = random.random()
-                if rdn < prob:
-                    output[i][j] = 255
-                elif rdn > thres:
-                    output[i][j] = 0
-                else:
-                    output[i][j] = img[i][j]
-        return output
-
     # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
-        ob = OverlayBuilder("alpha", img_bleed.astype("uint8"), img, 1, (1, 1), "center", 0, self.alpha)
+
+        # convert to single channel to avoud unnecessary noise in colour image
+        if len(img_bleed.shape) > 2:
+            img_bleed_input = cv2.cvtColor(img_bleed.astype("uint8"), cv2.COLOR_BGR2GRAY)
+        else:
+            img_bleed_input = img_bleed.astype("uint8")
+
+        ob = OverlayBuilder("normal", img_bleed_input, img, 1, (1, 1), "center", 0, self.alpha)
         return ob.build_overlay()
 
     # Offset image so that bleedthrough effect is visible and not stacked with input image
@@ -100,7 +92,7 @@ class BleedThrough(Augmentation):
         )
         add_noise = np.vectorize(add_noise_fn)
         sobelized = sobel(img)
-        img_noise = np.double(add_noise(img, self.add_sp_noise(sobelized)))
+        img_noise = np.double(add_noise(img, sobelized))
         img_bleed = cv2.GaussianBlur(img_noise, ksize=ksize, sigmaX=sigmaX)
         return img_bleed
 

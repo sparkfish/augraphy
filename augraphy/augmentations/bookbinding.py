@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
+from augraphy.utilities import *
 
 
 class BookBinding(Augmentation):
@@ -33,16 +34,23 @@ class BookBinding(Augmentation):
         return f"BookBinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
-        img_output = img.copy()
+
         rows = img.shape[0]
         cols = img.shape[1]
-        for i in range(rows):
-            for j in range(cols):
-                dist = math.sqrt((j * j))
-                d = dist + (radius * (1 - math.cos(angle)))
-                new_i = img[i, j] * (dist / (d)) ** 2
-                img_output[i, j, :] = new_i
-        return img_output
+
+        # compute mask of shadow
+        img_dist = np.repeat(np.arange(cols), rows)
+        img_dist = np.transpose(img_dist.reshape(cols, rows))
+        img_d = img_dist + (radius * (1 - math.cos(angle)))
+        img_mask = (img_dist / img_d) ** 2
+        # rescale 0- 1 to prevent darken of the image
+        img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
+
+        # overlay mask of shadow to input image
+        ob = OverlayBuilder("darken", (img_mask * 255).astype("uint8"), img, 1, (1, 1), "center", 0, 1)
+        img_output = ob.build_overlay()
+
+        return img_output.astype("uint8")
 
     def curve_page(self, img, curve_intensity):
         rows = img.shape[0]
