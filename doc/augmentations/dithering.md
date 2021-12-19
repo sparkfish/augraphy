@@ -16,6 +16,8 @@ The Dithering augmentation applies Ordered or Floyd Steinberg dithering to the i
     from matplotlib import pyplot as plt
     from time import time
     import cv2
+    import cv2
+    import numpy as np
 
     start_time = time()
 

@@ -14,6 +14,8 @@ The Brightness Texturize augmentation creates a random noise in the brightness c
 ```python
     from matplotlib import pyplot as plt
     from time import time
+    import cv2
+    import numpy as np
 
     start_time = time()
 

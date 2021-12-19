@@ -18,6 +18,8 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 ```python
     from matplotlib import pyplot as plt
     from time import time
+    import cv2
+    import numpy as np
 
     start_time = time()
 

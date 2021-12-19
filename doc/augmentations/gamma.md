@@ -3,19 +3,57 @@
 The Gamma augmentation randomly applies gamma correction (from a range of values) on the image.
 Note: a gamma value of 1 will not affect the image.
 
-**Example Usage:**
-
-```python
-augmentation = Gamma(
-	range=(0.5,1.5),
-	p=0.5
-    )
-```
 
 | Parameter | Description                                                                                                                                                        |
 |-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `range`   | Specifies the range for gamma value. Gamma value below 1 darkens the image whereas above 1 increases pixel intensities. Gamma value of 1 does not change anything. |
 | `p`       | The probability that this augmentation will be applied.                                                                                                            |
+
+
+**Example Usage:**
+```python
+    from matplotlib import pyplot as plt
+    from time import time
+    import cv2
+    import numpy as np
+
+    start_time = time()
+
+    # create a blank image
+    image = np.full((1500, 1500,3), 128, dtype="uint8")
+
+    # insert text into image
+    for y in range(200, 1300, 100):
+        cv2.putText(
+            image,
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+            (250, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            0,
+            3,
+        )
+
+
+    gamma = Gamma(range=(2.0, 3.0))
+
+    img_gamma = gamma(image)
+
+    elapsed_time = time() - start_time
+    # processing time
+    print("Elapsed time = " + str(elapsed_time) + " seconds")
+
+
+    # display output
+    plt.figure()
+    plt.subplot(121)
+    plt.imshow(image)
+    plt.title("Input image")
+    plt.subplot(122)
+    plt.imshow(img_gamma)
+    plt.title("Gamma image")
+```
+
 
 **Example Result:**
 

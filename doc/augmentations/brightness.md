@@ -13,6 +13,8 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
 ```python
     from matplotlib import pyplot as plt
     from time import time
+    import cv2
+    import numpy as np
 
     start_time = time()
 
