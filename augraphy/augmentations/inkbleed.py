@@ -1,4 +1,5 @@
 import random
+import sys
 
 import cv2
 import numpy as np
@@ -18,6 +19,10 @@ class InkBleed(Augmentation):
     :param color_range: Pair of ints determining the range from which color
            noise is sampled.
     :type color_range: tuple, optional
+    :param kernel_size: Kernel size to determine area of inkbleed effect.
+    :type kernel_size: tuple, optional
+    :param severity: Severity to determine concentration of inkbleed effect.
+    :type severity: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -26,16 +31,20 @@ class InkBleed(Augmentation):
         self,
         intensity_range=(0.1, 0.2),
         color_range=(0, 224),
+        kernel_size=(5, 5),
+        severity=(0.4, 0.6),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.intensity_range = intensity_range
         self.color_range = color_range
+        self.kernel_size = kernel_size
+        self.severity = severity
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, p={self.p})"
+        return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, kernel_size={self.kernel_size}, severity={self.severity}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -47,15 +56,20 @@ class InkBleed(Augmentation):
                 if (y == 255 and random.random() < intensity)
                 else x
             )
-            apply_mask_fn = lambda x, y, z: x if (z != 255 or x < 64) else y
+
+            severity = random.randint(self.severity[0] * 10, self.severity[1] * 10) / 10
+            apply_mask_fn = lambda x, y, z: x if (z != 255 or random.random() > severity) else y
             add_noise = np.vectorize(add_noise_fn)
             apply_mask = np.vectorize(apply_mask_fn)
             sobelized = sobel(image)
-            sobelizedDilated = cv2.dilate(sobelized, (3, 3), iterations=1)
+
+            kernel = np.ones(self.kernel_size, dtype="uint8")
+            sobelizedDilated = cv2.dilate(sobelized, kernel, iterations=1)
+
             noise_mask = add_noise(image, sobelizedDilated)
             noise_mask = noise_mask.astype("uint8")
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
 
-            image = apply_mask(image, noise_mask, sobel)
+            image = apply_mask(image, noise_mask, sobelizedDilated)
 
             return image
