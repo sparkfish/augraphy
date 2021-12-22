@@ -27,6 +27,8 @@ augmentation = DirtyDrum(
 
     from matplotlib import pyplot as plt
     from time import time
+    import cv2
+    import numpy as np
 
     # create a blank image
     image = np.full((1500, 1500,3), 255, dtype="uint8")

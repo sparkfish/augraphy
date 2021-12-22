@@ -18,6 +18,8 @@ The Bindings And Fasteners augmentation creates binding and fastener mark in the
 ```python
     from matplotlib import pyplot as plt
     from time import time
+    import cv2
+    import numpy as np
 
     start_time = time()
 

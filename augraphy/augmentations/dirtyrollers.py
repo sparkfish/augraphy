@@ -12,6 +12,8 @@ class DirtyRollers(Augmentation):
     :param line_width_range: Pair of ints determining the range from which the
     width of a dirty roller line is sampled.
     :type line_width_range: tuple, optional
+    :param scanline_type: Types of scanline, use 0 for white background.
+    :type scanline_type: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -19,19 +21,23 @@ class DirtyRollers(Augmentation):
     def __init__(
         self,
         line_width_range=(8, 12),
+        scanline_type=0,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.line_width_range = line_width_range
+        self.scanline_type = scanline_type
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyRollers(line_width_range={self.line_width_range}, p={self.p})"
+        return f"DirtyRollers(line_width_range={self.line_width_range}, scanline_type={self.scanline_type}, p={self.p})"
 
     def apply_scanline_mask(self, img, mask, meta_mask):
-        if random.choice([True, False]):
+        # for dark background
+        if self.scanline_type:
             return self.apply_scanline_mask_v2(img, mask, meta_mask)
+        # for white background
         else:
             return self.apply_scanline_mask_v1(img, mask, meta_mask)
 
