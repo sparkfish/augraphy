@@ -16,12 +16,12 @@
     from time import time
     import cv2
     import numpy as np
-    
+
     start_time = time()
-    
+
     # create a blank image
     image = np.full((1500, 1500,3), 255, dtype="uint8")
-    
+
     # insert text into image
     for y in range(200, 1300, 100):
         cv2.putText(
@@ -33,34 +33,33 @@
             0,
             20,
         )
-    
+
 
     low_ink_periodic_line_consistent =  LowInkPeriodicLines(
         count_range=(2, 5),
         period_range=(10, 30),
         use_consistent_lines=True,
             )
-    
+
     low_ink_periodic_line_not_consistent =  LowInkPeriodicLines(
         count_range=(2, 5),
         period_range=(10, 30),
         use_consistent_lines=False,
             )
-    
+
     img_low_ink_periodic_line_consistent = low_ink_periodic_line_consistent(image)
-    
+
     img_low_ink_periodic_line_not_consistent = low_ink_periodic_line_not_consistent(image)
-    
+
     elapsed_time = time() - start_time
     # processing time
     print("Elapsed time = " + str(elapsed_time) + " seconds")
-    
-    
+
+
     # display output
     plt.figure()
     plt.imshow(img_low_ink_periodic_line_consistent)
     plt.title("Image low ink periodic line consistent")
-    
     plt.figure()
     plt.imshow(img_low_ink_periodic_line_not_consistent)
     plt.title("Image low ink periodic line not consistent")
