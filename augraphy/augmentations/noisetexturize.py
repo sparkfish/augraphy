@@ -48,17 +48,22 @@ class NoiseTexturize(Augmentation):
             )
 
             result = image.astype(float)
-            cols, rows, ch = image.shape
+            cols, rows = image.shape[:2]
+            if len(image.shape) > 2:
+                channel = image.shape[2]
+            else:
+                channel = 0
+
             ratio = cols
             while not ratio == 1:
-                result += self.noise(cols, rows, ratio, sigma=sigma)
+                result += self.noise(cols, rows, channel, ratio, sigma=sigma)
                 ratio = (ratio // turbulence) or 1
             cut = np.clip(result, 0, 255)
 
             cut = cut.astype(np.uint8)
             return cut
 
-    def noise(self, width, height, ratio, sigma):
+    def noise(self, width, height, channel, ratio, sigma):
         """The function generates an image, filled with gaussian nose. If ratio
         parameter is specified, noise will be generated for a lesser image and
         then it will be upscaled to the original size. In that case noise will
@@ -81,12 +86,17 @@ class NoiseTexturize(Augmentation):
             w = 1
 
         gaussian = np.vectorize(lambda x: random.gauss(mean, sigma))
+
         result = gaussian(np.array((w, h)))
 
-        if ratio > 1:
-            result = cv2.resize(
-                result,
-                dsize=(width, height),
-                interpolation=cv2.INTER_LINEAR,
-            )
-        return result.reshape((width, height, 1))
+        result = cv2.resize(
+            result,
+            dsize=(width, height),
+            interpolation=cv2.INTER_LINEAR,
+        )
+
+        # for multiple channels input, convert result to multiple channels
+        if channel:
+            result = np.stack([result, result, result], axis=2)
+
+        return result
