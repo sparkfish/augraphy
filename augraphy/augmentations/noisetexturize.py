@@ -48,7 +48,7 @@ class NoiseTexturize(Augmentation):
             )
 
             result = image.astype(float)
-            cols, rows = image.shape[:2]
+            rows, cols = image.shape[:2]
             if len(image.shape) > 2:
                 channel = image.shape[2]
             else:
