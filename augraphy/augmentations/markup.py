@@ -42,8 +42,8 @@ class Markup(Augmentation):
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
         markup_color=(0, 255, 0),
-        single_word_mode=False,
         repetitions=1,
+        single_word_mode=False,
         p=1,
     ):
 
@@ -122,7 +122,7 @@ class Markup(Augmentation):
                     continue
                 if num_lines == 0:
                     break
-                print(num_lines)
+
                 num_lines = num_lines - 1
                 markup_length = random.uniform(
                     self.markup_length_range[0],
@@ -150,7 +150,6 @@ class Markup(Augmentation):
                     # # dividing the line into points
                     points_count = random.randint(3, 10)  # dividing the line into points
                     points = np.linspace(starting_point[0], ending_point[0], points_count)
-                    relative_start_point = starting_point[1] if i % 2 else ending_point[1]
                     points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
                     points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm
                     all_points_lists.append(points)

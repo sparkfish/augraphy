@@ -2,6 +2,7 @@
 
 The Markup augmentation uses contours detection to detect text lines and add a smooth text strikethrough, highlight or underline effect.
 
+
 | Parameter                | Description                                                                     |
 |--------------------------|---------------------------------------------------------------------------------|
 | `num_lines_range`        | Pair of ints determining the number of added markup effect.                     |
@@ -16,6 +17,8 @@ The Markup augmentation uses contours detection to detect text lines and add a s
 ```python
     from matplotlib import pyplot as plt
     from time import time
+    import numpy as np
+    import cv2
 
     start_time = time()
 
@@ -37,22 +40,28 @@ The Markup augmentation uses contours detection to detect text lines and add a s
     # object for strikethrough
     markup_strikethrough = Markup(num_lines_range=(5, 7),
                               markup_length_range=(0.5, 1),
-                              markup_thickness_range=(1, 3),
+                              markup_thickness_range=(5, 7),
                               markup_type="strikethrough",
-                              markup_color=(0, 0, 255))
+                              markup_color=(0, 0, 255),
+                              repetitions=4,
+                              single_word_mode=False)
 
     # object for highlight
     markup_highlight = Markup(num_lines_range=(5, 7),
                               markup_length_range=(0.5, 1),
                               markup_thickness_range=(1, 3),
                               markup_type="highlight",
-                              markup_color=(0, 255, 0))
+                              markup_color=(0, 255, 0),
+                              repetitions=5,
+                              single_word_mode=True)
     # object for underline
     markup_underline = Markup(num_lines_range=(5, 7),
                               markup_length_range=(0.5, 1),
-                              markup_thickness_range=(1, 3),
+                              markup_thickness_range=(2, 4),
                               markup_type="underline",
-                              markup_color=(255, 0, 0))
+                              markup_color=(255, 0, 0),
+                              repetitions=3,
+                              single_word_mode=False)
 
 
     img_strikethrough = markup_strikethrough(image)
