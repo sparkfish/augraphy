@@ -14,7 +14,7 @@ class Geometric(Augmentation):
     :param fliplr: Flag to flip image in left right direction.
     :type fliplr: int, optional
     :param flipud: Flag to flip image in up down direction.
-    :type flipud: int, optional 
+    :type flipud: int, optional
     :param rotate_range: Pair of ints determining the range from which to sample
            the image rotation.
     :type rotate_range: tuple, optional
@@ -22,19 +22,21 @@ class Geometric(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, 
-                 scale = (1,1),
-                 fliplr = 0,
-                 flipud = 0,
-                 rotate_range = (-5,5),
-                 p=1):
+    def __init__(
+        self,
+        scale=(1, 1),
+        fliplr=0,
+        flipud=0,
+        rotate_range=(-5, 5),
+        p=1,
+    ):
         """Constructor method"""
         super().__init__(p=p)
         self.scale = scale
         self.fliplr = fliplr
         self.flipud = flipud
         self.rotate_range = rotate_range
-        
+
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
         return f"Geometry(scale={self.scale}, fliplr={self.fliplr}, flipud={self.flipud}, rotate_range={self.rotate_range}, p={self.p})"
@@ -69,29 +71,28 @@ class Geometric(Augmentation):
         rotated_mat = cv2.bitwise_not(rotated_mat)
         return rotated_mat
 
-
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            
+
             # resize based on scale
             if self.scale[1] > self.scale[0]:
-                scale = random.randint(self.scale[0]*10, self.scale[1]*10)/10
+                scale = random.randint(self.scale[0] * 10, self.scale[1] * 10) / 10
                 if scale > 0:
                     new_width = int(image.shape[1] * scale)
                     new_height = int(image.shape[0] * scale)
                     new_size = (new_width, new_height)
-                    image = cv2.resize(image, new_size, interpolation = cv2.INTER_AREA)
-            
-            # flip left right            
+                    image = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+
+            # flip left right
             if self.fliplr:
                 image = np.fliplr(image)
-            
+
             # flip up down
             if self.flipud:
                 image = np.flipud(image)
-             
+
             # generate random angle
             if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
                 angle = random.randint(self.rotate_range[0], self.rotate_range[1])
