@@ -4,6 +4,7 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
 | Parameter       | Description                                                      |
 |-----------------|------------------------------------------------------------------|
+| `mask`          | Mask of noise to generate badphotocopy effect.                   |
 | `noise_type`    | Types of noises to generate different mask patterns.             |
 | `intensity`     | Intensity range of noise, lower value get darker effect.         |
 | `nperiod`		  | The number of periods of noise to generate along each axis.      |

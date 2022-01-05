@@ -586,4 +586,8 @@ class OverlayBuilder:
             xend,
         )
 
+        # convert image back to gray if background image is in grayscale
+        if len(self.background.shape) < 3 and len(overlay_background.shape) > 2:
+            overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_BGR2GRAY)
+
         return overlay_background

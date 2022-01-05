@@ -12,6 +12,8 @@ from augraphy.utilities.noisegenerator import NoiseGenerator
 class BadPhotoCopy(Augmentation):
     """Uses added noise to generate an effect of dirty copier.
 
+    :param mask: Mask of noise to generate badphotocopy effect.
+    :type mask: uint8, optional
     :param noise_type: Types of noises to generate different mask patterns.
     :type noise_type: int, optional
     :param noise_value: Intensity range of noise, lower value get darker effect.
@@ -28,6 +30,7 @@ class BadPhotoCopy(Augmentation):
 
     def __init__(
         self,
+        mask=None,
         noise_type=0,
         noise_value=(30, 60),
         noise_sparsity=(0.4, 0.6),
@@ -37,6 +40,7 @@ class BadPhotoCopy(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p)
+        self.mask = mask
         self.noise_type = noise_type
         self.noise_value = noise_value
         self.noise_sparsity = noise_sparsity
@@ -61,7 +65,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(noise_type={self.noise_type}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def apply_wave(self, mask):
         """
@@ -166,17 +170,22 @@ class BadPhotoCopy(Augmentation):
         image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
         image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
 
-        # get mask of noise and resize it to image size
-        noise_generator = NoiseGenerator(noise_type=self.noise_type)
-        mask = noise_generator.generate_noise(
-            noise_value=self.noise_value,
-            noise_sparsity=self.noise_sparsity,
-            noise_concentration=self.noise_concentration,
-        )
+        # check if provided mask is numpy array
+        if isinstance(self.mask, np.ndarray):
+            mask = self.mask
+        # generate mask of noise
+        else:
 
-        # randomly rotate mask
-        if self.noise_type != 5 and self.noise_type != 6 and self.noise_type != 7 and self.noise_type != 8:
-            mask = np.rot90(mask, random.randint(0, 3))
+            noise_generator = NoiseGenerator(noise_type=self.noise_type)
+            mask = noise_generator.generate_noise(
+                noise_value=self.noise_value,
+                noise_sparsity=self.noise_sparsity,
+                noise_concentration=self.noise_concentration,
+            )
+
+            # randomly rotate mask
+            if self.noise_type != 5 and self.noise_type != 6 and self.noise_type != 7 and self.noise_type != 8:
+                mask = np.rot90(mask, random.randint(0, 3))
 
         # new size after rotation
         mask_ysize, mask_xsize = mask.shape[:2]
@@ -196,10 +205,11 @@ class BadPhotoCopy(Augmentation):
             mask = self.apply_wave(mask)
 
         # random flip mask vertically or horizontally
-        if random.choice([True, False]):
-            mask = cv2.flip(mask, 0)
-        if random.choice([True, False]):
-            mask = cv2.flip(mask, 1)
+        if self.noise_type not in [5, 6, 7, 8]:
+            if random.choice([True, False]):
+                mask = cv2.flip(mask, 0)
+            if random.choice([True, False]):
+                mask = cv2.flip(mask, 1)
 
         # add dotted noise effect to mask (unsmoothen)
         noise_mask = np.random.random((ysize, xsize)) * 225

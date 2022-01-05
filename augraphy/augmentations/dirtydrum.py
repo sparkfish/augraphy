@@ -15,6 +15,8 @@ class DirtyDrum(Augmentation):
     :param line_width_range: Pair of ints determining the range from which the
            width of a dirty drum line is sampled.
     :type line_width_range: tuple, optional
+    :param direction: Direction of effect, 0=horizontal, 1=vertical, 2=both.
+    :type direction: int, optional
     :param noise_intensity: Intensity of dirty drum effect, recommended value
            range from 0.8 to 1.0.
     :type noise_intensity: float, optional
@@ -30,6 +32,7 @@ class DirtyDrum(Augmentation):
     def __init__(
         self,
         line_width_range=(2, 8),
+        direction=random.randint(0, 2),
         noise_intensity=0.95,
         ksize=(3, 3),
         sigmaX=0,
@@ -37,13 +40,14 @@ class DirtyDrum(Augmentation):
     ):
         super().__init__(p=p)
         self.line_width_range = line_width_range
+        self.direction = direction
         self.noise_intensity = noise_intensity
         self.ksize = ksize
         self.sigmaX = sigmaX
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyDrum(line_width_range={self.line_width_range}, noise_intensity={self.noise_intensity}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
+        return f"DirtyDrum(line_width_range={self.line_width_range}, direction={self.direction}, noise_intensity={self.noise_intensity}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
 
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):
@@ -184,14 +188,13 @@ class DirtyDrum(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            direction = random.choice([0, 1, 2])
 
-            if direction == 0:
+            if self.direction == 0:
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 0)
                 # Apply gaussian blur to mask of dirty drum
                 image_dirty = cv2.GaussianBlur(image_dirty, ksize=self.ksize, sigmaX=self.sigmaX)
-            elif direction == 1:
+            elif self.direction == 1:
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 1)
                 # Apply gaussian blur to mask of dirty drum
