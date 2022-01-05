@@ -77,8 +77,8 @@ class Geometric(Augmentation):
             image = image.copy()
 
             # resize based on scale
-            if self.scale[1] > 0 and self.scale[0] > 0:
-                scale = random.uniform(self.scale[0], self.scale[1])
+            if self.scale[1] > self.scale[0]:
+                scale = random.randint(self.scale[0] * 10, self.scale[1] * 10) / 10
                 if scale > 0:
                     new_width = int(image.shape[1] * scale)
                     new_height = int(image.shape[0] * scale)
