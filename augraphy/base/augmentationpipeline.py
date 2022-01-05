@@ -25,7 +25,9 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
-
+    :param rotate_range: Pair of ints determining the range from which to sample
+           the paper rotation.
+    :type rotate_range: tuple, optional
     :param rotate_phase: Phase to apply rotation, select either pre_ink, post_ink,
             post_paper or post.
     :type rotate_phase: string, optional
@@ -38,13 +40,17 @@ class AugraphyPipeline:
         post_phase,
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
+        rotate_range=(0, 0),
+        rotate_phase="pre_ink",
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
         self.paper_phase = self.wrapListMaybe(paper_phase)
         self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
+        self.rotate_range = rotate_range
         self.paper_color_range = paper_color_range
+        self.rotate_phase = rotate_phase
 
     def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
@@ -84,6 +90,20 @@ class AugraphyPipeline:
 
         data["image"] = image.copy()
         ink = data["image"].copy()
+
+        # check and rotate before ink phase
+        if self.rotate_phase == "pre_ink":
+            # generate random angle
+            if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+                angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+            else:
+                angle = 0
+            # rotate image
+            if angle != 0:
+                ink = self.rotate_image(ink, angle)
+                data["image_rotated_pre_ink"] = ink.copy()
+            # add to log
+            data["log"]["rotation_angle_pre_ink"] = angle
 
         data["pipeline"] = self
         data["ink"] = list()
@@ -127,8 +147,40 @@ class AugraphyPipeline:
         # apply ink phase augmentation
         self.apply_phase(data, layer="ink", phase=self.ink_phase)
 
+        # check and rotate after ink phase
+        if self.rotate_phase == "post_ink":
+            # generate random angle
+            if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+                angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+            else:
+                angle = 0
+            # rotate image
+            if angle != 0:
+                # create a copy of ink output
+                data["ink"].append(deepcopy(data["ink"][-1]))
+                data["ink"][-1].result = self.rotate_image(data["ink"][-1].result, angle)
+                data["image_rotated_post_ink"] = data["ink"][-1].result.copy()
+            # add to log
+            data["log"]["rotation_angle_post_ink"] = angle
+
         # apply paper phase augmentations
         self.apply_phase(data, layer="paper", phase=self.paper_phase)
+
+        # check and rotate after paper phase
+        if self.rotate_phase == "post_paper":
+            # generate random angle
+            if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+                angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+            else:
+                angle = 0
+            # rotate image
+            if angle != 0:
+                # create a copy of paper output
+                data["paper"].append(deepcopy(data["paper"][-1]))
+                data["paper"][-1].result = self.rotate_image(data["paper"][-1].result, angle)
+                data["image_rotated_post_paper"] = data["paper"][-1].result.copy()
+            # add to log
+            data["log"]["rotation_angle_post_paper"] = angle
 
         # ink and paper phases always have at least one result by now
         data["post"].append(
@@ -144,6 +196,22 @@ class AugraphyPipeline:
 
         # apply post phase augmentations
         self.apply_phase(data, layer="post", phase=self.post_phase)
+
+        # check and rotate after post phase
+        if self.rotate_phase == "post":
+            # generate random angle
+            if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+                angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+            else:
+                angle = 0
+            # rotate image
+            if angle != 0:
+                # create a copy of paper output
+                data["post"].append(deepcopy(data["post"][-1]))
+                data["post"][-1].result = self.rotate_image(data["post"][-1].result, angle)
+                data["image_rotated_post"] = data["post"][-1].result.copy()
+            # add to log
+            data["log"]["rotation_angle_post"] = angle
 
         data["output"] = data["post"][-1].result.astype("uint8")
 
@@ -170,6 +238,36 @@ class AugraphyPipeline:
                 )
             else:
                 data[layer].append(AugmentationResult(augmentation, result))
+
+    def rotate_image(self, mat, angle):
+        """Rotates an image (angle in degrees) and expands image to avoid
+        cropping.
+        """
+        mat = cv2.bitwise_not(mat)
+        height, width = mat.shape[:2]  # image shape has 3 dimensions
+        image_center = (
+            width / 2,
+            height / 2,
+        )  # getRotationMatrix2D needs coordinates in reverse order (width, height) compared to shape
+
+        rotation_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+
+        # rotation calculates the cos and sin, taking absolutes of those.
+        abs_cos = abs(rotation_mat[0, 0])
+        abs_sin = abs(rotation_mat[0, 1])
+
+        # find the new width and height bounds
+        bound_w = int(height * abs_sin + width * abs_cos)
+        bound_h = int(height * abs_cos + width * abs_sin)
+
+        # subtract old image center (bringing image back to origo) and adding the new image center coordinates
+        rotation_mat[0, 2] += bound_w / 2 - image_center[0]
+        rotation_mat[1, 2] += bound_h / 2 - image_center[1]
+
+        # rotate image with the new bounds and translated rotation matrix
+        rotated_mat = cv2.warpAffine(mat, rotation_mat, (bound_w, bound_h))
+        rotated_mat = cv2.bitwise_not(rotated_mat)
+        return rotated_mat
 
     def print_ink_to_paper(self, data, overlay, background):
         """Applies the ink layer to the paper layer."""
