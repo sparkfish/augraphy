@@ -386,21 +386,19 @@ class OverlayBuilder:
     ):
         """Applies overlay from foreground to background"""
 
-        # convert background to gray
+        # get bgr and gray of background
         if len(overlay_background.shape) > 2:
             overlay_background_gray = cv2.cvtColor(overlay_background, cv2.COLOR_BGR2GRAY)
-            # convert foreground to bgr if background is bgr
-            # we need same channel in both background and foreground
-            if len(self.foreground.shape) < 3:
-                self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
         else:
             overlay_background_gray = overlay_background
+            overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_GRAY2BGR)
 
-        # convert foreground to gray
+        # get bgr and gray of foreground
         if len(self.foreground.shape) > 2:
             foreground_gray = cv2.cvtColor(self.foreground, cv2.COLOR_BGR2GRAY)
         else:
             foreground_gray = self.foreground
+            self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
 
         # get size
         bg_height, bg_width = overlay_background_gray.shape

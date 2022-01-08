@@ -8,6 +8,7 @@ The geometric augmentation applies basic geometric transformations such as resiz
 | `scale`       | Pair of floats determining new scale of image.                                    |
 | `fliplr`      | Flag to flip image in left right direction.                                       |
 | `flipud`      | Flag to flip image in up down direction.                                          |
+| `crop`        | Tuple of 4 (x0, y0, xn, yn) to crop section of image.                             |
 | `rotate_range`| Pair of ints determining the range from which to sample the image rotation.       |
 | `p`           | The probability that this augmentation will be applied.                           |
 

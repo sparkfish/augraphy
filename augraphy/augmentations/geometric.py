@@ -15,6 +15,8 @@ class Geometric(Augmentation):
     :type fliplr: int, optional
     :param flipud: Flag to flip image in up down direction.
     :type flipud: int, optional
+    :param crop: Tuple of 4 (x0, y0, xn, yn) to crop section of image.
+    :type crop: tuple, optional
     :param rotate_range: Pair of ints determining the range from which to sample
            the image rotation.
     :type rotate_range: tuple, optional
@@ -27,7 +29,8 @@ class Geometric(Augmentation):
         scale=(1, 1),
         fliplr=0,
         flipud=0,
-        rotate_range=(-5, 5),
+        crop=(),
+        rotate_range=(0, 0),
         p=1,
     ):
         """Constructor method"""
@@ -35,11 +38,12 @@ class Geometric(Augmentation):
         self.scale = scale
         self.fliplr = fliplr
         self.flipud = flipud
+        self.crop = crop
         self.rotate_range = rotate_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Geometry(scale={self.scale}, fliplr={self.fliplr}, flipud={self.flipud}, rotate_range={self.rotate_range}, p={self.p})"
+        return f"Geometry(scale={self.scale}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, p={self.p})"
 
     def rotate_image(self, mat, angle):
         """Rotates an image (angle in degrees) and expands image to avoid
@@ -75,6 +79,24 @@ class Geometric(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            # crop image
+            if self.crop:
+                # make sure there's only 4 inputs, x0, y0, xn, yn
+                if len(self.crop) == 4:
+                    ysize, xsize = image.shape[:2]
+                    xstart, ystart, xend, yend = self.crop
+                    # when value is set to -1, it takes image size
+                    if yend == -1:
+                        yend = ysize
+                    if xend == -1:
+                        xend = xsize
+                    # condition to make sure cropping range is valid
+                    check_y = yend > ystart and ystart >= 0
+                    check_x = xend > xstart and xstart >= 0
+                    # crop image
+                    if check_y and check_x:
+                        image = image[ystart:yend, xstart:xend]
 
             # resize based on scale
             if self.scale[1] > 0 and self.scale[0] > 0:
