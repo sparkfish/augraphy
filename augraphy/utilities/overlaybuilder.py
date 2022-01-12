@@ -386,21 +386,19 @@ class OverlayBuilder:
     ):
         """Applies overlay from foreground to background"""
 
-        # convert background to gray
+        # get bgr and gray of background
         if len(overlay_background.shape) > 2:
             overlay_background_gray = cv2.cvtColor(overlay_background, cv2.COLOR_BGR2GRAY)
-            # convert foreground to bgr if background is bgr
-            # we need same channel in both background and foreground
-            if len(self.foreground.shape) < 3:
-                self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
         else:
             overlay_background_gray = overlay_background
+            overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_GRAY2BGR)
 
-        # convert foreground to gray
+        # get bgr and gray of foreground
         if len(self.foreground.shape) > 2:
             foreground_gray = cv2.cvtColor(self.foreground, cv2.COLOR_BGR2GRAY)
         else:
             foreground_gray = self.foreground
+            self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
 
         # get size
         bg_height, bg_width = overlay_background_gray.shape
@@ -413,6 +411,10 @@ class OverlayBuilder:
                 yend = ystart + fg_height
                 xstart = random.randint(0, bg_width - 10)
                 xend = xstart + fg_width
+
+            # prevent negative value
+            ystart = max(0, ystart)
+            xstart = max(0, xstart)
 
             # crop a section of background
             base = overlay_background[ystart:yend, xstart:xend]
@@ -443,10 +445,26 @@ class OverlayBuilder:
             foreground_half_height = int(fg_height / 2)
             if foreground_half_width > half_width:
                 half_difference = foreground_half_width - half_width
-                new_foreground = new_foreground[:, half_difference:-half_difference]
+                # remove right part
+                if self.edge == "left":
+                    new_foreground = new_foreground[:, : -half_difference * 2]
+                # remove left part
+                elif self.edge == "right":
+                    new_foreground = new_foreground[:, half_difference * 2 :]
+                # shift evenly
+                else:
+                    new_foreground = new_foreground[:, half_difference:-half_difference]
             if foreground_half_height > half_height:
                 half_difference = foreground_half_height - half_height
-                new_foreground = new_foreground[half_difference:-half_difference, :]
+                # remove top part
+                if self.edge == "bottom":
+                    new_foreground = new_foreground[half_difference * 2 :, :]
+                # remove bottom part
+                elif self.edge == "top":
+                    new_foreground = new_foreground[: -half_difference * 2, :]
+                # shift evenly
+                else:
+                    new_foreground = new_foreground[half_difference:-half_difference, :]
 
             # resize new_foreground to cropped background size
             if self.overlay_types != "mix":
@@ -585,5 +603,9 @@ class OverlayBuilder:
             xstart,
             xend,
         )
+
+        # convert image back to gray if background image is in grayscale
+        if len(self.background.shape) < 3 and len(overlay_background.shape) > 2:
+            overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_BGR2GRAY)
 
         return overlay_background

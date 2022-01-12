@@ -16,6 +16,7 @@ augmentation = DirtyDrum(
 | Parameter          | Description                                                     |
 |--------------------|-----------------------------------------------------------------|
 | `line_width_range` | The range from which the width of a dirty drum line is sampled. |
+| `direction`        | Direction of effect, 0=horizontal, 1=vertical, 2=both.          |
 | `noise_intensity`  | Intensity of the effect.                                        |
 | `ksize`            | Height/width pair from which to sample the kernel size.         |
 | `sigmaX`           | Standard deviation of the kernel along the x-axis.              |
@@ -48,6 +49,7 @@ augmentation = DirtyDrum(
     # create dirtydrum object
     dirtydrum1 = DirtyDrum(
             line_width_range=(2, 8),
+			direction = 1,
             noise_intensity= 1,
             ksize=(3, 3),
             sigmaX=0

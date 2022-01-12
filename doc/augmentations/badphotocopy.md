@@ -2,16 +2,17 @@
 
 The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
-| Parameter       | Description                                                      |
-|-----------------|------------------------------------------------------------------|
-| `noise_type`    | Types of noises to generate different mask patterns.             |
-| `intensity`     | Intensity range of noise, lower value get darker effect.         |
-| `nperiod`		  | The number of periods of noise to generate along each axis.      |
-| `octaves`       | The number of octaves in the noise.                              |
-| `persistence`   | The scaling factor between two octaves.                          |
-| `lacunarity`    | The frequency factor between two octaves.                        |
-| `wave_pattern`  | To enable wave pattern in noise.                                 |
-| `p`             | The probability this augmentation will be applied.               |
+| Parameter            | Description                                                      |
+|----------------------|------------------------------------------------------------------|
+| `mask`               | Mask of noise to generate badphotocopy effect.                   |
+| `noise_type`         | Types of noises to generate different mask patterns.             |
+| `noise_value`        | Intensity range of noise, lower value get darker effect.         |
+| `noise_sparsity`	   | Pair of floats determining sparseness of noise.                  |
+| `noise_concentration`| Pair of floats determining concentration of noise.               |
+| `blur_noise`         | Flag to enable blur in noise mask.                               |
+| `blur_noise_kernel`  | Kernel to blur noise mask.                                       |
+| `wave_pattern`       | To enable wave pattern in noise.                                 |
+| `p`                  | The probability this augmentation will be applied.               |
 
 
 **Example Usage:**

@@ -11,6 +11,7 @@ from augraphy.augmentations.dustyink import DustyInk
 from augraphy.augmentations.faxify import Faxify
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
+from augraphy.augmentations.geometric import Geometric
 from augraphy.augmentations.inkbleed import InkBleed
 from augraphy.augmentations.jpeg import Jpeg
 from augraphy.augmentations.letterpress import Letterpress
@@ -39,6 +40,7 @@ __all__ = [
     "Faxify",
     "Folding",
     "Gamma",
+    "Geometric",
     "InkBleed",
     "Jpeg",
     "Letterpress",
