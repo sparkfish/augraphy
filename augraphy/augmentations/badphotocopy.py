@@ -16,6 +16,10 @@ class BadPhotoCopy(Augmentation):
     :type mask: uint8, optional
     :param noise_type: Types of noises to generate different mask patterns.
     :type noise_type: int, optional
+    :param noise_iteration: Pair of ints to determine number of iterations to apply noise in the mask.
+    :type noise_iteration: tuple, optional
+    :param noise_size: Pair of ints to determine scale of noise in the mask.
+    :type noise_size: tuple, optional
     :param noise_value: Intensity range of noise, lower value get darker effect.
     :type noise_value: tuple, optional
     :param noise_sparsity: Pair of floats determining sparseness of noise.
@@ -36,6 +40,8 @@ class BadPhotoCopy(Augmentation):
         self,
         mask=None,
         noise_type=0,
+        noise_iteration=(1, 1),
+        noise_size=(1, 1),
         noise_value=(30, 60),
         noise_sparsity=(0.4, 0.6),
         noise_concentration=(0.4, 0.6),
@@ -48,6 +54,8 @@ class BadPhotoCopy(Augmentation):
         super().__init__(p=p)
         self.mask = mask
         self.noise_type = noise_type
+        self.noise_iteration = noise_iteration
+        self.noise_size = noise_size
         self.noise_value = noise_value
         self.noise_sparsity = noise_sparsity
         self.noise_concentration = noise_concentration
@@ -73,7 +81,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, p={self.p})"
 
     def apply_wave(self, mask):
         """
@@ -187,6 +195,8 @@ class BadPhotoCopy(Augmentation):
             noise_generator = NoiseGenerator(noise_type=self.noise_type)
             mask = noise_generator.generate_noise(
                 noise_value=self.noise_value,
+                noise_iteration=self.noise_iteration,
+                noise_size=self.noise_size,
                 noise_sparsity=self.noise_sparsity,
                 noise_concentration=self.noise_concentration,
             )

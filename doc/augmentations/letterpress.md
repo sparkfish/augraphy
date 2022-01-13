@@ -2,13 +2,15 @@
 
 The Letterpress augmentation produces regions of ink mimicking the effect of ink pressed unevenly onto paper.
 
-| Parameter        | Description                                                                      |
-|------------------|----------------------------------------------------------------------------------|
-| `n_samples`      | Pair of ints determining number of points in a cluster.                          |
-| `n_clusters`     | Pair of ints determining number of clusters.                                     |
-| `std_range`      | The range from which the standard deviation of the blob distribution is sampled. |
-| `value_range`    | The range from which the value of a point in the blob is sampled.                |
-| `p`              | The probability this augmentation will be applied.                               |
+| Parameter                | Description                                                                      |
+|--------------------------|----------------------------------------------------------------------------------|
+| `n_samples`              | Pair of ints determining number of points in a cluster.                          |
+| `n_clusters`             | Pair of ints determining number of clusters.                                     |
+| `std_range`              | The range from which the standard deviation of the blob distribution is sampled. |
+| `value_range`            | The range from which the value of a point in the blob is sampled.                |
+| `value_threshold_range`  | Min value of pixel to enable letterpress effect                                  |
+| `blur`                   | Flag to enable blur in letterpress noise mask.                                   |
+| `p`                      | The probability this augmentation will be applied.                               |
 
 
 **Example Usage:**

@@ -20,6 +20,10 @@ class Letterpress(Augmentation):
     :param value_range: Pair of ints determining the range from which the
            value of a point in the blob is sampled.
     :type value_range: tuple, optional
+    :param value_threshold_range: Min value of pixel to enable letterpress effect.
+    :type value_threshold_range: tuple, optional
+    :param blur: Flag to enable blur in letterpress noise mask.
+    :type blur: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
 
@@ -31,6 +35,8 @@ class Letterpress(Augmentation):
         n_clusters=(500, 1000),
         std_range=(500, 500),
         value_range=(200, 255),
+        value_threshold_range=(128, 128),
+        blur=1,
         p=1,
     ):
         """Constructor method"""
@@ -39,9 +45,11 @@ class Letterpress(Augmentation):
         self.n_clusters = n_clusters
         self.std_range = std_range
         self.value_range = value_range
+        self.value_threshold_range = value_threshold_range
+        self.blur = blur
 
     def __repr__(self):
-        return f"Letterpress(n_samples={self.n_samples}, n_cluster={self.size_range}, std_range={self.std_range}, value_range={self.value_range}, p={self.p})"
+        return f"Letterpress(n_samples={self.n_samples}, n_cluster={self.size_range}, std_range={self.std_range}, value_range={self.value_range}, value_threshold_range={self.value_threshold_range}, blur={self.blur}, p={self.p})"
 
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
@@ -85,11 +93,17 @@ class Letterpress(Augmentation):
                     self.value_range[1],
                 )
 
-            # gaussian blur need uint8 input
-            noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+            if self.blur:
+                # gaussian blur need uint8 input
+                noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+
+            if self.value_threshold_range[1] >= self.value_threshold_range[0]:
+                value_threshold = random.randint(self.value_threshold_range[0], self.value_threshold_range[1])
+            else:
+                value_threshold = self.value_threshold_range[1]
 
             # apply noise to image
-            apply_mask_fn = lambda x, y: y if (x < 128) else x
+            apply_mask_fn = lambda x, y: y if (x < value_threshold) else x
             apply_mask = np.vectorize(apply_mask_fn)
             image = apply_mask(image, noise_mask)
 

@@ -1,5 +1,6 @@
 import random
 
+import cv2
 import numpy as np
 from sklearn.datasets import make_blobs
 
@@ -229,29 +230,9 @@ class NoiseGenerator:
 
         return img_mask
 
-    def generate_noise(
-        self,
-        noise_value=(0, 128),
-        noise_background=(255, 255),
-        noise_sparsity=(0.4, 0.6),
-        noise_concentration=(0.4, 0.6),
-        xsize=1500,
-        ysize=1500,
-    ):
+    def generate_mask_main(self, noise_value, noise_background, noise_sparsity, noise_concentration, xsize, ysize):
         """
-        Main function to generate noise
-        :param noise_value: Pair of ints determining value of noise.
-        :type noise_value: tuple, optional
-        :param noise_background: Pair of ints determining value of noise background.
-        :type noise_background: tuple, optional
-        :param noise_sparsity: Pair of floats determining sparseness of noise.
-        :type noise_sparsity: tuple, optional
-        :param noise_concentration: Pair of floats determining concentration of noise.
-        :type noise_concentration: tuple, optional
-        :param xsize: Number of columns in generated mask of noise.
-        :type xsize: int, optional
-        :param ysize: Number of rows in generated mask of noise.
-        :type ysize: int, optional
+        Main function to generate mask of noise in each iteration.
         """
 
         # get max of y or x size
@@ -282,5 +263,80 @@ class NoiseGenerator:
             xsize,
             ysize,
         )
+
+        return img_mask
+
+    def generate_noise(
+        self,
+        noise_iteration=(1, 1),
+        noise_size=(1, 1),
+        noise_value=(0, 128),
+        noise_background=(255, 255),
+        noise_sparsity=(0.4, 0.6),
+        noise_concentration=(0.4, 0.6),
+        xsize=1500,
+        ysize=1500,
+    ):
+        """
+        Main function to generate noise
+        :param noise_iteration: Pair of ints to determine number of iterations to apply noise in the mask.
+        :type noise_type: tuple, optional
+        :param noise_size: Pair of ints to determine scale of noise in the mask.
+        :type noise_size: tuple, optional
+        :param noise_value: Pair of ints determining value of noise.
+        :type noise_value: tuple, optional
+        :param noise_background: Pair of ints determining value of noise background.
+        :type noise_background: tuple, optional
+        :param noise_sparsity: Pair of floats determining sparseness of noise.
+        :type noise_sparsity: tuple, optional
+        :param noise_concentration: Pair of floats determining concentration of noise.
+        :type noise_concentration: tuple, optional
+        :param xsize: Number of columns in generated mask of noise.
+        :type xsize: int, optional
+        :param ysize: Number of rows in generated mask of noise.
+        :type ysize: int, optional
+        """
+
+        # generate random iterations
+        iterations = random.randint(noise_iteration[0], noise_iteration[1])
+
+        # generate background value
+        background_value = random.randint(noise_background[0], noise_background[1])
+
+        # initialize blank noise mask
+        img_mask = np.full((xsize, ysize), fill_value=background_value).astype("int")
+
+        # loop each iterations
+        for _ in range(iterations):
+
+            # divider to rescale noise mask to larger size
+            y_divider = random.randint(noise_size[0], noise_size[1])
+            x_divider = random.randint(noise_size[0], noise_size[1])
+
+            # generate noise mask for current iteration
+            img_mask_temporary = self.generate_mask_main(
+                noise_value,
+                noise_background,
+                noise_sparsity,
+                noise_concentration,
+                int(xsize / x_divider),
+                int(ysize / y_divider),
+            )
+            img_mask_temporary = cv2.resize(
+                img_mask_temporary.astype("uint8"),
+                (xsize, ysize),
+                interpolation=cv2.INTER_AREA,
+            )
+
+            # merge noise mask in each iteration
+            img_mask *= img_mask_temporary.astype("int")
+
+            # rescale value from 0 - 255
+            max_value = 255 if np.max(img_mask) > 255 else np.max(img_mask)
+            img_mask = (img_mask - np.min(img_mask)) * max_value / (np.max(img_mask) - np.min(img_mask))
+            img_mask[img_mask_temporary <= noise_value[1]] = img_mask_temporary[img_mask_temporary <= noise_value[1]]
+
+        # output needs uint8 type
+        img_mask = img_mask.astype("uint8")
 
         return img_mask
