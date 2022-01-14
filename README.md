@@ -58,6 +58,23 @@ There are plenty of choices when it comes to [augmentation libraries](https://gi
 # Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
+# Citations
+If you used Augraphy in your research, please cite the project.
+
+BibTeX:
+```
+@software{The_Augraphy_Project,
+author = {{The Augraphy Project}},
+title = {{Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes}},
+url = {https://github.com/sparkfish/augraphy},
+version = {5.0.0}
+}
+```
+
+APA:
+```
+The Augraphy Project. Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes (Version 5.0.0) [Computer software]. https://github.com/sparkfish/augraphy
+```
 # License
 Copyright 2021 Sparkfish LLC
 
