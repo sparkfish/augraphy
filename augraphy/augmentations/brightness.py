@@ -41,6 +41,4 @@ class Brightness(Augmentation):
             hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
             hsv = np.array(hsv, dtype=np.uint8)
             image = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            if layer == "ink":
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             return image

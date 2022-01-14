@@ -2,17 +2,19 @@
 
 The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 
-| Parameter            | Description                                                      |
-|----------------------|------------------------------------------------------------------|
-| `mask`               | Mask of noise to generate badphotocopy effect.                   |
-| `noise_type`         | Types of noises to generate different mask patterns.             |
-| `noise_value`        | Intensity range of noise, lower value get darker effect.         |
-| `noise_sparsity`	   | Pair of floats determining sparseness of noise.                  |
-| `noise_concentration`| Pair of floats determining concentration of noise.               |
-| `blur_noise`         | Flag to enable blur in noise mask.                               |
-| `blur_noise_kernel`  | Kernel to blur noise mask.                                       |
-| `wave_pattern`       | To enable wave pattern in noise.                                 |
-| `p`                  | The probability this augmentation will be applied.               |
+| Parameter            | Description                                                                |
+|----------------------|----------------------------------------------------------------------------|
+| `mask`               | Mask of noise to generate badphotocopy effect.                             |
+| `noise_type`         | Types of noises to generate different mask patterns.                       |
+| `noise_iteration`    | Pair of ints to determine number of iterations to apply noise in the mask. |
+| `noise_size`         | Pair of ints to determine scale of noise in the mask.                      |
+| `noise_value`        | Intensity range of noise, lower value get darker effect.                   |
+| `noise_sparsity`	   | Pair of floats determining sparseness of noise.                            |
+| `noise_concentration`| Pair of floats determining concentration of noise.                         |
+| `blur_noise`         | Flag to enable blur in noise mask.                                         |
+| `blur_noise_kernel`  | Kernel to blur noise mask.                                                 |
+| `wave_pattern`       | To enable wave pattern in noise.                                           |
+| `p`                  | The probability this augmentation will be applied.                         |
 
 
 **Example Usage:**
