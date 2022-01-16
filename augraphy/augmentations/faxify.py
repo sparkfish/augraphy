@@ -50,7 +50,7 @@ class Faxify(Augmentation):
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
-        self.monochrome_threshold = 127
+        self.monochrome_threshold = monochrome_threshold
         self.invert = invert
         self.half_kernel_size = half_kernel_size
         self.angle = angle

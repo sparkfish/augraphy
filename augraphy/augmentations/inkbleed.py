@@ -57,7 +57,7 @@ class InkBleed(Augmentation):
                 else x
             )
 
-            severity = random.randint(self.severity[0] * 10, self.severity[1] * 10) / 10
+            severity = np.random.uniform(self.severity[0], self.severity[1])
             apply_mask_fn = lambda x, y, z: x if (z != 255 or random.random() > severity) else y
             add_noise = np.vectorize(add_noise_fn)
             apply_mask = np.vectorize(apply_mask_fn)
