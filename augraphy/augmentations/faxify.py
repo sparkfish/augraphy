@@ -18,6 +18,8 @@ class Faxify(Augmentation):
     :type monochrome: int, optional
     :param monochrome_method: Otsu, Simple or Adaptive method.
     :type monochrome_method: string, optional
+    :param adaptive_method: cv2 adaptive methods when adaptive method is used.
+    :type adaptive_method: cv2.ADAPTIVE_THRESH, optional
     :param monochrome_threshold: Simple binarization threshold value.
     :type monochrome_threshold: int, optional
     :param invert: Invert grayscale value in halftone effect.
@@ -37,6 +39,7 @@ class Faxify(Augmentation):
         scale_range=(1, 1),
         monochrome=1,
         monochrome_method="Otsu",
+        adaptive_method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         monochrome_threshold=127,
         invert=1,
         half_kernel_size=2,
@@ -50,6 +53,7 @@ class Faxify(Augmentation):
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
+        self.adaptive_method = adaptive_method
         self.monochrome_threshold = monochrome_threshold
         self.invert = invert
         self.half_kernel_size = half_kernel_size
@@ -66,12 +70,16 @@ class Faxify(Augmentation):
         elif self.monochrome_method == "Adaptive":
             self.enable_adaptive = 1
 
+        # valid adaptive method only
+        if self.adaptive_method not in [cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.ADAPTIVE_THRESH_MEAN_C]:
+            self.adaptive_method = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
+
         # at least 1 for half kernel size
         self.half_kernel_size = max(1, self.half_kernel_size)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, adaptive_method={self.adaptive_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
     # rotate image based on the input angle
     def cv_rotate(self, image, angle):
@@ -200,7 +208,7 @@ class Faxify(Augmentation):
                     thres=self.monochrome_threshold,
                     max_value=255,
                     enable_adaptive=self.enable_adaptive,
-                    adaptive_method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                    adaptive_method=self.adaptive_method,
                     block_size=21,
                     C=10,
                 )
