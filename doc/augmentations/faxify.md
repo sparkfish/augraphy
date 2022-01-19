@@ -8,6 +8,7 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
 | `scale_range`          | Pair of ints determining the range from which to divide the resolution by. |
 | `monochrome`           | Flag to apply monochrome effect, false to select halftone effect.          |
 | `monochrome_method`    | Otsu, Simple or Adaptive method.                                           |
+| `adaptive_method`      | cv2 adaptive methods when adaptive method is used.                         |
 | `monochrome_threshold` | The simple binarization threshold value.                                   |
 | `invert`               | Invert grayscale value in halftone effect.                                 |
 | `half_kernel_size`     | The half size of gaussian kernel for halftone effect.                      |
