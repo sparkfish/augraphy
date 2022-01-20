@@ -15,6 +15,10 @@ class BookBinding(Augmentation):
     :type range: tuple, optional
     :param curve_intensity_range: Intensity by which the page text should be curved
     :type range: tuple, optional
+    :param mirror: Flag to enable mirror effect.
+    :type mirror: int, optional
+    :param mirror_range: Tuple of floats to determine width of image to be mirrored.
+    :type mirror_range: Tuple, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
 
@@ -24,14 +28,18 @@ class BookBinding(Augmentation):
         self,
         radius_range=(1, 100),
         curve_intensity_range=(0, 70),
+        mirror=0,
+        mirror_range=(0.1, 0.2),
         p=1,
     ):
         super().__init__(p=p)
         self.radius_range = radius_range
         self.curve_intensity_range = curve_intensity_range
+        self.mirror = mirror
+        self.mirror_range = mirror_range
 
     def __repr__(self):
-        return f"BookBinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range},  p={self.p})"
+        return f"BookBinding(radius_range={self.radius_range}, curve_intensity_range={self.curve_intensity_range}, mirror={self.mirror}, mirror_range={self.mirror_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
 
@@ -76,4 +84,30 @@ class BookBinding(Augmentation):
         )
         image = self.add_book_shadow(image, radius, angle)
         image = self.curve_page(image, curve_intensity)
+
+        if self.mirror:
+            # get image size and channels
+            if len(image.shape) > 2:
+                ysize, xsize, channels = image.shape
+            else:
+                ysize, xsize = image.shape
+                channels = 1
+
+            # generate range of mirror
+            mirror_range = np.random.uniform(self.mirror_range[0], self.mirror_range[1])
+            xsize_mirror = int(mirror_range * xsize)
+            image_mirror = image[:, :xsize_mirror]
+
+            # create new image with original size + mirror size
+            if channels > 2:
+                new_image = np.zeros((ysize, xsize + xsize_mirror, channels)).astype("uint8")
+            else:
+                new_image = np.zeros((ysize, xsize + xsize_mirror)).astype("uint8")
+
+            # merged the original iamge + mirrored image
+            new_image[:, :xsize_mirror] = np.fliplr(image_mirror)
+            new_image[:, xsize_mirror:] = image
+
+            image = new_image
+
         return image
