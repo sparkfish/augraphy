@@ -3,11 +3,13 @@
 The BookBinding augmentation creates the effect of a page curling away from the scanner bed, towards the binding of a book or magazine.
 
 
-| Parameter               | Description                                             |
-|-------------------------|---------------------------------------------------------|
-| `radius_range`          | The range of the curl radius, in pixels.                |
-| `curve_intensity_range` | The intensity by which the page text should be curved.  |
-| `p`                     | The probability that this augmentation will be applied. |
+| Parameter               | Description                                                |
+|-------------------------|------------------------------------------------------------|
+| `radius_range`          | The range of the curl radius, in pixels.                   |
+| `curve_intensity_range` | The intensity by which the page text should be curved.     |
+| `mirror`                | Flag to enable mirror effect.                              |
+| `mirror_range`          | Tuple of floats to determine width of image to be mirrored.|
+| `p`                     | The probability that this augmentation will be applied.    |
 
 
 **Example Usage:**

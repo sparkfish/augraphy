@@ -9,6 +9,10 @@ from augraphy.base.augmentation import Augmentation
 class Folding(Augmentation):
     """Emulates folding effect from perspective transformation
 
+    :param fold_x: X coordinate of the folding effect.
+    :type fold_x: int, optional
+    :param fold_deviation: Deviation (in pixels) of provided X coordinate location.
+    :type fold_deviation: tuple, optional
     :param fold count: Number of applied foldings
     :type fold_count: int, optional
     :param fold_noise: Level of noise added to folding area. Range from
@@ -27,6 +31,8 @@ class Folding(Augmentation):
 
     def __init__(
         self,
+        fold_x=None,
+        fold_deviation=(0, 0),
         fold_count=2,
         fold_noise=0.1,
         gradient_width=(0.1, 0.2),
@@ -34,6 +40,8 @@ class Folding(Augmentation):
         p=1,
     ):
         super().__init__(p=p)
+        self.fold_x = fold_x
+        self.fold_deviation = fold_deviation
         self.fold_count = fold_count
         self.fold_noise = fold_noise
         self.gradient_width = gradient_width
@@ -41,7 +49,7 @@ class Folding(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Folding(fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
+        return f"Folding(fold_x={self.fold_x}, fold_deviation={self.fold_deviation}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
 
     # Perspective transform based on 4 points
     def four_point_transform(self, image, pts, dst, xs, ys):
@@ -243,10 +251,16 @@ class Folding(Augmentation):
             print("Folding augmentation is not applied, please increase image size")
             return img
 
-        fold_x = random.randint(
-            fold_width_one_side + 1,
-            xsize - fold_width_one_side - 1,
-        )  # center of folding
+        # center of folding
+        if self.fold_x is None:
+
+            fold_x = random.randint(
+                fold_width_one_side + 1,
+                xsize - fold_width_one_side - 1,
+            )
+        else:
+            deviation = random.randint(self.fold_deviation[0], self.fold_deviation[1]) * random.choice([-1, 1])
+            fold_x = min(max(self.fold_x + deviation, fold_width_one_side + 1), xsize - fold_width_one_side - 1)
 
         fold_y_shift_min = min(np.ceil(gradient_height[0] * ysize), ysize).astype("int")
         fold_y_shift_max = min(np.ceil(gradient_height[1] * ysize), ysize).astype("int")

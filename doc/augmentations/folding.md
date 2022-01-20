@@ -5,6 +5,8 @@ The Folding augmentation emulates folded paper being scanned, with a visible war
 
 | Parameter         | Description                                                                                   |
 |-------------------|-----------------------------------------------------------------------------------------------|
+| `fold_x`          | X coordinate of the folding effect.                                                           |
+| `fold_deviation`  | Deviation (in pixels) of provided X coordinate location.                                      |
 | `fold_count`      | Number of folds to apply.                                                                     |
 | `fold_noise`      | Level of noise added to folding area. Range from 0 to 1.                                      |
 | `gradient_width`  | Measure of the space affected by the fold prior to being warped, as percentage of page width. |
