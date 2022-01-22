@@ -63,15 +63,29 @@ class BookBinding(Augmentation):
     def curve_page(self, img, curve_intensity):
         rows = img.shape[0]
         cols = img.shape[1]
-        img_output = np.zeros(img.shape, dtype=img.dtype)
+
+        # reassign variable name for clarity
+        max_offset_y = curve_intensity
+
+        if len(img.shape) > 2:
+            channels = img.shape[2]
+            img_output = np.zeros((rows + max_offset_y, cols, channels), dtype=img.dtype)
+        else:
+            img_output = np.zeros((rows + max_offset_y, cols), dtype=img.dtype)
+
         for i in range(rows):
+            i_new = i + max_offset_y
             for j in range(cols):
                 offset_x = 0
                 offset_y = int(curve_intensity * math.sin(2 * 3.14 * j / (3 * rows)))
+
                 if i + offset_y < rows:
-                    img_output[i, j] = img[(i + offset_y) % rows, (j + offset_x) % cols]
+                    img_output[i_new, j] = img[(i + offset_y) % (rows), (j + offset_x) % cols]
                 else:
-                    img_output[i, j] = img[0, 0]
+                    img_output[i_new, j] = img[0, 0]
+                    # add top section
+                    img_output[(i_new - rows), j] = img[(i + offset_y) % (rows), (j + offset_x) % cols]
+
         return img_output
 
     def __call__(self, image, layer=None, force=False):
@@ -82,6 +96,7 @@ class BookBinding(Augmentation):
             self.curve_intensity_range[0],
             self.curve_intensity_range[1],
         )
+
         image = self.add_book_shadow(image, radius, angle)
         image = self.curve_page(image, curve_intensity)
 
