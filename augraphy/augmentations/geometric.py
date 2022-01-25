@@ -11,6 +11,8 @@ class Geometric(Augmentation):
 
     :param scale: Pair of floats determining new scale of image.
     :type scale: tuple, optional
+    :param translation: Pair of ints determining x and y translation value.
+    :type translation: tuple, optional
     :param fliplr: Flag to flip image in left right direction.
     :type fliplr: int, optional
     :param flipud: Flag to flip image in up down direction.
@@ -27,6 +29,7 @@ class Geometric(Augmentation):
     def __init__(
         self,
         scale=(1, 1),
+        translation=(0, 0),
         fliplr=0,
         flipud=0,
         crop=(),
@@ -36,6 +39,7 @@ class Geometric(Augmentation):
         """Constructor method"""
         super().__init__(p=p)
         self.scale = scale
+        self.translation = translation
         self.fliplr = fliplr
         self.flipud = flipud
         self.crop = crop
@@ -43,7 +47,7 @@ class Geometric(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Geometry(scale={self.scale}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, p={self.p})"
+        return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, p={self.p})"
 
     def rotate_image(self, mat, angle):
         """Rotates an image (angle in degrees) and expands image to avoid
@@ -106,6 +110,31 @@ class Geometric(Augmentation):
                     new_height = int(image.shape[0] * scale)
                     new_size = (new_width, new_height)
                     image = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+
+            # translate image based on translation value
+            if self.translation[0] != 0 or self.translation[1] != 0:
+
+                image_new = np.full_like(image, fill_value=255).astype("uint8")
+                offset_x = self.translation[0]
+                offset_y = self.translation[1]
+
+                # x translation
+                if offset_x > 0:
+                    image_new[:, offset_x:] = image[:, :-offset_x]
+                    image = image_new
+                elif offset_x < 0:
+                    image_new[:, :offset_x] = image[:, abs(offset_x) :]
+                    image = image_new
+
+                image_new = np.full_like(image, fill_value=255).astype("uint8")
+
+                # y translation
+                if offset_y > 0:
+                    image_new[:, offset_y:] = image[:, :-offset_y]
+                    image = image_new
+                elif offset_y < 0:
+                    image_new[:, :-offset_y] = image[:, abs(offset_y) :]
+                    image = image_new
 
             # flip left right
             if self.fliplr:

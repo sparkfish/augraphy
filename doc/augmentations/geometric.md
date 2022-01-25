@@ -6,6 +6,7 @@ The geometric augmentation applies basic geometric transformations such as resiz
 | Parameter     | Description                                                                       |
 |---------------|-----------------------------------------------------------------------------------|
 | `scale`       | Pair of floats determining new scale of image.                                    |
+| `translation` | Pair of ints determining x and y translation value.                               |
 | `fliplr`      | Flag to flip image in left right direction.                                       |
 | `flipud`      | Flag to flip image in up down direction.                                          |
 | `crop`        | Tuple of 4 (x0, y0, xn, yn) to crop section of image.                             |
