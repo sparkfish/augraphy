@@ -55,4 +55,4 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
 
 ```
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1zPuAFgW8BdgX9tH9grorp_V3B7FswVUq?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zPuAFgW8BdgX9tH9grorp_V3B7FswVUq?usp=sharing)

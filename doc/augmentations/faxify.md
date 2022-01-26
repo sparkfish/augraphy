@@ -100,4 +100,4 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
 ```
 
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/12hxA5JDCi76hxmjFTotw0A3JmnwNpL6i?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/12hxA5JDCi76hxmjFTotw0A3JmnwNpL6i?usp=sharing)

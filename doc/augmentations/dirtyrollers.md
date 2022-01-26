@@ -57,4 +57,4 @@ The Dirty Rollers augmentation emulates an effect created by certain document sc
 
 ![Ink Bleed no Blur](../../images/Augmentations/DirtyRollers.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1G5z2_qRVIowcoRy3pQGiNLlWvQA0xwhS?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1G5z2_qRVIowcoRy3pQGiNLlWvQA0xwhS?usp=sharing)

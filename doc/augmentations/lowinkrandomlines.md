@@ -62,4 +62,4 @@
     plt.title("Image low ink random line not consistent")
 ```
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_FX-m7jtfdkucpGL1Ei3Mk_P-mi6DtDq?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1_FX-m7jtfdkucpGL1Ei3Mk_P-mi6DtDq?usp=sharing)

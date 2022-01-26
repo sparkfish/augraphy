@@ -59,4 +59,4 @@ The Pencil Scribbles augmentation applies random pencil scribbles to image.
     plt.title("Image pencil scribbles")
 ```
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1jyBODoE2UxLAUVgkFEQ2s1gOScjCzpdk?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1jyBODoE2UxLAUVgkFEQ2s1gOScjCzpdk?usp=sharing)

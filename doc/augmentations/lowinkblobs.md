@@ -67,4 +67,4 @@ The Low Ink Blobs augmentation creates random blobs of "low ink" that will be ap
 ![Ink Bleed no Blur](../../images/Augmentations/LowInkBlobs.png)
 ![Ink Bleed with Blur](../../images/Augmentations/LowInkBlobsBlur.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/18htEZ2nkdZsq1vJgZaIEogzODv820sRy?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/18htEZ2nkdZsq1vJgZaIEogzODv820sRy?usp=sharing)

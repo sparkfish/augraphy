@@ -71,4 +71,4 @@
 ![Ink Bleed no Blur](../../images/Augmentations/LowInkLines.png)
 ![Ink Bleed with Blur](../../images/Augmentations/LowInkLinesBlur.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1AfbcC_9_fp8zDnc8GCL0kGApLO67MW7A?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1AfbcC_9_fp8zDnc8GCL0kGApLO67MW7A?usp=sharing)

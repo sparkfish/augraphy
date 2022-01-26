@@ -72,4 +72,4 @@ The Dithering augmentation applies Ordered or Floyd Steinberg dithering to the i
 ```
 
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/19bqVyTF21BlzvEH4wOg_zFoFnCepPH1h?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/19bqVyTF21BlzvEH4wOg_zFoFnCepPH1h?usp=sharing)

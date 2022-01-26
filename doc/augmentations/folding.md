@@ -60,4 +60,4 @@ The Folding augmentation emulates folded paper being scanned, with a visible war
 ```
 
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1DNZoPc_z2CG8-VpwTvBWQoJG0cWa86MV?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1DNZoPc_z2CG8-VpwTvBWQoJG0cWa86MV?usp=sharing)

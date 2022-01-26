@@ -55,4 +55,4 @@ The BookBinding augmentation creates the effect of a page curling away from the 
 
 ```
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1Ju1kzxpHhIZWUbgML8PKaw8KMBoz3PTC?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1Ju1kzxpHhIZWUbgML8PKaw8KMBoz3PTC?usp=sharing)

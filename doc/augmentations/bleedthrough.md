@@ -60,4 +60,4 @@ The BleedThrough augmentation emulates ink bleeding through the page from the re
 
 ```
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1iwU2AnYhhJKEdddFP0Uu3DwEz8QnfQcs?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1iwU2AnYhhJKEdddFP0Uu3DwEz8QnfQcs?usp=sharing)

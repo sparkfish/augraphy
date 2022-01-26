@@ -62,4 +62,4 @@ The Page Border augmentation applies a shadow of underlying pages on any side of
 
 ![Border](../../images/Augmentations/PageBorder.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1eRFCmmyoQD87ZgAeweAk5dkygS-Hk3Zu?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1eRFCmmyoQD87ZgAeweAk5dkygS-Hk3Zu?usp=sharing)

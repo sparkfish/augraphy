@@ -72,4 +72,4 @@ augmentation = DirtyDrum(
 ```
 
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1yl0AxrAE2RyWnkWh07yWRDZdHJVfIfqb?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1yl0AxrAE2RyWnkWh07yWRDZdHJVfIfqb?usp=sharing)

@@ -61,4 +61,4 @@ In the image below, the leftmost picture is the original, the middle image is ob
 
 ![Gamma](../../images/Augmentations/gamma.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1_h1TybFELR6-e5UeVmjRniof-PLAvyXB?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1_h1TybFELR6-e5UeVmjRniof-PLAvyXB?usp=sharing)

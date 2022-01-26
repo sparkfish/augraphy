@@ -58,4 +58,4 @@ The Noise Texturize augmentation creates a random noise based texture pattern to
 
 ![Noise textureized image](../../images/Augmentations/NoiseTexturizeAfter.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1UOwbY83BeEbpRXiSQlhZvodUvrUVPpXh?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1UOwbY83BeEbpRXiSQlhZvodUvrUVPpXh?usp=sharing)

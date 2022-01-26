@@ -58,4 +58,4 @@ The Brightness Texturize augmentation creates a random noise in the brightness c
 
 ![Ink Bleed with Blur](../../images/Augmentations/BrightnessTexturizeAfter.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1vi4Tytxw-4Ap1pmSULtp3UhfjU8O9G2t?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1vi4Tytxw-4Ap1pmSULtp3UhfjU8O9G2t?usp=sharing)

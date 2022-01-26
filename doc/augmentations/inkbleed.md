@@ -68,4 +68,4 @@ Before and After Blur
 ![Ink Bleed no Blur](../../images/Augmentations/InkBleed.png)
 ![Ink Bleed with Blur](../../images/Augmentations/InkBleedBlur.png)
 
-Click here for an [example Colab Notebook](https://colab.research.google.com/drive/1hQr4eW2H0NNr1ov6Nw7sEHOf5QTJFOyX?usp=sharing)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1hQr4eW2H0NNr1ov6Nw7sEHOf5QTJFOyX?usp=sharing)
