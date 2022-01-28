@@ -10,17 +10,17 @@ class FigshareDownloader:
     """Makes HTTP requests for images on Figshare"""
 
     def __init__(self, directory="figshare/"):
-        self.saveDir = os.path.join(os.getcwd(), directory)
+        self.save_dir = os.path.join(os.getcwd(), directory)
 
-    def makeUrl(self, articleID):
+    def make_files_url(self, article_id):
         """Form the full URL for requests"""
-        return "https://api.figshare.com/v2/" + f"articles/{articleID}/files"
+        return f"https://api.figshare.com/v2/articles/{article_id}/files"
 
-    def makeSaveDir(self):
+    def make_save_dir(self):
         # Don't throw errors if we download stuff multiple times
-        os.makedirs(self.saveDir, exist_ok=True)
+        os.makedirs(self.save_dir, exist_ok=True)
 
-    def sendRequest(self, url, headers):
+    def send_request(self, url, headers):
         """Request Figshare data
 
         :param url: request endpoint
@@ -51,50 +51,55 @@ class FigshareDownloader:
 
         return response_data
 
-    def listFiles(self, articleID):
-        """Get a dictionary of files from articleID.
+    def list_article_files(self, article_id):
+        """Get a dictionary of files from Figshare.
 
-        :param articleID: ID of Figshare article
-        :type articleID: str
+        :param article_id: ID of the Figshare article
+        :type article_id: string
         """
 
-        requestUrl = self.makeUrl(articleID)
-        requestHeader = {"Content-Type": "application/json"}
-        response = self.sendRequest(requestUrl, headers=requestHeader)
+        request_url = self.make_files_url(article_id)
+        request_header = {"Content-Type": "application/json"}
+        response = self.send_request(request_url, headers=request_header)
         return response
 
-    def downloadFile(self, articleID, fileDict):
-        """Helper function to download files from articleID, save to ./figshare/
+    def download_file_by_id(self, file_id, file_name=None):
+        """Download a single file using its unique identifier,
+        and optionally rename it.
 
-        :param articleID: ID of the Figshare article
-        :type articleID: string
-        :param fileDict: dictionary of Figshare file info
-        :type fileDict: dictionary
+        :param file_id: ID of the Figshare file
+        :type id: string
         """
 
-        urlretrieve(
-            fileDict["download_url"],
-            os.path.join(self.saveDir, fileDict["name"]),
+        # Make ./figshare/ if not available
+        self.make_save_dir()
+
+        local_file, headers = urlretrieve(
+            f"https://figshare.com/ndownloader/files/{file_id}",
         )
 
-    def downloadSingleFile(self, articleID, fileDict):
-        """Download one file in articleID"""
+        if file_name is not None:
+            os.rename(local_file, os.path.join(self.save_dir, file_name))
+        else:
+            # urlretrieve puts everything in /tmp so we strip "/tmp/" from local_file
+            os.rename(local_file, os.path.join(self.save_dir, local_file[5:]))
 
-        # Make ./figshare/ if not available
-        self.makeSaveDir()
+    def download_all_files_from_article(self, article_id):
+        """Download every file in article_id
 
-        # Save the file
-        self.downloadFile(articleID, fileDict)
-
-    def downloadAllFiles(self, articleID):
-        """Download every file in articleID"""
+        :param article_id: ID of the Figshare article
+        :type article_id: string
+        """
 
         # Get list of dictionaries of file info
-        fileList = self.listFiles(articleID)
+        file_list = self.list_article_files(article_id)
 
         # Make ./figshare/ if not available
-        self.makeSaveDir()
+        self.make_save_dir()
 
         # Save the files
-        for fileDict in fileList:
-            self.downloadFile(articleID, fileDict)
+        for file_dict in file_list:
+            urlretrieve(
+                file_dict["download_url"],
+                os.path.join(self.save_dir, file_dict["name"]),
+            )
