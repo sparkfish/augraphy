@@ -189,12 +189,14 @@ class AugraphyPipeline:
         # Again calculate the inverse mask
         background_mask = 255 - overlay_mask
 
-        # Turn the masks into three channel, so we can use them as weights
+        # Turn the single channel alpha masks into three channel, so we can use them as weights
         if len(overlay.shape) > 2:
             overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
         if len(background_mask.shape) > 2:
             background_mask = cv2.cvtColor(background_mask, cv2.COLOR_GRAY2BGR)
-
+        # Convert background to 3 channels if they are in single channel
+        if len(background.shape) < 3:
+            background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
         # Create a masked out face image, and masked out overlay
         # We convert the images to floating point in range 0.0 - 1.0
         background_part = (background * (1 / 255.0)) * (background_mask * (1 / 255.0))
@@ -210,7 +212,7 @@ class AugraphyPipeline:
         r += f"paper_phase = {repr(self.ink_phase)}\n\n"
         r += f"post_phase = {repr(self.ink_phase)}\n\n"
 
-        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, rotate_range={self.rotate_range})"
+        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range})"
 
         return r
 
