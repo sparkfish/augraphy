@@ -11,22 +11,38 @@ class NoiseGenerator:
     def __init__(self, noise_type=1, noise_side=None):
         self.noise_type = noise_type
         self.noise_side = noise_side
-        self.sides = [None, "left", "right", "top", "bottom", "top_left", "top_right", "bottom_left", "bottom_right"]
+        self.sides = [
+            "random",
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "top_left",
+            "top_right",
+            "bottom_left",
+            "bottom_right",
+        ]
         """
-        noise types:
+        noise_type:
         1 = default, even spread of noise
         2 = noise with regular pattern
         3 = noise at all borders of image
         4 = sparse and little noise
+
+        noise_side:
+        1. All sides valid for noise_type = 1 and 4
+        2. For noise_type = 2, valid noise_side are only left, right, top and bottom.
+        3. For noise_type = 3, noise_side is not applicable.
+
         """
 
         # any invalid noise type will reset noise type to 0
-        if self.noise_type > 4:
+        if self.noise_type not in [1, 2, 3, 4]:
             self.noise_type = 1
 
-        # any invalid noise side will set to random sides
-        if self.noise_side == "random" or self.noise_side not in self.sides:
-            self.noise_side = random.choice(self.sides)
+        # random location with no sides if no side is chosen
+        if self.noise_side not in self.sides:
+            self.noise_side = "random"
 
     def generate_clusters_and_samples(self, noise_concentration, max_size):
         """
@@ -261,14 +277,15 @@ class NoiseGenerator:
             generated_points_y = np.array([[-1]], dtype="int")
 
             # to generate gradient in noise
-            reduce_elements = int(end_y / n_step_y)
+            reduce_elements = max(int(end_y / n_step_y), 2)
 
             # initial noise location
             ccenter_y = (0, 0)
             ccenter_x = (0, 0)
 
             while ccenter_y[1] < end_y:
-                if reduce_elements < len(n_samples_array) - 1:
+
+                if (len(n_samples_array) - reduce_elements) > 1:
                     n_samples_array = n_samples_array[:-reduce_elements]
 
                 # varying y
