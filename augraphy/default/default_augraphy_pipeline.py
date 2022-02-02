@@ -8,7 +8,7 @@ import random
 from augraphy import *
 
 
-def default_augraphy_pipeline():
+def default_augraphy_pipeline(clean):
     ink_phase = AugmentationSequence(
         [
             Dithering(p=0.5),
@@ -61,4 +61,6 @@ def default_augraphy_pipeline():
         ],
     )
 
-    return AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline.augment(clean)["output"]
