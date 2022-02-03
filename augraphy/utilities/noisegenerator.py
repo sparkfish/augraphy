@@ -276,17 +276,15 @@ class NoiseGenerator:
             generated_points_x = np.array([[-1]], dtype="int")
             generated_points_y = np.array([[-1]], dtype="int")
 
-            # to generate gradient in noise
-            reduce_elements = max(int(end_y / n_step_y), 2)
-
             # initial noise location
             ccenter_y = (0, 0)
             ccenter_x = (0, 0)
 
             while ccenter_y[1] < end_y:
 
-                if (len(n_samples_array) - reduce_elements) > 1:
-                    n_samples_array = n_samples_array[:-reduce_elements]
+                # reduce sample to generate gradient in noise
+                samples_index = np.ceil(len(n_samples_array) / 2).astype("int")
+                n_samples_array = n_samples_array[:samples_index]
 
                 # varying y
                 ccenter_y = [ccenter_y[1], ccenter_y[1] + n_step_y]

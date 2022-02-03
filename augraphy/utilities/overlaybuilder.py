@@ -416,6 +416,12 @@ class OverlayBuilder:
             ystart = max(0, ystart)
             xstart = max(0, xstart)
 
+            # prevent 0 size
+            if yend - ystart == 0:
+                yend += 1
+            if xend - xstart == 0:
+                xend += 1
+
             # crop a section of background
             base = overlay_background[ystart:yend, xstart:xend]
             base_gray = overlay_background_gray[ystart:yend, xstart:xend]

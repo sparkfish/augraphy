@@ -208,7 +208,7 @@ class BadPhotoCopy(Augmentation):
             )
 
             # randomly rotate mask
-            if self.noise_type != 5 and self.noise_type != 6 and self.noise_type != 7 and self.noise_type != 8:
+            if self.noise_side == "random":
                 mask = np.rot90(mask, random.randint(0, 3))
 
         # new size after rotation
@@ -233,7 +233,7 @@ class BadPhotoCopy(Augmentation):
             mask = self.apply_wave(mask)
 
         # random flip mask vertically or horizontally
-        if self.noise_side != "random":
+        if self.noise_side == "random":
             if random.choice([True, False]):
                 mask = cv2.flip(mask, 0)
             if random.choice([True, False]):
