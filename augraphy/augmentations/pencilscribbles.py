@@ -139,12 +139,25 @@ class PencilScribbles(Augmentation):
         return strokes_img
 
     def random_paste(self, paste, target):
+
+        target_shape_length = len(target.shape)
+
+        # scribbles is always in 3 channels, need to check and convert if target is not in 3 channels
+        if target_shape_length < 3:
+            target = cv2.cvtColor(target, cv2.COLOR_GRAY2RGB)
+
         target_x = random.randint(0, target.shape[1] - paste.shape[1])
         target_y = random.randint(0, target.shape[0] - paste.shape[0])
+
         target[
             target_y : target_y + paste.shape[1],
             target_x : target_x + paste.shape[0],
         ] = paste
+
+        # convert target back to original channel
+        if target_shape_length < 3:
+            target = cv2.cvtColor(target, cv2.COLOR_RGB2GRAY)
+
         return target
 
     # Applies the Augmentation to input data.
