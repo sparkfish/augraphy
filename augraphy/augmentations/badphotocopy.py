@@ -169,8 +169,10 @@ class BadPhotoCopy(Augmentation):
 
     def apply_augmentation(self, image):
 
+        image_shape_length = len(image.shape)
+
         # get image dimensions
-        if len(image.shape) > 2:
+        if image_shape_length > 2:
             ysize, xsize, dim = image.shape
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         else:
@@ -259,6 +261,10 @@ class BadPhotoCopy(Augmentation):
         result_new[result_new > 255] = 0
         result_new[result_new > image_copy] = 0
         result = image_original + result_new
+
+        # convert back to original image shape
+        if image_shape_length > 2:
+            result = cv2.cvtColor(result.astype("uint8"), cv2.COLOR_GRAY2BGR)
 
         return result.astype("uint8")
 
