@@ -195,6 +195,10 @@ class BadPhotoCopy(Augmentation):
         # check if provided mask is numpy array
         if isinstance(self.mask, np.ndarray):
             mask = self.mask
+            # noise mask needs to be in grayscale form
+            if len(mask.shape) > 2:
+                mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+
         # generate mask of noise
         else:
             noise_generator = NoiseGenerator(
