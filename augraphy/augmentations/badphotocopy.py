@@ -34,6 +34,8 @@ class BadPhotoCopy(Augmentation):
     :type blur_noise_kernel: tuple, optional
     :param wave_pattern: To enable wave pattern in noise.
     :type wave_pattern: int, optional
+    :param edge_effect: To add sobel egde effect into the noise mask.
+    :type edge_effect: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -51,6 +53,7 @@ class BadPhotoCopy(Augmentation):
         blur_noise=0,
         blur_noise_kernel=(5, 5),
         wave_pattern=0,
+        edge_effect=1,
         p=1,
     ):
         """Constructor method"""
@@ -66,6 +69,7 @@ class BadPhotoCopy(Augmentation):
         self.blur_noise = blur_noise
         self.blur_noise_kernel = blur_noise_kernel
         self.wave_pattern = wave_pattern
+        self.edge_effect = edge_effect
 
         # clamp values
         # noise value range from 0-255
@@ -85,7 +89,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, p={self.p})"
+        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, p={self.p})"
 
     def apply_wave(self, mask):
         """
@@ -258,13 +262,14 @@ class BadPhotoCopy(Augmentation):
         result = cv2.multiply(noise_img, image, scale=1 / 255)
 
         # merge sobel mask and noise mask to image
-        image_original = image.copy()
-        image_copy = image.copy()
-        result_new = result.astype("int") + image_sobel.astype("int")
-        image_original[image_original > result_new] = 0
-        result_new[result_new > 255] = 0
-        result_new[result_new > image_copy] = 0
-        result = image_original + result_new
+        if self.edge_effect:
+            image_original = image.copy()
+            image_copy = image.copy()
+            result_new = result.astype("int") + image_sobel.astype("int")
+            image_original[image_original > result_new] = 0
+            result_new[result_new > 255] = 0
+            result_new[result_new > image_copy] = 0
+            result = image_original + result_new
 
         # convert back to original image shape
         if image_shape_length > 2:
