@@ -264,13 +264,17 @@ class NoiseGenerator:
         std, center_x, center_y = self.generate_sparsity_std(noise_sparsity, xsize, ysize, max_size)
 
         if self.noise_type == 2:
+
+            # reduce sparsity
+            std = int(std / 5)
+
             # size of noise depends on noise sparsity
             random_sparsity = np.random.uniform(noise_sparsity[0], noise_sparsity[1])
             end_y = max((random_sparsity) * ysize, int(ysize / 10))
 
             # randomize noise pattern
-            n_step_x = int(xsize / random.randint(8, 12))
-            n_step_y = int(ysize / random.randint(4, 8))
+            n_step_x = int(xsize / random.randint(10, 14))
+            n_step_y = int(ysize / random.randint(16, 20))
 
             # initialize points array
             generated_points_x = np.array([[-1]], dtype="int")
@@ -310,7 +314,7 @@ class NoiseGenerator:
                     generated_points_y = np.concatenate([generated_points_y, cgenerated_points_y])
 
                     # space between next noise patch
-                    add_space = random.randint(20, 30)
+                    add_space = random.randint(10, 20)
                     ccenter_x = [ccenter_x[0] + n_step_x + add_space, ccenter_x[1] + n_step_x + add_space]
 
                     # to break out from inner loop
@@ -320,6 +324,11 @@ class NoiseGenerator:
                         ccenter_x[0] = xsize - 1
                         ccenter_x[1] = xsize - 1
                         check_break = 1
+
+                # space between next noise patch
+                add_space = random.randint(5, 15)
+
+                ccenter_y = [ccenter_y[1] + add_space, ccenter_y[1] + add_space]
 
             # generate mask
             img_mask = self.generate_mask(
