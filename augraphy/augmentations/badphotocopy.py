@@ -34,7 +34,7 @@ class BadPhotoCopy(Augmentation):
     :type blur_noise_kernel: tuple, optional
     :param wave_pattern: To enable wave pattern in noise.
     :type wave_pattern: int, optional
-    :param edge_effect: To add sobel egde effect into the noise mask.
+    :param edge_effect: To add sobel edge effect into the noise mask.
     :type edge_effect: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional

@@ -15,7 +15,7 @@ The Bad Photocopy augmentation produces noise blobs simulating a dirty copier.
 | `blur_noise`         | Flag to enable blur in noise mask.                                         |
 | `blur_noise_kernel`  | Kernel to blur noise mask.                                                 |
 | `wave_pattern`       | To enable wave pattern in noise.                                           |
-| `edge_effect`        | To add sobel egde effect into the noise mask.                              |
+| `edge_effect`        | To add sobel edge effect into the noise mask.                              |
 | `p`                  | The probability this augmentation will be applied.                         |
 
 
