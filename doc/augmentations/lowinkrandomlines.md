@@ -3,10 +3,11 @@
 `LowInkRandomLines` inherits from `LowInkLine`. LowInkRandomLines adds low ink lines randomly throughout the image.
 
 
-| Parameter     | Description                                             |
-|---------------|---------------------------------------------------------|
-| `count_range` | The number of lines to add to the image.                |
-| `p`           | The probability that this augmentation will be applied. |
+| Parameter           | Description                                             |
+|---------------------|---------------------------------------------------------|
+| `count_range`       | The number of lines to add to the image.                |
+| `noise_probability` | The probability to add noise into the generated lines.  |
+| `p`                 | The probability that this augmentation will be applied. |
 
 
 **Example Usage:**
