@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://user-images.githubusercontent.com/1108065/130455343-034d5a1a-c994-4cb5-81bf-d5c0ae341870.png" />
+    ![Augraphy Logo](images/logo/augraphy.png)
 </p>
 
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
