@@ -16,6 +16,8 @@ class LowInkPeriodicLines(LowInkLine):
     :param use_consistent_lines: Whether or not to vary the width and alpha of
            generated low ink lines.
     :type use_consistent_lines: bool, optional
+    :param noise_probability: The probability to add noise into the generated lines.
+    :type noise_probability: float, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -25,10 +27,11 @@ class LowInkPeriodicLines(LowInkLine):
         count_range=(2, 5),
         period_range=(10, 30),
         use_consistent_lines=True,
+        noise_probability=0.1,
         p=1,
     ):
         """Constructor method"""
-        super().__init__(use_consistent_lines=use_consistent_lines, p=p)
+        super().__init__(use_consistent_lines=use_consistent_lines, noise_probability=noise_probability, p=p)
         self.count_range = count_range
         self.period_range = period_range
 

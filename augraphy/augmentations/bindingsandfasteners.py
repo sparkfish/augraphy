@@ -176,17 +176,17 @@ class BindingsAndFasteners(Augmentation):
         # Id for figshare published template files
         article_ID = "16668964"
         # create figshare downloader
-        fsdl = FigshareDownloader()
+        fsdl = FigshareDownloader(directory="figshare_BindingsAndFasteners/")
         # download files
-        fsdl.downloadAllFiles(article_ID)
+        fsdl.download_all_files_from_article(article_ID)
 
         # read foreground
         if self.effect_type == "punch_holes":
-            foreground_path = os.path.join(os.getcwd() + "/figshare/punch_hole.png")
+            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/punch_hole.png")
         elif self.effect_type == "binding_holes":
-            foreground_path = os.path.join(os.getcwd() + "/figshare/binding_hole.png")
+            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/binding_hole.png")
         elif self.effect_type == "clips":
-            foreground_path = os.path.join(os.getcwd() + "/figshare/clip.png")
+            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/clip.png")
         self.foreground = cv2.imread(foreground_path)
 
     # Applies the Augmentation to input data.

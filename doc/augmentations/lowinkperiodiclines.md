@@ -3,11 +3,12 @@
 `LowInkPeriodicLines` inherits from `LowInkLine`. LowInkPeriodicLines creates a set of lines that repeat in a periodic fashion throughout the image.
 
 
-| Parameter      | Description                                                    |
-|----------------|----------------------------------------------------------------|
-| `count_range`  | The number of lines to add that will be repeated.              |
-| `period_range` | The number of pixels in each period before lines are repeated. |
-| `p`            | The probability that this augmentation will be applied.        |
+| Parameter           | Description                                                    |
+|---------------------|----------------------------------------------------------------|
+| `count_range`       | The number of lines to add that will be repeated.              |
+| `period_range`      | The number of pixels in each period before lines are repeated. |
+| `noise_probability` | The probability to add noise into the generated lines.         |
+| `p`                 | The probability that this augmentation will be applied.        |
 
 
 **Example Usage:**

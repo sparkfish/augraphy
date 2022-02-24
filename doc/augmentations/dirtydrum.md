@@ -2,30 +2,20 @@
 
 The Dirty Drum augmentation emulates deposits of dirt and ink-grime from dirty printer drums.
 
+
+| Parameter            | Description                                                     |
+|----------------------|-----------------------------------------------------------------|
+| `line_width_range`   | The range from which the width of a dirty drum line is sampled. |
+| `line_concentration` | Concentration or number of dirty drum lines.                    |
+| `direction`          | Direction of effect, 0=horizontal, 1=vertical, 2=both.          |
+| `noise_intensity`    | Intensity of the effect.                                        |
+| `noise_value`        | Tuple of ints to determine value of dirty drum noise            |
+| `ksize`              | Height/width pair from which to sample the kernel size.         |
+| `sigmaX`             | Standard deviation of the kernel along the x-axis.              |
+| `p`                  | The probability this augmentation will be applied.              |
+
 **Example Usage:**
-
 ```python
-augmentation = DirtyDrum(
-	line_width_range=(2, 8),
-	noise_intensity= 1,
-	ksize=(3, 3),
-	sigmaX=0
-	)
-```
-
-| Parameter          | Description                                                     |
-|--------------------|-----------------------------------------------------------------|
-| `line_width_range` | The range from which the width of a dirty drum line is sampled. |
-| `direction`        | Direction of effect, 0=horizontal, 1=vertical, 2=both.          |
-| `noise_intensity`  | Intensity of the effect.                                        |
-| `ksize`            | Height/width pair from which to sample the kernel size.         |
-| `sigmaX`           | Standard deviation of the kernel along the x-axis.              |
-| `p`                | The probability this augmentation will be applied.              |
-
-
-```python
-    # Usage Example:
-
     from matplotlib import pyplot as plt
     from time import time
     import cv2
@@ -48,9 +38,11 @@ augmentation = DirtyDrum(
 
     # create dirtydrum object
     dirtydrum1 = DirtyDrum(
-            line_width_range=(2, 8),
-			direction = 1,
-            noise_intensity= 1,
+            line_width_range=(1, 4),
+            line_concentration = 0.5,
+			direction = 2,
+            noise_intensity= 0.8,
+            noise_value = (0, 30),
             ksize=(3, 3),
             sigmaX=0
             )
@@ -68,7 +60,6 @@ augmentation = DirtyDrum(
     # display output
     plt.figure()
     plt.imshow(image_output, cmap="gray")
-
 ```
 
 

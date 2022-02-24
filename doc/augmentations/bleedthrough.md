@@ -1,6 +1,6 @@
 # BleedThrough
 
-The BleedThrough augmentation emulates ink bleeding through the page from the reverse side.
+The BleedThrough augmentation emulates ink bleeding through the page from random image or the reverse side.
 
 
 | Parameter         | Description                                                                                                           |
@@ -11,6 +11,7 @@ The BleedThrough augmentation emulates ink bleeding through the page from the re
 | `sigmaX`          | Standard deviation of the kernel along the x-axis.                                                                    |
 | `alpha`           | Intensity of bleeding effect.                                                                                         |
 | `offsets`         | Distance in x and y directions to shift the bleedthrough effect.                                                      |
+| `dpi`             | DPI of foreground image for bleedthrough effect. Select either 100, 200 or 300.                                       |
 | `p`               | The probability this augmentation will be applied.                                                                    |
 
 
@@ -45,6 +46,7 @@ The BleedThrough augmentation emulates ink bleeding through the page from the re
             sigmaX=0,
             alpha=0.2,
             offsets=(10, 20),
+			dpi=100
     )
 
     img_bleedthrough = bleedthrough(image)

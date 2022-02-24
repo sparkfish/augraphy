@@ -1,5 +1,6 @@
 import json
 import os
+import random
 from urllib.request import urlretrieve
 
 import requests
@@ -103,3 +104,23 @@ class FigshareDownloader:
                 file_dict["download_url"],
                 os.path.join(self.save_dir, file_dict["name"]),
             )
+
+    def download_random_file_from_article(self, article_id):
+        """Randomly download single file in article_id
+
+        :param article_id: ID of the Figshare article
+        :type article_id: string
+        """
+
+        # Get list of dictionaries of file info
+        file_list = self.list_article_files(article_id)
+
+        # Make ./figshare/ if not available
+        self.make_save_dir()
+
+        # Save the files
+        file_dict = file_list[random.randint(0, len(file_list) - 1)]
+        urlretrieve(
+            file_dict["download_url"],
+            os.path.join(self.save_dir, file_dict["name"]),
+        )

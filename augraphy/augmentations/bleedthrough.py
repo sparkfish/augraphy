@@ -1,8 +1,9 @@
+import os
 import random
+from glob import glob
 
 import cv2
 import numpy as np
-from PIL import Image
 
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
@@ -30,6 +31,9 @@ class BleedThrough(Augmentation):
     :param offsets: Tuple of x and y offset pair to shift the bleed through
             effect from original input.
     :type offsets: tuple, optional
+    :param dpi: DPI of foreground image for bleedthrough effect.
+            Select either 100, 200 or 300.
+    :type dpi: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -42,6 +46,7 @@ class BleedThrough(Augmentation):
         sigmaX=0,
         alpha=0.3,
         offsets=(10, 20),
+        dpi=100,
         p=1,
     ):
         super().__init__(p=p)
@@ -51,10 +56,11 @@ class BleedThrough(Augmentation):
         self.sigmaX = sigmaX
         self.alpha = alpha
         self.offsets = offsets
+        self.dpi = dpi
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
+        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},dpi={self.dpi},p={self.p})"
 
     # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
@@ -96,14 +102,60 @@ class BleedThrough(Augmentation):
         img_bleed = cv2.GaussianBlur(img_noise, ksize=ksize, sigmaX=sigmaX)
         return img_bleed
 
+    # create foreground image for bleedthrough effect
+    def create_bleedthrough_foreground(self, image):
+
+        try:
+            # Id for figshare published grayscale image
+            if self.dpi == 300:
+                article_ID = "19227981"
+            elif self.dpi == 200:
+                article_ID = "19227879"
+            else:
+                article_ID = "19210698"
+
+            # path to foreground folder
+            foreground_folder = os.path.join(os.getcwd() + "/figshare_bleedthrough/")
+
+            # create figshare downloader
+            fsdl = FigshareDownloader(directory="figshare_BleedThrough/")
+
+            # download files
+            fsdl.download_random_file_from_article(article_ID)
+
+            # file path list
+            foreground_images_path = glob(foreground_folder + "*.png", recursive=True)
+
+            # get random image path
+            random_path = foreground_images_path[random.randint(0, len(foreground_images_path) - 1)]
+
+            # get random image
+            image_bleedthrough_foreground = cv2.imread(random_path)
+
+            # resize foreground
+            image_bleedthrough_foreground = cv2.resize(
+                image_bleedthrough_foreground,
+                (image.shape[1], image.shape[0]),
+                interpolation=cv2.INTER_AREA,
+            )
+
+        # failed to download, flip and mirror image to get bleedthrough foreground
+        except Exception:
+
+            image_flip = cv2.flip(image, 0)
+            image_bleedthrough_foreground = cv2.flip(image_flip, 1)
+
+        return image_bleedthrough_foreground
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            image_flip = cv2.flip(image, 0)
-            image_flip = cv2.flip(image_flip, 1)
+
+            image_bleedthrough_foreground = self.create_bleedthrough_foreground(image)
+
             image_bleed = self.generate_bleeding_ink(
-                image_flip,
+                image_bleedthrough_foreground,
                 self.intensity_range,
                 self.color_range,
                 self.ksize,
