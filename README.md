@@ -1,5 +1,5 @@
 <p align="center">
-    ![Augraphy Logo](images/logo/augraphy.png)
+    <img src="images/logo/augraphy.png?raw=true" width="700" title="Augraphy Logo">
 </p>
 
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
