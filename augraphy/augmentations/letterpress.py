@@ -49,7 +49,7 @@ class Letterpress(Augmentation):
         self.blur = blur
 
     def __repr__(self):
-        return f"Letterpress(n_samples={self.n_samples}, n_cluster={self.size_range}, std_range={self.std_range}, value_range={self.value_range}, value_threshold_range={self.value_threshold_range}, blur={self.blur}, p={self.p})"
+        return f"Letterpress(n_samples={self.n_samples}, std_range={self.std_range}, value_range={self.value_range}, value_threshold_range={self.value_threshold_range}, blur={self.blur}, p={self.p})"
 
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
