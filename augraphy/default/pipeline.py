@@ -65,4 +65,4 @@ def default_augraphy_pipeline(img):
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 
-    return pipeline.augment(img)["output"]
+    return pipeline.augment(img)
