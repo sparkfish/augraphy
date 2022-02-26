@@ -224,6 +224,9 @@ class PageBorder(Augmentation):
             else:
                 side = self.side
 
+            if side == "top" or side == "bottom":
+                height = width
+
             border = self.create_border(
                 channel,
                 border_width,
