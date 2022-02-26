@@ -6,6 +6,186 @@ import numpy as np
 from sklearn.datasets import make_blobs
 
 
+# Generate noise to edges of folding
+def add_folding_noise(img, side, p=0.1):
+    # side = flag to put more noise at certain side
+    #   0  = left side
+    #   1  = right side
+
+    # get image dimension
+    ysize, xsize = img.shape[:2]
+
+    for y in range(ysize):
+        for x in range(xsize):
+
+            if side:  # more noise on right side
+                p_score = (((x) / xsize) ** 3) * p  # non linear score with power
+            else:  # more noise on left side
+                p_score = (((xsize - x) / xsize) ** 3) * p  # non linear score with power
+
+            if p_score > random.random():
+                img[y, x] = 0
+    return img
+
+
+# Perspective transform based on 4 points
+def four_point_transform(image, pts, dst, xs, ys):
+    M = cv2.getPerspectiveTransform(pts, dst)
+    if not isinstance(image, np.floating):
+        image = image.astype("float")
+    img_warped = cv2.warpPerspective(image, M, (xs, ys))
+    # return the warped image
+    return img_warped
+
+
+# Transform left side of folding area
+def warp_fold_left_side(
+    img,
+    ysize,
+    fold_noise,
+    fold_x,
+    fold_width_one_side,
+    fold_y_shift,
+):
+
+    img_fuse = img.copy()
+
+    # 4 vectices of folding area
+    xs = 0  # xleft
+    xe = fold_width_one_side  # xright
+    ys = 0  # ytop
+    ye = ysize  # ybottom
+
+    # before distortion
+    top_left = [xs, ys]
+    top_right = [xe, ys]
+    bottom_left = [xs, ye]
+    bottom_right = [xe, ye]
+
+    # after distortion
+    dtop_left = [xs, ys]
+    dtop_right = [xe, ys + fold_y_shift]
+    dbottom_left = [xs, ye]
+    dbottom_right = [xe, ye + fold_y_shift]
+
+    # image cropping points
+    cxs = fold_x
+    cxe = fold_x + fold_width_one_side
+    cys = 0
+    cye = ysize
+
+    # points of folding area
+    source_pts = np.array(
+        [top_left, bottom_left, bottom_right, top_right],
+        dtype=np.float32,
+    )
+    destination_pts = np.array(
+        [dtop_left, dbottom_left, dbottom_right, dtop_right],
+        dtype=np.float32,
+    )
+
+    # crop section of folding area
+    img_crop = img[cys:cye, cxs:cxe]
+
+    # get image dimension of cropped image
+    if len(img_crop.shape) > 2:
+        cysize, cxsize, cdim = img_crop.shape
+    else:
+        cysize, cxsize = img_crop.shape
+        cdim = 2
+
+    # warp folding area
+    img_warped = four_point_transform(
+        img_crop,
+        source_pts,
+        destination_pts,
+        cxsize,
+        cysize + fold_y_shift,
+    )
+    img_warped = add_folding_noise(img_warped, 1, fold_noise / 2)
+
+    if cdim > 2:
+        img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
+    else:
+        img_fuse[cys:cye, cxs:cxe] = img_warped[:-fold_y_shift, :]
+
+    return img_fuse
+
+
+# Transform right side of folding area
+def warp_fold_right_side(
+    img,
+    ysize,
+    fold_noise,
+    fold_x,
+    fold_width_one_side,
+    fold_y_shift,
+):
+
+    img_fuse = img.copy()
+
+    # 4 vectices of folding area
+    xs = 0  # xleft
+    xe = fold_width_one_side  # xright
+    ys = 0  # ytop
+    ye = ysize  # ybottom
+
+    # before distortion
+    top_left = [xs, ys]
+    top_right = [xe, ys]
+    bottom_left = [xs, ye]
+    bottom_right = [xe, ye]
+
+    # after distortion
+    dtop_left = [xs, ys + (fold_y_shift)]
+    dtop_right = [xe, ys]
+    dbottom_left = [xs, ye + (fold_y_shift)]
+    dbottom_right = [xe, ye]
+
+    # image cropping points
+    cxs = fold_x + fold_width_one_side
+    cxe = fold_x + (fold_width_one_side * 2)
+    cys = 0
+    cye = ysize
+
+    # points of folding area
+    source_pts = np.array(
+        [top_left, bottom_left, bottom_right, top_right],
+        dtype=np.float32,
+    )
+    destination_pts = np.array(
+        [dtop_left, dbottom_left, dbottom_right, dtop_right],
+        dtype=np.float32,
+    )
+
+    # crop section of folding area
+    img_crop = img[cys:cye, cxs:cxe]
+
+    # get image dimension of cropped image
+    if len(img_crop.shape) > 2:
+        cysize, cxsize, cdim = img_crop.shape
+    else:
+        cysize, cxsize = img_crop.shape
+        cdim = 2
+
+    # warp folding area
+    img_warped = four_point_transform(
+        img_crop,
+        source_pts,
+        destination_pts,
+        cxsize,
+        cysize + fold_y_shift,
+    )
+    img_warped = add_folding_noise(img_warped, 0, fold_noise / 2)
+
+    if cdim > 2:
+        img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
+    else:
+        img_fuse[cys:cye, cxs:cxe] = img_warped[:-fold_y_shift, :]
+
+    return img_fuse
+
+
 def chaikin(points):
     """
 
