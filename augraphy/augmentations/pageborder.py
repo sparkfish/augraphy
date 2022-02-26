@@ -188,7 +188,7 @@ class PageBorder(Augmentation):
             border_single = cv2.line(border_single, start_point, end_point, color, thickness)
 
             # apply random folding
-            if x != border_width:
+            if x != border_width and border_width > (self.curve_length_one_side[1] * 2) + 2:
                 for _ in range(random.randint(self.curve_frequency[0], self.curve_frequency[1])):
                     border_single = self.random_folding(border_single)
 
