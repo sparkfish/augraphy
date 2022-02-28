@@ -148,12 +148,15 @@ class AugraphyPipeline:
         """Applies every augmentation in a phase."""
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
-            start = time.process_time()  # time at start of execution
-            result = augmentation(result, layer)
-            end = time.process_time()  # time at end of execution
-            elapsed = end - start  # execution duration
 
-            data["log"]["time"].append((augmentation, elapsed))
+            if augmentation.should_run():
+                start = time.process_time()  # time at start of execution
+                result = augmentation(result, layer)
+                end = time.process_time()  # time at end of execution
+                elapsed = end - start  # execution duration
+                data["log"]["time"].append((augmentation, elapsed))
+            else:
+                result = None
 
             if result is None:
                 data[layer].append(
