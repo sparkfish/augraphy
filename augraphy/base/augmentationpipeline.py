@@ -1,3 +1,4 @@
+import os
 import random
 import time
 
@@ -24,6 +25,8 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
+    :param log_prob: Flag to enable logging of each augmentation probablity.
+    :type log_prob: bool, optional
     """
 
     def __init__(
@@ -33,6 +36,7 @@ class AugraphyPipeline:
         post_phase,
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
+        log_prob=False,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -40,6 +44,12 @@ class AugraphyPipeline:
         self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
+        self.log_prob = log_prob
+
+        # create directory to store log files
+        if self.log_prob:
+            self.log_prob_path = os.path.join(os.getcwd(), "log_prob/")
+            os.makedirs(self.log_prob_path, exist_ok=True)
 
     def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
@@ -73,6 +83,8 @@ class AugraphyPipeline:
 
         # For storing augmentation execution times.
         data["log"]["time"] = list()
+        data["log"]["augmentation_name"] = list()
+        data["log"]["augmentation_status"] = list()
 
         # This is useful.
         data["log"]["image_shape"] = image.shape
@@ -142,6 +154,24 @@ class AugraphyPipeline:
 
         data["output"] = data["post"][-1].result.astype("uint8")
 
+        # log probability
+        if self.log_prob:
+
+            # path to log file
+            log_file_name = "log_prob_" + time.strftime("%H:%M:%S", time.localtime()) + ".txt"
+            log_file_name = log_file_name.replace(":", "_")
+            log_prob_file_path = self.log_prob_path + log_file_name
+
+            augmentation_names = data["log"]["augmentation_name"]
+            augmentation_status = data["log"]["augmentation_status"]
+            with open(log_prob_file_path, "w+") as file:
+                for (
+                    name,
+                    status,
+                ) in zip(augmentation_names, augmentation_status):
+                    file.write("%s,%s \n" % (name, status))
+            file.close()
+
         return data
 
     def apply_phase(self, data, layer, phase):
@@ -158,7 +188,9 @@ class AugraphyPipeline:
             else:
                 result = None
 
+            data["log"]["augmentation_name"].append(augmentation.__class__.__name__)
             if result is None:
+                data["log"]["augmentation_status"].append(False)
                 data[layer].append(
                     AugmentationResult(
                         augmentation,
@@ -167,6 +199,13 @@ class AugraphyPipeline:
                     ),
                 )
             else:
+                data["log"]["augmentation_status"].append(True)
+                # for "OneOf" or "AugmentationSequence"
+                while isinstance(result, tuple) or isinstance(result, list):
+                    result, augmentations = result
+                    for nested_augmentation in augmentations:
+                        data["log"]["augmentation_name"].append(nested_augmentation.__class__.__name__)
+                        data["log"]["augmentation_status"].append(True)
                 data[layer].append(AugmentationResult(augmentation, result))
 
     def print_ink_to_paper(self, data, overlay, background):
