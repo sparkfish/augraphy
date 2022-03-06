@@ -3,4 +3,5 @@ opencv-python
 Pillow
 requests
 scipy
+skimage
 sklearn
