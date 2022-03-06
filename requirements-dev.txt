@@ -4,7 +4,7 @@ Pillow
 pre-commit
 pytest
 requests
+scikit-image
 scipy
-skimage
 sklearn
 tox
