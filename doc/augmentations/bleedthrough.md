@@ -3,16 +3,17 @@
 The BleedThrough augmentation emulates ink bleeding through the page from random image or the reverse side.
 
 
-| Parameter         | Description                                                                                                           |
-|-------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `intensity_range` | The range from which noise intensity is sampled.                                                                      |
-| `color_range`     | The range from which color noise is sampled.                                                                          |
-| `ksize`           | Tuple of height/width from which to sample the kernel size. Higher value increases the spread of the bleeding effect. |
-| `sigmaX`          | Standard deviation of the kernel along the x-axis.                                                                    |
-| `alpha`           | Intensity of bleeding effect.                                                                                         |
-| `offsets`         | Distance in x and y directions to shift the bleedthrough effect.                                                      |
-| `dpi`             | DPI of foreground image for bleedthrough effect. Select either 100, 200 or 300.                                       |
-| `p`               | The probability this augmentation will be applied.                                                                    |
+| Parameter              | Description                                                                                                           |
+|------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `intensity_range`      | The range from which noise intensity is sampled.                                                                      |
+| `color_range`          | The range from which color noise is sampled.                                                                          |
+| `ksize`                | Tuple of height/width from which to sample the kernel size. Higher value increases the spread of the bleeding effect. |
+| `sigmaX`               | Standard deviation of the kernel along the x-axis.                                                                    |
+| `alpha`                | Intensity of bleeding effect.                                                                                         |
+| `offsets`              | Distance in x and y directions to shift the bleedthrough effect.                                                      |
+| `use_figshare_library` | Flag to use images from figshare library for bleedthrough foreground.                                                 |
+| `dpi`                  | DPI of foreground image for bleedthrough effect. Select either 100, 200 or 300.                                       |
+| `p`                    | The probability this augmentation will be applied.                                                                    |
 
 
 **Example Usage:**

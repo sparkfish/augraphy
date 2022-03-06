@@ -31,6 +31,9 @@ class BleedThrough(Augmentation):
     :param offsets: Tuple of x and y offset pair to shift the bleed through
             effect from original input.
     :type offsets: tuple, optional
+    :param use_figshare_library: Flag to use images from figshare library for
+            bleedthrough foreground.
+    :type use_figshare_library: int, optional
     :param dpi: DPI of foreground image for bleedthrough effect.
             Select either 100, 200 or 300.
     :type dpi: int, optional
@@ -40,13 +43,14 @@ class BleedThrough(Augmentation):
 
     def __init__(
         self,
-        intensity_range=(0.1, 0.2),
-        color_range=(0, 224),
-        ksize=(17, 17),
-        sigmaX=0,
-        alpha=0.3,
-        offsets=(10, 20),
-        dpi=100,
+        intensity_range=None,
+        color_range=None,
+        ksize=None,
+        sigmaX=None,
+        alpha=None,
+        offsets=None,
+        use_figshare_library=None,
+        dpi=None,
         p=1,
     ):
         super().__init__(p=p)
@@ -56,11 +60,12 @@ class BleedThrough(Augmentation):
         self.sigmaX = sigmaX
         self.alpha = alpha
         self.offsets = offsets
+        self.use_figshare_library = use_figshare_library
         self.dpi = dpi
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},dpi={self.dpi},p={self.p})"
+        return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},use_figshare_library={self.use_figshare_library},dpi={self.dpi},p={self.p})"
 
     # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
@@ -105,52 +110,94 @@ class BleedThrough(Augmentation):
     # create foreground image for bleedthrough effect
     def create_bleedthrough_foreground(self, image):
 
-        try:
-            # Id for figshare published grayscale image
-            if self.dpi == 300:
-                article_ID = "19227981"
-            elif self.dpi == 200:
-                article_ID = "19227879"
-            else:
-                article_ID = "19210698"
+        if self.use_figshare_library:
+            try:
+                # Id for figshare published grayscale image
+                if self.dpi == 300:
+                    article_ID = "19227981"
+                elif self.dpi == 200:
+                    article_ID = "19227879"
+                else:
+                    article_ID = "19210698"
 
-            # path to foreground folder
-            foreground_folder = os.path.join(os.getcwd() + "/figshare_bleedthrough/")
+                # path to foreground folder
+                foreground_folder = os.path.join(os.getcwd() + "/figshare_bleedthrough/")
 
-            # create figshare downloader
-            fsdl = FigshareDownloader(directory="figshare_BleedThrough/")
+                # create figshare downloader
+                fsdl = FigshareDownloader(directory="figshare_BleedThrough/")
 
-            # download files
-            fsdl.download_random_file_from_article(article_ID)
+                # download files
+                fsdl.download_random_file_from_article(article_ID)
 
-            # file path list
-            foreground_images_path = glob(foreground_folder + "*.png", recursive=True)
+                # file path list
+                foreground_images_path = glob(foreground_folder + "*.png", recursive=True)
 
-            # get random image path
-            random_path = foreground_images_path[random.randint(0, len(foreground_images_path) - 1)]
+                # get random image path
+                random_path = foreground_images_path[random.randint(0, len(foreground_images_path) - 1)]
 
-            # get random image
-            image_bleedthrough_foreground = cv2.imread(random_path)
+                # get random image
+                image_bleedthrough_foreground = cv2.imread(random_path)
 
-            # resize foreground
-            image_bleedthrough_foreground = cv2.resize(
-                image_bleedthrough_foreground,
-                (image.shape[1], image.shape[0]),
-                interpolation=cv2.INTER_AREA,
-            )
+                # resize foreground
+                image_bleedthrough_foreground = cv2.resize(
+                    image_bleedthrough_foreground,
+                    (image.shape[1], image.shape[0]),
+                    interpolation=cv2.INTER_AREA,
+                )
+            # failed to download, set to use mirror image
+            except Exception:
+                self.use_figshare_library = 0
 
-        # failed to download, flip and mirror image to get bleedthrough foreground
-        except Exception:
+        # flip and mirror image to get bleedthrough foreground
+        if not self.use_figshare_library:
 
-            image_flip = cv2.flip(image, 0)
-            image_bleedthrough_foreground = cv2.flip(image_flip, 1)
+            # flip left-right only, flip top-bottom get inverted text, which is not realistic
+            image_bleedthrough_foreground = cv2.flip(image, 1)
 
         return image_bleedthrough_foreground
+
+    # initialize default values based on input image
+    def init_default_values(self, image):
+
+        ysize, xsize = image.shape[:2]
+
+        if self.intensity_range is None:
+            self.intensity_range = (0.1, 0.9)
+
+        if self.color_range is None:
+            self.color_range = (0, 224)
+
+        if self.ksize is None:
+            ksize1 = random.randint(3, 25)
+            ksize2 = random.randint(3, 25)
+            if not ksize1 % 2:
+                ksize1 += 1
+            if not ksize2 % 2:
+                ksize2 += 1
+            self.ksize = (ksize1, ksize2)
+
+        if self.sigmaX is None:
+            self.sigmaX = random.randint(0, 5)
+
+        if self.alpha is None:
+            self.alpha = random.uniform(0.2, 0.5)
+
+        if self.offsets is None:
+            x_offset = random.randint(20, min(xsize, 50))
+            y_offset = random.randint(20, min(ysize, 100))
+            self.offsets = (x_offset, y_offset)
+
+        if self.use_figshare_library is None:
+            self.use_figshare_library = 0
+
+        if self.dpi is None:
+            self.dpi = random.choice((100, 200, 300))
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+            self.init_default_values(image)
 
             image_bleedthrough_foreground = self.create_bleedthrough_foreground(image)
 

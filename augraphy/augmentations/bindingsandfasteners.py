@@ -1,4 +1,5 @@
 import os
+import random
 
 import cv2
 import numpy as np
@@ -34,13 +35,13 @@ class BindingsAndFasteners(Augmentation):
 
     def __init__(
         self,
-        overlay_types="mix",
+        overlay_types=None,
         foreground=None,
-        effect_type="punch_holes",
-        ntimes=3,
-        nscales=(1, 1),
-        edge="left",
-        edge_offset=50,
+        effect_type=None,
+        ntimes=None,
+        nscales=None,
+        edge=None,
+        edge_offset=None,
         p=1,
     ):
         """Constructor method"""
@@ -51,12 +52,7 @@ class BindingsAndFasteners(Augmentation):
         self.ntimes = ntimes
         self.nscales = nscales
         self.edge = edge
-        self.edge_offset = max(0, edge_offset)  # prevent negative
-
-        # check for valid effect types
-        if self.effect_type not in ["punch_holes", "binding_holes", "clips"]:
-            self.effect_type = "punch_holes"
-            # print warning here on the invalid effect type
+        self.edge_offset = edge_offset
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
@@ -189,9 +185,60 @@ class BindingsAndFasteners(Augmentation):
             foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/clip.png")
         self.foreground = cv2.imread(foreground_path)
 
+    # initialize default values based on input image
+    def init_default_values(self, image):
+
+        ysize, xsize = image.shape[:2]
+        resolution = ysize * xsize
+        min_size = min(ysize, xsize)
+        internal_resolution = 1500 * 1500
+
+        # scale to internal default testing size
+        scale = int(resolution / internal_resolution)
+
+        if self.overlay_types is None:
+            self.overlay_types = random.choice(
+                (
+                    "min",
+                    "max",
+                    "mix",
+                    "normal",
+                    "lighten",
+                    "darken",
+                    "addition",
+                    "screen",
+                    "dodge",
+                    "multiply",
+                    "divide",
+                    "hard_light",
+                    "grain_merge",
+                    "overlay",
+                ),
+            )
+
+        if self.edge is None:
+            self.edge = random.choice(("left", "right", "top", "bottom"))
+
+        if self.effect_type not in ("punch_holes", "binding_holes", "clips"):
+            self.effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
+
+        if self.ntimes is None:
+            self.ntimes = random.randint(2, 8)
+
+        if self.nscales is None:
+            self.nscales = (max(1, scale), max(1, scale) * 2)
+
+        if self.edge_offset is None:
+            self.edge_offset = min(min_size - 1, random.randint(0, 50 * scale))
+
+        # prevent negative offset
+        self.edge_offset = max(0, self.edge_offset)
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+
+            self.init_default_values(image)
 
             # reset foreground when the same class instance called twice
             if not isinstance(self.foreground, str) and not isinstance(self.foreground, np.ndarray):

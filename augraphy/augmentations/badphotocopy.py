@@ -43,17 +43,17 @@ class BadPhotoCopy(Augmentation):
     def __init__(
         self,
         mask=None,
-        noise_type=0,
-        noise_side="random",
-        noise_iteration=(1, 1),
-        noise_size=(1, 1),
-        noise_value=(30, 60),
-        noise_sparsity=(0.4, 0.6),
-        noise_concentration=(0.4, 0.6),
-        blur_noise=0,
-        blur_noise_kernel=(5, 5),
-        wave_pattern=0,
-        edge_effect=1,
+        noise_type=None,
+        noise_side=None,
+        noise_iteration=None,
+        noise_size=None,
+        noise_value=None,
+        noise_sparsity=None,
+        noise_concentration=None,
+        blur_noise=None,
+        blur_noise_kernel=None,
+        wave_pattern=None,
+        edge_effect=None,
         p=1,
     ):
         """Constructor method"""
@@ -70,22 +70,6 @@ class BadPhotoCopy(Augmentation):
         self.blur_noise_kernel = blur_noise_kernel
         self.wave_pattern = wave_pattern
         self.edge_effect = edge_effect
-
-        # clamp values
-        # noise value range from 0-255
-        self.noise_value = list(self.noise_value)
-        self.noise_value[0] = np.clip(self.noise_value[0], 0, 255)
-        self.noise_value[1] = np.clip(self.noise_value[1], 0, 255)
-
-        # sparsity range from 0-1
-        self.noise_sparsity = list(self.noise_sparsity)
-        self.noise_sparsity[0] = np.clip(self.noise_sparsity[0], 0, 1)
-        self.noise_sparsity[1] = np.clip(self.noise_sparsity[1], 0, 1)
-
-        # concentration range from 0-1
-        self.noise_concentration = list(self.noise_concentration)
-        self.noise_concentration[0] = np.clip(self.noise_concentration[0], 0, 1)
-        self.noise_concentration[1] = np.clip(self.noise_concentration[1], 0, 1)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
@@ -277,9 +261,70 @@ class BadPhotoCopy(Augmentation):
 
         return result.astype("uint8")
 
+    # initialize default values based on input image
+    def init_default_values(self, image):
+
+        ysize, xsize = image.shape[:2]
+        resolution = ysize * xsize
+        internal_resolution = 1500 * 1500
+
+        # scale to internal default testing size
+        scale = int(resolution / internal_resolution)
+
+        if self.noise_type is None:
+            self.noise_type = random.randint(1, 4)
+
+        if self.noise_side is None:
+            self.noise_side = "random"
+
+        if self.noise_iteration is None:
+            self.noise_iteration = (1, max(3 * scale, 1))
+
+        if self.noise_size is None:
+            self.noise_size = (1, max(3 * scale, 1))
+
+        if self.noise_value is None:
+            self.noise_value = (0, 64)
+
+        if self.noise_sparsity is None:
+            self.noise_sparsity = (0.1, 0.9)
+
+        if self.noise_concentration is None:
+            self.noise_concentration = (0.1, 0.7)
+
+        if self.blur_noise is None:
+            self.blur_noise = random.randint(0, 1)
+
+        if self.blur_noise_kernel is None:
+            kernel = random.choice((3, 5, 7, 9))
+            self.blur_noise_kernel = (kernel, kernel)
+
+        if self.wave_pattern is None:
+            self.wave_pattern = random.randint(0, 1)
+
+        if self.edge_effect is None:
+            self.edge_effect = random.randint(0, 1)
+
+        # clamp values
+        # noise value range from 0-255
+        self.noise_value = list(self.noise_value)
+        self.noise_value[0] = np.clip(self.noise_value[0], 0, 255)
+        self.noise_value[1] = np.clip(self.noise_value[1], 0, 255)
+
+        # sparsity range from 0-1
+        self.noise_sparsity = list(self.noise_sparsity)
+        self.noise_sparsity[0] = np.clip(self.noise_sparsity[0], 0, 1)
+        self.noise_sparsity[1] = np.clip(self.noise_sparsity[1], 0, 1)
+
+        # concentration range from 0-1
+        self.noise_concentration = list(self.noise_concentration)
+        self.noise_concentration[0] = np.clip(self.noise_concentration[0], 0, 1)
+        self.noise_concentration[1] = np.clip(self.noise_concentration[1], 0, 1)
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+            self.init_default_values(image)
             result = image.copy()
             result = self.apply_augmentation(image)
             return result

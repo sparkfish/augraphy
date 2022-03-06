@@ -181,7 +181,7 @@ class AugraphyPipeline:
 
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
-                result = augmentation(result, layer)
+                result = augmentation(result, layer, force=True)
                 end = time.process_time()  # time at end of execution
                 elapsed = end - start  # execution duration
                 data["log"]["time"].append((augmentation, elapsed))
