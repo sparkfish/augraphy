@@ -1,6 +1,7 @@
 import os
 import random
 import time
+from glob import glob
 
 import cv2
 import numpy as np
@@ -75,6 +76,20 @@ class AugraphyPipeline:
                     image.shape,
                 ),
             )
+
+        # create augraphy cache folder
+        cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
+        os.makedirs(cache_folder_path, exist_ok=True)
+        cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
+
+        # store 30 cache image files
+        if len(cache_image_paths) >= 30:
+            modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
+            oldest_index = np.argmin(modified_time)
+            cv2.imwrite(cache_folder_path + "image_" + str(oldest_index) + ".png", image)
+        else:
+            current_image_index = len(cache_image_paths)
+            cv2.imwrite(cache_folder_path + "image_" + str(current_image_index) + ".png", image)
 
         data = dict()
 

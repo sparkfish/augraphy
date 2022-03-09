@@ -3,15 +3,16 @@
 The Bindings And Fasteners augmentation creates binding and fastener mark in the input image.
 
 
-| Parameter       | Description                                                      |
-|-----------------|------------------------------------------------------------------|
-| `overlay_types` | Types of overlay method, min, max or mix.                        |
-| `foreground`    | Path to foreground image.                                        |
-| `effect_type`   | Types of binding effect.                                         |
-| `ntimes`        | Number of repetition to draw foreground image.                   |
-| `edge`          | Which edge of the page the foreground copies should be placed on.|
-| `edge_offset`   | How far from the edge of the page to draw the copies.            |
-| `p`             | The probability this augmentation will be applied.               |
+| Parameter              | Description                                                                     |
+|------------------------|---------------------------------------------------------------------------------|
+| `overlay_types`        | Types of overlay method.                .                                       |
+| `foreground`           | Path to foreground image.                                                       |
+| `effect_type`          | Types of binding effect.                                                        |
+| `ntimes`               | Pair of ints to determine number of repetition to draw foreground image.        |
+| `edge`                 | Which edge of the page the foreground copies should be placed on.               |
+| `edge_offset`          | Pair of ints to determine how far from the edge of the page to draw the copies. |
+| `use_figshare_library` | Flag to download foreground images from figshare library.                       |
+| `p`                    | The probability this augmentation will be applied.                              |
 
 
 **Example Usage:**
@@ -54,35 +55,36 @@ The Bindings And Fasteners augmentation creates binding and fastener mark in the
     binder_punch_holes = BindingsAndFasteners(overlay_types="darken",
                                         foreground=None,
                                         effect_type="punch_holes",
-                                        ntimes=3,
+                                        ntimes=(3, 4),
                                         nscales=(1, 1),
                                         edge="left",
-                                        edge_offset=50,
+                                        edge_offset=(30,50)
                                     )
 
     binder_binding_holes = BindingsAndFasteners(overlay_types="darken",
                                         foreground=None,
                                         effect_type="binding_holes",
-                                        ntimes=10,
-                                        nscales=(2, 2),
+                                        ntimes=(3, 4),
+                                        nscales=(1, 2),
                                         edge="right",
-                                        edge_offset=50,
+                                        edge_offset=(40,50)
                                     )
 
     binder_clips = BindingsAndFasteners(overlay_types="darken",
                                         foreground=None,
                                         effect_type="clips",
-                                        ntimes=3,
-                                        nscales=(3, 4),
+                                        ntimes= (3, 4),
+                                        nscales=(1, 2),
                                         edge="bottom",
-                                        edge_offset=50,
+                                        edge_offset= (30, 60)
                                     )
 
     binder_input_foreground = BindingsAndFasteners(overlay_types="darken",
                                         foreground=image_foreground,
-                                        ntimes=3,
+                                        ntimes=(3, 3),
                                         nscales=(1, 1),
                                         edge="random",
+                                        edge_offset= (10, 20)
                                     )
 
     img_punch_holes = binder_punch_holes(image)

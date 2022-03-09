@@ -3,18 +3,18 @@
 The Faxify augmentation emulates the artifacts created by faxing the document.
 
 
-| Parameter              | Description                                                                |
-|------------------------|----------------------------------------------------------------------------|
-| `scale_range`          | Pair of ints determining the range from which to divide the resolution by. |
-| `monochrome`           | Flag to enable monochrome effect.                                          |
-| `monochrome_method`    | Monochrome thresholding method.                                            |
-| `monochrome_arguments` | A dictionary contains argument to monochrome thresholding method.          |
-| `halftone`             | Flag to enable halftone effect.                                            |
-| `invert`               | Invert grayscale value in halftone effect.                                 |
-| `half_kernel_size`     | The half size of gaussian kernel for halftone effect.                      |
-| `angle`                | The angle of halftone effect.                                              |
-| `sigma`                | The sigma value of gaussian kernel in halftone effect.                     |
-| `p`                    | The probability that this augmentation will be applied.                    |
+| Parameter              | Description                                                                  |
+|------------------------|------------------------------------------------------------------------------|
+| `scale_range`          | Pair of floats determining the range from which to divide the resolution by. |
+| `monochrome`           | Flag to enable monochrome effect.                                            |
+| `monochrome_method`    | Monochrome thresholding method.                                              |
+| `monochrome_arguments` | A dictionary contains argument to monochrome thresholding method.            |
+| `halftone`             | Flag to enable halftone effect.                                              |
+| `invert`               | Invert grayscale value in halftone effect.                                   |
+| `half_kernel_size`     | Pair of ints to determine half size of gaussian kernel for halftone effect.  |
+| `angle`                | Pair of ints to determine angle of halftone effect.                          |
+| `sigma`                | Pair of ints to determine sigma value of gaussian kernel in halftone effect. |
+| `p`                    | The probability that this augmentation will be applied.                      |
 
 
 **Example Usage:**
@@ -51,9 +51,9 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
                     monochrome_arguments = arguments1,
                     halftone = 1,
                     invert = 1,
-                    half_kernel_size = 2,
-                    angle = 45,
-                    sigma = 1)
+                    half_kernel_size = (1,2),
+                    angle = (0, 360),
+                    sigma = (1,3))
 
     arguments2 = {"window_size":99, "k":0.2}
     faxify2 = Faxify(scale_range = (1,2),
@@ -62,9 +62,9 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
                     monochrome_arguments = arguments2,
                     halftone = 1,
                     invert = 1,
-                    half_kernel_size = 2,
-                    angle = 45,
-                    sigma = 1)
+                    half_kernel_size = (1,2),
+                    angle = (0, 360),
+                    sigma = (1,3))
 
 
     img_faxify1 = faxify1(image)

@@ -11,8 +11,6 @@ The BleedThrough augmentation emulates ink bleeding through the page from random
 | `sigmaX`               | Standard deviation of the kernel along the x-axis.                                                                    |
 | `alpha`                | Intensity of bleeding effect.                                                                                         |
 | `offsets`              | Distance in x and y directions to shift the bleedthrough effect.                                                      |
-| `use_figshare_library` | Flag to use images from figshare library for bleedthrough foreground.                                                 |
-| `dpi`                  | DPI of foreground image for bleedthrough effect. Select either 100, 200 or 300.                                       |
 | `p`                    | The probability this augmentation will be applied.                                                                    |
 
 
@@ -47,7 +45,6 @@ The BleedThrough augmentation emulates ink bleeding through the page from random
             sigmaX=0,
             alpha=0.2,
             offsets=(10, 20),
-			dpi=100
     )
 
     img_bleedthrough = bleedthrough(image)

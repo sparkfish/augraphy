@@ -13,35 +13,38 @@ from augraphy.utilities import *
 class BindingsAndFasteners(Augmentation):
     """Creates binding and fastener mark in the input image.
 
-    :param overlay_types: Types of overlay method, min, max or mix.
+    :param overlay_types: Types of overlay method.
     :type overlay_types: string
     :param foreground: Path to foreground image or the foreground image.
     :type foreground: string or numpy array, optional
     :param effect_type: Types of binding effect, select from either
-        "punch_holes", binding_holes" or "clips".
+        "random", "punch_holes", binding_holes" or "clips".
     :type effect_type: string, optional
-    :param ntimes: Number of repetition to draw foreground image.
-    :type ntimes: int, optional
-    :param nscales: Scales of foreground image size.
+    :param ntimes: Pair of ints to determine number of repetition to draw foreground image.
+    :type ntimes: tuple, optional
+    :param nscales: Pair of floats to determine scale of foreground image size.
     :type nscales: tuple, optional
     :param edge: Which edge of the page the foreground copies should be
         placed on.
     :type edge: string, optional
-    :param edge_offset: How far from the edge of the page to draw the copies.
-    :type edge_offset: int, optional
+    :param edge_offset: Pair of ints to determine how far from the edge of the page to draw the copies.
+    :type edge_offset: tuple, optional
+    :param use_figshare_library: Flag to download foreground images from figshare library.
+    :type use_figshare_library: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
-        overlay_types=None,
+        overlay_types="random",
         foreground=None,
-        effect_type=None,
-        ntimes=None,
-        nscales=None,
-        edge=None,
-        edge_offset=None,
+        effect_type="random",
+        ntimes=(2, 6),
+        nscales=(1.0, 1.5),
+        edge="random",
+        edge_offset=(5, 20),
+        use_figshare_library=0,
         p=1,
     ):
         """Constructor method"""
@@ -53,16 +56,22 @@ class BindingsAndFasteners(Augmentation):
         self.nscales = nscales
         self.edge = edge
         self.edge_offset = edge_offset
+        self.use_figshare_library = use_figshare_library
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, p={self.p})"
+        return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, use_figshare_library={self.use_figshare_library}, p={self.p})"
 
     def create_foreground(self, image):
 
         ysize, xsize = image.shape[:2]
 
-        if self.effect_type == "punch_holes":
+        if self.effect_type == "random":
+            effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
+        else:
+            effect_type == self.effect_type
+
+        if effect_type == "punch_holes":
 
             template_size = template_size_ori = 30
             # scale template size based on image size
@@ -93,7 +102,7 @@ class BindingsAndFasteners(Augmentation):
 
             self.foreground = image_circle_bgr
 
-        elif self.effect_type == "binding_holes":
+        elif effect_type == "binding_holes":
 
             template_size = template_size_ori = 40
             # scale template size based on image size
@@ -122,7 +131,7 @@ class BindingsAndFasteners(Augmentation):
 
             self.foreground = image_rectangle_bgr
 
-        elif self.effect_type == "clips":
+        elif effect_type == "clips":
 
             # minimum size
             template_size = template_size_ori = 60
@@ -176,6 +185,11 @@ class BindingsAndFasteners(Augmentation):
         # download files
         fsdl.download_all_files_from_article(article_ID)
 
+        if self.effect_type == "random":
+            effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
+        else:
+            effect_type == self.effect_type
+
         # read foreground
         if self.effect_type == "punch_holes":
             foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/punch_hole.png")
@@ -185,117 +199,108 @@ class BindingsAndFasteners(Augmentation):
             foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/clip.png")
         self.foreground = cv2.imread(foreground_path)
 
-    # initialize default values based on input image
-    def init_default_values(self, image):
-
-        ysize, xsize = image.shape[:2]
-        resolution = ysize * xsize
-        min_size = min(ysize, xsize)
-        internal_resolution = 1500 * 1500
-
-        # scale to internal default testing size
-        scale = int(resolution / internal_resolution)
-
-        if self.overlay_types is None:
-            self.overlay_types = random.choice(
-                (
-                    "min",
-                    "max",
-                    "mix",
-                    "normal",
-                    "lighten",
-                    "darken",
-                    "addition",
-                    "screen",
-                    "dodge",
-                    "multiply",
-                    "divide",
-                    "hard_light",
-                    "grain_merge",
-                    "overlay",
-                ),
-            )
-
-        if self.edge is None:
-            self.edge = random.choice(("left", "right", "top", "bottom"))
-
-        if self.effect_type not in ("punch_holes", "binding_holes", "clips"):
-            self.effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
-
-        if self.ntimes is None:
-            self.ntimes = random.randint(2, 8)
-
-        if self.nscales is None:
-            self.nscales = (max(1, scale), max(1, scale) * 2)
-
-        if self.edge_offset is None:
-            self.edge_offset = min(min_size - 1, random.randint(0, 50 * scale))
-
-        # prevent negative offset
-        self.edge_offset = max(0, self.edge_offset)
-
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-
-            self.init_default_values(image)
 
             # reset foreground when the same class instance called twice
             if not isinstance(self.foreground, str) and not isinstance(self.foreground, np.ndarray):
                 self.foreground = None
 
             image = image.copy()
+
+            # generate randomized overlay types
+            if self.overlay_types == "random":
+                overlay_types = random.choice(
+                    (
+                        "min",
+                        "max",
+                        "mix",
+                        "normal",
+                        "lighten",
+                        "darken",
+                        "addition",
+                        "screen",
+                        "dodge",
+                        "multiply",
+                        "divide",
+                        "hard_light",
+                        "grain_merge",
+                        "overlay",
+                    ),
+                )
+            else:
+                overlay_types = self.overlay_types
+
+            # generate randomized edge
+            if self.edge == "random":
+                edge = random.choice(("left", "right", "top", "bottom"))
+            else:
+                edge = self.edge
+
+            # generate randomized ntimes
+            ntimes = random.randint(self.ntimes[0], self.ntimes[1])
+
+            # generate randomized offset
+            edge_offset = random.randint(self.edge_offset[0], self.edge_offset[1])
+
             # if user input image path
             if isinstance(self.foreground, str) and os.path.isfile(self.foreground):
                 self.foreground = cv2.imread(self.foreground)
                 ob = OverlayBuilder(
-                    self.overlay_types,
+                    overlay_types,
                     self.foreground,
                     image,
-                    self.ntimes,
+                    ntimes,
                     self.nscales,
-                    self.edge,
-                    self.edge_offset,
+                    edge,
+                    edge_offset,
                     1,
                 )
             # if user input image
             elif isinstance(self.foreground, np.ndarray):
                 ob = OverlayBuilder(
-                    self.overlay_types,
+                    overlay_types,
                     self.foreground,
                     image,
-                    self.ntimes,
+                    ntimes,
                     self.nscales,
-                    self.edge,
-                    self.edge_offset,
+                    edge,
+                    edge_offset,
                     1,
                 )
 
             else:
                 # user didn't input foreground or not readable file, try to download from Figshare
-                try:
-                    self.retrieve_foreground()
-                    ob = OverlayBuilder(
-                        self.overlay_types,
-                        self.foreground,
-                        image,
-                        self.ntimes,
-                        self.nscales,
-                        self.edge,
-                        self.edge_offset,
-                        1,
-                    )
-                # if failed to download from Figshare, create some simple effect
-                except Exception:
+                use_figshare_library = self.use_figshare_library
+
+                if use_figshare_library:
+                    try:
+                        self.retrieve_foreground()
+                        ob = OverlayBuilder(
+                            overlay_types,
+                            self.foreground,
+                            image,
+                            ntimes,
+                            self.nscales,
+                            edge,
+                            edge_offset,
+                            1,
+                        )
+                    # if failed to download from Figshare, set to create own foreground
+                    except Exception:
+                        use_figshare_library = 0
+
+                if not use_figshare_library:
                     self.create_foreground(image)
                     ob = OverlayBuilder(
-                        self.overlay_types,
+                        overlay_types,
                         self.foreground,
                         image,
-                        self.ntimes,
+                        ntimes,
                         self.nscales,
-                        self.edge,
-                        self.edge_offset,
+                        edge,
+                        edge_offset,
                         1,
                     )
 

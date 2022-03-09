@@ -72,8 +72,14 @@ class LightingGradient(Augmentation):
                 transparency = self.transparency
 
             frame = image
-            height, width, _ = frame.shape
-            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+            height, width = frame.shape[:2]
+            if len(frame.shape) > 2:
+                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            else:
+                bgr = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+                hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+
             mask = self.generate_parallel_light_mask(
                 mask_size=(width, height),
                 position=self.light_position,
@@ -158,10 +164,7 @@ class LightingGradient(Augmentation):
         # add median blur
         mask = cv2.medianBlur(mask, 9)
         mask = 255 - mask
-        # cv2.circle(mask, init_light_pos, 1, (0, 0, 255))
-        # cv2.imshow("crop", mask[init_mask_ul[1]:init_mask_br[1], init_mask_ul[0]:init_mask_br[0]])
-        # cv2.imshow("all", mask)
-        # cv2.waitKey(0)
+
         return mask
 
     def _decayed_value_in_norm(self, x, max_value, min_value, center, range):
