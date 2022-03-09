@@ -133,7 +133,8 @@ class Markup(Augmentation):
         markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
 
         # shuffle contours to get randomize location to apply augmentation
-        random.shuffle(contours)
+        if len(contours) > 0:
+            contours = random.shuffle(contours)
         for cnt in contours:
             # adding randomization.
             choice = random.choice([False, True])
