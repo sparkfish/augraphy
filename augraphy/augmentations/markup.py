@@ -134,7 +134,7 @@ class Markup(Augmentation):
 
         # shuffle contours to get randomize location to apply augmentation
         if len(contours) > 0:
-            contours = random.shuffle(contours)
+            random.shuffle(contours)
         for cnt in contours:
             # adding randomization.
             choice = random.choice([False, True])
