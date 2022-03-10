@@ -43,7 +43,7 @@ class BadPhotoCopy(Augmentation):
     def __init__(
         self,
         mask=None,
-        noise_type=0,
+        noise_type=-1,
         noise_side="random",
         noise_iteration=(2, 5),
         noise_size=(1, 3),

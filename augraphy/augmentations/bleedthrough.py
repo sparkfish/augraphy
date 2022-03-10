@@ -39,7 +39,7 @@ class BleedThrough(Augmentation):
         self,
         intensity_range=(0.1, 0.9),
         color_range=(0, 224),
-        ksize=(7, 7),
+        ksize=(17, 17),
         sigmaX=1,
         alpha=0.2,
         offsets=(20, 20),
