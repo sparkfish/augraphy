@@ -28,7 +28,7 @@ class OneOf(Augmentation):
 
             # Applies the selected Augmentation.
             image = augmentation(image, force=True)
-            return image
+            return image, [augmentation]
 
     # Constructs a string containing the representations
     # of each augmentation

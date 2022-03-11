@@ -108,6 +108,7 @@ class Markup(Augmentation):
             None,
             iterations=1,
         )
+
         return dilation
 
     def __call__(self, image, layer=None, force=False):
@@ -131,13 +132,17 @@ class Markup(Augmentation):
         # initialize mask for markup
         markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
 
+        # shuffle contours to get randomize location to apply augmentation
+        if len(contours) > 0:
+            contours = list(contours)
+            random.shuffle(contours)
         for cnt in contours:
             # adding randomization.
             choice = random.choice([False, True])
             if choice:
                 x, y, w, h = cv2.boundingRect(cnt)
-                # avoiding too small contours (width less  20% of the image width)
-                if w < int(markup_img.shape[1] / 10):
+                # avoiding too small contours (width less  5% of the image width)
+                if w < int(markup_img.shape[1] / 5):
                     continue
                 if num_lines == 0:
                     break

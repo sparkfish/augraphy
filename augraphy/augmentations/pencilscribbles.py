@@ -35,7 +35,7 @@ class PencilScribbles(Augmentation):
         self,
         size_range=(250, 400),
         count_range=(1, 10),
-        stroke_count_range=(3, 6),
+        stroke_count_range=(1, 6),
         thickness_range=(2, 6),
         brightness_change=128,
         p=1,
@@ -81,14 +81,14 @@ class PencilScribbles(Augmentation):
 
         return cv2.multiply(stroke_image, image, scale=1 / 255)
 
-    def createScribble(self, max_height, max_width):
+    def create_scribble(self, max_height, max_width):
         size = random.randint(self.size_range[0], self.size_range[1])
         size = min([size, max_height, max_width])
         width, height = size, size  # picture's size
 
         strokes_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
 
-        for i in range(5):
+        for i in range(random.randint(self.stroke_count_range[0], self.stroke_count_range[1])):
             # lets say these are my black pixels in a white image.
             stroke_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
             x = np.array(
@@ -134,6 +134,7 @@ class PencilScribbles(Augmentation):
                     self.thickness_range[1],
                 ),
             )
+
             strokes_img = self.apply_pencil_stroke(stroke_img, strokes_img)
 
         return strokes_img
@@ -167,7 +168,7 @@ class PencilScribbles(Augmentation):
 
             for i in range(random.randint(self.count_range[0], self.count_range[1])):
                 scribbles = np.full(image.shape, 255).astype("uint8")
-                strokes_img = self.createScribble(image.shape[1], image.shape[0])
+                strokes_img = self.create_scribble(image.shape[1], image.shape[0])
                 scribbles = self.random_paste(strokes_img, scribbles)
                 image = cv2.multiply(scribbles, image, scale=1 / 255)
 

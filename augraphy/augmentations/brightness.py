@@ -35,8 +35,6 @@ class Brightness(Augmentation):
             hsv = cv2.cvtColor(image.astype("uint8"), cv2.COLOR_BGR2HSV)
 
             hsv = np.array(hsv, dtype=np.float64)
-            hsv[:, :, 1] = hsv[:, :, 1] * value
-            hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
             hsv[:, :, 2] = hsv[:, :, 2] * value
             hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
             hsv = np.array(hsv, dtype=np.uint8)

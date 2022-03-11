@@ -63,6 +63,6 @@ def default_augraphy_pipeline(img):
         Faxify(p=0.5),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, log=False)
 
     return pipeline.augment(img)

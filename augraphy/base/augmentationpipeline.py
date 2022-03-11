@@ -1,5 +1,7 @@
+import os
 import random
 import time
+from glob import glob
 
 import cv2
 import numpy as np
@@ -24,6 +26,8 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
+    :param log: Flag to enable logging.
+    :type log: bool, optional
     """
 
     def __init__(
@@ -33,6 +37,7 @@ class AugraphyPipeline:
         post_phase,
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
+        log=False,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -40,6 +45,12 @@ class AugraphyPipeline:
         self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
+        self.log = log
+
+        # create directory to store log files
+        if self.log:
+            self.log_prob_path = os.path.join(os.getcwd(), "logs/")
+            os.makedirs(self.log_prob_path, exist_ok=True)
 
     def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
@@ -66,6 +77,26 @@ class AugraphyPipeline:
                 ),
             )
 
+        # create augraphy cache folder
+        cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
+        os.makedirs(cache_folder_path, exist_ok=True)
+        cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
+
+        file_indices = []
+        modified_time = []
+        for image_path in cache_image_paths:
+            file_name = os.path.basename(image_path)
+            file_indices.append(int(file_name[file_name.index("_") + 1 : -4]))
+            modified_time.append(os.path.getmtime(image_path))
+
+        # store 30 cache image files
+        if len(cache_image_paths) >= 30:
+            oldest_index = np.argmin(modified_time)
+            cv2.imwrite(cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png", image)
+        else:
+            current_image_index = len(cache_image_paths)
+            cv2.imwrite(cache_folder_path + "image_" + str(current_image_index) + ".png", image)
+
         data = dict()
 
         # Store performance metadata and other logs here.
@@ -73,6 +104,9 @@ class AugraphyPipeline:
 
         # For storing augmentation execution times.
         data["log"]["time"] = list()
+        data["log"]["augmentation_name"] = list()
+        data["log"]["augmentation_status"] = list()
+        data["log"]["augmentation_parameters"] = list()
 
         # This is useful.
         data["log"]["image_shape"] = image.shape
@@ -142,6 +176,35 @@ class AugraphyPipeline:
 
         data["output"] = data["post"][-1].result.astype("uint8")
 
+        # log probability
+        if self.log:
+
+            # path to log file
+            log_file_name = "log_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".txt"
+            log_prob_file_path = self.log_prob_path + log_file_name
+
+            augmentation_names = data["log"]["augmentation_name"]
+            augmentation_status = data["log"]["augmentation_status"]
+            augmentation_parameters = data["log"]["augmentation_parameters"].copy()
+
+            # remove image array and replace it with shape
+            for augmentation_parameter in augmentation_parameters:
+                if augmentation_parameter:
+                    for parameter, value in augmentation_parameter.items():
+                        if hasattr(value, "shape"):
+                            augmentation_parameter[parameter] = value.shape
+
+            with open(log_prob_file_path, "w+") as file:
+                for (
+                    name,
+                    status,
+                    parameters,
+                ) in zip(augmentation_names, augmentation_status, augmentation_parameters):
+                    file.write("%s,%s,%s \n" % (name, status, parameters))
+                    # put a space
+                    file.write("\n")
+            file.close()
+
         return data
 
     def apply_phase(self, data, layer, phase):
@@ -151,14 +214,17 @@ class AugraphyPipeline:
 
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
-                result = augmentation(result, layer)
+                result = augmentation(result, layer, force=True)
                 end = time.process_time()  # time at end of execution
                 elapsed = end - start  # execution duration
                 data["log"]["time"].append((augmentation, elapsed))
             else:
                 result = None
 
+            data["log"]["augmentation_name"].append(augmentation.__class__.__name__)
             if result is None:
+                data["log"]["augmentation_status"].append(False)
+                data["log"]["augmentation_parameters"].append("")
                 data[layer].append(
                     AugmentationResult(
                         augmentation,
@@ -167,6 +233,15 @@ class AugraphyPipeline:
                     ),
                 )
             else:
+                data["log"]["augmentation_status"].append(True)
+                data["log"]["augmentation_parameters"].append(augmentation.__dict__)
+                # for "OneOf" or "AugmentationSequence"
+                while isinstance(result, tuple) or isinstance(result, list):
+                    result, augmentations = result
+                    for nested_augmentation in augmentations:
+                        data["log"]["augmentation_name"].append(nested_augmentation.__class__.__name__)
+                        data["log"]["augmentation_status"].append(True)
+                        data["log"]["augmentation_parameters"].append(nested_augmentation.__dict__)
                 data[layer].append(AugmentationResult(augmentation, result))
 
     def print_ink_to_paper(self, data, overlay, background):

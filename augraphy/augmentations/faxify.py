@@ -10,41 +10,41 @@ from augraphy.base.augmentation import Augmentation
 class Faxify(Augmentation):
     """Emulates faxify effect in the image.
 
-    :param scale_range: Pair of ints determining the range from which to
+    :param scale_range: Pair of floats determining the range from which to
            divide the resolution by.
     :type scale_range: tuple, optional
-    :param monochrome: Flag to apply monochrome effect, false to select
-           halftone effect.
+    :param monochrome: Flag to enable monochrome effect.
     :type monochrome: int, optional
-    :param monochrome_method: Otsu, Simple or Adaptive method.
+    :param monochrome_method: Monochrome thresholding method.
     :type monochrome_method: string, optional
-    :param adaptive_method: cv2 adaptive methods when adaptive method is used.
-    :type adaptive_method: cv2.ADAPTIVE_THRESH, optional
-    :param monochrome_threshold: Simple binarization threshold value.
-    :type monochrome_threshold: int, optional
-    :param invert: Invert grayscale value in halftone effect.
+    :param monochrome_arguments: A dictionary contains argument to monochrome
+            thresholding method.
+    :type monochrome_arguments: dict, optional
+    :param halftone: Flag to enable halftone effect.
+    :type halftone: int, optional
+    :param invert: Flag to invert grayscale value in halftone effect.
     :type invert: int, optional
-    :param half_kernel_size: Half size of gaussian kernel for halftone effect.
-    :type half_kernel_size: int, optional
-    :param angle: Angle of halftone effect.
-    :type angle: int, optional
-    :param sigma: Sigma value of gaussian kernel in halftone effect.
-    :type sigma: int, optional
+    :param half_kernel_size: Pair of ints to determine half size of gaussian kernel for halftone effect.
+    :type half_kernel_size: tuple, optional
+    :param angle: Pair of ints to determine angle of halftone effect.
+    :type angle: tuple, optional
+    :param sigma: Pair of ints to determine sigma value of gaussian kernel in halftone effect.
+    :type sigma: tuple, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
-        scale_range=(1, 1),
+        scale_range=(1.0, 1.25),
         monochrome=1,
-        monochrome_method="Otsu",
-        adaptive_method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        monochrome_threshold=127,
+        monochrome_method="random",
+        monochrome_arguments={},
+        halftone=1,
         invert=1,
-        half_kernel_size=2,
-        angle=45,
-        sigma=2,
+        half_kernel_size=(1, 1),
+        angle=(0, 360),
+        sigma=(1, 3),
         p=1,
     ):
 
@@ -53,33 +53,16 @@ class Faxify(Augmentation):
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
-        self.adaptive_method = adaptive_method
-        self.monochrome_threshold = monochrome_threshold
+        self.monochrome_arguments = monochrome_arguments
+        self.halftone = halftone
         self.invert = invert
         self.half_kernel_size = half_kernel_size
         self.angle = angle
         self.sigma = sigma
 
-        self.enable_otsu = 0
-        self.enable_simple = 0
-        self.enable_adaptive = 0
-        if self.monochrome_method == "Otsu":
-            self.enable_otsu = 1
-        elif self.monochrome_method == "Simple":
-            self.enable_simple = 1
-        elif self.monochrome_method == "Adaptive":
-            self.enable_adaptive = 1
-
-        # valid adaptive method only
-        if self.adaptive_method not in [cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.ADAPTIVE_THRESH_MEAN_C]:
-            self.adaptive_method = cv2.ADAPTIVE_THRESH_GAUSSIAN_C
-
-        # at least 1 for half kernel size
-        self.half_kernel_size = max(1, self.half_kernel_size)
-
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, adaptive_method={self.adaptive_method}, monochrome_threshold={self.monochrome_threshold}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_arguments={self.monochrome_arguments}, halftone={self.halftone}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
     # rotate image based on the input angle
     def cv_rotate(self, image, angle):
@@ -109,7 +92,7 @@ class Faxify(Augmentation):
         return image_rotated
 
     # generate halftone effect
-    def generate_halftone(self, image, invert=1, half_kernel_size=2, angle=45, sigma=2):
+    def generate_halftone(self, image, half_kernel_size=2, angle=45, sigma=2):
 
         # get total width of the kernel
         kernel_size = kernel_size_x = kernel_size_y = 2 * half_kernel_size + 1
@@ -153,11 +136,7 @@ class Faxify(Augmentation):
         x_end = x_start + xsize_in
         image_halftone = image_halftone[y_start:y_end, x_start:x_end]
 
-        # return image as uint8
-        if invert:
-            return ((1 - image_halftone) * 255).astype("uint8")
-        else:
-            return (image_halftone * 255).astype("uint8")
+        return image_halftone
 
     # convert rgb/bgr to single channel grayscale
     def rgb_to_gray(self, img, invert=1, gray_level=255, max_value=255):
@@ -179,13 +158,9 @@ class Faxify(Augmentation):
     # downscale image based on the provided scale
     def downscale(self, image):
 
-        if len(image.shape) > 2:
-            ysize, xsize, dim = image.shape
-        else:
-            ysize, xsize = image.shape
-
-        scale = random.randint(self.scale_range[0], self.scale_range[1])
-        new_size = (xsize // scale, ysize // scale)
+        ysize, xsize = image.shape[:2]
+        scale = np.random.uniform(self.scale_range[0], self.scale_range[1])
+        new_size = (int(xsize // scale), int(ysize // scale))
         image_downscaled = cv2.resize(image, new_size)
 
         return image_downscaled
@@ -196,33 +171,105 @@ class Faxify(Augmentation):
             image = image.copy()
 
             # downscale image
-            image_downscaled = self.downscale(image)
+            image_out = self.downscale(image)
 
-            # applies monochrome
             if self.monochrome:
+                # randomly select threshold method
+                if self.monochrome_method == "random":
+                    all_monochrome_method = [
+                        "threshold_minimum",
+                        "threshold_li",
+                        "threshold_mean",
+                        "threshold_otsu",
+                        "threshold_sauvola",
+                        "threshold_triangle",
+                        "threshold_yen",
+                        "cv2.threshold",
+                        # "cv2.adaptiveThreshold",
+                        # "threshold_local",
+                        # "threshold_niblack",
+                    ]
+                    monochrome_method = random.choice(all_monochrome_method)
+                else:
+                    monochrome_method = self.monochrome_method
+
+                monochrome_arguments = self.monochrome_arguments.copy()
+
+                # block size must present in the input argument
+                if monochrome_method == "threshold_local" and "block_size" not in monochrome_arguments:
+                    # min image size is 30
+                    block_size = random.randint(3, 29)
+                    # block size must be odd
+                    if not block_size % 2:
+                        block_size += 1
+                    monochrome_arguments["block_size"] = block_size
+
+                # window size of niblack and sauvola must be odd
+                if (monochrome_method == "threshold_niblack") or (monochrome_method == "threshold_sauvola"):
+                    if monochrome_arguments and "window_size" in monochrome_arguments:
+                        if not monochrome_arguments["window_size"] % 2:
+                            monochrome_arguments["window_size"] += 1
+
+                # cv2 threshold needs to have input arguments
+                if monochrome_method == "cv2.threshold":
+                    if monochrome_arguments is None:
+                        monochrome_arguments = {}
+                    if "thresh" not in monochrome_arguments:
+                        monochrome_arguments["thresh"] = random.randint(64, 128)
+                    if "maxval" not in monochrome_arguments:
+                        monochrome_arguments["maxval"] = 255
+                    if "type" not in self.monochrome_arguments:
+                        monochrome_arguments["type"] = cv2.THRESH_BINARY
+
+                # cv2 adaptiveThreshold needs to have input arguments
+                if monochrome_method == "cv2.adaptiveThreshold":
+                    if monochrome_arguments is None:
+                        monochrome_arguments = {}
+                    if "maxValue" not in monochrome_arguments:
+                        monochrome_arguments["maxValue"] = 255
+                    if "adaptiveMethod" not in monochrome_arguments:
+                        monochrome_arguments["adaptiveMethod"] = random.choice(
+                            (cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.ADAPTIVE_THRESH_MEAN_C),
+                        )
+                    if "thresholdType" not in monochrome_arguments:
+                        monochrome_arguments["thresholdType"] = cv2.THRESH_BINARY
+                    if "blockSize" not in monochrome_arguments:
+                        block_size = random.randint(5, 29)
+                        if not block_size % 2:
+                            block_size += 1
+                        monochrome_arguments["blockSize"] = block_size
+                    if "C" not in monochrome_arguments:
+                        monochrome_arguments["C"] = random.randint(1, 3)
+
+                # run binarization
                 image_out = binary_threshold(
-                    image_downscaled,
-                    enable_otsu=self.enable_otsu,
-                    enable_simple=self.enable_simple,
-                    simple_method=cv2.THRESH_BINARY,
-                    thres=self.monochrome_threshold,
-                    max_value=255,
-                    enable_adaptive=self.enable_adaptive,
-                    adaptive_method=self.adaptive_method,
-                    block_size=21,
-                    C=10,
+                    image_out,
+                    monochrome_method,
+                    monochrome_arguments,
                 )
-            # applies halftone
-            else:
-                image_gray = self.rgb_to_gray(image_downscaled, invert=self.invert)
+
+            # check and apply halftone
+            if self.halftone:
+
+                # convert to gray
+                image_out = self.rgb_to_gray(image_out, invert=self.invert)
+
+                half_kernel_size = random.randint(self.half_kernel_size[0], self.half_kernel_size[1])
+                angle = random.randint(self.angle[0], self.angle[1])
+                sigma = random.randint(self.sigma[0], self.sigma[1])
 
                 image_out = self.generate_halftone(
-                    image_gray,
-                    self.invert,
-                    self.half_kernel_size,
-                    self.angle,
-                    self.sigma,
+                    image_out,
+                    half_kernel_size,
+                    angle,
+                    sigma,
                 )
+
+                # check and invert image, then return image as uint8
+                if self.invert:
+                    image_out = ((1 - image_out) * 255).astype("uint8")
+                else:
+                    image_out = (image_out * 255).astype("uint8")
 
             # upscale image
             image_faxify = cv2.resize(image_out, (image.shape[1], image.shape[0]))

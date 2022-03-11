@@ -38,7 +38,7 @@ class NoiseGenerator:
 
         # any invalid noise type will reset noise type to 0
         if self.noise_type not in [1, 2, 3, 4]:
-            self.noise_type = 1
+            self.noise_type = random.randint(1, 4)
 
         # random location with no sides if no side is chosen
         if self.noise_side not in self.sides:

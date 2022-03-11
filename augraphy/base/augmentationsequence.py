@@ -29,4 +29,4 @@ class AugmentationSequence(Augmentation):
             for augmentation in self.augmentations:
                 result = augmentation(result)
 
-            return result
+            return result, self.augmentations

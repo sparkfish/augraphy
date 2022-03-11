@@ -3,18 +3,18 @@
 The Faxify augmentation emulates the artifacts created by faxing the document.
 
 
-| Parameter              | Description                                                                |
-|------------------------|----------------------------------------------------------------------------|
-| `scale_range`          | Pair of ints determining the range from which to divide the resolution by. |
-| `monochrome`           | Flag to apply monochrome effect, false to select halftone effect.          |
-| `monochrome_method`    | Otsu, Simple or Adaptive method.                                           |
-| `adaptive_method`      | cv2 adaptive methods when adaptive method is used.                         |
-| `monochrome_threshold` | The simple binarization threshold value.                                   |
-| `invert`               | Invert grayscale value in halftone effect.                                 |
-| `half_kernel_size`     | The half size of gaussian kernel for halftone effect.                      |
-| `angle`                | The angle of halftone effect.                                              |
-| `sigma`                | The sigma value of gaussian kernel in halftone effect.                     |
-| `p`                    | The probability that this augmentation will be applied.                    |
+| Parameter              | Description                                                                  |
+|------------------------|------------------------------------------------------------------------------|
+| `scale_range`          | Pair of floats determining the range from which to divide the resolution by. |
+| `monochrome`           | Flag to enable monochrome effect.                                            |
+| `monochrome_method`    | Monochrome thresholding method.                                              |
+| `monochrome_arguments` | A dictionary contains argument to monochrome thresholding method.            |
+| `halftone`             | Flag to enable halftone effect.                                              |
+| `invert`               | Invert grayscale value in halftone effect.                                   |
+| `half_kernel_size`     | Pair of ints to determine half size of gaussian kernel for halftone effect.  |
+| `angle`                | Pair of ints to determine angle of halftone effect.                          |
+| `sigma`                | Pair of ints to determine sigma value of gaussian kernel in halftone effect. |
+| `p`                    | The probability that this augmentation will be applied.                      |
 
 
 **Example Usage:**
@@ -44,38 +44,31 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
     # create image with random colour text
     image = image * (np.random.random((1500,1500,3))*255).astype('uint8')
 
-    faxify_otsu = Faxify(
-            scale_range=(4, 4),
-            monochrome=1,
-            monochrome_method="Otsu",
-            )
+    arguments1 = {"thresh":128, "maxval":128, "type":cv2.THRESH_BINARY}
+    faxify1 = Faxify(scale_range = (1,2),
+                    monochrome = 1,
+                    monochrome_method = "cv2.threshold",
+                    monochrome_arguments = arguments1,
+                    halftone = 1,
+                    invert = 1,
+                    half_kernel_size = (1,2),
+                    angle = (0, 360),
+                    sigma = (1,3))
 
-    faxify_simple = Faxify(
-            scale_range=(3, 3),
-            monochrome=1,
-            monochrome_method="Simple",
-            monochrome_threshold=10,
-            )
+    arguments2 = {"window_size":99, "k":0.2}
+    faxify2 = Faxify(scale_range = (1,2),
+                    monochrome = 1,
+                    monochrome_method = "threshold_niblack",
+                    monochrome_arguments = arguments2,
+                    halftone = 1,
+                    invert = 1,
+                    half_kernel_size = (1,2),
+                    angle = (0, 360),
+                    sigma = (1,3))
 
-    faxify_adaptive = Faxify(
-            scale_range=(2, 2),
-            monochrome=1,
-            monochrome_method="Adaptive",
-            )
 
-    faxify_halftone = Faxify(
-            scale_range=(1, 1),
-            monochrome=0,
-            invert=0,
-            half_kernel_size=4,
-            angle=45,
-            sigma=2,
-            )
-
-    img_faxify_otsu = faxify_otsu(image)
-    img_faxify_simple = faxify_simple(image)
-    img_faxify_adaptive = faxify_adaptive(image)
-    img_faxify_halftone = faxify_halftone(image)
+    img_faxify1 = faxify1(image)
+    img_faxify2 = faxify2(image)
 
     elapsed_time = time() - start_time
     # processing time
@@ -83,20 +76,12 @@ The Faxify augmentation emulates the artifacts created by faxing the document.
 
     # display output
     plt.figure()
-    plt.imshow(img_faxify_otsu)
-    plt.title("Faxify Otsu")
+    plt.imshow(img_faxify1)
+    plt.title("Faxify cv threshold")
 
     plt.figure()
-    plt.imshow(img_faxify_simple)
-    plt.title("Faxify simple")
-
-    plt.figure()
-    plt.imshow(img_faxify_adaptive)
-    plt.title("Faxify adaptive")
-
-    plt.figure()
-    plt.imshow(img_faxify_halftone)
-    plt.title("Faxify halftone")
+    plt.imshow(img_faxify1)
+    plt.title("Faxify skimage niblack")
 ```
 
 

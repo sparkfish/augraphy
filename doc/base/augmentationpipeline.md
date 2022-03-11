@@ -26,6 +26,7 @@ augmented_image = data['output']
 | `ink_color_range`   | Pair of ints determining the range from which to sample ink color.      |
 | `paper_color_range` | Pair of ints determining the range from which to sample paper color.    |
 | `rotate_range`      | Pair of ints determining the range from which to sample paper rotation. |
+| `log_prob`          | Flag to enable logging of each augmentation probablity.                 |
 
 ## The Data Dictionary
 

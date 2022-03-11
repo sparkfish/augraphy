@@ -3,7 +3,29 @@ import random
 
 import cv2
 import numpy as np
+from numpy.linalg import norm
+from skimage.filters import threshold_li
+from skimage.filters import threshold_local
+from skimage.filters import threshold_mean
+from skimage.filters import threshold_minimum
+from skimage.filters import threshold_niblack
+from skimage.filters import threshold_otsu
+from skimage.filters import threshold_sauvola
+from skimage.filters import threshold_triangle
+from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
+
+
+# Generate average intensity value
+def generate_average_intensity(image):
+    # Adapted from this discussion
+    # https://stackoverflow.com/questions/14243472/estimate-brightness-of-an-image-opencv/22020098#22020098
+    if len(image.shape) > 2:
+        # bgr image - create brightness with euclidean norm
+        return np.average(norm(image, axis=2)) / np.sqrt(3)
+    else:
+        # grayscale or binary
+        return np.average(image)
 
 
 # Generate noise to edges of folding
@@ -188,7 +210,6 @@ def warp_fold_right_side(
 
 def chaikin(points):
     """
-
     :param points: a list of more than 2 points, where each point is a tuple/array of len=2
     :type points: array
     """
@@ -214,7 +235,6 @@ def chaikin(points):
 
 def smooth(points, iter):
     """
-
     :param points: a list of more than 2 points, where each point is a tuple/array of len=2
     :type points: array
     :param iter: number of times to apply chaikin algorithm
@@ -368,91 +388,6 @@ def apply_blob(
     return mask
 
 
-def binary_threshold(
-    img,
-    enable_otsu=0,
-    enable_simple=0,
-    simple_method=cv2.THRESH_BINARY,
-    thres=127,
-    max_value=255,
-    enable_adaptive=0,
-    adaptive_method=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-    block_size=21,
-    C=10,
-):
-    """Converts img to grayscale and applies the given threshold type
-
-    :param img: the image to binarize
-    :type img: numpy.array
-
-    :param enable_otsu: Flag to enable otsu binarization method
-    :type enable_otsu: Int, optional
-
-    :param enable_simple: Flag to enable simple binarization method
-    :type enable_simple: Int, optional
-    :param simple_method: Simple binarization method
-    :type simple_method: cv2.THRESH_ value, optional
-    :param thres: Thresholding value for simple binarization method
-    :type thres: Int, optional
-    :param max_value: Max value of image for simple binarization method
-    :type max_value: Int, optional
-
-    :param enable_adaptive: Flag to enable adaptive binarization method
-    :type enable_adaptive: Int, optional
-    :param adaptive_method: Adaptive binarization method
-    :type adaptive_method: cv2.THRESH_ value, optional
-    :param block_size: Size of a pixel neighborhood that is used to calculate
-                        a threshold value for adaptive method
-    :type block_size: Int, optional
-    :param C: Constant subtracted from the mean or weighted mean, only for
-                        adaptive method
-    :type C: Int, optional
-    """
-
-    # otsu as default method
-    if not enable_otsu and not enable_simple and not enable_adaptive:
-        enable_otsu = 1
-
-    # convert to grayscale
-    if len(img.shape) > 2:
-        grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    else:
-        grayscale = img
-
-    # otsu method:
-    if enable_otsu:
-        ret, thresholded = cv2.threshold(grayscale, 0, 255, cv2.THRESH_OTSU)
-    # simple method
-    elif enable_simple:
-        simple_methods = [
-            cv2.THRESH_BINARY,
-            cv2.THRESH_BINARY_INV,
-            cv2.THRESH_TRUNC,
-            cv2.THRESH_TOZERO,
-            cv2.THRESH_TOZERO_INV,
-        ]
-        if simple_method in simple_methods:
-            ret, thresholded = cv2.threshold(grayscale, thres, max_value, simple_method)
-        else:
-            raise TypeError("Invalid thresholding method.")
-    # adaptive method
-    elif enable_adaptive:
-        adaptive_methods = [cv2.ADAPTIVE_THRESH_MEAN_C, cv2.ADAPTIVE_THRESH_GAUSSIAN_C]
-        if adaptive_method in adaptive_methods:
-            thresholded = cv2.adaptiveThreshold(
-                grayscale,
-                255,
-                adaptive_method,
-                cv2.THRESH_BINARY,
-                block_size,
-                C,
-            )
-        else:
-            raise TypeError("Invalid thresholding method.")
-
-    return thresholded
-
-
 def sobel(image):
     """Computes the gradient of the image intensity function.
 
@@ -481,3 +416,43 @@ def make_white_transparent(img, ink_color=0):
     # Apply transparency mask based on grayscale.
     img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
     return img_bgra
+
+
+def binary_threshold(
+    image,
+    threshold_method,
+    threshold_arguments,
+):
+
+    # convert image to grascale
+    if len(image.shape) > 2:
+        grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        grayscale = image
+
+    if threshold_arguments:
+        # get input arguments for threhold function
+        input_arguments = ""
+        for input_argument in threshold_arguments:
+            # for string argument value
+            if isinstance(threshold_arguments[input_argument], str):
+                input_value = threshold_arguments[input_argument]
+            # for non-string argument value
+            else:
+                input_value = str(threshold_arguments[input_argument])
+            # merge argument name and their value
+            input_arguments += "," + input_argument + "=" + input_value
+
+        # apply binary function and get threshold
+        binary_threshold = eval(threshold_method + "(grayscale" + input_arguments + ")")
+    else:
+        # apply binary function and get threshold
+        binary_threshold = eval(threshold_method + "(grayscale)")
+
+    # apply binary threshold
+    if threshold_method == "cv2.threshold":
+        binary_threshold, image_binary = binary_threshold
+    else:
+        image_binary = np.uint8((grayscale > binary_threshold) * 255)
+
+    return image_binary

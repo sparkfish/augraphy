@@ -531,14 +531,11 @@ class OverlayBuilder:
 
         overlay_background = self.background
 
-        # sensitivity up to 0.01 (for scale down)
-        min_value = max(1, self.nscales[0] * 100)
-        max_value = max(1, self.nscales[1] * 100)
-        random_height_scale = random.randint(min_value, max_value)
-        random_width_scale = random.randint(min_value, max_value)
+        random_height_scale = np.random.uniform(self.nscales[0], self.nscales[1])
+        random_width_scale = np.random.uniform(self.nscales[0], self.nscales[1])
 
-        new_fg_height = int((self.foreground.shape[0] * random_height_scale) / 100)
-        new_fg_width = int((self.foreground.shape[1] * random_width_scale) / 100)
+        new_fg_height = int((self.foreground.shape[0] * random_height_scale))
+        new_fg_width = int((self.foreground.shape[1] * random_width_scale))
         self.foreground = cv2.resize(
             self.foreground,
             (int(new_fg_width), int(new_fg_height)),
