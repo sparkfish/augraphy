@@ -1,9 +1,12 @@
 import glob
+import os
 import random
 
 import cv2
 import numpy as np
 
+from augraphy.augmentations.brightness import Brightness
+from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 
@@ -32,9 +35,11 @@ class PaperFactory(Augmentation):
         self.paper_textures = list()
         self.tile_texture_shape = tile_texture_shape
         self.texture_path = texture_path
+        self.texture_file_names = []
+        self.texture_file_name = None
         for file in glob.glob(f"{texture_path}/*"):
             texture = cv2.imread(file)
-
+            self.texture_file_names.append(os.path.basename(file))
             # prevent invalid image file
             if hasattr(texture, "dtype") and texture.dtype == np.uint8:
 
@@ -142,7 +147,23 @@ class PaperFactory(Augmentation):
 
     # Returns a paper texture cropped to a given shape.
     def get_texture(self, shape):
-        texture = random.choice(self.paper_textures)
+        random_index = random.randint(0, len(self.paper_textures) - 1)
+        texture = self.paper_textures[random_index]
+        self.texture_file_name = self.texture_file_names[random_index]
+        # reset file names and textures
+        self.texture_file_names = []
+        self.paper_textures = []
+
+        # texture_intensity
+        texture_intensity = generate_average_intensity(texture)
+        # brighten dark texture based on target intensity, max intensity = 255 (brightest)
+        target_intensity = 200
+        if texture_intensity < target_intensity:
+            brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
+            brighten_min = 1 + brighten_ratio
+            brighten_max = 1 + brighten_ratio + 0.5
+            brightness = Brightness(range=(brighten_min, brighten_max))
+            texture = brightness(texture)
 
         if texture.shape[0] < shape[0] or texture.shape[1] < shape[1]:
             texture = self.resize(texture, shape)

@@ -26,8 +26,8 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
-    :param log_prob: Flag to enable logging of each augmentation probablity.
-    :type log_prob: bool, optional
+    :param log: Flag to enable logging.
+    :type log: bool, optional
     """
 
     def __init__(
@@ -37,7 +37,7 @@ class AugraphyPipeline:
         post_phase,
         ink_color_range=(0, 0),
         paper_color_range=(255, 255),
-        log_prob=False,
+        log=False,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -45,11 +45,11 @@ class AugraphyPipeline:
         self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
-        self.log_prob = log_prob
+        self.log = log
 
         # create directory to store log files
-        if self.log_prob:
-            self.log_prob_path = os.path.join(os.getcwd(), "log_prob/")
+        if self.log:
+            self.log_prob_path = os.path.join(os.getcwd(), "logs/")
             os.makedirs(self.log_prob_path, exist_ok=True)
 
     def wrapListMaybe(self, augs):
@@ -106,6 +106,7 @@ class AugraphyPipeline:
         data["log"]["time"] = list()
         data["log"]["augmentation_name"] = list()
         data["log"]["augmentation_status"] = list()
+        data["log"]["augmentation_parameters"] = list()
 
         # This is useful.
         data["log"]["image_shape"] = image.shape
@@ -176,21 +177,32 @@ class AugraphyPipeline:
         data["output"] = data["post"][-1].result.astype("uint8")
 
         # log probability
-        if self.log_prob:
+        if self.log:
 
             # path to log file
-            log_file_name = "log_prob_" + time.strftime("%H:%M:%S", time.localtime()) + ".txt"
-            log_file_name = log_file_name.replace(":", "_")
+            log_file_name = "log_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".txt"
             log_prob_file_path = self.log_prob_path + log_file_name
 
             augmentation_names = data["log"]["augmentation_name"]
             augmentation_status = data["log"]["augmentation_status"]
+            augmentation_parameters = data["log"]["augmentation_parameters"].copy()
+
+            # remove image array and replace it with shape
+            for augmentation_parameter in augmentation_parameters:
+                if augmentation_parameter:
+                    for parameter, value in augmentation_parameter.items():
+                        if hasattr(value, "shape"):
+                            augmentation_parameter[parameter] = value.shape
+
             with open(log_prob_file_path, "w+") as file:
                 for (
                     name,
                     status,
-                ) in zip(augmentation_names, augmentation_status):
-                    file.write("%s,%s \n" % (name, status))
+                    parameters,
+                ) in zip(augmentation_names, augmentation_status, augmentation_parameters):
+                    file.write("%s,%s,%s \n" % (name, status, parameters))
+                    # put a space
+                    file.write("\n")
             file.close()
 
         return data
@@ -212,6 +224,7 @@ class AugraphyPipeline:
             data["log"]["augmentation_name"].append(augmentation.__class__.__name__)
             if result is None:
                 data["log"]["augmentation_status"].append(False)
+                data["log"]["augmentation_parameters"].append("")
                 data[layer].append(
                     AugmentationResult(
                         augmentation,
@@ -221,12 +234,14 @@ class AugraphyPipeline:
                 )
             else:
                 data["log"]["augmentation_status"].append(True)
+                data["log"]["augmentation_parameters"].append(augmentation.__dict__)
                 # for "OneOf" or "AugmentationSequence"
                 while isinstance(result, tuple) or isinstance(result, list):
                     result, augmentations = result
                     for nested_augmentation in augmentations:
                         data["log"]["augmentation_name"].append(nested_augmentation.__class__.__name__)
                         data["log"]["augmentation_status"].append(True)
+                        data["log"]["augmentation_parameters"].append(nested_augmentation.__dict__)
                 data[layer].append(AugmentationResult(augmentation, result))
 
     def print_ink_to_paper(self, data, overlay, background):

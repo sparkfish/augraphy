@@ -3,6 +3,7 @@ import random
 
 import cv2
 import numpy as np
+from numpy.linalg import norm
 from skimage.filters import threshold_li
 from skimage.filters import threshold_local
 from skimage.filters import threshold_mean
@@ -13,6 +14,18 @@ from skimage.filters import threshold_sauvola
 from skimage.filters import threshold_triangle
 from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
+
+
+# Generate average intensity value
+def generate_average_intensity(image):
+    # Adapted from this discussion
+    # https://stackoverflow.com/questions/14243472/estimate-brightness-of-an-image-opencv/22020098#22020098
+    if len(image.shape) > 2:
+        # bgr image - create brightness with euclidean norm
+        return np.average(norm(image, axis=2)) / np.sqrt(3)
+    else:
+        # grayscale or binary
+        return np.average(image)
 
 
 # Generate noise to edges of folding
