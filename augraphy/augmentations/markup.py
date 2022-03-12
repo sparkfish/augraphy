@@ -6,6 +6,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from augraphy.augmentations.brightness import Brightness
+from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import smooth
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
@@ -63,7 +65,7 @@ class Markup(Augmentation):
         )
 
     def distribute_line(self, starting_point, ending_point, offset):
-        points_count = random.randint(3, 10)  # dividing the line into points
+        points_count = random.randint(6, 12)  # dividing the line into points
         points = np.linspace(starting_point[0], ending_point[0], points_count)
         points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
         points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm
@@ -94,7 +96,7 @@ class Markup(Augmentation):
         if self.single_word_mode is False:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
         else:
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 1))
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (10, 1))
             self.markup_length_range = (1, 1)
 
         # dilating the threshold image to combine horizontal lines
@@ -139,8 +141,9 @@ class Markup(Augmentation):
         for cnt in contours:
             # adding randomization.
             choice = random.choice([False, True])
-            if choice:
-                x, y, w, h = cv2.boundingRect(cnt)
+            x, y, w, h = cv2.boundingRect(cnt)
+            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10):
+
                 # avoiding too small contours (width less  5% of the image width)
                 if w < int(markup_img.shape[1] / 5):
                     continue
@@ -233,6 +236,27 @@ class Markup(Augmentation):
         if self.markup_type == "highlight":
             alpha = 0.5
             markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
+
+            # increase brightness of highlight effect if highlight colour is too dark
+            # highlight min intensity ( to appear bright )
+            if len(markup_mask.shape) > 2:
+                markup_mask_gray = cv2.cvtColor(markup_mask, cv2.COLOR_BGR2GRAY)
+            else:
+                markup_mask_gray = markup_mask
+
+            # get location of intensity < min intensity
+            min_intensity = 200
+            y_location, x_location = np.where(markup_mask_gray < min_intensity)
+
+            # if there's location where intensity < min intensity, apply brightness
+            if len(y_location) > 0:
+                markup_min_intensity = min(markup_mask_gray[y_location, x_location])
+                brighten_ratio = abs(markup_min_intensity - min_intensity) / markup_min_intensity
+                brighten_min = 1 + brighten_ratio
+                brighten_max = 1 + brighten_ratio + 0.5
+                brightness = Brightness(range=(brighten_min, brighten_max))
+                markup_mask = brightness(markup_mask)
+
         else:
             alpha = 1
 

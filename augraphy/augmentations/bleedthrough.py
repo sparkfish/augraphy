@@ -5,6 +5,7 @@ from glob import glob
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
@@ -65,6 +66,12 @@ class BleedThrough(Augmentation):
             img_bleed_input = cv2.cvtColor(img_bleed.astype("uint8"), cv2.COLOR_BGR2GRAY)
         else:
             img_bleed_input = img_bleed.astype("uint8")
+
+        # if the bleedthrough foreground is darker, reduce the blending alpha value
+        img_bleed_brightness = generate_average_intensity(img_bleed)
+        img_brightness = generate_average_intensity(img)
+        if img_bleed_brightness < img_brightness:
+            self.alpha *= (img_bleed_brightness / img_brightness) / 2
 
         ob = OverlayBuilder("normal", img_bleed_input, img, 1, (1, 1), "center", 0, self.alpha)
         return ob.build_overlay()
