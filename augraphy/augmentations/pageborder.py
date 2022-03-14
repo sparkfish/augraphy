@@ -6,6 +6,7 @@ import numpy as np
 from augraphy.augmentations.lib import warp_fold_left_side
 from augraphy.augmentations.lib import warp_fold_right_side
 from augraphy.base.augmentation import Augmentation
+from augraphy.utilities import *
 
 
 class PageBorder(Augmentation):
@@ -235,14 +236,39 @@ class PageBorder(Augmentation):
                 noise_intensity,
             )
 
+            border_image = np.full_like(image, fill_value=255)
             if side == "left":
-                image = np.hstack((border, image))
+                if random.random() > 0.5:
+                    border = np.flipud(border)
+                border_y, border_x = border.shape[:2]
+                border_image = np.full_like(image, fill_value=255)
+                border_image[:, :border_x] = border
+
             elif side == "right":
-                image = np.hstack((image, np.fliplr(border)))
+                border = np.fliplr(border)
+                if random.random() > 0.5:
+                    border = np.flipud(border)
+                border_y, border_x = border.shape[:2]
+                border_image[-border_y:, -border_x:] = border
+
             elif side == "top":
-                image = np.vstack((cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE), image))
+                border = cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE)
+                if random.random() > 0.5:
+                    border = np.fliplr(border)
+                border_y, border_x = border.shape[:2]
+                border_image = np.full_like(image, fill_value=255)
+                border_image[:border_y, :] = border
+
             elif side == "bottom":
-                image = np.vstack(
-                    (image, (cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE))),
-                )
-            return image
+                border = cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                if random.random() > 0.5:
+                    border = np.fliplr(border)
+                border_y, border_x = border.shape[:2]
+                border_image = np.full_like(image, fill_value=255)
+                border_image[-border_y:, :] = border
+
+            # merge border and input image
+            overlay_builder = OverlayBuilder("darken", border_image, image, 1, (1, 1), "center", 0, 1)
+            image_output = overlay_builder.build_overlay()
+
+            return image_output

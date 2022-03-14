@@ -65,7 +65,7 @@ class Markup(Augmentation):
         )
 
     def distribute_line(self, starting_point, ending_point, offset):
-        points_count = random.randint(6, 12)  # dividing the line into points
+        points_count = random.randint(3, 6)  # dividing the line into points
         points = np.linspace(starting_point[0], ending_point[0], points_count)
         points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
         points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm

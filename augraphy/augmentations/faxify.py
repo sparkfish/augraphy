@@ -139,7 +139,7 @@ class Faxify(Augmentation):
         return image_halftone
 
     # convert rgb/bgr to single channel grayscale
-    def rgb_to_gray(self, img, invert=1, gray_level=255, max_value=255):
+    def complement_rgb_to_gray(self, img, invert=1, gray_level=255, max_value=255):
 
         img_complement = max_value - img
 
@@ -177,14 +177,15 @@ class Faxify(Augmentation):
                 # randomly select threshold method
                 if self.monochrome_method == "random":
                     all_monochrome_method = [
-                        "threshold_minimum",
+                        # "grayscale",
                         "threshold_li",
                         "threshold_mean",
                         "threshold_otsu",
                         "threshold_sauvola",
                         "threshold_triangle",
-                        "threshold_yen",
-                        "cv2.threshold",
+                        # "threshold_yen",
+                        # "cv2.threshold",
+                        # "threshold_minimum",
                         # "cv2.adaptiveThreshold",
                         # "threshold_local",
                         # "threshold_niblack",
@@ -252,7 +253,7 @@ class Faxify(Augmentation):
             if self.halftone:
 
                 # convert to gray
-                image_out = self.rgb_to_gray(image_out, invert=self.invert)
+                image_out = self.complement_rgb_to_gray(image_out, invert=self.invert)
 
                 half_kernel_size = random.randint(self.half_kernel_size[0], self.half_kernel_size[1])
                 angle = random.randint(self.angle[0], self.angle[1])
