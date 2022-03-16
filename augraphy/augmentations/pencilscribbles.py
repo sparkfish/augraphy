@@ -65,8 +65,6 @@ class PencilScribbles(Augmentation):
 
         add_noise = np.vectorize(add_noise_fn)
         apply_mask = np.vectorize(apply_mask_fn)
-        sobelized = sobel(stroke_image)
-        sobelizedDilated = cv2.dilate(sobelized, (5, 5), iterations=3)
         stroke_image = add_noise(stroke_image, sobel)
 
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_GRAY2BGR)

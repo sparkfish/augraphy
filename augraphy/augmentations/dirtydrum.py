@@ -56,7 +56,7 @@ class DirtyDrum(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyDrum(line_width_range={self.line_width_range}, line_concentration={self.line_concentation}, direction={self.direction}, noise_intensity={self.noise_intensity}, noise_value={self.noise_value}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
+        return f"DirtyDrum(line_width_range={self.line_width_range}, line_concentration={self.line_concentration}, direction={self.direction}, noise_intensity={self.noise_intensity}, noise_value={self.noise_value}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
 
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):

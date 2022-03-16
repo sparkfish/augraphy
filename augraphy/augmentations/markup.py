@@ -7,8 +7,10 @@ import cv2
 import numpy as np
 
 from augraphy.augmentations.brightness import Brightness
+from augraphy.augmentations.lib import add_noise as lib_add_noise
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import smooth
+from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
 
@@ -113,6 +115,52 @@ class Markup(Augmentation):
 
         return dilation
 
+    def draw_line(self, p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness):
+        # draw main line
+        markup_mask = cv2.line(
+            markup_mask,
+            p1,
+            p2,
+            self.markup_color,
+            markup_thickness,
+            lineType=cv2.LINE_AA,
+        )
+
+        # draw another line with offset y at point1 or point2, so that one end of the line is thicker, another end is thinner
+        if random.random() > 0.5:
+            p1_y_offset1 = np.clip(p1_y + markup_thickness, 0, ysize)
+            p1_y_offset2 = np.clip(p1_y - markup_thickness, 0, ysize)
+            p11 = (p1_x, p1_y_offset1)
+            p21 = (p2_x, p2_y)
+            p12 = (p1_x, p1_y_offset2)
+            p22 = (p2_x, p2_y)
+        else:
+            p2_y_offset1 = np.clip(p2_y + markup_thickness, 0, ysize)
+            p2_y_offset2 = np.clip(p2_y - markup_thickness, 0, ysize)
+            p11 = (p1_x, p1_y)
+            p21 = (p2_x, p2_y_offset1)
+            p12 = (p1_x, p1_y)
+            p22 = (p2_x, p2_y_offset2)
+
+        # draw positive offset
+        markup_mask = cv2.line(
+            markup_mask,
+            p11,
+            p21,
+            self.markup_color,
+            markup_thickness,
+            lineType=cv2.LINE_AA,
+        )
+        # draw negative offset
+        markup_mask = cv2.line(
+            markup_mask,
+            p12,
+            p22,
+            self.markup_color,
+            markup_thickness,
+            lineType=cv2.LINE_AA,
+        )
+
     def __call__(self, image, layer=None, force=False):
         markup_img = image.copy()
         overlay = markup_img.copy()
@@ -176,40 +224,34 @@ class Markup(Augmentation):
 
                 for i in range(self.repetitions):
                     if self.markup_type == "crossed":
-                        # Drawing primary diagonal
-                        p1 = (
-                            starting_point[0] + random.randint(-offset, offset),
-                            starting_point[1] + +random.randint(-offset, offset),
+
+                        ysize, xsize = markup_img.shape[:2]
+
+                        # drawing primary diagonal
+                        markup_thickness = random.randint(
+                            self.markup_thickness_range[0],
+                            self.markup_thickness_range[1],
                         )
-                        p2 = (
-                            ending_point[0] + random.randint(-offset, offset),
-                            ending_point[1] + +random.randint(-offset, offset),
-                        )
-                        markup_mask = cv2.line(
-                            markup_mask,
-                            p1,
-                            p2,
-                            self.markup_color,
-                            markup_thickness,
-                            lineType=cv2.LINE_AA,
-                        )
+                        p1_x = np.clip(starting_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
+                        p1_y = np.clip(starting_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p2_x = np.clip(ending_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
+                        p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p1 = (p1_x, p1_y)
+                        p2 = (p2_x, p2_y)
+                        self.draw_line(p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness)
+
                         # drawing secondary diagonal
-                        p1 = (
-                            ending_point[0] + random.randint(-offset, offset),
-                            starting_point[1] + +random.randint(-offset, offset),
+                        markup_thickness = random.randint(
+                            self.markup_thickness_range[0],
+                            self.markup_thickness_range[1],
                         )
-                        p2 = (
-                            starting_point[0] + random.randint(-offset, offset),
-                            ending_point[1] + +random.randint(-offset, offset),
-                        )
-                        markup_mask = cv2.line(
-                            markup_mask,
-                            p1,
-                            p2,
-                            self.markup_color,
-                            markup_thickness,
-                            lineType=cv2.LINE_AA,
-                        )
+                        p1_x = np.clip(ending_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
+                        p1_y = np.clip(starting_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p2_x = np.clip(starting_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
+                        p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p1 = (p1_x, p1_y)
+                        p2 = (p2_x, p2_y)
+                        self.draw_line(p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness)
 
                     else:
                         # dividing the line into points to mimic a smoothing effect
@@ -231,6 +273,34 @@ class Markup(Augmentation):
                                     markup_thickness,
                                     lineType=cv2.LINE_AA,
                                 )
+
+        # add scribble similar realistic effect
+        markup_mask_copy = markup_mask.copy()
+
+        apply_mask_fn = lambda x, y: y if (x < 224) else x
+        apply_mask = np.vectorize(apply_mask_fn)
+        if len(markup_mask_copy.shape) > 2:
+            markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_BGR2GRAY)
+        noise_mask = lib_add_noise(markup_mask_copy, (0.3, 0.5), (32, 128))
+
+        markup_mask_copy = apply_mask(markup_mask_copy, noise_mask)
+        intensity = random.uniform(0.4, 0.7)
+        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
+
+        add_noise = np.vectorize(add_noise_fn)
+        apply_mask = np.vectorize(apply_mask_fn)
+
+        markup_mask_copy = add_noise(markup_mask_copy, sobel)
+        markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_GRAY2BGR)
+        markup_mask_copy = cv2.GaussianBlur(markup_mask_copy, (3, 3), 0)
+
+        hsv = cv2.cvtColor(markup_mask_copy.astype("uint8"), cv2.COLOR_BGR2HSV)
+        hsv = np.array(hsv, dtype=np.float64)
+        hsv[:, :, 2] += random.randint(0, 128)
+        hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
+        hsv = np.array(hsv, dtype=np.uint8)
+        markup_mask_copy = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        markup_mask = cv2.multiply(markup_mask_copy, markup_mask, scale=1 / 255)
 
         # smoothen highlight mask to make it more realistic
         if self.markup_type == "highlight":
