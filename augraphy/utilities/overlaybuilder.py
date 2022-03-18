@@ -76,13 +76,13 @@ class OverlayBuilder:
         ]:
             self.overlay_types = "mix"
 
-    def compute_offsets(self):
+    def compute_offsets(self, foreground):
         """Determine where to place the foreground image copies"""
         xdim = self.background.shape[1]
         ydim = self.background.shape[0]
 
-        img_width = self.foreground.shape[1]
-        img_height = self.foreground.shape[0]
+        img_width = foreground.shape[1]
+        img_height = foreground.shape[0]
 
         remaining_width = xdim - (self.ntimes * img_width)
         remaining_height = ydim - (self.ntimes * img_height)
@@ -393,18 +393,27 @@ class OverlayBuilder:
             overlay_background_gray = overlay_background
             overlay_background = cv2.cvtColor(overlay_background, cv2.COLOR_GRAY2BGR)
 
-        # get bgr and gray of foreground
-        if len(self.foreground.shape) > 2:
-            foreground_gray = cv2.cvtColor(self.foreground, cv2.COLOR_BGR2GRAY)
+        if isinstance(self.foreground, list):
+
+            for i, current_foreground in enumerate(self.foreground):
+                # get bgr and gray of foreground
+                if len(current_foreground.shape) < 3:
+                    self.foreground[i] = cv2.cvtColor(current_foreground, cv2.COLOR_GRAY2BGR)
+            fg_height, fg_width = self.foreground[0].shape[:2]
         else:
-            foreground_gray = self.foreground
-            self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
+            # get bgr and gray of foreground
+            if len(self.foreground.shape) < 3:
+                self.foreground = cv2.cvtColor(self.foreground, cv2.COLOR_GRAY2BGR)
+            fg_height, fg_width = self.foreground.shape[:2]
 
         # get size
-        bg_height, bg_width = overlay_background_gray.shape
-        fg_height, fg_width = foreground_gray.shape
-
+        bg_height, bg_width = overlay_background.shape[:2]
         for i in range(self.ntimes):
+
+            if isinstance(self.foreground, list):
+                foreground = random.choice(self.foreground)
+            else:
+                foreground = self.foreground
 
             if self.edge == "random":
                 ystart = random.randint(0, bg_height - 10)
@@ -439,7 +448,7 @@ class OverlayBuilder:
             center = (center_x, center_y)
 
             # check for size mismatch issue
-            new_foreground, center = self.check_size(self.foreground, overlay_background, center)
+            new_foreground, center = self.check_size(foreground, overlay_background, center)
 
             # new foreground height and width
             fg_height, fg_width = new_foreground.shape[:2]
@@ -504,7 +513,7 @@ class OverlayBuilder:
                 self.various_blend(overlay_background, base, new_foreground, xstart, xend, ystart, yend)
 
             # get original height and width from foreground
-            fg_height, fg_width = self.foreground.shape[:2]
+            fg_height, fg_width = foreground.shape[:2]
 
             if self.edge == "left" or self.edge == "right":
                 # for next loop ystart and yend
@@ -534,22 +543,31 @@ class OverlayBuilder:
         random_height_scale = np.random.uniform(self.nscales[0], self.nscales[1])
         random_width_scale = np.random.uniform(self.nscales[0], self.nscales[1])
 
-        new_fg_height = int((self.foreground.shape[0] * random_height_scale))
-        new_fg_width = int((self.foreground.shape[1] * random_width_scale))
-        self.foreground = cv2.resize(
-            self.foreground,
-            (int(new_fg_width), int(new_fg_height)),
-            interpolation=cv2.INTER_AREA,
-        )
+        if isinstance(self.foreground, list):
+
+            new_fg_height = int((self.foreground[0].shape[0] * random_height_scale))
+            new_fg_width = int((self.foreground[0].shape[1] * random_width_scale))
+
+            for i, current_foreground in enumerate(self.foreground):
+                self.foreground[i] = cv2.resize(
+                    current_foreground,
+                    (int(new_fg_width), int(new_fg_height)),
+                    interpolation=cv2.INTER_AREA,
+                )
+            foreground = self.foreground[0]
+        else:
+            foreground = self.foreground
+            new_fg_height = int((foreground.shape[0] * random_height_scale))
+            new_fg_width = int((foreground.shape[1] * random_width_scale))
 
         # foreground size (height & width)
-        fg_height, fg_width = self.foreground.shape[:2]
+        fg_height, fg_width = foreground.shape[:2]
 
         # background size (height & width)
         bg_height, bg_width = self.background.shape[:2]
 
         # compute offsets between foreground and background
-        offset_width, offset_height = self.compute_offsets()
+        offset_width, offset_height = self.compute_offsets(foreground)
 
         # get overlay location for each types of edge
         if self.edge == "left":
