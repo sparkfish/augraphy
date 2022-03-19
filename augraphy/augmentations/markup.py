@@ -190,7 +190,7 @@ class Markup(Augmentation):
             # adding randomization.
             choice = random.choice([False, True])
             x, y, w, h = cv2.boundingRect(cnt)
-            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10):
+            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10) and h > 10:
 
                 # avoiding too small contours (width less  5% of the image width)
                 if w < int(markup_img.shape[1] / 5):
