@@ -45,7 +45,7 @@ class Markup(Augmentation):
         markup_length_range=(0.5, 1),
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
-        markup_color=(0, 255, 0),
+        markup_color=(255, 0, 0),
         single_word_mode=False,
         repetitions=1,
         p=1,
@@ -115,51 +115,43 @@ class Markup(Augmentation):
 
         return dilation
 
-    def draw_line(self, p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness):
-        # draw main line
-        markup_mask = cv2.line(
-            markup_mask,
-            p1,
-            p2,
-            self.markup_color,
-            markup_thickness,
-            lineType=cv2.LINE_AA,
-        )
+    def draw_line(self, p1, p2, markup_mask, markup_thickness, reverse):
 
-        # draw another line with offset y at point1 or point2, so that one end of the line is thicker, another end is thinner
-        if random.random() > 0.5:
-            p1_y_offset1 = np.clip(p1_y + markup_thickness, 0, ysize)
-            p1_y_offset2 = np.clip(p1_y - markup_thickness, 0, ysize)
-            p11 = (p1_x, p1_y_offset1)
-            p21 = (p2_x, p2_y)
-            p12 = (p1_x, p1_y_offset2)
-            p22 = (p2_x, p2_y)
+        # get min and max of points
+        min_x = min(p2[0], p1[0])
+        max_x = max(p2[0], p1[0])
+        min_y = min(p2[1], p1[1])
+        max_y = max(p2[1], p1[1])
+
+        # set point x in ascending or descending order based on direction
+        if reverse:
+            points_x = [min_x, random.randint(min_x, max_x), max_x]
         else:
-            p2_y_offset1 = np.clip(p2_y + markup_thickness, 0, ysize)
-            p2_y_offset2 = np.clip(p2_y - markup_thickness, 0, ysize)
-            p11 = (p1_x, p1_y)
-            p21 = (p2_x, p2_y_offset1)
-            p12 = (p1_x, p1_y)
-            p22 = (p2_x, p2_y_offset2)
+            points_x = [max_x, random.randint(min_x, max_x), min_x]
+        points_y = [min_y, random.randint(min_y, max_y), max_y]
 
-        # draw positive offset
-        markup_mask = cv2.line(
-            markup_mask,
-            p11,
-            p21,
-            self.markup_color,
-            markup_thickness,
-            lineType=cv2.LINE_AA,
-        )
-        # draw negative offset
-        markup_mask = cv2.line(
-            markup_mask,
-            p12,
-            p22,
-            self.markup_color,
-            markup_thickness,
-            lineType=cv2.LINE_AA,
-        )
+        # smooth points
+        points = [[point_x, point_y] for point_x, point_y in zip(points_x, points_y)]
+        points = smooth(points, 6)
+
+        # draw curvy lines
+        for (point1_x, point1_y), (point2_x, point2_y) in zip(points[:-1], points[1:]):
+
+            if reverse:
+                point1 = (int(point1_x), int(point1_y))
+                point2 = (int(point2_x), int(point2_y))
+            else:
+                point1 = (int(point1_x), int(point1_y))
+                point2 = (int(point2_x), int(point2_y))
+
+            markup_mask = cv2.line(
+                markup_mask,
+                point1,
+                point2,
+                self.markup_color,
+                markup_thickness,
+                lineType=cv2.LINE_AA,
+            )
 
     def __call__(self, image, layer=None, force=False):
         markup_img = image.copy()
@@ -238,7 +230,7 @@ class Markup(Augmentation):
                         p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
-                        self.draw_line(p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness)
+                        self.draw_line(p1, p2, markup_mask, markup_thickness, 0)
 
                         # drawing secondary diagonal
                         markup_thickness = random.randint(
@@ -251,7 +243,7 @@ class Markup(Augmentation):
                         p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
-                        self.draw_line(p1, p2, p1_x, p1_y, p2_x, p2_y, xsize, ysize, markup_mask, markup_thickness)
+                        self.draw_line(p1, p2, markup_mask, markup_thickness, 1)
 
                     else:
                         # dividing the line into points to mimic a smoothing effect
