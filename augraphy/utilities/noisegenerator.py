@@ -58,8 +58,14 @@ class NoiseGenerator:
             n_samples = n_clusters
         # default: following input value
         else:
-            n_clusters = (int((noise_concentration[0]) * max_size), int((noise_concentration[1]) * max_size))
-            n_samples = (int((noise_concentration[0]) * max_size), int((noise_concentration[1]) * max_size))
+            n_clusters = (
+                int((noise_concentration[0]) * max_size),
+                int((noise_concentration[1]) * max_size),
+            )
+            n_samples = (
+                int((noise_concentration[0]) * max_size),
+                int((noise_concentration[1]) * max_size),
+            )
 
         # prevent 0 cluster or 0 sample
         n_clusters = (max(1, n_clusters[0]), max(1, n_clusters[1]))
@@ -78,11 +84,20 @@ class NoiseGenerator:
         """
 
         if self.noise_type == 2:
-            std_range = (int((noise_sparsity[0]) * (max_size / 5)), int((noise_sparsity[1]) * (max_size / 5)))
+            std_range = (
+                int((noise_sparsity[0]) * (max_size / 5)),
+                int((noise_sparsity[1]) * (max_size / 5)),
+            )
         elif self.noise_type == 3:
-            std_range = (int((noise_sparsity[0]) * (max_size / 3)), int((noise_sparsity[1]) * (max_size / 3)))
+            std_range = (
+                int((noise_sparsity[0]) * (max_size / 3)),
+                int((noise_sparsity[1]) * (max_size / 3)),
+            )
         else:
-            std_range = (int((noise_sparsity[0]) * (max_size)), int((noise_sparsity[1]) * (max_size)))
+            std_range = (
+                int((noise_sparsity[0]) * (max_size)),
+                int((noise_sparsity[1]) * (max_size)),
+            )
 
         # for noise concentrated at certain part of image
         # left
@@ -185,10 +200,20 @@ class NoiseGenerator:
             )
 
             generated_points_x = np.concatenate(
-                (generated_points_x_left, generated_points_x_right, generated_points_x_top, generated_points_x_bottom),
+                (
+                    generated_points_x_left,
+                    generated_points_x_right,
+                    generated_points_x_top,
+                    generated_points_x_bottom,
+                ),
             )
             generated_points_y = np.concatenate(
-                (generated_points_y_left, generated_points_y_right, generated_points_y_top, generated_points_y_bottom),
+                (
+                    generated_points_y_left,
+                    generated_points_y_right,
+                    generated_points_y_top,
+                    generated_points_y_bottom,
+                ),
             )
 
         else:
@@ -229,16 +254,32 @@ class NoiseGenerator:
 
         return generated_points_x, generated_points_y
 
-    def generate_mask(self, noise_background, noise_value, generated_points_x, generated_points_y, xsize, ysize):
+    def generate_mask(
+        self,
+        noise_background,
+        noise_value,
+        generated_points_x,
+        generated_points_y,
+        xsize,
+        ysize,
+    ):
         """
         Generate mask of noise.
         """
 
         # background of noise mask
-        img_mask = np.random.randint(noise_background[0], noise_background[1] + 1, (ysize, xsize))
+        img_mask = np.random.randint(
+            noise_background[0],
+            noise_background[1] + 1,
+            (ysize, xsize),
+        )
 
         # mask of random value
-        img_mask_random = np.random.randint(low=noise_value[0], high=noise_value[1] + 1, size=(ysize, xsize))
+        img_mask_random = np.random.randint(
+            low=noise_value[0],
+            high=noise_value[1] + 1,
+            size=(ysize, xsize),
+        )
 
         # get xy points in list form
         x_points = list(generated_points_x)
@@ -249,7 +290,15 @@ class NoiseGenerator:
 
         return img_mask
 
-    def generate_mask_main(self, noise_value, noise_background, noise_sparsity, noise_concentration, xsize, ysize):
+    def generate_mask_main(
+        self,
+        noise_value,
+        noise_background,
+        noise_sparsity,
+        noise_concentration,
+        xsize,
+        ysize,
+    ):
         """
         Main function to generate mask of noise in each iteration.
         """
@@ -258,10 +307,18 @@ class NoiseGenerator:
         max_size = max(xsize, ysize)
 
         # generate number of clusters and number of samples in each cluster
-        n_samples_array = self.generate_clusters_and_samples(noise_concentration, max_size)
+        n_samples_array = self.generate_clusters_and_samples(
+            noise_concentration,
+            max_size,
+        )
 
         # For sparsity of the noises (distance to centroid of cluster)
-        std, center_x, center_y = self.generate_sparsity_std(noise_sparsity, xsize, ysize, max_size)
+        std, center_x, center_y = self.generate_sparsity_std(
+            noise_sparsity,
+            xsize,
+            ysize,
+            max_size,
+        )
 
         if self.noise_type == 2:
 
@@ -310,12 +367,19 @@ class NoiseGenerator:
                     )
 
                     # combine coordinates
-                    generated_points_x = np.concatenate([generated_points_x, cgenerated_points_x])
-                    generated_points_y = np.concatenate([generated_points_y, cgenerated_points_y])
+                    generated_points_x = np.concatenate(
+                        [generated_points_x, cgenerated_points_x],
+                    )
+                    generated_points_y = np.concatenate(
+                        [generated_points_y, cgenerated_points_y],
+                    )
 
                     # space between next noise patch
                     add_space = random.randint(10, 20)
-                    ccenter_x = [ccenter_x[0] + n_step_x + add_space, ccenter_x[1] + n_step_x + add_space]
+                    ccenter_x = [
+                        ccenter_x[0] + n_step_x + add_space,
+                        ccenter_x[1] + n_step_x + add_space,
+                    ]
 
                     # to break out from inner loop
                     if check_break:

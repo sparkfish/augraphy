@@ -41,7 +41,10 @@ class BrightnessTexturize(Augmentation):
                 hsv = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_BGR2HSV)
             # for gray image
             else:
-                bgr = hsv = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_GRAY2BGR)
+                bgr = hsv = cv2.cvtColor(
+                    image_output.astype("uint8"),
+                    cv2.COLOR_GRAY2BGR,
+                )
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
             # compute random value
             value = random.uniform(self.low, self.high)

@@ -88,11 +88,17 @@ class PageBorder(Augmentation):
                     # add noise to one side of the line
                     spread = random.randint(1, max(1, int(self.width_range[0] / 18)))
                     d = int(random.uniform(1, spread * 2))
-                    border[x, min(X - 1, y + d)] = random.randint(self.value[0], self.value[1])
+                    border[x, min(X - 1, y + d)] = random.randint(
+                        self.value[0],
+                        self.value[1],
+                    )
                     # add noise to another side of the line
                     spread = random.randint(1, max(1, int(self.width_range[0] / 18)))
                     d = int(random.uniform(1, spread * 2))
-                    border[x, max(0, y - d)] = random.randint(self.value[0], self.value[1])
+                    border[x, max(0, y - d)] = random.randint(
+                        self.value[0],
+                        self.value[1],
+                    )
 
         return border
 
@@ -105,7 +111,10 @@ class PageBorder(Augmentation):
         ysize, xsize = image_rotate.shape[:2]
 
         # height of curve, min value is 1
-        curve_y_shift = random.randint(max(1, self.curve_height[0]), max(1, self.curve_height[1]))
+        curve_y_shift = random.randint(
+            max(1, self.curve_height[0]),
+            max(1, self.curve_height[1]),
+        )
 
         # length of one side curvy part, min value is 5
         curve_width_one_side = random.randint(
@@ -114,7 +123,10 @@ class PageBorder(Augmentation):
         )
 
         # center of curvy part
-        curve_x = random.randint(curve_width_one_side + 1, xsize - curve_width_one_side - 1)
+        curve_x = random.randint(
+            curve_width_one_side + 1,
+            xsize - curve_width_one_side - 1,
+        )
 
         # filler of folding function
         curve_noise = 0
@@ -186,15 +198,26 @@ class PageBorder(Augmentation):
 
             # generate radom thickness and draw line
             thickness = np.random.choice([2, 3, 4])
-            border_single = cv2.line(border_single, start_point, end_point, color, thickness)
+            border_single = cv2.line(
+                border_single,
+                start_point,
+                end_point,
+                color,
+                thickness,
+            )
 
             # apply random folding
             if x != border_width and border_height > (self.curve_length_one_side[1] * 2) + 2:
-                for _ in range(random.randint(self.curve_frequency[0], self.curve_frequency[1])):
+                for _ in range(
+                    random.randint(self.curve_frequency[0], self.curve_frequency[1]),
+                ):
                     border_single = self.random_folding(border_single)
 
             # add noise to single page border
-            border_single = self.add_corner_noise(np.uint8(border_single), noise_intensity)
+            border_single = self.add_corner_noise(
+                np.uint8(border_single),
+                noise_intensity,
+            )
 
             # merge borders
             border_merged = np.minimum(border_merged, border_single)
@@ -268,7 +291,16 @@ class PageBorder(Augmentation):
                 border_image[-border_y:, :] = border
 
             # merge border and input image
-            overlay_builder = OverlayBuilder("darken", border_image, image, 1, (1, 1), "center", 0, 1)
+            overlay_builder = OverlayBuilder(
+                "darken",
+                border_image,
+                image,
+                1,
+                (1, 1),
+                "center",
+                0,
+                1,
+            )
             image_output = overlay_builder.build_overlay()
 
             return image_output

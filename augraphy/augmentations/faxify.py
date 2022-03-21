@@ -230,7 +230,10 @@ class Faxify(Augmentation):
                         monochrome_arguments["maxValue"] = 255
                     if "adaptiveMethod" not in monochrome_arguments:
                         monochrome_arguments["adaptiveMethod"] = random.choice(
-                            (cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.ADAPTIVE_THRESH_MEAN_C),
+                            (
+                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.ADAPTIVE_THRESH_MEAN_C,
+                            ),
                         )
                     if "thresholdType" not in monochrome_arguments:
                         monochrome_arguments["thresholdType"] = cv2.THRESH_BINARY
@@ -255,7 +258,10 @@ class Faxify(Augmentation):
                 # convert to gray
                 image_out = self.complement_rgb_to_gray(image_out, invert=self.invert)
 
-                half_kernel_size = random.randint(self.half_kernel_size[0], self.half_kernel_size[1])
+                half_kernel_size = random.randint(
+                    self.half_kernel_size[0],
+                    self.half_kernel_size[1],
+                )
                 angle = random.randint(self.angle[0], self.angle[1])
                 sigma = random.randint(self.sigma[0], self.sigma[1])
 

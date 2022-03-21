@@ -98,7 +98,10 @@ class Letterpress(Augmentation):
                 noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
 
             if self.value_threshold_range[1] >= self.value_threshold_range[0]:
-                value_threshold = random.randint(self.value_threshold_range[0], self.value_threshold_range[1])
+                value_threshold = random.randint(
+                    self.value_threshold_range[0],
+                    self.value_threshold_range[1],
+                )
             else:
                 value_threshold = self.value_threshold_range[1]
 

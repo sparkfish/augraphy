@@ -86,7 +86,9 @@ class PencilScribbles(Augmentation):
 
         strokes_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
 
-        for i in range(random.randint(self.stroke_count_range[0], self.stroke_count_range[1])):
+        for i in range(
+            random.randint(self.stroke_count_range[0], self.stroke_count_range[1]),
+        ):
             # lets say these are my black pixels in a white image.
             stroke_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
             x = np.array(

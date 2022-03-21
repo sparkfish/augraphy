@@ -70,7 +70,10 @@ class Markup(Augmentation):
         points_count = random.randint(3, 6)  # dividing the line into points
         points = np.linspace(starting_point[0], ending_point[0], points_count)
         points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
-        points = smooth(points, 6)  # adding a smoothing effect in points using chaikin's algorithm
+        points = smooth(
+            points,
+            6,
+        )  # adding a smoothing effect in points using chaikin's algorithm
         return points
 
     def apply_crossed_off(self, image, p1, p2, offset):
@@ -78,7 +81,14 @@ class Markup(Augmentation):
         apply_random_offset = np.vectorize(apply_random_offset_fn)
         p1 = tuple(apply_random_offset(p1, offset))
         p2 = tuple(apply_random_offset(p2, offset))
-        drawn = cv2.line(image, p1, p2, self.markup_color, self.mar, lineType=cv2.LINE_AA)
+        drawn = cv2.line(
+            image,
+            p1,
+            p2,
+            self.markup_color,
+            self.mar,
+            lineType=cv2.LINE_AA,
+        )
 
     def _preprocess(self, image):
         blurred = cv2.blur(image, (5, 5))
@@ -224,10 +234,26 @@ class Markup(Augmentation):
                             self.markup_thickness_range[0],
                             self.markup_thickness_range[1],
                         )
-                        p1_x = np.clip(starting_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
-                        p1_y = np.clip(starting_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
-                        p2_x = np.clip(ending_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
-                        p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p1_x = np.clip(
+                            starting_point[0] + random.randint(-offset * 5, offset * 5),
+                            0,
+                            xsize,
+                        )
+                        p1_y = np.clip(
+                            starting_point[1] + +random.randint(-offset * 1, offset * 1),
+                            0,
+                            ysize,
+                        )
+                        p2_x = np.clip(
+                            ending_point[0] + random.randint(-offset * 5, offset * 5),
+                            0,
+                            xsize,
+                        )
+                        p2_y = np.clip(
+                            ending_point[1] + +random.randint(-offset * 1, offset * 1),
+                            0,
+                            ysize,
+                        )
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
                         self.draw_line(p1, p2, markup_mask, markup_thickness, 0)
@@ -237,26 +263,58 @@ class Markup(Augmentation):
                             self.markup_thickness_range[0],
                             self.markup_thickness_range[1],
                         )
-                        p1_x = np.clip(ending_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
-                        p1_y = np.clip(starting_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
-                        p2_x = np.clip(starting_point[0] + random.randint(-offset * 5, offset * 5), 0, xsize)
-                        p2_y = np.clip(ending_point[1] + +random.randint(-offset * 1, offset * 1), 0, ysize)
+                        p1_x = np.clip(
+                            ending_point[0] + random.randint(-offset * 5, offset * 5),
+                            0,
+                            xsize,
+                        )
+                        p1_y = np.clip(
+                            starting_point[1] + +random.randint(-offset * 1, offset * 1),
+                            0,
+                            ysize,
+                        )
+                        p2_x = np.clip(
+                            starting_point[0] + random.randint(-offset * 5, offset * 5),
+                            0,
+                            xsize,
+                        )
+                        p2_y = np.clip(
+                            ending_point[1] + +random.randint(-offset * 1, offset * 1),
+                            0,
+                            ysize,
+                        )
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
                         self.draw_line(p1, p2, markup_mask, markup_thickness, 1)
 
                     else:
                         # dividing the line into points to mimic a smoothing effect
-                        points_list = self.distribute_line(starting_point, ending_point, offset)
+                        points_list = self.distribute_line(
+                            starting_point,
+                            ending_point,
+                            offset,
+                        )
                         for i in range(len(points_list) - 1):
                             p1 = (int(points_list[i][0]), int(points_list[i][1]))
                             if self.markup_type == "highlight":
-                                p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1] - h))
+                                p2 = (
+                                    int(points_list[i + 1][0]),
+                                    int(points_list[i + 1][1] - h),
+                                )
                                 # A filled rectangle
-                                markup_mask = cv2.rectangle(markup_mask, p1, p2, self.markup_color, -1)
+                                markup_mask = cv2.rectangle(
+                                    markup_mask,
+                                    p1,
+                                    p2,
+                                    self.markup_color,
+                                    -1,
+                                )
 
                             else:
-                                p2 = (int(points_list[i + 1][0]), int(points_list[i + 1][1]))
+                                p2 = (
+                                    int(points_list[i + 1][0]),
+                                    int(points_list[i + 1][1]),
+                                )
                                 markup_mask = cv2.line(
                                     markup_mask,
                                     p1,

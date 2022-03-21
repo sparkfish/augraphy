@@ -63,7 +63,10 @@ class BleedThrough(Augmentation):
 
         # convert to single channel to avoud unnecessary noise in colour image
         if len(img_bleed.shape) > 2:
-            img_bleed_input = cv2.cvtColor(img_bleed.astype("uint8"), cv2.COLOR_BGR2GRAY)
+            img_bleed_input = cv2.cvtColor(
+                img_bleed.astype("uint8"),
+                cv2.COLOR_BGR2GRAY,
+            )
         else:
             img_bleed_input = img_bleed.astype("uint8")
 
@@ -73,7 +76,16 @@ class BleedThrough(Augmentation):
         if img_bleed_brightness < img_brightness:
             self.alpha *= (img_bleed_brightness / img_brightness) / 2
 
-        ob = OverlayBuilder("normal", img_bleed_input, img, 1, (1, 1), "center", 0, self.alpha)
+        ob = OverlayBuilder(
+            "normal",
+            img_bleed_input,
+            img,
+            1,
+            (1, 1),
+            "center",
+            0,
+            self.alpha,
+        )
         return ob.build_overlay()
 
     # Offset image so that bleedthrough effect is visible and not stacked with input image

@@ -55,7 +55,16 @@ class BookBinding(Augmentation):
         img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
 
         # overlay mask of shadow to input image
-        ob = OverlayBuilder("darken", (img_mask * 255).astype("uint8"), img, 1, (1, 1), "center", 0, 1)
+        ob = OverlayBuilder(
+            "darken",
+            (img_mask * 255).astype("uint8"),
+            img,
+            1,
+            (1, 1),
+            "center",
+            0,
+            1,
+        )
         img_output = ob.build_overlay()
 
         return img_output.astype("uint8")
@@ -69,7 +78,10 @@ class BookBinding(Augmentation):
 
         if len(img.shape) > 2:
             channels = img.shape[2]
-            img_output = np.zeros((rows + max_offset_y, cols, channels), dtype=img.dtype)
+            img_output = np.zeros(
+                (rows + max_offset_y, cols, channels),
+                dtype=img.dtype,
+            )
         else:
             img_output = np.zeros((rows + max_offset_y, cols), dtype=img.dtype)
 
@@ -80,11 +92,17 @@ class BookBinding(Augmentation):
                 offset_y = int(curve_intensity * math.sin(2 * 3.14 * j / (3 * rows)))
 
                 if i + offset_y < rows:
-                    img_output[i_new, j] = img[(i + offset_y) % (rows), (j + offset_x) % cols]
+                    img_output[i_new, j] = img[
+                        (i + offset_y) % (rows),
+                        (j + offset_x) % cols,
+                    ]
                 else:
                     img_output[i_new, j] = img[0, 0]
                     # add top section
-                    img_output[(i_new - rows), j] = img[(i + offset_y) % (rows), (j + offset_x) % cols]
+                    img_output[(i_new - rows), j] = img[
+                        (i + offset_y) % (rows),
+                        (j + offset_x) % cols,
+                    ]
 
         return img_output
 
@@ -115,7 +133,9 @@ class BookBinding(Augmentation):
 
             # create new image with original size + mirror size
             if channels > 2:
-                new_image = np.zeros((ysize, xsize + xsize_mirror, channels)).astype("uint8")
+                new_image = np.zeros((ysize, xsize + xsize_mirror, channels)).astype(
+                    "uint8",
+                )
             else:
                 new_image = np.zeros((ysize, xsize + xsize_mirror)).astype("uint8")
 
