@@ -33,7 +33,10 @@ class ImageOverlay(Augmentation):
         xdim = background.shape[0] + (2 * self.foreground.shape[0])
         ydim = background.shape[1] + (2 * self.foreground.shape[1])
 
-        return cv2.cvtColor(np.ones((xdim, ydim, 3), dtype=np.uint8), cv2.COLOR_RGB2RGBA)
+        return cv2.cvtColor(
+            np.ones((xdim, ydim, 3), dtype=np.uint8),
+            cv2.COLOR_RGB2RGBA,
+        )
 
     def layerForeground(self, ambient, xloc, yloc):
         """Put self.foreground at (xloc,yloc) on ambient"""

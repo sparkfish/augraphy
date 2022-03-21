@@ -56,11 +56,19 @@ class DirtyDrum(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DirtyDrum(line_width_range={self.line_width_range}, line_concentration={self.line_concentation}, direction={self.direction}, noise_intensity={self.noise_intensity}, noise_value={self.noise_value}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
+        return f"DirtyDrum(line_width_range={self.line_width_range}, line_concentration={self.line_concentration}, direction={self.direction}, noise_intensity={self.noise_intensity}, noise_value={self.noise_value}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
 
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):
-        ob = OverlayBuilder("mix", img_dirty.astype("uint8"), img, 1, (1, 1), "center", 0)
+        ob = OverlayBuilder(
+            "mix",
+            img_dirty.astype("uint8"),
+            img,
+            1,
+            (1, 1),
+            "center",
+            0,
+        )
         return ob.build_overlay()
 
     # Add noise to stripe of image
@@ -77,11 +85,23 @@ class DirtyDrum(Augmentation):
         random_deviation = max(1, int(min(x_dif, y_dif) / 10))
 
         # generate min and max of noise clusters
-        n_cluster_min = max(int(x_dif * y_dif * (self.noise_intensity / 150)) - random_deviation, 1)
-        n_cluster_max = max(int(x_dif * y_dif * (self.noise_intensity / 150)) + random_deviation, 1)
+        n_cluster_min = max(
+            int(x_dif * y_dif * (self.noise_intensity / 150)) - random_deviation,
+            1,
+        )
+        n_cluster_max = max(
+            int(x_dif * y_dif * (self.noise_intensity / 150)) + random_deviation,
+            1,
+        )
         # generate min and max of noise samples
-        n_samples_min = max(int(x_dif * y_dif * (self.noise_intensity / 70)) - random_deviation, 1)
-        n_samples_max = max(int(x_dif * y_dif * (self.noise_intensity / 70)) + random_deviation, 1)
+        n_samples_min = max(
+            int(x_dif * y_dif * (self.noise_intensity / 70)) - random_deviation,
+            1,
+        )
+        n_samples_max = max(
+            int(x_dif * y_dif * (self.noise_intensity / 70)) + random_deviation,
+            1,
+        )
         # generate min and max fr std range
         std_min = max(int(x_dif / 2) - random_deviation, 1)
         std_max = max(int(x_dif / 2) + random_deviation, 1)
@@ -124,12 +144,18 @@ class DirtyDrum(Augmentation):
         ind_delete_y1 = np.where(generated_points_y < 0)
         ind_delete_y2 = np.where(generated_points_y >= yn)
 
-        ind_delete = np.concatenate((ind_delete_x1, ind_delete_x2, ind_delete_x3, ind_delete_y1, ind_delete_y2), axis=1)
+        ind_delete = np.concatenate(
+            (ind_delete_x1, ind_delete_x2, ind_delete_x3, ind_delete_y1, ind_delete_y2),
+            axis=1,
+        )
         generated_points_x = np.delete(generated_points_x, ind_delete, axis=0)
         generated_points_y = np.delete(generated_points_y, ind_delete, axis=0)
 
         # generate noise
-        img[generated_points_y, generated_points_x] = random.randint(self.noise_value[0], self.noise_value[1])
+        img[generated_points_y, generated_points_x] = random.randint(
+            self.noise_value[0],
+            self.noise_value[1],
+        )
 
     # Create mask for drity drum effect
     def create_dirty_mask(self, img, line_width_range=(6, 18), axis=1):
@@ -140,7 +166,13 @@ class DirtyDrum(Augmentation):
 
         x = 0
         # generate initial random strip width
-        current_width = random.randint(line_width_range[0], line_width_range[1]) * random.randint(1, 5)
+        current_width = (
+            random.randint(
+                line_width_range[0],
+                line_width_range[1],
+            )
+            * random.randint(1, 5)
+        )
 
         # flag to break
         f_break = 0
@@ -192,19 +224,35 @@ class DirtyDrum(Augmentation):
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 0)
                 # Apply gaussian blur to mask of dirty drum
-                image_dirty = cv2.GaussianBlur(image_dirty, ksize=self.ksize, sigmaX=self.sigmaX)
+                image_dirty = cv2.GaussianBlur(
+                    image_dirty,
+                    ksize=self.ksize,
+                    sigmaX=self.sigmaX,
+                )
             elif self.direction == 1:
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 1)
                 # Apply gaussian blur to mask of dirty drum
-                image_dirty = cv2.GaussianBlur(image_dirty, ksize=self.ksize, sigmaX=self.sigmaX)
+                image_dirty = cv2.GaussianBlur(
+                    image_dirty,
+                    ksize=self.ksize,
+                    sigmaX=self.sigmaX,
+                )
             else:
                 # Create directional masks for dirty drum effect
                 image_dirty_h = self.create_dirty_mask(image, self.line_width_range, 0)
                 image_dirty_v = self.create_dirty_mask(image, self.line_width_range, 1)
                 # Apply gaussian blur to mask of dirty drum
-                image_dirty_h = cv2.GaussianBlur(image_dirty_h, ksize=self.ksize, sigmaX=self.sigmaX)
-                image_dirty_v = cv2.GaussianBlur(image_dirty_v, ksize=self.ksize, sigmaX=self.sigmaX)
+                image_dirty_h = cv2.GaussianBlur(
+                    image_dirty_h,
+                    ksize=self.ksize,
+                    sigmaX=self.sigmaX,
+                )
+                image_dirty_v = cv2.GaussianBlur(
+                    image_dirty_v,
+                    ksize=self.ksize,
+                    sigmaX=self.sigmaX,
+                )
                 # Blend image with the masks of dirty drum effect
                 image_dirty = self.blend(image_dirty_v, image_dirty_h)
 

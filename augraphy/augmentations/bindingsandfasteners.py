@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 
 from augraphy import *
-from augraphy.augmentations.lib import add_noise
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities import *
 
@@ -62,6 +61,18 @@ class BindingsAndFasteners(Augmentation):
     def __repr__(self):
         return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, use_figshare_library={self.use_figshare_library}, p={self.p})"
 
+    # Add noise to image
+    def add_noise(self, image, noise_probability, noise_value, max_input_value):
+
+        noise = (
+            lambda x: random.randint(noise_value[0], noise_value[1])
+            if (x < max_input_value and noise_probability > random.random())
+            else x
+        )
+        add_noise = np.vectorize(noise)
+        image_output = add_noise(image)
+        return image_output
+
     def create_foreground(self, image):
 
         ysize, xsize = image.shape[:2]
@@ -69,38 +80,86 @@ class BindingsAndFasteners(Augmentation):
         if self.effect_type == "random":
             effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
         else:
-            effect_type == self.effect_type
+            effect_type = self.effect_type
 
         if effect_type == "punch_holes":
 
-            template_size = template_size_ori = 30
+            self.foreground = []
+            template_size = template_size_ori = 60
             # scale template size based on image size
             # 1000 * 800 is normal image size for template size = 30
             # use max to prevent small template and min to prevent large template
-            template_size = int(max(template_size_ori / 2, 30 * ((ysize * xsize) / (1000 * 800))))
+            template_size = int(
+                max(template_size_ori / 4, 30 * ((ysize * xsize) / (900 * 700))),
+            )
             template_size = int(min(template_size, template_size_ori * 2))
 
-            # draw circle
-            image_circle = np.zeros((template_size, template_size), dtype="uint8")
-            circle_centroid = (int(template_size / 2), int(template_size / 2))
-            circle_radius = int(template_size / 2) - 5
-            cv2.circle(image_circle, circle_centroid, circle_radius, 255, -1)
+            # create random location to merge 2 circles
+            min_value = min(10, int(template_size / 2))
+            random_x = random.randint(min_value, template_size - min_value)
+            random_y = random.randint(min_value, template_size - min_value)
 
-            # applies noise
-            image_circle = add_noise(image_circle, intensity_range=(0.05, 0.05), color_range=(0, 255))
-            image_circle = 255 - image_circle
-            image_circle = add_noise(image_circle, intensity_range=(0.3, 0.3), color_range=(0, 255))
+            # number of random rotation
+            rotate_num = random.randint(1, 3)
 
-            # gaussian blur
-            image_circle = cv2.GaussianBlur(image_circle.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
+            for _ in range(self.ntimes[1]):
+                # draw circle
+                image_circle = np.full(
+                    (template_size, template_size),
+                    fill_value=255,
+                    dtype="uint8",
+                )
+                circle_centroid = (int(template_size / 2), int(template_size / 2))
+                circle_radius = max(int(template_size / 4) - 5, 5)
+                cv2.circle(image_circle, circle_centroid, circle_radius, 0, -1)
 
-            # convert to bgr
-            image_circle_bgr = np.zeros((template_size, template_size, 3), dtype="uint8")
-            image_circle_bgr[:, :, 0] = image_circle.copy()
-            image_circle_bgr[:, :, 1] = image_circle.copy()
-            image_circle_bgr[:, :, 2] = image_circle.copy()
+                # add small blob noise effect
+                if random.random() > 0.7:
+                    angle = random.randint(0, 360)
+                    circle_centroid_small = (
+                        int(
+                            circle_centroid[0] + circle_radius * np.cos(np.radians(angle)),
+                        ),
+                        int(
+                            circle_centroid[1] + circle_radius * np.sin(np.radians(angle)),
+                        ),
+                    )
+                    circle_radius_small = max(
+                        int(circle_radius * random.uniform(0.1, 0.5)),
+                        2,
+                    )
+                    cv2.circle(
+                        image_circle,
+                        circle_centroid_small,
+                        circle_radius_small,
+                        0,
+                        -1,
+                    )
 
-            self.foreground = image_circle_bgr
+                # add noise
+                image_circle = self.add_noise(
+                    image_circle,
+                    random.uniform(0.01, 0.21),
+                    (0, 255),
+                    10,
+                )
+
+                # create another copy of complement image
+                image_circle_complement = 255 - image_circle.copy()
+
+                # merge 2 circles to create non-perfect circle effect
+                image_circle[random_y:, random_x:] = np.maximum(
+                    image_circle[random_y:, random_x:],
+                    image_circle_complement[:-random_y, :-random_x],
+                )
+
+                # randomly rotate to get different direction effect
+                image_circle = np.rot90(image_circle, rotate_num)
+
+                # convert to bgr
+                image_circle_bgr = cv2.cvtColor(image_circle, cv2.COLOR_GRAY2BGR)
+
+                self.foreground.append(image_circle_bgr)
 
         elif effect_type == "binding_holes":
 
@@ -108,28 +167,99 @@ class BindingsAndFasteners(Augmentation):
             # scale template size based on image size
             # 1000 * 800 is normal image size for template size = 40
             # use max to prevent small template and min to prevent large template
-            template_size = int(max(template_size_ori / 2, 40 * ((ysize * xsize) / (1000 * 800))))
+            template_size = int(
+                max(template_size_ori / 2, 40 * ((ysize * xsize) / (1000 * 800))),
+            )
             template_size = int(min(template_size, template_size_ori * 2))
 
-            # draw rectangle
-            image_rectangle = np.zeros((template_size, int(template_size / 2)), dtype="uint8")
-            image_rectangle[3:-3:, 4:-4] = 255
+            self.foreground = []
 
-            # applies noise
-            image_rectangle = add_noise(image_rectangle, intensity_range=(0.05, 0.05), color_range=(0, 255))
-            image_rectangle = 255 - image_rectangle
-            image_rectangle = add_noise(image_rectangle, intensity_range=(0.3, 0.3), color_range=(0, 255))
+            random_x_offset = random.randint(4, 16)
+            random_y_offset = random.randint(2, 6)
 
-            # gaussian blur
-            image_rectangle = cv2.GaussianBlur(image_rectangle.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
+            offset_p = random.random() > 0.2
+            y_offset_p = random.random() > 0.5
 
-            # convert to bgr
-            image_rectangle_bgr = np.zeros((template_size, int(template_size / 2), 3), dtype="uint8")
-            image_rectangle_bgr[:, :, 0] = image_rectangle.copy()
-            image_rectangle_bgr[:, :, 1] = image_rectangle.copy()
-            image_rectangle_bgr[:, :, 2] = image_rectangle.copy()
+            x_offset_type_p = random.random() > 0.5
+            y_offset_type_p = random.random() > 0.5
 
-            self.foreground = image_rectangle_bgr
+            random_scale = random.uniform(1, 2)
+
+            for _ in range(self.ntimes[1]):
+
+                # draw rectangle
+                offset = int(template_size / random.uniform(7, 8))
+                image_rectangle = np.full(
+                    (template_size, int(template_size / random_scale)),
+                    fill_value=255,
+                    dtype="uint8",
+                )
+                image_rectangle[offset:-offset:, offset:-offset] = 0
+
+                new_offset = offset + random.randint(3, 6)
+                image_rectangle_complement = np.full(
+                    (template_size, int(template_size / random_scale)),
+                    fill_value=0,
+                    dtype="uint8",
+                )
+                image_rectangle_complement[new_offset:-new_offset:, new_offset:-new_offset] = 255
+
+                image_rectangle = self.add_noise(
+                    image_rectangle,
+                    random.uniform(0.01, 0.21),
+                    (0, 255),
+                    10,
+                )
+
+                # create offset effect
+                if offset_p:
+                    # x offset is default
+                    if x_offset_type_p:
+                        image_rectangle_complement[:, :-random_x_offset] = image_rectangle_complement[
+                            :,
+                            random_x_offset:,
+                        ]
+                    else:
+                        image_rectangle_complement[:, random_x_offset:] = image_rectangle_complement[
+                            :,
+                            :-random_x_offset,
+                        ]
+
+                    # create y offset effect
+                    if y_offset_p:
+                        if y_offset_type_p:
+                            image_rectangle_complement[:-random_y_offset, :] = image_rectangle_complement[
+                                random_y_offset:,
+                                :,
+                            ]
+                        else:
+                            image_rectangle_complement[random_y_offset:, :] = image_rectangle_complement[
+                                :-random_y_offset,
+                                :,
+                            ]
+                    # merge 2 image to create offset effect
+                    image_rectangle = np.maximum(
+                        image_rectangle,
+                        image_rectangle_complement,
+                    )
+
+                # add noise and apply blur
+                image_rectangle = self.add_noise(
+                    image_rectangle,
+                    random.uniform(0.01, 0.21),
+                    (0, 255),
+                    10,
+                )
+                image_rectangle = cv2.GaussianBlur(
+                    image_rectangle.astype("uint8"),
+                    (3, 3),
+                    cv2.BORDER_DEFAULT,
+                )
+
+                # convert to bgr
+                image_rectangle_bgr = cv2.cvtColor(image_rectangle, cv2.COLOR_GRAY2BGR)
+
+                self.foreground.append(image_rectangle_bgr)
 
         elif effect_type == "clips":
 
@@ -138,43 +268,100 @@ class BindingsAndFasteners(Augmentation):
             # scale template size based on image size
             # 1000 * 800 is normal image size for template size = 60
             # use max to prevent small template and min to prevent large template
-            template_size = int(max(template_size_ori / 2, 60 * ((ysize * xsize) / (1000 * 800))))
+            template_size = int(
+                max(template_size_ori / 2, 60 * ((ysize * xsize) / (1000 * 800))),
+            )
             template_size = int(min(template_size, template_size_ori * 2))
 
             template_size_y = int(template_size / 3)
             template_size_x = template_size
 
-            # draw line, triangle & circle to create clip effect
-            image_clip = np.zeros((template_size_y, template_size_x), dtype="uint8")
+            self.foreground = []
 
-            # draw line
-            image_clip[3:5:, 5:-3] = 255
+            for _ in range(self.ntimes[1]):
 
-            # draw triangle
-            pt1, pt2, pt3 = (5, 3), (template_size_x - 4, 3 + int(template_size_y / 2)), (5, template_size_y - 3)
-            triangle_contour = np.array([pt1, pt2, pt3])
-            cv2.drawContours(image_clip, [triangle_contour], 0, 255, -1)
+                # draw line, triangle & circle to create clip effect
+                image_clip = np.full(
+                    (template_size_y, template_size_x),
+                    fill_value=255,
+                    dtype="uint8",
+                )
 
-            # draw circle
-            circle_radius = int((pt3[1] - pt1[1]) / 2)
-            circle_centroid = (8, 3 + int(template_size_y / 2) - 3)
-            cv2.circle(image_clip, circle_centroid, circle_radius, 255, -1)
+                # draw triangle
+                pt1, pt2, pt3 = (
+                    (5, 3),
+                    (template_size_x - 4, 3 + int(template_size_y / 2)),
+                    (5, template_size_y - 3),
+                )
+                triangle_contour = np.array([pt1, pt2, pt3])
+                cv2.drawContours(image_clip, [triangle_contour], 0, 0, -1)
 
-            # applies noise
-            image_clip = add_noise(image_clip, intensity_range=(0.05, 0.05), color_range=(0, 255))
-            image_clip = 255 - image_clip
-            image_clip = add_noise(image_clip, intensity_range=(0.3, 0.3), color_range=(0, 255))
+                # draw circle
+                circle_radius = int((pt3[1] - pt1[1]) / 2)
+                circle_centroid = (8, 3 + int(template_size_y / 2) - 3)
+                cv2.circle(image_clip, circle_centroid, circle_radius, 0, -1)
 
-            # gaussian blur
-            image_clip = cv2.GaussianBlur(image_clip.astype("uint8"), (3, 3), cv2.BORDER_DEFAULT)
+                # add noise
+                image_clip = self.add_noise(
+                    image_clip,
+                    random.uniform(0.01, 0.21),
+                    (0, 255),
+                    10,
+                )
+                image_clip_complement = 255 - image_clip
 
-            # convert to bgr
-            image_clip_bgr = np.zeros((template_size_y, template_size_x, 3), dtype="uint8")
-            image_clip_bgr[:, :, 0] = image_clip.copy()
-            image_clip_bgr[:, :, 1] = image_clip.copy()
-            image_clip_bgr[:, :, 2] = image_clip.copy()
+                # create cip inner part
+                scale_percent = random.uniform(0.5, 0.8)
+                width = int(image_clip_complement.shape[1] * scale_percent)
+                height = int(image_clip_complement.shape[0] * scale_percent)
+                dimension = (width, height)
 
-            self.foreground = image_clip_bgr
+                # resize image
+                image_clip_complement_resize = cv2.resize(
+                    image_clip_complement,
+                    dimension,
+                    interpolation=cv2.INTER_AREA,
+                )
+                ysize, xsize = image_clip_complement_resize.shape[:2]
+
+                # get offset
+                offset = int((template_size - (template_size * scale_percent)) / 4)
+                image_crop = image_clip_complement[offset : offset + ysize, offset : offset + xsize]
+
+                # draw clip inner part
+                if image_crop.shape[0] == ysize and image_crop.shape[1] == xsize:
+                    image_clip_complement[:] = 0
+                    image_clip_complement[
+                        offset : offset + ysize,
+                        offset : offset + xsize,
+                    ] = image_clip_complement_resize
+
+                # draw line
+                image_clip[3:5:, random.randint(2, 6) : -(random.randint(2, 6))] = 0
+
+                #  add noise and apply blur
+                image_clip = self.add_noise(
+                    image_clip,
+                    random.uniform(0.01, 0.21),
+                    (0, 255),
+                    10,
+                )
+                image_clip = cv2.GaussianBlur(
+                    image_clip.astype("uint8"),
+                    (3, 3),
+                    cv2.BORDER_DEFAULT,
+                )
+
+                # merge image
+                image_clip = np.maximum(image_clip, image_clip_complement)
+
+                # convert to bgr
+                image_clip_bgr = cv2.cvtColor(image_clip, cv2.COLOR_GRAY2BGR)
+
+                if random.random() > 0.5:
+                    image_clip_bgr = np.fliplr(image_clip_bgr)
+
+                self.foreground.append(image_clip_bgr)
 
     def retrieve_foreground(self):
 
@@ -192,11 +379,17 @@ class BindingsAndFasteners(Augmentation):
 
         # read foreground
         if self.effect_type == "punch_holes":
-            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/punch_hole.png")
+            foreground_path = os.path.join(
+                os.getcwd() + "/figshare_BindingsAndFasteners/punch_hole.png",
+            )
         elif self.effect_type == "binding_holes":
-            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/binding_hole.png")
+            foreground_path = os.path.join(
+                os.getcwd() + "/figshare_BindingsAndFasteners/binding_hole.png",
+            )
         elif self.effect_type == "clips":
-            foreground_path = os.path.join(os.getcwd() + "/figshare_BindingsAndFasteners/clip.png")
+            foreground_path = os.path.join(
+                os.getcwd() + "/figshare_BindingsAndFasteners/clip.png",
+            )
         self.foreground = cv2.imread(foreground_path)
 
     # Applies the Augmentation to input data.
@@ -204,7 +397,10 @@ class BindingsAndFasteners(Augmentation):
         if force or self.should_run():
 
             # reset foreground when the same class instance called twice
-            if not isinstance(self.foreground, str) and not isinstance(self.foreground, np.ndarray):
+            if not isinstance(self.foreground, str) and not isinstance(
+                self.foreground,
+                np.ndarray,
+            ):
                 self.foreground = None
 
             image = image.copy()

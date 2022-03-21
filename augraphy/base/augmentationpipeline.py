@@ -92,10 +92,16 @@ class AugraphyPipeline:
         # store 30 cache image files
         if len(cache_image_paths) >= 30:
             oldest_index = np.argmin(modified_time)
-            cv2.imwrite(cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png", image)
+            cv2.imwrite(
+                cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png",
+                image,
+            )
         else:
             current_image_index = len(cache_image_paths)
-            cv2.imwrite(cache_folder_path + "image_" + str(current_image_index) + ".png", image)
+            cv2.imwrite(
+                cache_folder_path + "image_" + str(current_image_index) + ".png",
+                image,
+            )
 
         data = dict()
 
@@ -195,11 +201,11 @@ class AugraphyPipeline:
                             augmentation_parameter[parameter] = value.shape
 
             with open(log_prob_file_path, "w+") as file:
-                for (
-                    name,
-                    status,
-                    parameters,
-                ) in zip(augmentation_names, augmentation_status, augmentation_parameters):
+                for (name, status, parameters) in zip(
+                    augmentation_names,
+                    augmentation_status,
+                    augmentation_parameters,
+                ):
                     file.write("%s,%s,%s \n" % (name, status, parameters))
                     # put a space
                     file.write("\n")
@@ -239,9 +245,13 @@ class AugraphyPipeline:
                 while isinstance(result, tuple) or isinstance(result, list):
                     result, augmentations = result
                     for nested_augmentation in augmentations:
-                        data["log"]["augmentation_name"].append(nested_augmentation.__class__.__name__)
+                        data["log"]["augmentation_name"].append(
+                            nested_augmentation.__class__.__name__,
+                        )
                         data["log"]["augmentation_status"].append(True)
-                        data["log"]["augmentation_parameters"].append(nested_augmentation.__dict__)
+                        data["log"]["augmentation_parameters"].append(
+                            nested_augmentation.__dict__,
+                        )
                 data[layer].append(AugmentationResult(augmentation, result))
 
     def print_ink_to_paper(self, data, overlay, background):
@@ -250,7 +260,11 @@ class AugraphyPipeline:
         # prevent inconsistency in size between background and overlay
         if overlay.shape[:2] != background.shape[:2]:
             overlay_y, overlay_x = overlay.shape[:2]
-            background = cv2.resize(background, (overlay_x, overlay_y), interpolation=cv2.INTER_AREA)
+            background = cv2.resize(
+                background,
+                (overlay_x, overlay_y),
+                interpolation=cv2.INTER_AREA,
+            )
 
         if (self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0):
             ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])

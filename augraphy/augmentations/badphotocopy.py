@@ -117,15 +117,23 @@ class BadPhotoCopy(Augmentation):
         x_points.sort()
 
         # 1st point
-        points = [(0, random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size))]
+        points = [
+            (0, random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size)),
+        ]
         for i in range(1, number_points - 1, 1):
             # points between 1st and last point
             points.append(
-                (x_points[i - 1], random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size)),
+                (
+                    x_points[i - 1],
+                    random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size),
+                ),
             )  # last point
         # last point
         points.append(
-            (mask_xsize - 1, random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size)),
+            (
+                mask_xsize - 1,
+                random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size),
+            ),
         )  # last point
 
         # smooth points
@@ -147,7 +155,11 @@ class BadPhotoCopy(Augmentation):
         # right (noise concentrated at right edge)
         elif self.noise_type == 6:
             img_wave = np.rot90(img_wave, 3)
-            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            img_wave = cv2.resize(
+                img_wave,
+                (mask_xsize, mask_ysize),
+                interpolation=cv2.INTER_AREA,
+            )
             mask = img_wave * mask
         # bottom (noise concentrated at bottom edge)
         elif self.noise_type == 8:
@@ -156,11 +168,19 @@ class BadPhotoCopy(Augmentation):
         # left (noise concentrated at left edge)
         elif self.noise_type == 5:
             img_wave = np.rot90(img_wave, 1)
-            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            img_wave = cv2.resize(
+                img_wave,
+                (mask_xsize, mask_ysize),
+                interpolation=cv2.INTER_AREA,
+            )
             mask = img_wave * mask
         else:
             img_wave = np.rot90(img_wave, random.randint(0, 3))
-            img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_AREA)
+            img_wave = cv2.resize(
+                img_wave,
+                (mask_xsize, mask_ysize),
+                interpolation=cv2.INTER_AREA,
+            )
             mask = img_wave * mask
 
         # reset 0 area to white (white is background)

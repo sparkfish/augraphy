@@ -430,6 +430,10 @@ def binary_threshold(
     else:
         grayscale = image
 
+    # if return grayscale image if threshold method is grayscale
+    if threshold_method == "grayscale":
+        return grayscale
+
     if threshold_arguments:
         # get input arguments for threhold function
         input_arguments = ""

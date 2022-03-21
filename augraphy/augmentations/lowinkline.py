@@ -77,17 +77,31 @@ class LowInkLine(Augmentation):
 
             # add noise to top and bottom of the line
             if y - 1 >= 0:
-                low_ink_line_top = self.consistent_transparency_line_topbottom(mask[y - 1, :], alpha)
+                low_ink_line_top = self.consistent_transparency_line_topbottom(
+                    mask[y - 1, :],
+                    alpha,
+                )
                 if len(mask.shape) > 2:
                     low_ink_line_top = np.dstack(
-                        [low_ink_line_top[:, 0], low_ink_line_top[:, 0], low_ink_line_top[:, 0]],
+                        [
+                            low_ink_line_top[:, 0],
+                            low_ink_line_top[:, 0],
+                            low_ink_line_top[:, 0],
+                        ],
                     )[0]
 
             if y + 1 < mask.shape[0]:
-                low_ink_line_bottom = self.consistent_transparency_line_topbottom(mask[y + 1, :], alpha)
+                low_ink_line_bottom = self.consistent_transparency_line_topbottom(
+                    mask[y + 1, :],
+                    alpha,
+                )
                 if len(mask.shape) > 2:
                     low_ink_line_bottom = np.dstack(
-                        [low_ink_line_bottom[:, 0], low_ink_line_bottom[:, 0], low_ink_line_bottom[:, 0]],
+                        [
+                            low_ink_line_bottom[:, 0],
+                            low_ink_line_bottom[:, 0],
+                            low_ink_line_bottom[:, 0],
+                        ],
                     )[0]
 
         else:
@@ -95,9 +109,13 @@ class LowInkLine(Augmentation):
 
             # add noise to top and bottom of the line
             if y - 1 >= 0:
-                low_ink_line_top = self.inconsistent_transparency_line_topbottom(mask[y - 1, :])
+                low_ink_line_top = self.inconsistent_transparency_line_topbottom(
+                    mask[y - 1, :],
+                )
             if y + 1 < mask.shape[0]:
-                low_ink_line_bottom = self.inconsistent_transparency_line_topbottom(mask[y + 1, :])
+                low_ink_line_bottom = self.inconsistent_transparency_line_topbottom(
+                    mask[y + 1, :],
+                )
 
         mask[y, :] = self.apply_line(mask[y, :], low_ink_line)
         # apply noise to top and bottom of the line
