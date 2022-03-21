@@ -89,12 +89,13 @@ class BindingsAndFasteners(Augmentation):
             # scale template size based on image size
             # 1000 * 800 is normal image size for template size = 30
             # use max to prevent small template and min to prevent large template
-            template_size = int(max(template_size_ori / 4, 30 * ((ysize * xsize) / (1000 * 800))))
+            template_size = int(max(template_size_ori / 4, 30 * ((ysize * xsize) / (900 * 700))))
             template_size = int(min(template_size, template_size_ori * 2))
 
             # create random location to merge 2 circles
-            random_x = random.randint(10, template_size - 10)
-            random_y = random.randint(10, template_size - 10)
+            min_value = min(10, int(template_size / 2))
+            random_x = random.randint(min_value, template_size - min_value)
+            random_y = random.randint(min_value, template_size - min_value)
 
             # number of random rotation
             rotate_num = random.randint(1, 3)
@@ -103,7 +104,7 @@ class BindingsAndFasteners(Augmentation):
                 # draw circle
                 image_circle = np.full((template_size, template_size), fill_value=255, dtype="uint8")
                 circle_centroid = (int(template_size / 2), int(template_size / 2))
-                circle_radius = int(template_size / 4) - 5
+                circle_radius = max(int(template_size / 4) - 5, 5)
                 cv2.circle(image_circle, circle_centroid, circle_radius, 0, -1)
 
                 # add small blob noise effect
