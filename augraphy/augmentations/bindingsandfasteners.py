@@ -216,22 +216,26 @@ class BindingsAndFasteners(Augmentation):
                     # x offset is default
                     if x_offset_type_p:
                         image_rectangle_complement[:, :-random_x_offset] = image_rectangle_complement[
-                            :, random_x_offset:
+                            :,
+                            random_x_offset:,
                         ]
                     else:
                         image_rectangle_complement[:, random_x_offset:] = image_rectangle_complement[
-                            :, :-random_x_offset
+                            :,
+                            :-random_x_offset,
                         ]
 
                     # create y offset effect
                     if y_offset_p:
                         if y_offset_type_p:
                             image_rectangle_complement[:-random_y_offset, :] = image_rectangle_complement[
-                                random_y_offset:, :
+                                random_y_offset:,
+                                :,
                             ]
                         else:
                             image_rectangle_complement[random_y_offset:, :] = image_rectangle_complement[
-                                :-random_y_offset, :
+                                :-random_y_offset,
+                                :,
                             ]
                     # merge 2 image to create offset effect
                     image_rectangle = np.maximum(
@@ -328,7 +332,8 @@ class BindingsAndFasteners(Augmentation):
                 if image_crop.shape[0] == ysize and image_crop.shape[1] == xsize:
                     image_clip_complement[:] = 0
                     image_clip_complement[
-                        offset : offset + ysize, offset : offset + xsize
+                        offset : offset + ysize,
+                        offset : offset + xsize,
                     ] = image_clip_complement_resize
 
                 # draw line
