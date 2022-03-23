@@ -65,18 +65,17 @@ class PaperFactory(Augmentation):
             if self.paper_textures:
                 shape = image.shape
 
-
-                random_index = random.randint(0,len(self.paper_textures))
+                random_index = random.randint(0, len(self.paper_textures) - 1)
                 texture = self.paper_textures[random_index]
 
                 # If the texture we chose is larger than the paper,
                 # just align to the top left corner and crop as necessary
                 if (texture.shape[0] >= shape[0]) and (texture.shape[1] >= shape[1]):
-                    texture = texture[0:shape[0],0:shape[1]]
+                    texture = texture[0 : shape[0], 0 : shape[1]]
                     return texture
 
                 # If the texture we chose is smaller in either dimension than the paper,
-                # scale up the texture, align to the top left corner, and crop as necessary.
+                # use the resize logic
                 else:
                     texture = self.resize(texture, shape)
                     return texture
