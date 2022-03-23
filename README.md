@@ -67,15 +67,15 @@ BibTeX:
 author = {{The Augraphy Project}},
 title = {{Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes}},
 url = {https://github.com/sparkfish/augraphy},
-version = {5.0.0}
+version = {7.0.0}
 }
 ```
 
 APA:
 ```
-The Augraphy Project. Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes (Version 5.0.0) [Computer software]. https://github.com/sparkfish/augraphy
+The Augraphy Project. Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes (Version 7.0.0) [Computer software]. https://github.com/sparkfish/augraphy
 ```
 # License
-Copyright 2021 Sparkfish LLC
+Copyright 2022 Sparkfish LLC
 
 Augraphy is free and open-source software distributed under the terms of the [**MIT**](https://github.com/sparkfish/augraphy/blob/dev/LICENSE) license.
