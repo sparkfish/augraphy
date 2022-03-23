@@ -65,49 +65,24 @@ class PaperFactory(Augmentation):
             if self.paper_textures:
                 shape = image.shape
 
-                if random.choice([True, False]):
-                    texture = self.get_texture(self.tile_texture_shape)
-                    paper = self.tile_texture(texture, shape)
-                else:
-                    texture = self.get_texture(shape)
-                    paper = texture.copy()
 
-                return paper
+                random_index = random.randint(0,len(self.paper_textures))
+                texture = self.paper_textures[random_index]
+
+                # If the texture we chose is larger than the paper,
+                # just align to the top left corner and crop as necessary
+                if (texture.shape[0] >= shape[0]) and (texture.shape[1] >= shape[1]):
+                    texture = texture[0:shape[0],0:shape[1]]
+                    return texture
+
+                # If the texture we chose is smaller in either dimension than the paper,
+                # scale up the texture, align to the top left corner, and crop as necessary.
+                else:
+                    texture = self.resize(texture, shape)
+                    return texture
+
             else:
                 print("No paper image in the paper directory!")
-
-    # Takes a texture and a shape and returns the shape with
-    # the texture tiled in a vertical/horizontal grid across it.
-    def tile_texture(self, texture, shape):
-        x_scale = shape[0] // texture.shape[0] + 1
-        y_scale = shape[1] // texture.shape[1] + 1
-
-        if len(texture.shape) > 2:
-            paper = np.empty(
-                (
-                    texture.shape[0] * x_scale,
-                    texture.shape[1] * y_scale,
-                    texture.shape[2],
-                ),
-            )
-        else:
-            paper = np.empty((texture.shape[0] * x_scale, texture.shape[1] * y_scale))
-
-        for x in range(x_scale):
-            for y in range(y_scale):
-                start_x = x * texture.shape[0]
-                end_x = start_x + texture.shape[0]
-                start_y = y * texture.shape[1]
-                end_y = start_y + texture.shape[1]
-
-                paper[start_x:end_x, start_y:end_y] = texture
-                texture = cv2.flip(texture, 1)
-
-            texture = cv2.flip(texture, 0)
-            if x_scale % 2 == 0:
-                texture = cv2.flip(texture, 1)
-
-        return paper[: shape[0], : shape[1]]
 
     # Scales and zooms a given texture to fit a given shape.
     def resize(self, texture, shape):
