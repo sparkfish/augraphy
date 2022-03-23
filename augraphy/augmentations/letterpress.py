@@ -31,9 +31,9 @@ class Letterpress(Augmentation):
 
     def __init__(
         self,
-        n_samples=(100, 200),
-        n_clusters=(500, 1000),
-        std_range=(500, 500),
+        n_samples=(300, 800),
+        n_clusters=(300, 800),
+        std_range=(1500, 5000),
         value_range=(200, 255),
         value_threshold_range=(128, 128),
         blur=1,
@@ -58,19 +58,26 @@ class Letterpress(Augmentation):
             max_box_size = max(ysize, xsize)
 
             noise_mask = np.copy(image)
-            n_samples = [
-                random.randint(self.n_samples[0], self.n_samples[1])
-                for _ in range(random.randint(self.n_clusters[0], self.n_clusters[1]))
-            ]
-            std = random.randint(self.std_range[0], self.std_range[1]) / 100
 
-            # generate clusters of blobs
-            generated_points, point_group = make_blobs(
-                n_samples=n_samples,
-                center_box=(0, max_box_size),
-                cluster_std=std,
-                n_features=2,
-            )
+            generated_points = np.array([[-1, -1]], dtype="float")
+
+            for i in range(random.randint(8, 12)):
+
+                n_samples = [
+                    random.randint(self.n_samples[0], self.n_samples[1])
+                    for _ in range(random.randint(self.n_clusters[0], self.n_clusters[1]))
+                ]
+                std = random.randint(self.std_range[0], self.std_range[1]) / 100
+
+                # generate clusters of blobs
+                generated_points_new, point_group = make_blobs(
+                    n_samples=n_samples,
+                    center_box=(0, max_box_size),
+                    cluster_std=std,
+                    n_features=2,
+                )
+
+                generated_points = np.concatenate((generated_points, generated_points_new), axis=0)
 
             # remove decimals
             generated_points = generated_points.astype("int")
@@ -95,13 +102,10 @@ class Letterpress(Augmentation):
 
             if self.blur:
                 # gaussian blur need uint8 input
-                noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+                noise_mask = cv2.GaussianBlur(noise_mask, (5, 5), 0)
 
             if self.value_threshold_range[1] >= self.value_threshold_range[0]:
-                value_threshold = random.randint(
-                    self.value_threshold_range[0],
-                    self.value_threshold_range[1],
-                )
+                value_threshold = random.randint(self.value_threshold_range[0], self.value_threshold_range[1])
             else:
                 value_threshold = self.value_threshold_range[1]
 
