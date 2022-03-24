@@ -64,21 +64,38 @@ class PaperFactory(Augmentation):
 
             if self.paper_textures:
                 shape = image.shape
-
                 random_index = random.randint(0, len(self.paper_textures) - 1)
                 texture = self.paper_textures[random_index]
+                self.texture_file_name = self.texture_file_names[random_index]
+                # reset file names and textures
+                self.texture_file_names = []
+                self.paper_textures = []
 
                 # If the texture we chose is larger than the paper,
-                # just align to the top left corner and crop as necessary
+                # get randomn location that fit into paper size
                 if (texture.shape[0] >= shape[0]) and (texture.shape[1] >= shape[1]):
-                    texture = texture[0 : shape[0], 0 : shape[1]]
-                    return texture
+                    difference_y = texture.shape[0] - shape[0]
+                    difference_x = texture.shape[1] - shape[1]
+                    start_y = random.randint(0, difference_y - 1)
+                    start_x = random.randint(0, difference_x - 1)
+                    texture = texture[start_y : start_y + shape[0], start_x : start_x + shape[1]]
 
                 # If the texture we chose is smaller in either dimension than the paper,
                 # use the resize logic
                 else:
                     texture = self.resize(texture, shape)
-                    return texture
+
+                # texture_intensity
+                texture_intensity = generate_average_intensity(texture)
+                # brighten dark texture based on target intensity, max intensity = 255 (brightest)
+                target_intensity = 200
+                if texture_intensity < target_intensity:
+                    brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
+                    brighten_min = 1 + (brighten_ratio / 2)
+                    brighten_max = 1 + brighten_ratio
+                    brightness = Brightness(range=(brighten_min, brighten_max), min_brightness=1)
+                    texture = brightness(texture)
+                return texture
 
             else:
                 print("No paper image in the paper directory!")
@@ -136,7 +153,7 @@ class PaperFactory(Augmentation):
             brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
             brighten_min = 1 + brighten_ratio
             brighten_max = 1 + brighten_ratio + 0.5
-            brightness = Brightness(range=(brighten_min, brighten_max))
+            brightness = Brightness(range=(brighten_min, brighten_max), min_brightness=1)
             texture = brightness(texture)
 
         if texture.shape[0] < shape[0] or texture.shape[1] < shape[1]:
