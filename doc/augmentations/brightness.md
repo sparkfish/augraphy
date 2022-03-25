@@ -3,10 +3,12 @@
 The Brightness augmentation adjusts the brightness of the whole image by a chosen multiplier.
 
 
-| Parameter | Description                                                                       |
-|-----------|-----------------------------------------------------------------------------------|
-| `range`   | The range of values to be chosen at random for the brightness multiplier applied. |
-| `p`       | The probability that this augmentation will be applied.                           |
+| Parameter                | Description                                                                       |
+|--------------------------|-----------------------------------------------------------------------------------|
+| `range`                  | The range of values to be chosen at random for the brightness multiplier applied. |
+| `min_brightness`         | Flag to enable min brightness intensity value in the augmented image.             |
+| `min_brightness_value`   | Pair of ints determining the minimum brightness intensity of augmented image.     |
+| `p`                      | The probability that this augmentation will be applied.                           |
 
 
 **Example Usage:**
