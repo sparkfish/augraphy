@@ -1,0 +1,184 @@
+Dithering,False, 
+
+InkBleed,True,{'p': 0.5, 'intensity_range': (0.1, 0.2), 'color_range': (0, 224), 'kernel_size': (5, 5), 'severity': (0.4, 0.6)} 
+
+Letterpress,True,{'p': 1, 'n_samples': (200, 400), 'n_clusters': (300, 800), 'std_range': (500, 3000), 'value_range': (150, 224), 'value_threshold_range': (128, 128), 'blur': 1} 
+
+OneOf,True,{'augmentations': [LowInkRandomLines(count_range=(3, 10), use_consistent_lines=True, p=1), LowInkPeriodicLines(count_range=(2, 5), period_range=(40, 80), use_consistent_lines=True, p=1)], 'augmentation_probabilities': [0.5, 0.5], 'p': 1} 
+
+LowInkRandomLines,True,{'p': 1, 'use_consistent_lines': True, 'noise_probability': 0.1, 'inconsistent_transparency_line': <numpy.vectorize object at 0x0000018D0D98DC08>, 'inconsistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018D0D98D9C8>, 'consistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018D0D98DB88>, 'apply_line': <numpy.vectorize object at 0x0000018D0D98D708>, 'count_range': (3, 10)} 
+
+Markup,True,{'p': 0.5, 'num_lines_range': (2, 7), 'markup_length_range': (0.5, 1), 'markup_thickness_range': (1, 1), 'markup_type': 'underline', 'markup_color': (193, 250, 244), 'repetitions': 1, 'single_word_mode': False} 
+
+PaperFactory,True,{'p': 1, 'paper_textures': [], 'tile_texture_shape': (250, 234), 'texture_path': './paper_textures', 'texture_file_names': [], 'texture_file_name': '140-rawpixel-publicdomain-cardboard-texture-CC0.jpg'} 
+
+OneOf,False, 
+
+Brightness,True,{'p': 0.5, 'range': (1, 1.1), 'min_brightness': 0, 'min_brightness_value': (120, 150)} 
+
+BrightnessTexturize,False, 
+
+OneOf,False, 
+
+OneOf,False, 
+
+SubtleNoise,True,{'p': 0.5, 'range': 10} 
+
+Jpeg,True,{'p': 0.5, 'quality_range': (25, 95)} 
+
+PencilScribbles,True,{'p': 1, 'size_range': (100, 700), 'count_range': (1, 4), 'stroke_count_range': (1, 1), 'thickness_range': (2, 6), 'brightness_change': 124} 
+
+BindingsAndFasteners,True,{'p': 0.5, 'overlay_types': 'darken', 'foreground': [array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8)], 'effect_type': 'punch_holes', 'ntimes': (2, 3), 'nscales': (0.9, 1), 'edge': 'random', 'edge_offset': (10, 50), 'use_figshare_library': 0} 
+
+BadPhotoCopy,False, 
+
+Geometric,False, 
+
+OneOf,False, 
+
+BleedThrough,True,{'p': 0.5, 'intensity_range': (0.1, 0.2), 'color_range': (32, 224), 'ksize': (17, 17), 'sigmaX': 0, 'alpha': 0.08475105570420483, 'offsets': (10, 20)} 
+

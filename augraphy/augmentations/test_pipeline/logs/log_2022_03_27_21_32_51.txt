@@ -1,0 +1,202 @@
+Dithering,False, 
+
+InkBleed,True,{'p': 0.5, 'intensity_range': (0.1, 0.2), 'color_range': (0, 224), 'kernel_size': (5, 5), 'severity': (0.4, 0.6)} 
+
+Letterpress,True,{'p': 1, 'n_samples': (200, 400), 'n_clusters': (300, 800), 'std_range': (500, 3000), 'value_range': (150, 224), 'value_threshold_range': (128, 128), 'blur': 1} 
+
+OneOf,True,{'augmentations': [LowInkRandomLines(count_range=(3, 10), use_consistent_lines=True, p=1), LowInkPeriodicLines(count_range=(2, 5), period_range=(40, 80), use_consistent_lines=True, p=1)], 'augmentation_probabilities': [0.5, 0.5], 'p': 1} 
+
+LowInkRandomLines,True,{'p': 1, 'use_consistent_lines': True, 'noise_probability': 0.1, 'inconsistent_transparency_line': <numpy.vectorize object at 0x0000018C80DBF908>, 'inconsistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018CAF79E2C8>, 'consistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018CAF79EC88>, 'apply_line': <numpy.vectorize object at 0x0000018CAF79E388>, 'count_range': (3, 10)} 
+
+Markup,False, 
+
+PaperFactory,True,{'p': 1, 'paper_textures': [], 'tile_texture_shape': (263, 262), 'texture_path': './paper_textures', 'texture_file_names': [], 'texture_file_name': '120-pxhere-publicdomain-coffee_paper_background_stain_texture-CC0.jpg'} 
+
+OneOf,True,{'augmentations': [AugmentationSequence([
+	NoiseTexturize(sigma_range=(3, 10), turbulence_range=(2, 5), p=1),
+	BrightnessTexturize(range=(0.9, 0.99), deviation=0.03, p=1),
+]), AugmentationSequence([
+	BrightnessTexturize(range=(0.9, 0.99), deviation=0.03, p=1),
+	NoiseTexturize(sigma_range=(3, 10), turbulence_range=(2, 5), p=1),
+])], 'augmentation_probabilities': [0.5, 0.5], 'p': 0.5} 
+
+AugmentationSequence,True,{'augmentations': [BrightnessTexturize(range=(0.9, 0.99), deviation=0.03, p=1), NoiseTexturize(sigma_range=(3, 10), turbulence_range=(2, 5), p=1)], 'p': 1} 
+
+BrightnessTexturize,True,{'p': 1, 'low': 0.9, 'high': 0.99, 'deviation': 0.03, 'range': (0.9, 0.99)} 
+
+NoiseTexturize,True,{'p': 1, 'sigma_range': (3, 10), 'turbulence_range': (2, 5)} 
+
+Brightness,True,{'p': 0.5, 'range': (1, 1.1), 'min_brightness': 0, 'min_brightness_value': (120, 150)} 
+
+BrightnessTexturize,True,{'p': 0.5, 'low': 0.9, 'high': 0.99, 'deviation': 0.03, 'range': (0.9, 0.99)} 
+
+OneOf,True,{'augmentations': [PageBorder(side=right, width_range=(5, 30), pages=None, noise_intensity_range=(0.4, 0.8), curve_frequency=(2, 8), curve_height=(2, 4), curve_length_one_side=(50, 100), value=(32, 150), p=1), DirtyRollers(line_width_range=(1, 24), scanline_type=0, p=0)], 'augmentation_probabilities': [1.0, 0.0], 'p': 0.5} 
+
+DirtyRollers,True,{'p': 0, 'line_width_range': (1, 24), 'scanline_type': 0} 
+
+OneOf,True,{'augmentations': [LightingGradient(light_position=None, direction=None, max_brightness=196, min_brightness=0, mode='gaussian', linear_decay_rate=None, transparency=None, p=1), Brightness(range=(1, 1.1), min_brightness=0, min_brightness_value=(120, 150), p=1), Gamma(range=(0.8, 1.2), p=0.5)], 'augmentation_probabilities': [0.4, 0.4, 0.2], 'p': 0.5} 
+
+LightingGradient,True,{'p': 1, 'light_position': None, 'direction': None, 'max_brightness': 196, 'min_brightness': 0, 'mode': 'gaussian', 'linear_decay_rate': None, 'transparency': None} 
+
+SubtleNoise,True,{'p': 0.5, 'range': 10} 
+
+Jpeg,False, 
+
+PencilScribbles,False, 
+
+BindingsAndFasteners,True,{'p': 0.5, 'overlay_types': 'darken', 'foreground': [array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [251, 251, 251],
+        [247, 247, 247],
+        ...,
+        [246, 246, 246],
+        [251, 251, 251],
+        [255, 255, 255]],
+
+       [[254, 254, 254],
+        [224, 224, 224],
+        [188, 188, 188],
+        ...,
+        [184, 184, 184],
+        [220, 220, 220],
+        [254, 254, 254]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [211, 211, 211],
+        [235, 235, 235],
+        [236, 236, 236]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [251, 251, 251],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [250, 250, 250],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[241, 241, 241],
+        [241, 241, 241],
+        [223, 223, 223],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [253, 253, 253],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [247, 247, 247],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [208, 208, 208],
+        [237, 237, 237],
+        [238, 238, 238]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [251, 251, 251],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8)], 'effect_type': 'clips', 'ntimes': (2, 3), 'nscales': (0.9, 1), 'edge': 'random', 'edge_offset': (10, 50), 'use_figshare_library': 0} 
+
+BadPhotoCopy,False, 
+
+Geometric,False, 
+
+OneOf,True,{'augmentations': [Faxify(scale_range=(0.5, 0.75), monochrome=0, monochrome_method=grayscale, monochrome_arguments={}, halftone=0, invert=1, half_kernel_size=(1, 1), angle=(0, 360), sigma=(1, 3), p=0.5), DirtyDrum(line_width_range=(1, 4), line_concentration=0.0723219939954399, direction=0, noise_intensity=0.6543680837142926, noise_value=(128, 224), ksize=(3, 3), sigmaX=0,p=0)], 'augmentation_probabilities': [1.0, 0.0], 'p': 0.5} 
+
+Faxify,True,{'p': 0.5, 'scale_range': (0.5, 0.75), 'monochrome': 0, 'monochrome_method': 'grayscale', 'monochrome_arguments': {}, 'halftone': 0, 'invert': 1, 'half_kernel_size': (1, 1), 'angle': (0, 360), 'sigma': (1, 3)} 
+
+BleedThrough,False, 
+

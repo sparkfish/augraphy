@@ -1,0 +1,188 @@
+Dithering,False, 
+
+InkBleed,True,{'p': 0.5, 'intensity_range': (0.1, 0.2), 'color_range': (0, 224), 'kernel_size': (5, 5), 'severity': (0.4, 0.6)} 
+
+Letterpress,False, 
+
+OneOf,True,{'augmentations': [LowInkRandomLines(count_range=(3, 10), use_consistent_lines=True, p=1), LowInkPeriodicLines(count_range=(2, 5), period_range=(40, 80), use_consistent_lines=False, p=1)], 'augmentation_probabilities': [0.5, 0.5], 'p': 1} 
+
+LowInkRandomLines,True,{'p': 1, 'use_consistent_lines': True, 'noise_probability': 0.1, 'inconsistent_transparency_line': <numpy.vectorize object at 0x0000018D107005C8>, 'inconsistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018CAC4166C8>, 'consistent_transparency_line_topbottom': <numpy.vectorize object at 0x0000018D0B20ACC8>, 'apply_line': <numpy.vectorize object at 0x0000018D0D98DFC8>, 'count_range': (3, 10)} 
+
+Markup,False, 
+
+PaperFactory,True,{'p': 1, 'paper_textures': [], 'tile_texture_shape': (234, 271), 'texture_path': './paper_textures', 'texture_file_names': [], 'texture_file_name': '216-stockvault-FreeTextureFriday-vintage-book-texture-CCBYSA.jpg'} 
+
+OneOf,False, 
+
+Brightness,False, 
+
+BrightnessTexturize,False, 
+
+OneOf,True,{'augmentations': [PageBorder(side=top, width_range=(5, 30), pages=None, noise_intensity_range=(0.4, 0.8), curve_frequency=(2, 8), curve_height=(2, 4), curve_length_one_side=(50, 100), value=(32, 150), p=1), DirtyRollers(line_width_range=(1, 24), scanline_type=0, p=1)], 'augmentation_probabilities': [0.5, 0.5], 'p': 0.5} 
+
+DirtyRollers,True,{'p': 1, 'line_width_range': (1, 24), 'scanline_type': 0} 
+
+OneOf,True,{'augmentations': [LightingGradient(light_position=None, direction=None, max_brightness=196, min_brightness=0, mode='linear_dynamic', linear_decay_rate=None, transparency=None, p=1), Brightness(range=(1, 1.1), min_brightness=0, min_brightness_value=(120, 150), p=1), Gamma(range=(0.8, 1.2), p=0.5)], 'augmentation_probabilities': [0.4, 0.4, 0.2], 'p': 0.5} 
+
+Gamma,True,{'p': 0.5, 'range': (0.8, 1.2)} 
+
+SubtleNoise,True,{'p': 0.5, 'range': 10} 
+
+Jpeg,True,{'p': 0.5, 'quality_range': (25, 95)} 
+
+PencilScribbles,False, 
+
+BindingsAndFasteners,True,{'p': 0.5, 'overlay_types': 'darken', 'foreground': [array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [249, 249, 249],
+        [244, 244, 244],
+        ...,
+        [244, 244, 244],
+        [249, 249, 249],
+        [255, 255, 255]],
+
+       [[254, 254, 254],
+        [218, 218, 218],
+        [179, 179, 179],
+        ...,
+        [179, 179, 179],
+        [218, 218, 218],
+        [254, 254, 254]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [204, 204, 204],
+        [235, 235, 235],
+        [239, 239, 239]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [249, 249, 249],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [249, 249, 249],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [254, 254, 254],
+        [217, 217, 217],
+        ...,
+        [246, 246, 246],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [208, 208, 208],
+        [236, 236, 236],
+        [237, 237, 237]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [251, 251, 251],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8), array([[[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [249, 249, 249],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [246, 246, 246],
+        [213, 213, 213],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       ...,
+
+       [[232, 232, 232],
+        [230, 230, 230],
+        [205, 205, 205],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [249, 249, 249],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]],
+
+       [[255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255],
+        ...,
+        [255, 255, 255],
+        [255, 255, 255],
+        [255, 255, 255]]], dtype=uint8)], 'effect_type': 'clips', 'ntimes': (2, 3), 'nscales': (0.9, 1), 'edge': 'random', 'edge_offset': (10, 50), 'use_figshare_library': 0} 
+
+BadPhotoCopy,True,{'p': 1, 'mask': None, 'noise_type': -1, 'noise_side': 'random', 'noise_iteration': (1, 2), 'noise_size': (1, 2), 'noise_value': [128, 196], 'noise_sparsity': [0.3, 0.9], 'noise_concentration': [0.1, 0.3], 'blur_noise': 1, 'blur_noise_kernel': (5, 5), 'wave_pattern': 0, 'edge_effect': 1} 
+
+Geometric,False, 
+
+OneOf,False, 
+
+BleedThrough,True,{'p': 0.5, 'intensity_range': (0.1, 0.2), 'color_range': (32, 224), 'ksize': (17, 17), 'sigmaX': 0, 'alpha': 0.09833161874329217, 'offsets': (10, 20)} 
+
