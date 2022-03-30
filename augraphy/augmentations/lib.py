@@ -404,17 +404,25 @@ def sobel(image):
 
 def make_white_transparent(img, ink_color=0):
     # Create the Ink Layer for the specified color.
-    img_bgra = cv2.cvtColor(
-        np.full((img.shape[0], img.shape[1], 3), ink_color, dtype="uint8"),
-        cv2.COLOR_BGR2BGRA,
-    )
+    # inherit ink from input image
+    if ink_color == -1:
+        img_bgra = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2BGRA,
+        )
+    # use the provided ink color
+    else:
+        img_bgra = cv2.cvtColor(
+            np.full((img.shape[0], img.shape[1], 3), ink_color, dtype="uint8"),
+            cv2.COLOR_BGR2BGRA,
+        )
 
     # Convert to grayscale if not already.
     if len(img.shape) > 2 and img.shape[2] > 1:
-        img = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
+        img_alpha = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
 
     # Apply transparency mask based on grayscale.
-    img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
+    img_bgra[:, :, 3] = ~(img_alpha[:, :].astype(np.int64))
     return img_bgra
 
 

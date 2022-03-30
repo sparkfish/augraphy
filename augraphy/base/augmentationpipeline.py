@@ -35,7 +35,7 @@ class AugraphyPipeline:
         ink_phase,
         paper_phase,
         post_phase,
-        ink_color_range=(0, 0),
+        ink_color_range=(-1, -1),
         paper_color_range=(255, 255),
         log=False,
     ):
@@ -256,7 +256,6 @@ class AugraphyPipeline:
 
     def print_ink_to_paper(self, data, overlay, background):
         """Applies the ink layer to the paper layer."""
-
         # prevent inconsistency in size between background and overlay
         if overlay.shape[:2] != background.shape[:2]:
             overlay_y, overlay_x = overlay.shape[:2]
@@ -266,10 +265,10 @@ class AugraphyPipeline:
                 interpolation=cv2.INTER_AREA,
             )
 
-        if (self.ink_color_range[0] != 0) or (self.ink_color_range[1] != 0):
+        if (self.ink_color_range[0] != -1) or (self.ink_color_range[1] != -1):
             ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
         else:
-            ink_color = 0
+            ink_color = -1
 
         data["log"]["ink_color"] = ink_color
 
@@ -291,8 +290,8 @@ class AugraphyPipeline:
             background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
         # Create a masked out face image, and masked out overlay
         # We convert the images to floating point in range 0.0 - 1.0
-        background_part = (background * (1 / 255.0)) * (background_mask * (1 / 255.0))
-        overlay_part = (overlay_img * (1 / 255.0)) * (overlay_mask * (1 / 255.0))
+        background_part = (background * (1.0 / 255.0)) * (background_mask * (1 / 255.0))
+        overlay_part = (overlay_img * (1.0 / 255.0)) * (overlay_mask * (1.0 / 255.0))
 
         # And finally just add them together, and rescale it back to an 8bit integer image
         return np.uint8(
