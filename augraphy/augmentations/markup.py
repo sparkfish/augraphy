@@ -360,7 +360,7 @@ class Markup(Augmentation):
 
         # smoothen highlight mask to make it more realistic
         if self.markup_type == "highlight":
-            alpha = 1
+            # blur markup mask
             markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
 
             # increase brightness of highlight effect if highlight colour is too dark
@@ -384,7 +384,8 @@ class Markup(Augmentation):
                 markup_mask = brightness(markup_mask)
 
         else:
-            alpha = 1
+            # blur markup mask
+            markup_mask = cv2.GaussianBlur(markup_mask, (3, 3), cv2.BORDER_DEFAULT)
 
             # add scribble similar realistic effect
             markup_mask_copy = markup_mask.copy()
@@ -423,7 +424,7 @@ class Markup(Augmentation):
             (1, 1),
             "center",
             0,
-            alpha=alpha,
+            alpha=1,
         )
         # overlay image
         markup_img = overlay_builder.build_overlay()
