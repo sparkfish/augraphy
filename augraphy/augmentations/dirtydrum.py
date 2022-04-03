@@ -61,7 +61,7 @@ class DirtyDrum(Augmentation):
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):
         ob = OverlayBuilder(
-            "mix",
+            "darken",
             img_dirty.astype("uint8"),
             img,
             1,

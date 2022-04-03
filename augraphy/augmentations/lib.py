@@ -420,6 +420,8 @@ def make_white_transparent(img, ink_color=0):
     # Convert to grayscale if not already.
     if len(img.shape) > 2 and img.shape[2] > 1:
         img_alpha = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
+    else:
+        img_alpha = img
 
     # Apply transparency mask based on grayscale.
     img_bgra[:, :, 3] = ~(img_alpha[:, :].astype(np.int64))
