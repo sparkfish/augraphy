@@ -80,7 +80,7 @@ class PencilScribbles(Augmentation):
         return cv2.multiply(stroke_image, image, scale=1 / 255)
 
     def create_scribble(self, max_height, max_width):
-        size = random.randint(self.size_range[0], self.size_range[1])
+        size = random.randint(max(self.size_range[0], 30), max(40, self.size_range[1]))
         size = min([size, max_height, max_width])
         width, height = size, size  # picture's size
 
@@ -93,26 +93,26 @@ class PencilScribbles(Augmentation):
             stroke_img = np.zeros((height, width, 3), np.uint8) + 255  # make the background white
             x = np.array(
                 [
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
                 ],
             )
             y = np.array(
                 [
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
-                    random.randint(25, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
+                    random.randint(5, size - 25),
                 ],
             )
 
             start_stop = [
-                random.randint(25, size // 2),
-                random.randint(size // 2, size - 25),
+                random.randint(5, size // 2),
+                random.randint(size // 2, size - 5),
             ]
 
             # Initilaize y axis

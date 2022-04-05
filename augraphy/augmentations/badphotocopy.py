@@ -202,20 +202,6 @@ class BadPhotoCopy(Augmentation):
         else:
             ysize, xsize = image.shape
 
-        # add random noise range from 0-128
-        add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
-        add_edge_noise = np.vectorize(add_edge_noise_fn)
-
-        image_sobel = sobel(image)
-        image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
-        image_sobel[:, :][image_sobel[:, :] % 255 != 0] = 255
-        image_sobel = cv2.dilate(image_sobel, (5, 5), iterations=2)
-
-        image_sobel_sobel = sobel(image_sobel)
-        image_sobel_sobel = cv2.dilate(image_sobel_sobel, (3, 3), iterations=2)
-        image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
-        image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
-
         # check if provided mask is numpy array
         if isinstance(self.mask, np.ndarray):
             mask = self.mask
@@ -295,12 +281,29 @@ class BadPhotoCopy(Augmentation):
         else:
             edge_effect = self.edge_effect
         if edge_effect:
+
+            # add random noise range from 0-128
+            add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
+            add_edge_noise = np.vectorize(add_edge_noise_fn)
+
+            # get edge mask
+            image_sobel = sobel(image)
+            image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
+            image_sobel[:, :][image_sobel[:, :] % 255 != 0] = 255
+            image_sobel = cv2.dilate(image_sobel, (15, 15), iterations=5)
+            image_sobel_sobel = sobel(image_sobel)
+            image_sobel_sobel = cv2.dilate(image_sobel_sobel, (5, 5), iterations=2)
+            image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
+            image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
+
             image_original = image.copy()
             image_copy = image.copy()
+
+            # apply edge
             result_new = result.astype("int") + image_sobel.astype("int")
             image_original[image_original > result_new] = 0
             result_new[result_new > 255] = 0
-            result_new[result_new > image_copy] = 0
+            result_new[result_new >= image_copy] = 0
             result = image_original + result_new
 
         # convert back to original image shape
