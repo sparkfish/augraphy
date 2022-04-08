@@ -97,7 +97,12 @@ class BadPhotoCopy(Augmentation):
         """
 
         # rescale mask from 0 to 255
-        mask_rescaled = mask = (((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255).astype("uint8")
+        # prevent zero division
+        if np.max(mask) - np.min(mask) == 0:
+            divisor = 1
+        else:
+            divisor = np.max(mask) - np.min(mask)
+        mask_rescaled = (((mask - np.min(mask)) / divisor) * 255).astype("uint8")
         mask_ysize, mask_xsize = mask_rescaled.shape
         img_wave = np.zeros_like(mask_rescaled)
 
