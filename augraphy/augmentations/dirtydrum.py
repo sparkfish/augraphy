@@ -61,7 +61,7 @@ class DirtyDrum(Augmentation):
     # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):
         ob = OverlayBuilder(
-            "mix",
+            "darken",
             img_dirty.astype("uint8"),
             img,
             1,
@@ -166,13 +166,10 @@ class DirtyDrum(Augmentation):
 
         x = 0
         # generate initial random strip width
-        current_width = (
-            random.randint(
-                line_width_range[0],
-                line_width_range[1],
-            )
-            * random.randint(1, 5)
-        )
+        current_width = random.randint(
+            line_width_range[0],
+            line_width_range[1],
+        ) * random.randint(1, 5)
 
         # flag to break
         f_break = 0
@@ -193,13 +190,10 @@ class DirtyDrum(Augmentation):
             x += current_width * random.randint(1, 3)
 
             # generate next random strip width
-            current_width = (
-                random.randint(
-                    line_width_range[0],
-                    line_width_range[1],
-                )
-                * random.randint(1, 5)
-            )
+            current_width = random.randint(
+                line_width_range[0],
+                line_width_range[1],
+            ) * random.randint(1, 5)
 
             # if next strip > image width, set it to fit into image width
             if x + (current_width) > xsize - 1:

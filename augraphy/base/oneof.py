@@ -51,4 +51,11 @@ class OneOf(Augmentation):
 
         augmentation_probabilities = [augmentation.p for augmentation in augmentations]
         s = sum(augmentation_probabilities)
-        return [ap / s for ap in augmentation_probabilities]
+
+        # prevent zero division
+        if s > 0:
+            final_P = [ap / s for ap in augmentation_probabilities]
+        else:
+            final_P = 0
+
+        return final_P
