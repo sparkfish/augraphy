@@ -122,7 +122,7 @@ class PencilScribbles(Augmentation):
             z = np.polyfit(x, y, 2)
 
             # calculate x axis
-            line_fitx = z[0] * lspace ** 2 + z[1] * lspace + z[2]
+            line_fitx = z[0] * lspace**2 + z[1] * lspace + z[2]
             verts = np.array(list(zip(line_fitx.astype(int), lspace.astype(int))))
             cv2.polylines(
                 stroke_img,
