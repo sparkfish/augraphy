@@ -16,12 +16,12 @@ The ColorPaper augmentation change color of input paper based on user input hue 
     from time import time
     import cv2
     import numpy as np
-    
+
     start_time = time()
-    
+
     # create a blank image
     image = np.full((1500, 1500,3), 255, dtype="uint8")
-    
+
     # insert text into image
     for y in range(200, 1300, 100):
         cv2.putText(
@@ -33,16 +33,16 @@ The ColorPaper augmentation change color of input paper based on user input hue 
             0,
             3,
         )
-    
+
     colorpaper= ColorPaper(hue_range=(28, 32), saturation_range=(10,30), p=1)
-    
+
     img_colorpaper = colorpaper(image)
-    
+
     elapsed_time = time() - start_time
     # processing time
     print("Elapsed time = " + str(elapsed_time) + " seconds")
-    
-    
+
+
     # display output
     plt.figure()
     plt.subplot(121)

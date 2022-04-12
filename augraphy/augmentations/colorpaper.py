@@ -3,6 +3,7 @@ import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 
+
 class ColorPaper(Augmentation):
     """Change color of input paper based on user input hue and saturation.
 
@@ -29,30 +30,26 @@ class ColorPaper(Augmentation):
     def __repr__(self):
         return f"ColorPaper(hue_range={self.hue_range}, saturation_range={self.saturation_range}, p={self.p})"
 
-
-
     def add_color(self, image):
-        
-        
-        if len(image.shape)<3:
+
+        if len(image.shape) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         ysize, xsize = image.shape[:2]
-            
+
         # convert to hsv colorspace
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         # assign hue and saturation
         image_h = np.random.randint(self.hue_range[0], self.hue_range[1], size=(ysize, xsize))
         image_s = np.random.randint(self.saturation_range[0], self.saturation_range[1], size=(ysize, xsize))
-        
+
         # assign hue and saturation channel back to hsv image
-        image_hsv[:,:,0] = image_h
-        image_hsv[:,:,1] = image_s
-        
+        image_hsv[:, :, 0] = image_h
+        image_hsv[:, :, 1] = image_s
+
         # convert back to bgr
         color_image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
-             
-        return color_image
 
+        return color_image
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -60,5 +57,5 @@ class ColorPaper(Augmentation):
             image = image.copy()
 
             color_image = self.add_color(image)
-            
+
             return color_image
