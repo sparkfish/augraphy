@@ -15,9 +15,6 @@ class PaperFactory(Augmentation):
     """Replaces the starting paper image with a texture randomly chosen from
     a directory and resized to fit or cropped and tiled to fit.
 
-    :param tile_texture_shape: Pair of ints determining the range from which to
-           sample the texture dimensions.
-    :type tile_texture_shape: tuple, optional
     :param texture_path: Directory location to pull paper textures from.
     :type texture_path: string, optional
     :param p: The probability that this Augmentation will be applied.
@@ -26,17 +23,16 @@ class PaperFactory(Augmentation):
 
     def __init__(
         self,
-        tile_texture_shape=(250, 250),
         texture_path="./paper_textures",
+        color_augmentation=0,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.paper_textures = list()
-        self.tile_texture_shape = tile_texture_shape
         self.texture_path = texture_path
         self.texture_file_names = []
         self.texture_file_name = None
+        self.paper_textures = list()
         for file in glob.glob(f"{texture_path}/*"):
             texture = cv2.imread(file)
             self.texture_file_names.append(os.path.basename(file))
@@ -54,9 +50,7 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return (
-            f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
-        )
+        return f"PaperFactory(texture_path={self.texture_path}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -135,31 +129,3 @@ class PaperFactory(Augmentation):
             texture = cv2.resize(texture, zoom)
 
         return texture
-
-    # Returns a paper texture cropped to a given shape.
-    def get_texture(self, shape):
-        random_index = random.randint(0, len(self.paper_textures) - 1)
-        texture = self.paper_textures[random_index]
-        self.texture_file_name = self.texture_file_names[random_index]
-        # reset file names and textures
-        self.texture_file_names = []
-        self.paper_textures = []
-
-        # texture_intensity
-        texture_intensity = generate_average_intensity(texture)
-        # brighten dark texture based on target intensity, max intensity = 255 (brightest)
-        target_intensity = 200
-        if texture_intensity < target_intensity:
-            brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
-            brighten_min = 1 + brighten_ratio
-            brighten_max = 1 + brighten_ratio + 0.5
-            brightness = Brightness(range=(brighten_min, brighten_max), min_brightness=1)
-            texture = brightness(texture)
-
-        if texture.shape[0] < shape[0] or texture.shape[1] < shape[1]:
-            texture = self.resize(texture, shape)
-
-        h = random.randint(0, texture.shape[0] - shape[0])
-        w = random.randint(0, texture.shape[1] - shape[1])
-        cropped_texture = texture[h : h + shape[0], w : w + shape[1]]
-        return cropped_texture
