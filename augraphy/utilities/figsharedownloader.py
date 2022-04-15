@@ -1,7 +1,7 @@
 import json
 import os
-import shutil
 import random
+import shutil
 from urllib.request import urlretrieve
 
 import requests
