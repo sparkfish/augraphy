@@ -4,6 +4,7 @@ from augraphy.augmentations.bleedthrough import BleedThrough
 from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
+from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
 from augraphy.augmentations.dithering import Dithering
@@ -31,6 +32,7 @@ __all__ = [
     "BookBinding",
     "Brightness",
     "BrightnessTexturize",
+    "ColorPaper",
     "DirtyDrum",
     "DirtyRollers",
     "Dithering",
