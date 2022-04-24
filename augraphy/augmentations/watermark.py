@@ -128,22 +128,99 @@ class WaterMark(Augmentation):
             watermark_location = self.watermark_location
 
         # initialize watermark method
-        if self.watermark_method == "random":
-            watermark_method = ["darken", "mix", "normal"]
+        if self.watermark_method == "random" or self.watermark_method not in ["overlay", "obfuscate"]:
+            watermark_method = random.choice(["overlay", "obfuscate"])
         else:
             watermark_method = self.watermark_method
 
-        # overlay watermark foreground and input image
-        ob = OverlayBuilder(
-            watermark_method,
-            watermark_foreground,
-            image,
-            ntimes=1,
-            nscales=(1, 1),
-            edge=watermark_location,
-            edge_offset=10,
-            alpha=0.3,
-        )
+        if watermark_method == "obfuscate":
+
+            # blur image
+            image_blurred = cv2.blur(image, (5, 5)).astype("uint8")
+            if len(image_blurred.shape) > 2:
+                image_blurred = cv2.cvtColor(image_blurred, cv2.COLOR_BGR2GRAY)
+
+            # convert to binary
+            _, image_binarized = cv2.threshold(
+                image_blurred,
+                0,
+                255,
+                cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
+            )
+
+            # get kernel for dilation
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (50, 1))
+
+            # dilate and erode the binary image
+            image_dilated = cv2.dilate(
+                image_binarized,
+                kernel,
+                iterations=2,
+            )
+            image_eroded = cv2.erode(
+                image_dilated,
+                None,
+                iterations=1,
+            )
+
+            # get contours
+            contours, hierarchy = cv2.findContours(
+                image_eroded,
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_NONE,
+            )
+
+            # complement image
+            image_eroded = 255 - image_eroded
+            # remove contours in fixed interval
+            for i, contour in enumerate(contours):
+                if i % 2:
+                    x, y, w, h = cv2.boundingRect(contour)
+                    image_eroded[y : y + h, x : x + w] = 255
+
+            # create blank image and overlay the foreground only
+            image_blank = np.full_like(image, fill_value=255, dtype="uint8")
+            ob = OverlayBuilder(
+                "darken",
+                watermark_foreground,
+                image_blank,
+                ntimes=1,
+                nscales=(1, 1),
+                edge=watermark_location,
+                edge_offset=10,
+            )
+            new_watermark_foreground = ob.build_overlay()
+
+            # set removed contours to white
+            if len(new_watermark_foreground.shape) > 2:
+                image_eroded = cv2.cvtColor(image_eroded, cv2.COLOR_GRAY2BGR)
+            new_watermark_foreground[image_eroded == 0] = 255
+
+            # overlay watermark foreground and input image
+            ob = OverlayBuilder(
+                "darken",
+                new_watermark_foreground,
+                image,
+                ntimes=1,
+                nscales=(1, 1),
+                edge="center",
+                edge_offset=0,
+                alpha=0.5,
+            )
+
+        else:
+
+            # overlay watermark foreground and input image
+            ob = OverlayBuilder(
+                "darken",
+                watermark_foreground,
+                image,
+                ntimes=1,
+                nscales=(1, 1),
+                edge=watermark_location,
+                edge_offset=10,
+                alpha=0.5,
+            )
 
         return ob.build_overlay()
 
