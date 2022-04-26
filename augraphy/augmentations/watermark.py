@@ -194,7 +194,9 @@ class WaterMark(Augmentation):
             # set removed contours to white
             if len(new_watermark_foreground.shape) > 2:
                 image_eroded = cv2.cvtColor(image_eroded, cv2.COLOR_GRAY2BGR)
+
             new_watermark_foreground[image_eroded == 0] = 255
+            image[new_watermark_foreground < 255] = 255
 
             # overlay watermark foreground and input image
             ob = OverlayBuilder(
