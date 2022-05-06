@@ -65,6 +65,9 @@ class PaperFactory(Augmentation):
                 self.texture_file_names = []
                 self.paper_textures = []
 
+                # check for edge
+                texture = self.check_paper_edges(texture)
+
                 # If the texture we chose is larger than the paper,
                 # get randomn location that fit into paper size
                 if (texture.shape[0] >= shape[0]) and (texture.shape[1] >= shape[1]):
@@ -93,6 +96,93 @@ class PaperFactory(Augmentation):
 
             else:
                 print("No paper image in the paper directory!")
+
+    def check_paper_edges(self, texture):
+
+        ysize, xsize = texture.shape[:2]
+
+        # get single channel image
+        if len(texture.shape) > 2:
+            texture_gray = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
+        else:
+            texture_gray = texture.copy()
+
+        # blur image
+        texture_blur = cv2.GaussianBlur(texture_gray, (5, 5), 0)
+
+        # convert to binary using otsu
+        _, texture_binary = cv2.threshold(texture_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # get border average intensity
+        border_average = (
+            np.average(texture_binary[:, :10])
+            + np.average(texture_binary[:, -10:])
+            + np.average(texture_binary[:10, :])
+            + np.average(texture_binary[-10:, :])
+        ) / 4
+
+        # get center average intensity
+        center_x = int(xsize / 2)
+        center_y = int(ysize / 2)
+        center_average = np.average(texture_blur[center_y - 10 : center_y + 10, center_x - 10 : center_x + 10])
+
+        # if border intensity is higher, complement image
+        if border_average > center_average:
+            texture_binary = 255 - texture_binary
+
+        # erode
+        texture_binary = cv2.erode(texture_binary, np.ones((9, 9), np.uint8), iterations=1)
+
+        # find contours in image
+        contours, hierarchy = cv2.findContours(texture_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # get all areas
+        areas = [cv2.contourArea(contour) for contour in contours]
+
+        # sort area and get the largest contour first
+        area_indexs = list(np.argsort(areas))
+        area_indexs.reverse()
+
+        # threshold for contour
+        min_area = ysize * xsize * 0.65
+
+        # at least 1 contour
+        if len(areas) > 0:
+            max_contour = contours[area_indexs[0]]
+            for i, area_index in enumerate(area_indexs):
+                # last index
+                if i == len(area_indexs) - 1:
+                    # current contour >= min area
+                    if areas[area_indexs[i]] >= min_area:
+                        max_contour = contours[area_index]
+                    else:
+                        return texture
+                else:
+                    # current contour >= min area but the next one < min area
+                    if areas[area_indexs[i]] >= min_area and areas[area_indexs[i + 1]] < min_area:
+                        max_contour = contours[area_index]
+                        break
+                    else:
+                        return texture
+
+            # get rotated rectangle and their box
+            rectangle = cv2.minAreaRect(max_contour)
+            bbox = np.int0(cv2.boxPoints(rectangle))
+
+            # get min of x and y from rectangle
+            y_list = np.sort(bbox[:, 1])
+            x_list = np.sort(bbox[:, 0])
+            y_top = y_list[1]
+            y_bottom = y_list[2]
+            x_left = x_list[1]
+            x_right = x_list[2]
+
+            # crop texture
+            texture_cropped = texture[y_top:y_bottom, x_left:x_right]
+        else:
+            texture_cropped = texture
+
+        return texture_cropped
 
     # Scales and zooms a given texture to fit a given shape.
     def resize(self, texture, shape):
