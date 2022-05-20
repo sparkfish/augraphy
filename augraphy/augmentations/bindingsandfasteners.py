@@ -375,7 +375,7 @@ class BindingsAndFasteners(Augmentation):
         if self.effect_type == "random":
             effect_type = random.choice(("punch_holes", "binding_holes", "clips"))
         else:
-            effect_type == self.effect_type
+            effect_type = self.effect_type
 
         # read foreground
         if self.effect_type == "punch_holes":
