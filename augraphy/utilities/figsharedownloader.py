@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import shutil
 from urllib.request import urlretrieve
 
 import requests
@@ -80,10 +81,10 @@ class FigshareDownloader:
         )
 
         if file_name is not None:
-            os.rename(local_file, os.path.join(self.save_dir, file_name))
+            shutil.move(local_file, os.path.join(self.save_dir, file_name))
         else:
             # urlretrieve puts everything in /tmp so we strip "/tmp/" from local_file
-            os.rename(local_file, os.path.join(self.save_dir, local_file[5:]))
+            shutil.move(local_file, os.path.join(self.save_dir, local_file[5:]))
 
     def download_all_files_from_article(self, article_id):
         """Download every file in article_id

@@ -16,6 +16,38 @@ from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
 
 
+def rotate_image(mat, angle):
+    """Rotates an image (angle in degrees) and expands image to avoid
+    cropping.
+    """
+
+    mat = cv2.bitwise_not(mat)
+    height, width = mat.shape[:2]  # image shape has 3 dimensions
+    image_center = (
+        width / 2,
+        height / 2,
+    )  # getRotationMatrix2D needs coordinates in reverse order (width, height) compared to shape
+
+    rotation_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+
+    # rotation calculates the cos and sin, taking absolutes of those.
+    abs_cos = abs(rotation_mat[0, 0])
+    abs_sin = abs(rotation_mat[0, 1])
+
+    # find the new width and height bounds
+    bound_w = int(height * abs_sin + width * abs_cos)
+    bound_h = int(height * abs_cos + width * abs_sin)
+
+    # subtract old image center (bringing image back to origo) and adding the new image center coordinates
+    rotation_mat[0, 2] += bound_w / 2 - image_center[0]
+    rotation_mat[1, 2] += bound_h / 2 - image_center[1]
+
+    # rotate image with the new bounds and translated rotation matrix
+    rotated_mat = cv2.warpAffine(mat, rotation_mat, (bound_w, bound_h))
+    rotated_mat = cv2.bitwise_not(rotated_mat)
+    return rotated_mat
+
+
 # Generate average intensity value
 def generate_average_intensity(image):
     # Adapted from this discussion
@@ -404,17 +436,27 @@ def sobel(image):
 
 def make_white_transparent(img, ink_color=0):
     # Create the Ink Layer for the specified color.
-    img_bgra = cv2.cvtColor(
-        np.full((img.shape[0], img.shape[1], 3), ink_color, dtype="uint8"),
-        cv2.COLOR_BGR2BGRA,
-    )
+    # inherit ink from input image
+    if ink_color == -1:
+        img_bgra = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2BGRA,
+        )
+    # use the provided ink color
+    else:
+        img_bgra = cv2.cvtColor(
+            np.full((img.shape[0], img.shape[1], 3), ink_color, dtype="uint8"),
+            cv2.COLOR_BGR2BGRA,
+        )
 
     # Convert to grayscale if not already.
     if len(img.shape) > 2 and img.shape[2] > 1:
-        img = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
+        img_alpha = cv2.cvtColor(img.astype(np.single), cv2.COLOR_BGR2GRAY)
+    else:
+        img_alpha = img
 
     # Apply transparency mask based on grayscale.
-    img_bgra[:, :, 3] = ~(img[:, :].astype(np.int64))
+    img_bgra[:, :, 3] = ~(img_alpha[:, :].astype(np.int64))
     return img_bgra
 
 

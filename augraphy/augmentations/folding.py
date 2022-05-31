@@ -82,13 +82,10 @@ class Folding(Augmentation):
                 xsize - fold_width_one_side - 1,
             )
         else:
-            deviation = (
-                random.randint(
-                    self.fold_deviation[0],
-                    self.fold_deviation[1],
-                )
-                * random.choice([-1, 1])
-            )
+            deviation = random.randint(
+                self.fold_deviation[0],
+                self.fold_deviation[1],
+            ) * random.choice([-1, 1])
             fold_x = min(
                 max(self.fold_x + deviation, fold_width_one_side + 1),
                 xsize - fold_width_one_side - 1,

@@ -15,9 +15,6 @@ class PaperFactory(Augmentation):
     """Replaces the starting paper image with a texture randomly chosen from
     a directory and resized to fit or cropped and tiled to fit.
 
-    :param tile_texture_shape: Pair of ints determining the range from which to
-           sample the texture dimensions.
-    :type tile_texture_shape: tuple, optional
     :param texture_path: Directory location to pull paper textures from.
     :type texture_path: string, optional
     :param p: The probability that this Augmentation will be applied.
@@ -26,17 +23,16 @@ class PaperFactory(Augmentation):
 
     def __init__(
         self,
-        tile_texture_shape=(250, 250),
         texture_path="./paper_textures",
+        color_augmentation=0,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.paper_textures = list()
-        self.tile_texture_shape = tile_texture_shape
         self.texture_path = texture_path
         self.texture_file_names = []
         self.texture_file_name = None
+        self.paper_textures = list()
         for file in glob.glob(f"{texture_path}/*"):
             texture = cv2.imread(file)
             self.texture_file_names.append(os.path.basename(file))
@@ -54,9 +50,7 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return (
-            f"PaperFactory(tile_texture_shape={self.tile_texture_shape}, texture_path={self.texture_path}, p={self.p})"
-        )
+        return f"PaperFactory(texture_path={self.texture_path}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -64,24 +58,131 @@ class PaperFactory(Augmentation):
 
             if self.paper_textures:
                 shape = image.shape
-
                 random_index = random.randint(0, len(self.paper_textures) - 1)
                 texture = self.paper_textures[random_index]
+                self.texture_file_name = self.texture_file_names[random_index]
+                # reset file names and textures
+                self.texture_file_names = []
+                self.paper_textures = []
+
+                # check for edge
+                texture = self.check_paper_edges(texture)
 
                 # If the texture we chose is larger than the paper,
-                # just align to the top left corner and crop as necessary
+                # get randomn location that fit into paper size
                 if (texture.shape[0] >= shape[0]) and (texture.shape[1] >= shape[1]):
-                    texture = texture[0 : shape[0], 0 : shape[1]]
-                    return texture
+                    difference_y = texture.shape[0] - shape[0]
+                    difference_x = texture.shape[1] - shape[1]
+                    start_y = random.randint(0, difference_y - 1)
+                    start_x = random.randint(0, difference_x - 1)
+                    texture = texture[start_y : start_y + shape[0], start_x : start_x + shape[1]]
 
                 # If the texture we chose is smaller in either dimension than the paper,
                 # use the resize logic
                 else:
                     texture = self.resize(texture, shape)
-                    return texture
+
+                # texture_intensity
+                texture_intensity = generate_average_intensity(texture)
+                # brighten dark texture based on target intensity, max intensity = 255 (brightest)
+                target_intensity = 200
+                if texture_intensity < target_intensity:
+                    brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
+                    brighten_min = 1 + (brighten_ratio / 2)
+                    brighten_max = 1 + brighten_ratio
+                    brightness = Brightness(range=(brighten_min, brighten_max), min_brightness=1)
+                    texture = brightness(texture)
+                return texture
 
             else:
                 print("No paper image in the paper directory!")
+
+    def check_paper_edges(self, texture):
+
+        ysize, xsize = texture.shape[:2]
+
+        # get single channel image
+        if len(texture.shape) > 2:
+            texture_gray = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
+        else:
+            texture_gray = texture.copy()
+
+        # blur image
+        texture_blur = cv2.GaussianBlur(texture_gray, (5, 5), 0)
+
+        # convert to binary using otsu
+        _, texture_binary = cv2.threshold(texture_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        # get border average intensity
+        border_average = (
+            np.average(texture_binary[:, :10])
+            + np.average(texture_binary[:, -10:])
+            + np.average(texture_binary[:10, :])
+            + np.average(texture_binary[-10:, :])
+        ) / 4
+
+        # get center average intensity
+        center_x = int(xsize / 2)
+        center_y = int(ysize / 2)
+        center_average = np.average(texture_blur[center_y - 10 : center_y + 10, center_x - 10 : center_x + 10])
+
+        # if border intensity is higher, complement image
+        if border_average > center_average:
+            texture_binary = 255 - texture_binary
+
+        # erode
+        texture_binary = cv2.erode(texture_binary, np.ones((9, 9), np.uint8), iterations=1)
+
+        # find contours in image
+        contours, hierarchy = cv2.findContours(texture_binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # get all areas
+        areas = [cv2.contourArea(contour) for contour in contours]
+
+        # sort area and get the largest contour first
+        area_indexs = list(np.argsort(areas))
+        area_indexs.reverse()
+
+        # threshold for contour
+        min_area = ysize * xsize * 0.65
+
+        # at least 1 contour
+        if len(areas) > 0:
+            max_contour = contours[area_indexs[0]]
+            for i, area_index in enumerate(area_indexs):
+                # last index
+                if i == len(area_indexs) - 1:
+                    # current contour >= min area
+                    if areas[area_indexs[i]] >= min_area:
+                        max_contour = contours[area_index]
+                    else:
+                        return texture
+                else:
+                    # current contour >= min area but the next one < min area
+                    if areas[area_indexs[i]] >= min_area and areas[area_indexs[i + 1]] < min_area:
+                        max_contour = contours[area_index]
+                        break
+                    else:
+                        return texture
+
+            # get rotated rectangle and their box
+            rectangle = cv2.minAreaRect(max_contour)
+            bbox = np.int0(cv2.boxPoints(rectangle))
+
+            # get min of x and y from rectangle
+            y_list = np.sort(bbox[:, 1])
+            x_list = np.sort(bbox[:, 0])
+            y_top = y_list[1]
+            y_bottom = y_list[2]
+            x_left = x_list[1]
+            x_right = x_list[2]
+
+            # crop texture
+            texture_cropped = texture[y_top:y_bottom, x_left:x_right]
+        else:
+            texture_cropped = texture
+
+        return texture_cropped
 
     # Scales and zooms a given texture to fit a given shape.
     def resize(self, texture, shape):
@@ -118,31 +219,3 @@ class PaperFactory(Augmentation):
             texture = cv2.resize(texture, zoom)
 
         return texture
-
-    # Returns a paper texture cropped to a given shape.
-    def get_texture(self, shape):
-        random_index = random.randint(0, len(self.paper_textures) - 1)
-        texture = self.paper_textures[random_index]
-        self.texture_file_name = self.texture_file_names[random_index]
-        # reset file names and textures
-        self.texture_file_names = []
-        self.paper_textures = []
-
-        # texture_intensity
-        texture_intensity = generate_average_intensity(texture)
-        # brighten dark texture based on target intensity, max intensity = 255 (brightest)
-        target_intensity = 200
-        if texture_intensity < target_intensity:
-            brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
-            brighten_min = 1 + brighten_ratio
-            brighten_max = 1 + brighten_ratio + 0.5
-            brightness = Brightness(range=(brighten_min, brighten_max))
-            texture = brightness(texture)
-
-        if texture.shape[0] < shape[0] or texture.shape[1] < shape[1]:
-            texture = self.resize(texture, shape)
-
-        h = random.randint(0, texture.shape[0] - shape[0])
-        w = random.randint(0, texture.shape[1] - shape[1])
-        cropped_texture = texture[h : h + shape[0], w : w + shape[1]]
-        return cropped_texture

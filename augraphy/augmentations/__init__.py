@@ -4,6 +4,7 @@ from augraphy.augmentations.bleedthrough import BleedThrough
 from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
+from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
 from augraphy.augmentations.dithering import Dithering
@@ -22,6 +23,7 @@ from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
 from augraphy.augmentations.subtlenoise import SubtleNoise
+from augraphy.augmentations.watermark import WaterMark
 
 
 __all__ = [
@@ -31,6 +33,7 @@ __all__ = [
     "BookBinding",
     "Brightness",
     "BrightnessTexturize",
+    "ColorPaper",
     "DirtyDrum",
     "DirtyRollers",
     "Dithering",
@@ -49,4 +52,5 @@ __all__ = [
     "PageBorder",
     "PencilScribbles",
     "SubtleNoise",
+    "WaterMark",
 ]

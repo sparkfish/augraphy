@@ -1,13 +1,12 @@
-# Brightness
+# ColorPaper
 
-The Brightness augmentation adjusts the brightness of the whole image by a chosen multiplier.
+The ColorPaper augmentation change color of input paper based on user input hue and saturation.
 
 
 | Parameter                | Description                                                                       |
 |--------------------------|-----------------------------------------------------------------------------------|
-| `range`                  | The range of values to be chosen at random for the brightness multiplier applied. |
-| `min_brightness`         | Flag to enable min brightness intensity value in the augmented image.             |
-| `min_brightness_value`   | Pair of ints determining the minimum brightness intensity of augmented image.     |
+| `hue_range`              | Pair of ints determining the range from which hue value is sampled.               |
+| `saturation_range`       | Pair of ints determining the range from which saturation value is sampled.        |
 | `p`                      | The probability that this augmentation will be applied.                           |
 
 
@@ -21,7 +20,7 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
     start_time = time()
 
     # create a blank image
-    image = np.full((1500, 1500,3), 128, dtype="uint8")
+    image = np.full((1500, 1500,3), 255, dtype="uint8")
 
     # insert text into image
     for y in range(200, 1300, 100):
@@ -35,10 +34,9 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
             3,
         )
 
+    colorpaper= ColorPaper(hue_range=(28, 32), saturation_range=(10,30), p=1)
 
-    brightness= Brightness(range=(1.5, 2))
-
-    img_brightness = brightness(image)
+    img_colorpaper = colorpaper(image)
 
     elapsed_time = time() - start_time
     # processing time
@@ -46,15 +44,12 @@ The Brightness augmentation adjusts the brightness of the whole image by a chose
 
 
     # display output
-
     plt.figure()
     plt.subplot(121)
     plt.imshow(image)
     plt.title("Input image")
     plt.subplot(122)
-    plt.imshow(img_brightness)
-    plt.title("Brightness augmentation")
+    plt.imshow(img_colorpaper)
+    plt.title("ColorPaper augmentation")
 
 ```
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1zPuAFgW8BdgX9tH9grorp_V3B7FswVUq?usp=sharing)

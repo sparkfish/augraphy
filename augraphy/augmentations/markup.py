@@ -28,7 +28,7 @@ class Markup(Augmentation):
     :param markup_type: Choice of markup "strikethrough", "highlight", "underline" or "crossed".
     :type markup_type: string
     :param markup_color: bgr color tuple.
-    :type markup_color: tuple of ints
+    :type markup_color: tuple of ints or string
     :param repetitions: determines how many time a markup should be drawn
     :type repetitions: int
     :param single_word_mode: set true to draw markup on a single word only
@@ -45,7 +45,7 @@ class Markup(Augmentation):
         markup_length_range=(0.5, 1),
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
-        markup_color=(255, 0, 0),
+        markup_color="random",
         single_word_mode=False,
         repetitions=1,
         p=1,
@@ -98,13 +98,14 @@ class Markup(Augmentation):
         elif len(blurred.shape) > 2 and blurred.shape[2] == 4:
             blurred = cv2.cvtColor(blurred, cv2.COLOR_BGRA2GRAY)
 
-        ret, thresh1 = cv2.threshold(
+        _, binarized = cv2.threshold(
             blurred,
             0,
             255,
             cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV,
         )
 
+        # get kernel for dilation
         if self.single_word_mode is False:
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (20, 1))
         else:
@@ -113,7 +114,7 @@ class Markup(Augmentation):
 
         # dilating the threshold image to combine horizontal lines
         dilation = cv2.dilate(
-            thresh1,
+            binarized,
             kernel,
             iterations=2,
         )
@@ -166,6 +167,14 @@ class Markup(Augmentation):
     def __call__(self, image, layer=None, force=False):
         markup_img = image.copy()
         overlay = markup_img.copy()
+
+        if self.markup_color == "random":
+            self.markup_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        elif self.markup_color == "contrast":
+            single_color = cv2.resize(image, (1, 1), interpolation=cv2.INTER_AREA)
+            self.markup_color = 255 - single_color[0][0]
+            self.markup_color = self.markup_color.tolist()
+
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         markup_thickness = random.randint(
             self.markup_thickness_range[0],
@@ -181,6 +190,23 @@ class Markup(Augmentation):
             cv2.CHAIN_APPROX_NONE,
         )  # Each line is detected as a contour.
 
+        heights = []
+        for cnt in contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            heights.append(h)
+
+        # get average of character height
+        bins = np.unique(heights)
+        hist, bin_edges = np.histogram(heights, bins=bins, density=False)
+        if len(bin_edges) > 1 and np.max(hist) > 20:
+            character_height_min = bin_edges[np.argmax(hist)]
+            character_height_max = bin_edges[np.argmax(hist) + 1]
+            character_height_average = int((character_height_max + character_height_min) / 2)
+            height_range = ((character_height_max - character_height_min) / 2) + 1
+        else:
+            character_height_average = -1
+            height_range = -1
+
         # initialize mask for markup
         markup_mask = np.full_like(overlay, fill_value=255).astype("uint8")
 
@@ -192,7 +218,15 @@ class Markup(Augmentation):
             # adding randomization.
             choice = random.choice([False, True])
             x, y, w, h = cv2.boundingRect(cnt)
-            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10) and h > 10:
+
+            if character_height_average == -1:
+                check_height = h > 10
+            else:
+                check_height = (h > character_height_average - height_range) and (
+                    h < character_height_average + height_range
+                )
+
+            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10) and check_height:
 
                 # avoiding too small contours (width less  5% of the image width)
                 if w < int(markup_img.shape[1] / 5):
@@ -324,37 +358,9 @@ class Markup(Augmentation):
                                     lineType=cv2.LINE_AA,
                                 )
 
-        # add scribble similar realistic effect
-        markup_mask_copy = markup_mask.copy()
-
-        apply_mask_fn = lambda x, y: y if (x < 224) else x
-        apply_mask = np.vectorize(apply_mask_fn)
-        if len(markup_mask_copy.shape) > 2:
-            markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_BGR2GRAY)
-        noise_mask = lib_add_noise(markup_mask_copy, (0.3, 0.5), (32, 128))
-
-        markup_mask_copy = apply_mask(markup_mask_copy, noise_mask)
-        intensity = random.uniform(0.4, 0.7)
-        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
-
-        add_noise = np.vectorize(add_noise_fn)
-        apply_mask = np.vectorize(apply_mask_fn)
-
-        markup_mask_copy = add_noise(markup_mask_copy, sobel)
-        markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_GRAY2BGR)
-        markup_mask_copy = cv2.GaussianBlur(markup_mask_copy, (3, 3), 0)
-
-        hsv = cv2.cvtColor(markup_mask_copy.astype("uint8"), cv2.COLOR_BGR2HSV)
-        hsv = np.array(hsv, dtype=np.float64)
-        hsv[:, :, 2] += random.randint(0, 128)
-        hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
-        hsv = np.array(hsv, dtype=np.uint8)
-        markup_mask_copy = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-        markup_mask = cv2.multiply(markup_mask_copy, markup_mask, scale=1 / 255)
-
         # smoothen highlight mask to make it more realistic
         if self.markup_type == "highlight":
-            alpha = 0.5
+            # blur markup mask
             markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
 
             # increase brightness of highlight effect if highlight colour is too dark
@@ -378,7 +384,36 @@ class Markup(Augmentation):
                 markup_mask = brightness(markup_mask)
 
         else:
-            alpha = 1
+            # blur markup mask
+            markup_mask = cv2.GaussianBlur(markup_mask, (3, 3), cv2.BORDER_DEFAULT)
+
+            # add scribble similar realistic effect
+            markup_mask_copy = markup_mask.copy()
+
+            apply_mask_fn = lambda x, y: y if (x < 224) else x
+            apply_mask = np.vectorize(apply_mask_fn)
+            if len(markup_mask_copy.shape) > 2:
+                markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_BGR2GRAY)
+            noise_mask = lib_add_noise(markup_mask_copy, (0.3, 0.5), (32, 128))
+
+            markup_mask_copy = apply_mask(markup_mask_copy, noise_mask)
+            intensity = random.uniform(0.4, 0.7)
+            add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
+
+            add_noise = np.vectorize(add_noise_fn)
+            apply_mask = np.vectorize(apply_mask_fn)
+
+            markup_mask_copy = add_noise(markup_mask_copy, sobel)
+            markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_GRAY2BGR)
+            markup_mask_copy = cv2.GaussianBlur(markup_mask_copy, (3, 3), 0)
+
+            hsv = cv2.cvtColor(markup_mask_copy.astype("uint8"), cv2.COLOR_BGR2HSV)
+            hsv = np.array(hsv, dtype=np.float64)
+            hsv[:, :, 2] += random.randint(0, 128)
+            hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
+            hsv = np.array(hsv, dtype=np.uint8)
+            markup_mask_copy = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+            markup_mask = cv2.multiply(markup_mask_copy, markup_mask, scale=1 / 255)
 
         # create overlay builder
         overlay_builder = OverlayBuilder(
@@ -389,7 +424,7 @@ class Markup(Augmentation):
             (1, 1),
             "center",
             0,
-            alpha=alpha,
+            alpha=1,
         )
         # overlay image
         markup_img = overlay_builder.build_overlay()
