@@ -95,7 +95,12 @@ class PaperFactory(Augmentation):
                 return texture
 
             else:
-                print("No paper image in the paper directory!")
+                # future development
+                """
+                if verbose:
+                    print("No paper image in the paper directory!")
+                """
+                pass
 
     def check_paper_edges(self, texture):
 
