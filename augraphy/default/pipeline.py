@@ -69,7 +69,6 @@ def default_augraphy_pipeline():
             watermark_word="random",
             watermark_font_size=(10, 15),
             watermark_font_thickness=(20, 25),
-            watermark_font_type=cv2.FONT_HERSHEY_SIMPLEX,
             watermark_rotation=(0, 360),
             watermark_location="random",
             watermark_color="random",
