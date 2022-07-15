@@ -14,4 +14,4 @@ def random_image():
 
 
 def test_default_pipeline(random_image):
-    augmented = default_augraphy_pipeline(random_image)
+    augmented = default_augment(random_image)["output"]

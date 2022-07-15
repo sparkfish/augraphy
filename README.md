@@ -67,7 +67,7 @@ BibTeX:
 author = {{The Augraphy Project}},
 title = {{Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes}},
 url = {https://github.com/sparkfish/augraphy},
-version = {7.0.0}
+version = {8.0.0}
 }
 ```
 
