@@ -25,7 +25,7 @@ jobs:
       - name: "Build and uploads to PyPI"
         run: |
           python3 setup.py sdist bdist_wheel
-          python3 -m twine upload --skip-existing dist/*
+          python3 -m twine upload dist/*
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_GITHUB_ACTIONS_PUBLISHING_TOKEN }}
