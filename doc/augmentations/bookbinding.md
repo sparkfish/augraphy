@@ -6,8 +6,7 @@ The BookBinding augmentation creates the effect of a page curling away from the 
 | Parameter               | Description                                                |
 |-------------------------|------------------------------------------------------------|
 | `radius_range`          | The range of the curl radius, in pixels.                   |
-| `curve_intensity_range` | The intensity by which the page text should be curved.     |
-| `mirror`                | Flag to enable mirror effect.                              |
+| `curve_range`           | The pixels by which the page text should be curved.        |
 | `mirror_range`          | Tuple of floats to determine width of image to be mirrored.|
 | `p`                     | The probability that this augmentation will be applied.    |
 
@@ -38,7 +37,7 @@ The BookBinding augmentation creates the effect of a page curling away from the 
 
     book_binder = BookBinding(
             radius_range=(50, 150),
-            curve_intensity_range=(30, 100)
+            curve_range=(30, 100)
             )
 
     img_book_binding= book_binder(image)

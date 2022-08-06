@@ -117,6 +117,8 @@ def default_augraphy_pipeline():
             [
                 PageBorder(
                     side="random",
+                    border_background_value=(230, 255),
+                    flip_border=random.choice([0, 1]),
                     width_range=(5, 30),
                     pages=None,
                     noise_intensity_range=(0.3, 0.8),
@@ -124,6 +126,7 @@ def default_augraphy_pipeline():
                     curve_height=(2, 4),
                     curve_length_one_side=(50, 100),
                     value=(32, 150),
+                    same_page_border=random.choice([0, 1]),
                 ),
                 DirtyRollers(
                     line_width_range=(2, 32),
@@ -200,9 +203,8 @@ def default_augraphy_pipeline():
             [
                 BookBinding(
                     radius_range=(1, 100),
-                    curve_intensity_range=(0, 70),
-                    mirror=0,
-                    mirror_range=(0.1, 0.2),
+                    curve_range=(100, 200),
+                    mirror_range=(0.3, 0.5),
                 ),
                 BindingsAndFasteners(
                     overlay_types="darken",

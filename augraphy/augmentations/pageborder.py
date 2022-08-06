@@ -15,6 +15,10 @@ class PageBorder(Augmentation):
     :param side: One of the four sides of page i:e top,right,left,bottom,random.
                 By default it is "random"
     :type side: string , optional
+    :param border_background_value: Pair of ints determining the background value of border effect.
+    :type border_background_value: tuple, optional
+    :param flip_border: Flag to choose whether the created border will be flipped or not.
+    :type flip_border: int, optional
     :param width_range: Pair of ints determining the width of the page border effect.
     :type width_range: tuple, optional
     :param pages: An integer determining the number of page shadows in the border.
@@ -30,6 +34,8 @@ class PageBorder(Augmentation):
     :type curve_length_one_side: tuple, optional
     :param value: Pair of ints determining intensity of generated shadow lines.
     :type value: tuple, optional
+    :param same_page_border: Flag to decide whether the added borders will be within the input image or not.
+    :type same_page_border: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -37,6 +43,8 @@ class PageBorder(Augmentation):
     def __init__(
         self,
         side="random",
+        border_background_value=(230, 255),
+        flip_border=0,
         width_range=(30, 60),
         pages=None,
         noise_intensity_range=(0.3, 0.8),
@@ -44,11 +52,14 @@ class PageBorder(Augmentation):
         curve_height=(2, 4),
         curve_length_one_side=(50, 100),
         value=(30, 120),
+        same_page_border=1,
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.side = side
+        self.border_background_value = border_background_value
+        self.flip_border = flip_border
         self.width_range = width_range
         self.pages = pages
         self.noise_intensity_range = noise_intensity_range
@@ -56,9 +67,10 @@ class PageBorder(Augmentation):
         self.curve_height = curve_height
         self.curve_length_one_side = curve_length_one_side
         self.value = value
+        self.same_page_border = same_page_border
 
     def __repr__(self):
-        return f"PageBorder(side={self.side}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, value={self.value}, p={self.p})"
+        return f"PageBorder(side={self.side}, border_background_value={self.border_background_value}, flip_border={self.flip_border}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, value={self.value}, same_page_border={self.same_page_border}, p={self.p})"
 
     def add_corner_noise(self, border, intensity=0.2):
 
@@ -164,20 +176,23 @@ class PageBorder(Augmentation):
         noise_intensity=0.2,
     ):
 
-        pad = 0
         if channel > 2:
-            border = np.ones((border_height, border_width + pad, channel))
+            border = np.ones((border_height, border_width, channel))
             random_color = random.randint(self.value[0], self.value[1])
             color = (random_color, random_color, random_color)
         else:
-            border = np.ones((border_height, border_width + pad))
+            border = np.ones((border_height, border_width))
             color = random.randint(self.value[0], self.value[1])
 
         if num_pages is None:
             num_pages = random.randint(3, 6)
 
         # initialize border image
-        border_merged = np.full_like(border, fill_value=255).astype("uint8")
+        border_background_value = max(
+            1,
+            random.randint(self.border_background_value[0], self.border_background_value[1]),
+        )
+        border_merged = np.full_like(border, fill_value=border_background_value).astype("uint8")
         for x in np.linspace(border_width, 0, num_pages):
 
             # create a copy of image
@@ -205,6 +220,15 @@ class PageBorder(Augmentation):
                 color,
                 thickness,
             )
+
+            # convert top side into zeros
+            if x == 0:
+                for y in range(border_height):
+                    for x in range(border_width):
+                        if border_single[y, x].mean() == 255:
+                            border_merged[y, x] = 0
+                        else:
+                            break
 
             # apply random folding
             if x != border_width and border_height > (self.curve_length_one_side[1] * 2) + 2:
@@ -259,48 +283,67 @@ class PageBorder(Augmentation):
                 noise_intensity,
             )
 
-            border_image = np.full_like(image, fill_value=255)
-            if side == "left":
-                if random.random() > 0.5:
-                    border = np.flipud(border)
-                border_y, border_x = border.shape[:2]
+            # create output border image
+            if self.same_page_border:
                 border_image = np.full_like(image, fill_value=255)
-                border_image[:, :border_x] = border
+
+            if side == "left":
+                if self.flip_border:
+                    border = np.flipud(border)
+                if self.same_page_border:
+                    border_y, border_x = border.shape[:2]
+                    border_image = np.full_like(image, fill_value=255)
+                    border_image[:, :border_x] = border
+                else:
+                    image_output = np.hstack((border, image))
 
             elif side == "right":
                 border = np.fliplr(border)
-                if random.random() > 0.5:
+                if self.flip_border:
                     border = np.flipud(border)
-                border_y, border_x = border.shape[:2]
-                border_image[-border_y:, -border_x:] = border
+
+                if self.same_page_border:
+
+                    border_y, border_x = border.shape[:2]
+                    border_image[-border_y:, -border_x:] = border
+                else:
+                    image_output = np.hstack((image, border))
 
             elif side == "top":
                 border = cv2.rotate(border, cv2.ROTATE_90_CLOCKWISE)
-                if random.random() > 0.5:
+                if self.flip_border:
                     border = np.fliplr(border)
-                border_y, border_x = border.shape[:2]
-                border_image = np.full_like(image, fill_value=255)
-                border_image[:border_y, :] = border
+
+                if self.same_page_border:
+                    border_y, border_x = border.shape[:2]
+                    border_image = np.full_like(image, fill_value=255)
+                    border_image[:border_y, :] = border
+                else:
+                    image_output = np.vstack((border, image))
 
             elif side == "bottom":
                 border = cv2.rotate(border, cv2.ROTATE_90_COUNTERCLOCKWISE)
-                if random.random() > 0.5:
+                if self.flip_border:
                     border = np.fliplr(border)
-                border_y, border_x = border.shape[:2]
-                border_image = np.full_like(image, fill_value=255)
-                border_image[-border_y:, :] = border
+                if self.same_page_border:
+                    border_y, border_x = border.shape[:2]
+                    border_image = np.full_like(image, fill_value=255)
+                    border_image[-border_y:, :] = border
+                else:
+                    image_output = np.vstack((image, border))
 
-            # merge border and input image
-            overlay_builder = OverlayBuilder(
-                "darken",
-                border_image,
-                image,
-                1,
-                (1, 1),
-                "center",
-                0,
-                1,
-            )
-            image_output = overlay_builder.build_overlay()
+            if self.same_page_border:
+                # merge border and input image
+                overlay_builder = OverlayBuilder(
+                    "darken",
+                    border_image,
+                    image,
+                    1,
+                    (1, 1),
+                    "center",
+                    0,
+                    1,
+                )
+                image_output = overlay_builder.build_overlay()
 
             return image_output
