@@ -1,5 +1,7 @@
 import random
 
+import numpy as np
+
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationsequence import AugmentationSequence
 
@@ -16,15 +18,15 @@ class OneOf(Augmentation):
     def __init__(self, augmentations, p=1):
         """Constructor method"""
         self.augmentations = augmentations
-        self.augmentation_probabilities = self.computeProbability(self.augmentations)
+        self.augmentation_probabilities = self.compute_probability(self.augmentations)
         self.p = p
 
     # Randomly selects an Augmentation to apply to data.
     def __call__(self, image, layer=None, force=False):
-        if self.augmentation_probabilities and (force or self.should_run()):
+        if force or self.should_run():
 
-            # Randomly selects one Augmentation to apply.
-            augmentation = random.choice(self.augmentations)
+            # Select one augmentation using the max value in probability values
+            augmentation = self.augmentations[np.argmax(self.augmentation_probabilities)]
 
             # Applies the selected Augmentation.
             image = augmentation(image, force=True)
@@ -41,7 +43,7 @@ class OneOf(Augmentation):
         r += f"], p={self.p})"
         return r
 
-    def computeProbability(self, augmentations):
+    def compute_probability(self, augmentations):
         """For each Augmentation in the input list, compute the probability of
         applying that Augmentation.
 
@@ -49,13 +51,13 @@ class OneOf(Augmentation):
         :type augmentations: list
         """
 
-        augmentation_probabilities = [augmentation.p for augmentation in augmentations]
-        s = sum(augmentation_probabilities)
+        # generate random 0-1 value for each augmentation
+        augmentation_probabilities = [random.uniform(0, 1.0) for augmentation in augmentations]
+        probability_sum = sum(augmentation_probabilities)
 
-        # prevent zero division
-        if s > 0:
-            final_P = [ap / s for ap in augmentation_probabilities]
-        else:
-            final_P = 0
+        # generate weighted probability by using (probability/ sum of probabilities)
+        augmentation_probabilities = [
+            augmentation_probability / probability_sum for augmentation_probability in augmentation_probabilities
+        ]
 
-        return final_P
+        return augmentation_probabilities

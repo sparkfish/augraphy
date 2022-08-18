@@ -152,7 +152,7 @@ def default_augraphy_pipeline():
                     min_brightness_value=(120, 150),
                 ),
             ],
-            p=0.5,
+            p=0.33,
         ),
         DirtyDrum(
             line_width_range=(1, 6),
@@ -199,26 +199,6 @@ def default_augraphy_pipeline():
             brightness_change=random.randint(64, 224),
             p=0.33,
         ),
-        OneOf(
-            [
-                BookBinding(
-                    radius_range=(1, 100),
-                    curve_range=(100, 200),
-                    mirror_range=(0.3, 0.5),
-                ),
-                BindingsAndFasteners(
-                    overlay_types="darken",
-                    foreground=None,
-                    effect_type="random",
-                    ntimes=(2, 6),
-                    nscales=(0.9, 1.0),
-                    edge="random",
-                    edge_offset=(10, 50),
-                    use_figshare_library=0,
-                ),
-            ],
-            p=0.33,
-        ),
         BadPhotoCopy(
             mask=None,
             noise_type=-1,
@@ -236,6 +216,17 @@ def default_augraphy_pipeline():
         ),
         Gamma(
             range=(0.9, 1.1),
+            p=0.33,
+        ),
+        BindingsAndFasteners(
+            overlay_types="darken",
+            foreground=None,
+            effect_type="random",
+            ntimes=(2, 6),
+            nscales=(0.9, 1.0),
+            edge="random",
+            edge_offset=(10, 50),
+            use_figshare_library=0,
             p=0.33,
         ),
         Geometric(
@@ -257,6 +248,12 @@ def default_augraphy_pipeline():
             half_kernel_size=random.choice([(1, 1), (2, 2)]),
             angle=(0, 360),
             sigma=(1, 3),
+            p=0.33,
+        ),
+        BookBinding(
+            radius_range=(1, 100),
+            curve_range=(100, 200),
+            mirror_range=(0.3, 0.5),
             p=0.33,
         ),
     ]
