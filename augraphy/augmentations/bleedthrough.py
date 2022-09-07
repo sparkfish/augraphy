@@ -58,8 +58,16 @@ class BleedThrough(Augmentation):
     def __repr__(self):
         return f"BleedThrough(intensity_range={self.intensity_range}, color_range={self.color_range}, ksize={self.ksize}, sigmaX={self.sigmaX},alpha={self.alpha},offsets={self.offsets},p={self.p})"
 
-    # Blend images to produce bleedthrough effect
     def blend(self, img, img_bleed, alpha):
+        """Blend two images based on the alpha value to create bleedthrough effect.
+
+        :param img: The background image to apply the blending function.
+        :type img: numpy.array (numpy.uint8)
+        :param img_bleed: The foreground image to apply the blending function.
+        :type img_bleed: numpy.array (numpy.uint8)
+        :param alpha: The alpha value of foreground image for the blending function.
+        :type alpha: float
+        """
 
         # convert to single channel to avoud unnecessary noise in colour image
         if len(img_bleed.shape) > 2:
@@ -88,8 +96,15 @@ class BleedThrough(Augmentation):
         )
         return ob.build_overlay()
 
-    # Offset image so that bleedthrough effect is visible and not stacked with input image
     def generate_offset(self, img_bleed, offsets):
+        """Offset image based on the input offset value so that bleedthrough effect is visible and not stacked with background image.
+
+        :param img_bleed: The input image to apply the offset function.
+        :type img_bleed: numpy.array (numpy.uint8)
+        :param offsets: The offset value.
+        :type offsets: int
+        """
+
         x_offset = offsets[0]
         y_offset = offsets[1]
         if (x_offset == 0) and (y_offset == 0):
@@ -102,8 +117,20 @@ class BleedThrough(Augmentation):
             img_bleed[y_offset:, x_offset:] = img_bleed[:-y_offset, :-x_offset]
         return img_bleed
 
-    # Preprocess and create bleeding ink effect
     def generate_bleeding_ink(self, img, intensity_range, color_range, ksize, sigmaX):
+        """Preprocess and create bleeding ink effect in the input image.
+
+        :param img: The input image to apply the offset function.
+        :type img: numpy.array (numpy.uint8)
+        :param intensity_range: Pair of floats determining the range from which noise intensity is sampled.
+        :type intensity_range: tuple
+        :param color_range: Pair of ints determining the range from which color noise is sampled.
+        :type color_range: tuple
+        :param ksize: Tuple of height/width pairs from which to sample the kernel size. Higher value increases the spreadness of bleeding effect.
+        :type ksize: tuple
+        :param sigmaX: Standard deviation of the kernel along the x-axis.
+        :type sigmaX: float
+        """
         intensity = random.uniform(intensity_range[0], intensity_range[1])
         add_noise_fn = (
             lambda x, y: random.randint(color_range[0], color_range[1])
@@ -118,6 +145,11 @@ class BleedThrough(Augmentation):
 
     # create foreground image for bleedthrough effect
     def create_bleedthrough_foreground(self, image):
+        """Create foreground image for bleedthrough effect.
+
+        :param image: The background image of the bleedthrough effect.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         # path to foreground cache folder
         cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")

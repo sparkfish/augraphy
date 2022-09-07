@@ -92,8 +92,10 @@ class BadPhotoCopy(Augmentation):
         return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, p={self.p})"
 
     def apply_wave(self, mask):
-        """
-        applies wavy pattern mask to input mask
+        """applies wavy pattern mask to input mask.
+
+        :param mask: The image to apply the function.
+        :type mask: numpy.array (numpy.uint8)
         """
 
         # rescale mask from 0 to 255
@@ -197,6 +199,11 @@ class BadPhotoCopy(Augmentation):
         return mask
 
     def apply_augmentation(self, image):
+        """applies augmentation to the input image.
+
+        :param image: The image to apply the augmentation.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         image_shape_length = len(image.shape)
 

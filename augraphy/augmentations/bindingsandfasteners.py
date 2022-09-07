@@ -61,8 +61,18 @@ class BindingsAndFasteners(Augmentation):
     def __repr__(self):
         return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, use_figshare_library={self.use_figshare_library}, p={self.p})"
 
-    # Add noise to image
     def add_noise(self, image, noise_probability, noise_value, max_input_value):
+        """Add noise to input image.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param noise_probability: The probability of applied noise.
+        :type noise_probability: float
+        :param noise_value: The value of applied noise.
+        :type noise_value: tuple
+        :param max_input_value: Maximum value of input to apply the noise effect.
+        :type max_input_value: int
+        """
 
         noise = (
             lambda x: random.randint(noise_value[0], noise_value[1])
@@ -74,6 +84,11 @@ class BindingsAndFasteners(Augmentation):
         return image_output
 
     def create_foreground(self, image):
+        """Create foreground based on current input effect type.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         ysize, xsize = image.shape[:2]
 
@@ -364,6 +379,7 @@ class BindingsAndFasteners(Augmentation):
                 self.foreground.append(image_clip_bgr)
 
     def retrieve_foreground(self):
+        """Retrieve template foreground based on current input effect type."""
 
         # Id for figshare published template files
         article_ID = "16668964"

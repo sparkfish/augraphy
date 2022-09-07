@@ -36,33 +36,6 @@ class NoiseTexturize(Augmentation):
     def __repr__(self):
         return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
-    # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
-        if force or self.should_run():
-            image = image.copy()
-
-            sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
-            turbulence = random.randint(
-                self.turbulence_range[0],
-                self.turbulence_range[1],
-            )
-
-            result = image.astype(float)
-            rows, cols = image.shape[:2]
-            if len(image.shape) > 2:
-                channel = image.shape[2]
-            else:
-                channel = 0
-
-            ratio = cols
-            while not ratio == 1:
-                result += self.noise(cols, rows, channel, ratio, sigma=sigma)
-                ratio = (ratio // turbulence) or 1
-            cut = np.clip(result, 0, 255)
-
-            cut = cut.astype(np.uint8)
-            return cut
-
     def noise(self, width, height, channel, ratio, sigma):
         """The function generates an image, filled with gaussian nose. If ratio
         parameter is specified, noise will be generated for a lesser image and
@@ -70,8 +43,16 @@ class NoiseTexturize(Augmentation):
         generate larger square patterns. To avoid multiple lines, the upscale
         uses interpolation.
 
-        :param ratio: the size of generated noise "pixels"
-        :param sigma: defines bounds of noise fluctuations
+        :param width: Width of generated image.
+        :type width: int
+        :param height: Height of generated image.
+        :type height: int
+        :param channel: Channel number of generated image.
+        :type channel: int
+        :param ratio: The size of generated noise "pixels".
+        :type ratio: int
+        :param sigma: Defines bounds of noise fluctuations.
+        :type sigma: int
         """
         mean = 0
         # assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
@@ -100,3 +81,30 @@ class NoiseTexturize(Augmentation):
             result = np.stack([result, result, result], axis=2)
 
         return result
+
+    # Applies the Augmentation to input data.
+    def __call__(self, image, layer=None, force=False):
+        if force or self.should_run():
+            image = image.copy()
+
+            sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
+            turbulence = random.randint(
+                self.turbulence_range[0],
+                self.turbulence_range[1],
+            )
+
+            result = image.astype(float)
+            rows, cols = image.shape[:2]
+            if len(image.shape) > 2:
+                channel = image.shape[2]
+            else:
+                channel = 0
+
+            ratio = cols
+            while not ratio == 1:
+                result += self.noise(cols, rows, channel, ratio, sigma=sigma)
+                ratio = (ratio // turbulence) or 1
+            cut = np.clip(result, 0, 255)
+
+            cut = cut.astype(np.uint8)
+            return cut
