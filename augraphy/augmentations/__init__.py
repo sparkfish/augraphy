@@ -25,7 +25,6 @@ from augraphy.augmentations.pencilscribbles import PencilScribbles
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.watermark import WaterMark
 
-
 __all__ = [
     "BadPhotoCopy",
     "BindingsAndFasteners",

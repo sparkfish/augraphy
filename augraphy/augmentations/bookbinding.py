@@ -13,9 +13,9 @@ class BookBinding(Augmentation):
     """Creates a book binding effect with shadow and curved lines
 
     :param radius_range: The range of radius in pixels.
-    :type range: tuple, optional
+    :type radius_range: tuple, optional
     :param curve_range: Pixels by which the page text should be curved, suggested value is 1/8 of image width.
-    :type range: tuple, optional
+    :type curve_range: tuple, optional
     :param mirror_range: Tuple of floats to determine percentage of image to be mirrored.
     :type mirror_range: Tuple, optional
     :param p: The probability that this Augmentation will be applied.
@@ -39,6 +39,15 @@ class BookBinding(Augmentation):
         return f"BookBinding(radius_range={self.radius_range}, curve_range={self.curve_range}, mirror_range={self.mirror_range},  p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
+        """Add shadow effect in the input image.
+
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param radius: Radius of the shadow effect.
+        :type radius: int
+        :param angle: Angle value to generate shadow effect.
+        :type angle: int
+        """
 
         rows = img.shape[0]
         cols = img.shape[1]
@@ -67,6 +76,15 @@ class BookBinding(Augmentation):
         return img_output.astype("uint8")
 
     def curve_page(self, img, curve_range):
+        """Generate curvy effect in the input image.
+
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param curve_range: Tuple of pixels by which the page text should be curved.
+        :type curve_range: tuple
+
+        """
+
         rows = img.shape[0]
         cols = img.shape[1]
 

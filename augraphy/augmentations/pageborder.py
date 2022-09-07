@@ -73,6 +73,13 @@ class PageBorder(Augmentation):
         return f"PageBorder(side={self.side}, border_background_value={self.border_background_value}, flip_border={self.flip_border}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, value={self.value}, same_page_border={self.same_page_border}, p={self.p})"
 
     def add_corner_noise(self, border, intensity=0.2):
+        """Add noise to the input border image.
+
+        :param border: The input border image.
+        :type boder: numpy.array (numpy.uint8)
+        :param intensity: Intensity of the noise.
+        :type intensity: float
+        """
 
         ksize = (5, 5)
         blur = cv2.blur(border, ksize)
@@ -115,6 +122,7 @@ class PageBorder(Augmentation):
         return border
 
     def random_folding(self, image):
+        """Create random folding effect at the image border."""
 
         # rotate image due to folding algorithm process image in another direction
         image_rotate = np.rot90(image, 1)
@@ -175,6 +183,19 @@ class PageBorder(Augmentation):
         num_pages=None,
         noise_intensity=0.2,
     ):
+        """Create image with border of pages effect.
+
+        :param channel: Channel number of border image.
+        :type channel: int
+        :param border_width: Width of the border image.
+        :type border_width: int
+        :param border_height: Height of border image.
+        :type border_height: int
+        :param num_pages: Number of pages in border effect.
+        :type num_pages: int
+        :param noise_intensity: Intensity of the noise.
+        :type noise_intensity: float
+        """
 
         if channel > 2:
             border = np.ones((border_height, border_width, channel))

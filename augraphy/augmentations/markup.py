@@ -16,7 +16,6 @@ from augraphy.utilities import *
 
 
 class Markup(Augmentation):
-
     """Uses contours detection to detect text lines and add a smooth text strikethrough, highlight or underline effect.
 
     :param num_lines_range: Pair of ints determining the number of added markup effect.
@@ -27,14 +26,12 @@ class Markup(Augmentation):
     :type markup_thickness_range: int tuple, optional
     :param markup_type: Choice of markup "strikethrough", "highlight", "underline" or "crossed".
     :type markup_type: string
-    :param markup_color: bgr color tuple.
-    :type markup_color: tuple of ints or string
-    :param repetitions: determines how many time a markup should be drawn
+    :param markup_color: BGR color tuple.
+    :type markup_color: tuple or string
+    :param repetitions: Determine how many time a single markup effect should be drawn.
     :type repetitions: int
-    :param single_word_mode: set true to draw markup on a single word only
+    :param single_word_mode: Set true to draw markup on a single word only.
     :type single_word_mode: boolean
-
-
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -67,6 +64,16 @@ class Markup(Augmentation):
         )
 
     def distribute_line(self, starting_point, ending_point, offset):
+        """Create smoothed line from the provided starting and ending point.
+
+        :param starting_point: Starting point (x, y) of the line.
+        :type starting_point: tuple
+        :param ending_point: Ending point (x, y) of the line.
+        :type ending_point: tuple
+        :param offset: Offset value to randomize point position.
+        :type offset: int
+        """
+
         points_count = random.randint(3, 6)  # dividing the line into points
         points = np.linspace(starting_point[0], ending_point[0], points_count)
         points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
@@ -76,21 +83,8 @@ class Markup(Augmentation):
         )  # adding a smoothing effect in points using chaikin's algorithm
         return points
 
-    def apply_crossed_off(self, image, p1, p2, offset):
-        apply_random_offset_fn = lambda p, offset: p + random.randint(-offset, offset)
-        apply_random_offset = np.vectorize(apply_random_offset_fn)
-        p1 = tuple(apply_random_offset(p1, offset))
-        p2 = tuple(apply_random_offset(p2, offset))
-        drawn = cv2.line(
-            image,
-            p1,
-            p2,
-            self.markup_color,
-            self.mar,
-            lineType=cv2.LINE_AA,
-        )
-
     def _preprocess(self, image):
+        """Preprocess image with binarization, dilation and erosion."""
         blurred = cv2.blur(image, (5, 5))
         blurred = blurred.astype("uint8")
         if len(blurred.shape) > 2 and blurred.shape[2] == 3:
@@ -127,6 +121,19 @@ class Markup(Augmentation):
         return dilation
 
     def draw_line(self, p1, p2, markup_mask, markup_thickness, reverse):
+        """Draw line across two provided points.
+
+        :param p1: Starting point (x, y) of the line.
+        :type p1: tuple
+        :param p2: Ending point (x, y) of the line.
+        :type p2: tuple
+        :param markup_mask: Mask of markup effect.
+        :type markup_mask: numpy.array (numpy.uint8)
+        :param markup_thickness: Thickness of the line.
+        :type markup_thickness: int
+        :param reverse: Reverse the order of line points distribution.
+        :type reverse: int
+        """
 
         # get min and max of points
         min_x = min(p2[0], p1[0])

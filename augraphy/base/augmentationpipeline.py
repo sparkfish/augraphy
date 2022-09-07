@@ -300,8 +300,8 @@ class AugraphyPipeline:
 
     def __repr__(self):
         r = f"ink_phase = {repr(self.ink_phase)}\n\n"
-        r += f"paper_phase = {repr(self.ink_phase)}\n\n"
-        r += f"post_phase = {repr(self.ink_phase)}\n\n"
+        r += f"paper_phase = {repr(self.paper_phase)}\n\n"
+        r += f"post_phase = {repr(self.post_phase)}\n\n"
 
         r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range})"
 

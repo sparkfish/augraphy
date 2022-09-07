@@ -27,8 +27,12 @@ class SubtleNoise(Augmentation):
     def __repr__(self):
         return f"SubtleNoise(range={self.range}, p={self.p})"
 
-    # generate mask of noise and add it to input image
     def add_subtle_noise(self, image):
+        """Generate mask of noise and add it to input image.
+
+        :param image: Image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
         # get image size
         ysize, xsize = image.shape[:2]
 
