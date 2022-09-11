@@ -18,6 +18,8 @@ class BookBinding(Augmentation):
     :type curve_range: tuple, optional
     :param mirror_range: Tuple of floats to determine percentage of image to be mirrored.
     :type mirror_range: Tuple, optional
+    :param curling_direction: The direction of page curling, 0: up, 1: down.
+    :type curling_direction: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
 
@@ -28,15 +30,17 @@ class BookBinding(Augmentation):
         radius_range=(1, 100),
         curve_range=(200, 300),
         mirror_range=(0.2, 0.5),
+        curling_direction=random.choice([0, 1]),
         p=1,
     ):
         super().__init__(p=p)
         self.radius_range = radius_range
         self.curve_range = curve_range
         self.mirror_range = mirror_range
+        self.curling_direction = curling_direction
 
     def __repr__(self):
-        return f"BookBinding(radius_range={self.radius_range}, curve_range={self.curve_range}, mirror_range={self.mirror_range},  p={self.p})"
+        return f"BookBinding(radius_range={self.radius_range}, curve_range={self.curve_range}, mirror_range={self.mirror_range}, curling_direction={self.curling_direction}, p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
         """Add shadow effect in the input image.
@@ -160,8 +164,8 @@ class BookBinding(Augmentation):
             ),
         )
 
-        # random bending direction
-        curve_down = random.choice([0, 1])
+        # get bending direction
+        curve_down = self.curling_direction
 
         added_border_height = int(image.shape[0] / 10)
 
@@ -286,6 +290,9 @@ class BookBinding(Augmentation):
         # get their y difference
         y_diff = cysize - ysize
 
+        if not curve_down:
+            image_left = np.fliplr(self.add_book_shadow(np.fliplr(image_left), radius, angle))
+
         # create new image with original size + mirror size
         if len(image_right.shape) > 2:
             new_image = np.zeros((ysize + y_diff, xsize + cxsize, image_right.shape[2])).astype(
@@ -298,8 +305,14 @@ class BookBinding(Augmentation):
         if curve_down:
             new_image[:, :xsize] = image_left
         else:
-            random_offset = random.randint(int(ysize / 30), int(ysize / 25))
-            new_image[curve_range - random_offset :, :xsize] = image_left[: -curve_range + random_offset, :]
+            if image.shape[0] < image.shape[1]:
+                start_y = 0
+                new_image[start_y : image_left.shape[0], :xsize] = image_left
+            else:
+                start_y = curve_range
+                random_offset = random.randint(int(ysize / 30), int(ysize / 25))
+                random_offset = 0
+                new_image[start_y - random_offset :, :xsize] = image_left[: -start_y + random_offset, :]
         if y_diff != 0:
             new_image[:-y_diff, xsize:] = image_right
         else:

@@ -9,23 +9,23 @@ class SubtleNoise(Augmentation):
     """Emulates the imperfections in scanning solid colors due to subtle
     lighting differences.
 
-    :param range: The possible range of noise variation to sample from.
-    :type range: int, optional
+    :param subtle_range: The possible range of noise variation to sample from.
+    :type subtle_range: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
-        range=10,
+        subtle_range=10,
         p=1,
     ):
         super().__init__(p=p)
-        self.range = range
+        self.subtle_range = subtle_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"SubtleNoise(range={self.range}, p={self.p})"
+        return f"SubtleNoise(subtle_range={self.subtle_range}, p={self.p})"
 
     def add_subtle_noise(self, image):
         """Generate mask of noise and add it to input image.
@@ -37,7 +37,7 @@ class SubtleNoise(Augmentation):
         ysize, xsize = image.shape[:2]
 
         # generate 2d mask of random noise
-        image_noise = np.random.randint(-self.range, self.range, size=(ysize, xsize))
+        image_noise = np.random.randint(-self.subtle_range, self.subtle_range, size=(ysize, xsize))
 
         # add noise to image
         image = image.astype("int") + image_noise
