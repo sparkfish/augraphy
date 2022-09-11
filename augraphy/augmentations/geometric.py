@@ -101,10 +101,10 @@ class Geometric(Augmentation):
 
                 # y translation
                 if offset_y > 0:
-                    image_new[:, offset_y:] = image[:, :-offset_y]
+                    image_new[offset_y:, :] = image[:-offset_y, :]
                     image = image_new
                 elif offset_y < 0:
-                    image_new[:, :-offset_y] = image[:, abs(offset_y) :]
+                    image_new[:offset_y, :] = image[abs(offset_y) :, :]
                     image = image_new
 
             # flip left right

@@ -84,7 +84,7 @@ def default_augraphy_pipeline():
                             turbulence_range=(2, 5),
                         ),
                         BrightnessTexturize(
-                            range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                     ],
@@ -92,7 +92,7 @@ def default_augraphy_pipeline():
                 AugmentationSequence(
                     [
                         BrightnessTexturize(
-                            range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                         NoiseTexturize(
@@ -105,7 +105,7 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         Brightness(
-            range=(0.9, 1.1),
+            brightness_range=(0.9, 1.1),
             min_brightness=0,
             min_brightness_value=(120, 150),
             p=0.1,
@@ -147,7 +147,7 @@ def default_augraphy_pipeline():
                     transparency=None,
                 ),
                 Brightness(
-                    range=(0.9, 1.1),
+                    brightness_range=(0.9, 1.1),
                     min_brightness=0,
                     min_brightness_value=(120, 150),
                 ),
@@ -165,7 +165,7 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         SubtleNoise(
-            range=random.randint(5, 10),
+            subtle_range=random.randint(5, 10),
             p=0.33,
         ),
         Jpeg(
@@ -215,7 +215,7 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         Gamma(
-            range=(0.9, 1.1),
+            gamma_range=(0.9, 1.1),
             p=0.33,
         ),
         BindingsAndFasteners(

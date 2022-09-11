@@ -9,9 +9,9 @@ from augraphy.base.augmentation import Augmentation
 class Brightness(Augmentation):
     """Adjusts the brightness of the whole image by a chosen multiplier.
 
-    :param range: Pair of ints determining the range from which to sample
+    :param brightness_range: Pair of ints determining the range from which to sample
            the brightness shift.
-    :type range: tuple, optional
+    :type brightness_range: tuple, optional
     :param min_brightness: Flag to enable min brightness intensity value in
             the augmented image.
     :type min_brightness: int, optional
@@ -25,26 +25,26 @@ class Brightness(Augmentation):
 
     def __init__(
         self,
-        range=(0.8, 1.4),
+        brightness_range=(0.8, 1.4),
         min_brightness=0,
         min_brightness_value=(120, 150),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.range = range
+        self.brightness_range = brightness_range
         self.min_brightness = min_brightness
         self.min_brightness_value = min_brightness_value
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Brightness(range={self.range}, min_brightness={self.min_brightness}, min_brightness_value={self.min_brightness_value}, p={self.p})"
+        return f"Brightness(brightness_range={self.brightness_range}, min_brightness={self.min_brightness}, min_brightness_value={self.min_brightness_value}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            value = random.uniform(self.range[0], self.range[1])
+            value = random.uniform(self.brightness_range[0], self.brightness_range[1])
             if len(image.shape) < 3:
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
             hsv = cv2.cvtColor(image.astype("uint8"), cv2.COLOR_BGR2HSV)

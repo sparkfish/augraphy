@@ -232,6 +232,8 @@ class DirtyDrum(Augmentation):
         # for horizontal stripes, rotate current image
         if axis == 0:
             img_dirty = np.rot90(img_dirty, random.choice((1, 3)))
+            # resize after rotation
+            img_dirty = cv2.resize(img_dirty, (img.shape[1], img.shape[0]))
 
         return img_dirty
 
