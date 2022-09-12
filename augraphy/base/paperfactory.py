@@ -90,7 +90,7 @@ class PaperFactory(Augmentation):
                     brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
                     brighten_min = 1 + (brighten_ratio / 2)
                     brighten_max = 1 + brighten_ratio
-                    brightness = Brightness(range=(brighten_min, brighten_max), min_brightness=1)
+                    brightness = Brightness(brightness_range=(brighten_min, brighten_max), min_brightness=1)
                     texture = brightness(texture)
                 return texture
 
