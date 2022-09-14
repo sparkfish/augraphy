@@ -10,7 +10,7 @@ After both the ink and paper phases are completed, processing continues by apply
 
 The end result is an image that mimics real documents.
 
-.. figure:: ../images/pipeline/Pipeline.png
+.. figure:: ../../images/Pipeline.png
 
 
 --------------------------
