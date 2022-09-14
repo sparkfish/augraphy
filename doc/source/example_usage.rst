@@ -176,10 +176,10 @@ To initialize a custom augmentation pipeline and augment an image::
             mirror_range=(0.3, 0.5),
             p=0.33,
         ),
-    ]   
+    ]
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
-	
+
     img = cv2.imread("image.png")
 
     data = pipeline.augment(img)

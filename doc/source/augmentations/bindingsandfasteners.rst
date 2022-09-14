@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -45,7 +45,7 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a BindingsAndFasteners augmentation instance is initialized and it is using punch holes binder template from figshare library. 
+In this example, a BindingsAndFasteners augmentation instance is initialized and it is using punch holes binder template from figshare library.
 The punch holes mark is set to bind 3 times (3,3) and with scale of 1.5 (1.5,1.5).
 The effect is set at the left edge and with random offset range of 30 to 50 pixels from the chosen edge.
 
@@ -62,7 +62,7 @@ Code example:
                                         edge_offset=(30,50),
                                         use_figshare_library=1,
                                     )
-    
+
     img_punch_holes =binder_punch_holes(image)
     cv2.imshow("punch_holes", img_punch_holes)
 
@@ -73,7 +73,7 @@ Augmented image:
 ---------
 Example 2
 ---------
-In this example, a BindingsAndFasteners augmentation instance is initialized and it is using a synthetic binding holes mark. 
+In this example, a BindingsAndFasteners augmentation instance is initialized and it is using a synthetic binding holes mark.
 The binding holes mark is set to bind 9 to 10 times (9,10) and with scale of 1 to 2 (1,2).
 The effect is set at the left edge and with random offset range of 30 to 50 pixels from the chosen edge.
 
@@ -90,7 +90,7 @@ Code example:
                                         edge_offset=(40,50),
                                         use_figshare_library=0,
                                     )
-        
+
     img_binding_holes =binder_binding_holes(image)
     cv2.imshow("binding_holes", img_binding_holes)
 
@@ -101,7 +101,7 @@ Augmented image:
 ---------
 Example 3
 ---------
-In this example, a BindingsAndFasteners augmentation instance is initialized and it is using a synthetic binding clips mark. 
+In this example, a BindingsAndFasteners augmentation instance is initialized and it is using a synthetic binding clips mark.
 The binding clips mark is set to bind 2 to 3 times (2,3) and with scale of 1 to 2 (1,2).
 The effect is set to random edge and with random offset range of 10 to 20 pixels from the edge.
 
@@ -128,7 +128,7 @@ Augmented image:
 ---------
 Example 4
 ---------
-In this example, a BindingsAndFasteners augmentation instance is initialized and it is manually created binder image. 
+In this example, a BindingsAndFasteners augmentation instance is initialized and it is manually created binder image.
 The binder is set to bind 2 to 3 times (2,3) and with scale of 1 to 2 (1,2).
 The effect is set to right edge and with random offset range of 10 to 20 pixels from the edge.
 
@@ -138,8 +138,8 @@ Code example:
 
     binder_rectangle = np.full((50,20),fill_value=250,dtype="uint8")
     binder_rectangle[10:40,5:15] = 0
-    
-    
+
+
     user_binder_clips = BindingsAndFasteners(overlay_types="darken",
                                             foreground=binder_rectangle,
                                             ntimes= (2, 3),

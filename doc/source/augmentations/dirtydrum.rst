@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -61,7 +61,7 @@ Code example:
                           ksize=(3, 3),
                           sigmaX=0,
                           )
-    
+
     img_dirtydrum1 = dirtydrum1(image)
     cv2.imshow("dirtydrum1", img_dirtydrum1)
 
@@ -88,7 +88,7 @@ Code example:
                           ksize=(3, 3),
                           sigmaX=0,
                           )
-    
+
     img_dirtydrum2 = dirtydrum2(image)
     cv2.imshow("dirtydrum2", img_dirtydrum2)
 
@@ -115,7 +115,7 @@ Code example:
                           ksize=(3, 3),
                           sigmaX=0,
                           )
-    
+
     img_dirtydrum3 = dirtydrum3(image)
     cv2.imshow("dirtydrum3", img_dirtydrum3)
 

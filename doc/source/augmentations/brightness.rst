@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -45,7 +45,7 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a Brightness augmentation instance is initialized and the brightness range is set to 1.5 to 2 (1.5, 2) times of original brightness. 
+In this example, a Brightness augmentation instance is initialized and the brightness range is set to 1.5 to 2 (1.5, 2) times of original brightness.
 Flag to enable min brightness is disabled.
 
 Code example:
@@ -55,7 +55,7 @@ Code example:
     brightness_brighten= Brightness(brightness_range=(1.5, 2),
                            min_brightness=0,
                         )
-    
+
     img_brightness_brighten= brightness_brighten(image)
     cv2.imshow("brightness_brighten", img_brightness_brighten)
 
@@ -66,7 +66,7 @@ Augmented image:
 ---------
 Example 2
 ---------
-In this example, a Brightness augmentation instance is initialized and the brightness range is set to 0.2 to 0.8 (0.2, 0.8) times of original brightness. 
+In this example, a Brightness augmentation instance is initialized and the brightness range is set to 0.2 to 0.8 (0.2, 0.8) times of original brightness.
 Flag to enable min brightness is enabled (1) and the minimum pixel value is set to between 120 to 150 (120,150).
 
 Code example:
@@ -77,7 +77,7 @@ Code example:
                                     min_brightness=1,
                                     min_brightness_value=(120, 150),
                             )
-    
+
     img_brightness_dimmer= brightness_dimmer(image)
     cv2.imshow("brightness_dimmer", img_brightness_dimmer)
 

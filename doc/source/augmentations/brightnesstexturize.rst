@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -51,9 +51,9 @@ Code example:
 
 ::
 
-    brightness_texturize = BrightnessTexturize(texturize_range=(0.9, 0.99), 
+    brightness_texturize = BrightnessTexturize(texturize_range=(0.9, 0.99),
                                                deviation=0.1 )
-    
+
     img_brightness_texturize = brightness_texturize(image)
     cv2.imshow("brightness_texturize", img_brightness_texturize)
 

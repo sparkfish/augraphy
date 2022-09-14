@@ -12,7 +12,7 @@ Overview
 --------
 There are 4 main types of noise in BadPhotoCopy augmentation:
 
-Noise type 1 creates even spread of noises. 
+Noise type 1 creates even spread of noises.
 Noise type 2 creases noises with regular patterns
 Noise type 3 creates noises in all borders of image.
 Noise type 4 creates sparse and little noises.
@@ -27,8 +27,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -40,7 +40,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -50,7 +50,7 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 1 and the noise is set at the left edge of the image. Noise concentation is set to low intensity (0.2, 0.3) and noise sparsity is set to a low value (0.15, 0.15). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flag to blur noise is set to random (-1). 
+In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 1 and the noise is set at the left edge of the image. Noise concentation is set to low intensity (0.2, 0.3) and noise sparsity is set to a low value (0.15, 0.15). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flag to blur noise is set to random (-1).
 
 Code example:
 
@@ -76,7 +76,7 @@ Augmented image:
 ---------
 Example 2
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 2 and the noise is set at the right edge of the image. Noise concentation is set to low intensity (0.5, 0.5) and noise sparsity is set to a medium value (0.2, 0.3). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flags to blur noise and edge effect in noise are enabled. 
+In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 2 and the noise is set at the right edge of the image. Noise concentation is set to low intensity (0.5, 0.5) and noise sparsity is set to a medium value (0.2, 0.3). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flags to blur noise and edge effect in noise are enabled.
 
 Code example:
 
@@ -147,9 +147,3 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/badphotocopy/type4.png
-
-
-
-
-
-

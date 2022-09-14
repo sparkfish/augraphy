@@ -1,5 +1,5 @@
 ==================
-How Augraphy Works 
+How Augraphy Works
 ==================
 
 Augraphy uses a pipeline in augmentation process. Augraphy's augmentation pipeline starts with an image of a clean document.  The pipeline begins by extracting the text and graphics from the source into an "ink" layer.  (Ink is synonymous with toner within Augraphy.)  The augmentation pipeline then distorts and degrades the ink layer.
@@ -20,7 +20,7 @@ Example of simple pipeline
 An example of simple augmentation pipeline with just single augmentation in each ink, paper and post phase.
 
 ::
-    
+
     from augraphy import *
 
     ink_phase   = [Dithering(p=0.33)]
@@ -290,5 +290,3 @@ The current default augmentation pipeline is a complex pipeline with multiple au
     ]
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
-
-

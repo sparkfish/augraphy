@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -55,7 +55,7 @@ Code example:
     dirther_ordered = Dithering(dither="ordered",
                                 order=8,
                                 )
-    
+
     img_dither_ordered = dirther_ordered(image)
     cv2.imshow("dither_ordered", img_dither_ordered)
 
@@ -75,7 +75,7 @@ Code example:
 ::
 
     dirther_floyd = Dithering(dither="floyd" )
-    
+
     img_dither_floyd = dirther_floyd(image)
     cv2.imshow("dither_floyd", img_dither_floyd)
 

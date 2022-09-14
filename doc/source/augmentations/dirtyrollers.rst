@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -55,7 +55,7 @@ Code example:
     dirty_rollers = DirtyRollers(line_width_range=(12, 25),
                                 scanline_type=0,
                                 )
-    
+
     img_dirty_rollers = dirty_rollers(image)
     cv2.imshow("dirty_rollers", img_dirty_rollers)
 

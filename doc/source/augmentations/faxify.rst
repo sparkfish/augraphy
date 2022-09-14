@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -46,8 +46,8 @@ Clean image:
 Example 1
 ---------
 In this example, a Faxify augmentation instance is initialized and it is set to opencv thresholding method ("cv2.threshold") for monochrome effect.
-Halftone effect is enable (1) and halftone half kernel size is set to 2 (2,2). 
-Halftone angle is set randomly between 0 to 360 degree (0, 360) and the sigma value of Gaussian blur is to random value between 1 and 3 (1,3). 
+Halftone effect is enable (1) and halftone half kernel size is set to 2 (2,2).
+Halftone angle is set randomly between 0 to 360 degree (0, 360) and the sigma value of Gaussian blur is to random value between 1 and 3 (1,3).
 
 Code example:
 
@@ -62,7 +62,7 @@ Code example:
                     half_kernel_size = (2,2),
                     angle = (0, 360),
                     sigma = (1,3))
-    
+
     img_faxify = faxify(image)
     cv2.imshow("faxify", img_faxify)
 

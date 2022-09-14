@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -46,7 +46,7 @@ Clean image:
 Example 1
 ---------
 In this example, a LightingGradient augmentation instance is initialized and lighting position is set to random (None).
-The lighting direction is set to 90 degree (90) and the lighting mode is set to Gausian method. 
+The lighting direction is set to 90 degree (90) and the lighting mode is set to Gausian method.
 The lighting transparency is set 50 precent (0.5).
 
 Code example:
@@ -60,7 +60,7 @@ Code example:
                                                   mode="gaussian",
                                                   transparency=0.5
                                                   )
-    
+
     img_lighting_gradient_gaussian = lighting_gradient_gaussian(image)
     cv2.imshow("lighting_gradient_gaussian", img_lighting_gradient_gaussian)
 
@@ -73,7 +73,7 @@ Augmented image:
 Example 2
 ---------
 In this example, a LightingGradient augmentation instance is initialized and lighting position is set to random (None).
-The lighting direction is set to 45 degree (45) and the lighting mode is set to linear static method. 
+The lighting direction is set to 45 degree (45) and the lighting mode is set to linear static method.
 The linear decay rate is set to 0.5 (0.5) and lighting transparency is set 50 precent (0.5).
 
 Code example:
@@ -88,7 +88,7 @@ Code example:
                                                   linear_decay_rate = 0.5,
                                                   transparency=0.5
                                                   )
-    
+
     img_lighting_gradient_linear_static= lighting_gradient_linear_static(image)
     cv2.imshow("lighting_gradient_linear_static", img_lighting_gradient_linear_static)
 

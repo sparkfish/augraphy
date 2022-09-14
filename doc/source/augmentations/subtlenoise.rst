@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -52,7 +52,7 @@ Code example:
 ::
 
     subtle_noise = SubtleNoise(subtle_range=25)
-    
+
     img_subtle_noise = subtle_noise(image)
     cv2.imshow("subtle_noise", img_subtle_noise)
 

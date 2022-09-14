@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -60,7 +60,7 @@ Code example:
                          watermark_location = "center",
                          watermark_color = (0,0,255),
                          watermark_method = "darken")
-    
+
     img_watermark = watermark(image)
     cv2.imshow("watermark", img_watermark)
 

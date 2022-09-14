@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -62,11 +62,10 @@ Code example:
                                 alpha=0.3,
                                 offsets=(10, 20),
                             )
-    
+
     img_bleedthrough = bleedthrough(image)
     cv2.imshow("bleedthrough", img_bleedthrough)
 
 Augmented image:
 
 .. figure:: augmentations/bleedthrough/bleedthrough.png
-

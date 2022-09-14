@@ -23,8 +23,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -36,7 +36,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -60,7 +60,7 @@ Code example:
                             mirror_range=(0.2, 0.3),
                             curling_direction=0,
                             )
-    
+
     img_book_binding_up= book_binder_up(image)
     cv2.imshow("book_binding_up", img_book_binding_up)
 
@@ -85,7 +85,7 @@ Code example:
                             mirror_range=(0.3, 0.4),
                             curling_direction=1,
                             )
-    
+
     img_book_binding_down= book_binder_down(image)
 
 Augmented image:

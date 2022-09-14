@@ -21,7 +21,3 @@ Installation from Github repository
 To install the latest version from github repository, simply execute::
 
     pip install git+https://github.com/sparkfish/augraphy
-
-
-
-

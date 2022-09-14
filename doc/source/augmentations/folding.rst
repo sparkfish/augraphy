@@ -22,8 +22,8 @@ Code example:
     import cv2
     import numpy as np
     from augraphy import *
-    
-    
+
+
     # create a clean image with single line of text
     image = np.full((500, 1500,3), 250, dtype="uint8")
     cv2.putText(
@@ -35,7 +35,7 @@ Code example:
         0,
         3,
     )
-    
+
     cv2.imshow("Input image", image)
 
 Clean image:
@@ -46,7 +46,7 @@ Clean image:
 Example 1
 ---------
 In this example, a Folding augmentation instance is initialized and the folding count is set to 4 (4).
-Noise at folding area is set to low value (0.1). 
+Noise at folding area is set to low value (0.1).
 Each folding gradient width is set to low value (0.1, 0.2) and folding gradient height is to very low value (0.01, 0.02).
 
 Code example:
@@ -58,7 +58,7 @@ Code example:
                       gradient_width=(0.1, 0.2),
                       gradient_height=(0.01, 0.1)
                       )
-    
+
     img_folded= folding(image)
     cv2.imshow("folding", img_folded)
 
