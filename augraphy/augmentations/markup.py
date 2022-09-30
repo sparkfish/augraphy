@@ -172,6 +172,10 @@ class Markup(Augmentation):
             )
 
     def __call__(self, image, layer=None, force=False):
+
+        # change to 3 channels BGR format
+        if len(image.shape) < 3:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         markup_img = image.copy()
         overlay = markup_img.copy()
 
