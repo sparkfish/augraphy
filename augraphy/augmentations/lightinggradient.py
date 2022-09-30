@@ -12,8 +12,6 @@ class LightingGradient(Augmentation):
     position and direction, and applies it to the image as a lighting or
     brightness gradient.
 
-    :param mask_size: Tuple of ints (w, h) defining generated mask size
-    :type mask_size: Tuple, optional
     :param position: Tuple of ints (x, y) defining the center of light
         strip position, which is the reference point during rotation.
     :type position: tuple, optional
