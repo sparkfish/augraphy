@@ -1,6 +1,8 @@
 import os
 import random
 import time
+from copy import copy
+from copy import deepcopy
 from glob import glob
 
 import cv2
@@ -26,6 +28,8 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
+    :param save_outputs: Flag to enable saving each phase output image.
+    :type save_outputs: bool, optional
     :param log: Flag to enable logging.
     :type log: bool, optional
     """
@@ -37,6 +41,7 @@ class AugraphyPipeline:
         post_phase,
         ink_color_range=(-1, -1),
         paper_color_range=(255, 255),
+        save_outputs=False,
         log=False,
     ):
         """Constructor method"""
@@ -45,12 +50,22 @@ class AugraphyPipeline:
         self.post_phase = self.wrapListMaybe(post_phase)
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
+        self.save_outputs = save_outputs
         self.log = log
 
         # create directory to store log files
         if self.log:
             self.log_prob_path = os.path.join(os.getcwd(), "logs/")
             os.makedirs(self.log_prob_path, exist_ok=True)
+
+        if self.save_outputs:
+            # create each phase folder
+            self.save_paths = []
+            self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/ink/"))
+            self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/paper/"))
+            self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/post/"))
+            for i in range(len(self.save_paths)):
+                os.makedirs(self.save_paths[i], exist_ok=True)
 
     def wrapListMaybe(self, augs):
         """Converts a bare list to an AugmentationSequence, or does nothing."""
@@ -182,36 +197,185 @@ class AugraphyPipeline:
 
         data["output"] = data["post"][-1].result.astype("uint8")
 
+        # save each phase augmented images
+        if self.save_outputs:
+            self.save_images(data)
+
         # log probability
         if self.log:
-
-            # path to log file
-            log_file_name = "log_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".txt"
-            log_prob_file_path = self.log_prob_path + log_file_name
-
-            augmentation_names = data["log"]["augmentation_name"]
-            augmentation_status = data["log"]["augmentation_status"]
-            augmentation_parameters = data["log"]["augmentation_parameters"].copy()
-
-            # remove image array and replace it with shape
-            for augmentation_parameter in augmentation_parameters:
-                if augmentation_parameter:
-                    for parameter, value in augmentation_parameter.items():
-                        if hasattr(value, "shape"):
-                            augmentation_parameter[parameter] = value.shape
-
-            with open(log_prob_file_path, "w+") as file:
-                for (name, status, parameters) in zip(
-                    augmentation_names,
-                    augmentation_status,
-                    augmentation_parameters,
-                ):
-                    file.write("%s,%s,%s \n" % (name, status, parameters))
-                    # put a space
-                    file.write("\n")
-            file.close()
+            self.write_log(data)
 
         return data
+
+    def save_images(self, data):
+
+        layer_names = ["ink", "paper", "post"]
+        ink_layers = data["ink"]
+        paper_layers = data["paper"]
+        post_layers = data["post"]
+
+        n = 0
+        for j, layers in enumerate([ink_layers, paper_layers, post_layers]):
+
+            # output path for each ink, paper and post phase images
+            save_path = self.save_paths[j]
+
+            # name of layer or phase
+            layer_name = layer_names[j]
+
+            for i, layer_data in enumerate(layers):
+                if layer_data.metadata is None:
+                    result = layer_data.result
+
+                    # input layer
+                    if layer_data.augmentation is None:
+                        augmentation_name = layer_name + "_layer_input"
+                        cv2.imwrite(
+                            save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png",
+                            result,
+                        )
+                        n += 1
+
+                    # one of
+                    elif layer_data.augmentation.__class__.__name__ == "OneOf":
+                        augmentation_name = "oneof_"
+                        n = self.get_oneof_data(
+                            layer_data.augmentation,
+                            result,
+                            save_path,
+                            layer_name,
+                            augmentation_name,
+                            i,
+                            n,
+                        )
+
+                    # sequence
+                    elif layer_data.augmentation.__class__.__name__ == "AugmentationSequence":
+                        augmentation_name = "sequence_"
+                        n = self.get_sequence_data(
+                            layer_data.augmentation,
+                            result,
+                            save_path,
+                            layer_name,
+                            augmentation_name,
+                            i,
+                            n,
+                        )
+
+                    # normal augmentations
+                    else:
+                        augmentation_name = layer_data.augmentation.__class__.__name__
+                        cv2.imwrite(
+                            save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png",
+                            result,
+                        )
+                        n += 1
+
+    def get_oneof_data(self, augmentation, result, save_path, layer_name, augmentation_name, i, n):
+
+        current_augmentation = augmentation.augmentations[np.argmax(augmentation.augmentation_probabilities)]
+        # sequence inside oneof
+        if current_augmentation.__class__.__name__ == "AugmentationSequence":
+            augmentation_name += "sequence_"
+            n = self.get_sequence_data(current_augmentation, result, save_path, layer_name, augmentation_name, i, n)
+        # oneof inside oneof
+        elif current_augmentation.__class__.__name__ == "OneOf":
+            augmentation_name += "oneof_"
+            n = self.get_oneof_data(current_augmentation, result, save_path, layer_name, augmentation_name, i, n)
+        # augmentations inside oneof
+        else:
+            augmentation_name += current_augmentation.__class__.__name__
+            cv2.imwrite(save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png", result)
+            n += 1
+        return n
+
+    def get_sequence_data(self, augmentation, result, save_path, layer_name, input_augmentation_name, i, n):
+
+        s = 0
+        for current_augmentation, result in zip(augmentation.augmentations, augmentation.results):
+            augmentation_name = copy(input_augmentation_name) + str(s) + "_"
+            # sequence inside sequence
+            if current_augmentation.__class__.__name__ == "AugmentationSequence":
+                # sequence returns (result, self.augmentations), so get result only here
+                result = result[0]
+                augmentation_name += "sequence_"
+                n = self.get_sequence_data(current_augmentation, result, save_path, layer_name, augmentation_name, i, n)
+            # oneof inside sequence
+            elif current_augmentation.__class__.__name__ == "OneOf":
+                # oneof returns (image, [augmentation]), so get image only here
+                result = result[0]
+                augmentation_name += "oneof_"
+                n = self.get_oneof_data(current_augmentation, result, save_path, layer_name, augmentation_name, i, n)
+            # augmentations inside sequence
+            else:
+                augmentation_name += current_augmentation.__class__.__name__
+                cv2.imwrite(
+                    save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png",
+                    result,
+                )
+                n += 1
+            s += 1
+        return n
+
+    def write_log(self, data):
+
+        # path to log file
+        log_file_name = "log_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".txt"
+        log_prob_file_path = self.log_prob_path + log_file_name
+
+        augmentation_names = data["log"]["augmentation_name"]
+        augmentation_status = data["log"]["augmentation_status"]
+        augmentation_parameters = deepcopy(data["log"]["augmentation_parameters"])
+
+        # remove image array and replace it with shape
+        for j, augmentation_parameter in enumerate(augmentation_parameters):
+            # check and convert from tuple to list
+            if isinstance(augmentation_parameter, tuple):
+                augmentation_parameter = list(augmentation_parameter)
+                augmentation_parameters[j] = augmentation_parameter
+            check_values = [augmentation_parameter]
+            while check_values:
+                value = check_values.pop(0)
+                if value:
+                    if isinstance(value, list):
+                        for i, nested_value in enumerate(value):
+                            if hasattr(nested_value, "shape"):
+                                value[i] = nested_value.shape
+                            elif (
+                                isinstance(nested_value, list)
+                                or isinstance(nested_value, tuple)
+                                or hasattr(nested_value, "shape")
+                            ):
+                                # convert from tuple to list
+                                if isinstance(nested_value, tuple):
+                                    nested_value = list(nested_value)
+                                    value[i] = nested_value
+                                check_values.append(nested_value)
+                    elif hasattr(value, "items"):
+                        for parameter, nested_value in value.items():
+                            if hasattr(nested_value, "shape"):
+                                value[parameter] = nested_value.shape
+                            elif (
+                                isinstance(nested_value, list)
+                                or isinstance(nested_value, tuple)
+                                or hasattr(nested_value, "shape")
+                            ):
+                                # convert from tuple to list
+                                if isinstance(nested_value, tuple):
+                                    nested_value = list(nested_value)
+                                    value[parameter] = nested_value
+                                check_values.append(nested_value)
+
+        with open(log_prob_file_path, "w+") as file:
+            for (name, status, parameters) in zip(
+                augmentation_names,
+                augmentation_status,
+                augmentation_parameters,
+            ):
+                file.write("%s,%s,%s \n" % (name, status, parameters))
+                # put a space
+                file.write("\n")
+        file.close()
 
     def apply_phase(self, data, layer, phase):
         """Applies every augmentation in a phase."""
