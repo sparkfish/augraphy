@@ -208,6 +208,11 @@ class AugraphyPipeline:
         return data
 
     def save_images(self, data):
+        """Save each augmented image in each phases to local disk.
+
+        :param data: A dictionary of AugmentationResults representing the changes in each phase of the pipeline.
+        :type data: dictionary
+        """
 
         layer_names = ["ink", "paper", "post"]
         ink_layers = data["ink"]
@@ -272,6 +277,23 @@ class AugraphyPipeline:
                         n += 1
 
     def get_oneof_data(self, augmentation, result, save_path, layer_name, augmentation_name, i, n):
+        """Get augmentation information from OneOf augmentation recursively or save the augmented image in disk.
+
+        :param augmentation: Augmentation object of OneOf augmentation.
+        :type augmentation: class instance
+        :param result: Augmentation output, it may be nested in a list.
+        :type result: list or numpy array.
+        :param save_path: Output path of result.
+        :type save_path: list
+        :param layer_name: Name of current layer.
+        :type layer_name: list
+        :param augmentation_name: A combined name of augmentations, seperated by _.
+        :type augmentation_name: list
+        :param i: Index of current augmentation in total number of augmentations.
+        :type i: int
+        :param n: Index of current augmented in total number of augmented images.
+        :type n: int
+        """
 
         current_augmentation = augmentation.augmentations[np.argmax(augmentation.augmentation_probabilities)]
         # sequence inside oneof
@@ -290,6 +312,23 @@ class AugraphyPipeline:
         return n
 
     def get_sequence_data(self, augmentation, result, save_path, layer_name, input_augmentation_name, i, n):
+        """Get augmentation information from AugmentationSequence augmentation recursively or save the augmented image in disk.
+
+        :param augmentation: Augmentation object of OneOf augmentation.
+        :type augmentation: class instance
+        :param result: Augmentation output, it may be nested in a list.
+        :type result: list or numpy array.
+        :param save_path: Output path of result.
+        :type save_path: list
+        :param layer_name: Name of current layer.
+        :type layer_name: list
+        :param augmentation_name: A combined name of augmentations, seperated by _.
+        :type augmentation_name: list
+        :param i: Index of current augmentation in total number of augmentations.
+        :type i: int
+        :param n: Index of current augmented in total number of augmented images.
+        :type n: int
+        """
 
         s = 0
         for current_augmentation, result in zip(augmentation.augmentations, augmentation.results):
@@ -318,6 +357,11 @@ class AugraphyPipeline:
         return n
 
     def write_log(self, data):
+        """Save augmentations log to local disk.
+
+        :param data: A dictionary of AugmentationResults representing the changes in each phase of the pipeline.
+        :type data: dictionary
+        """
 
         # path to log file
         log_file_name = "log_" + time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) + ".txt"
@@ -378,7 +422,15 @@ class AugraphyPipeline:
         file.close()
 
     def apply_phase(self, data, layer, phase):
-        """Applies every augmentation in a phase."""
+        """Applies every augmentation in a phase.
+
+        :param data: A dictionary of AugmentationResults representing the changes in each phase of the pipeline.
+        :type data: dictionary
+        :param layer: The name of current layer or phase.
+        :type layer: string
+        :param phase: Collection of Augmentations to apply.
+        :type phase: base.augmentationsequence or list
+        """
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
 
@@ -419,7 +471,15 @@ class AugraphyPipeline:
                 data[layer].append(AugmentationResult(augmentation, result))
 
     def print_ink_to_paper(self, data, overlay, background):
-        """Applies the ink layer to the paper layer."""
+        """Applies the ink layer to the paper layer.
+
+        :param data: A dictionary of AugmentationResults representing the changes in each phase of the pipeline.
+        :type data: dictionary
+        :param overlay: Foreground of overlay process, output from ink phase.
+        :type overlay: numpy array
+        :param background: Background of overlay process, output from paper phase.
+        :type background: numpy array
+        """
         # prevent inconsistency in size between background and overlay
         if overlay.shape[:2] != background.shape[:2]:
             overlay_y, overlay_x = overlay.shape[:2]

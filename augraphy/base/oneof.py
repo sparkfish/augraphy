@@ -44,8 +44,7 @@ class OneOf(Augmentation):
         return r
 
     def compute_probability(self, augmentations):
-        """For each Augmentation in the input list, compute the probability of
-        applying that Augmentation.
+        """For each Augmentation in the input list, compute the probability of applying that Augmentation.
 
         :param augmentations: Augmentations to compute probability list for.
         :type augmentations: list

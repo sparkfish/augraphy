@@ -20,6 +20,16 @@ To use the default pipeline which contains all available augmentations and sensi
 
     augmented = data["output"]
 
+
+Input image:
+
+.. figure:: example_usage/input.png
+
+Augmented image:
+
+.. figure:: example_usage/example_output1.png
+
+
 ------------------------------------------------------------
 Examples 2 : Augmentation with custom augmentation pipeline
 ------------------------------------------------------------
@@ -84,7 +94,7 @@ To initialize a custom augmentation pipeline and augment an image::
                     turbulence_range=(2, 5),
                 ),
                 BrightnessTexturize(
-                    brightness_range=(0.9, 0.99),
+                    texturize_range=(0.9, 0.99),
                     deviation=0.03,
                 ),
             ],
@@ -185,3 +195,12 @@ To initialize a custom augmentation pipeline and augment an image::
     data = pipeline.augment(img)
 
     augmented = data["output"]
+
+
+Input image:
+
+.. figure:: example_usage/input.png
+
+Augmented image:
+
+.. figure:: example_usage/example_output2.png

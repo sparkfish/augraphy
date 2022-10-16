@@ -14,18 +14,18 @@ class OverlayBuilder:
     :param overlay_types: Types of overlay method.
     :type overlay_types: string
     :param foreground: The image to overlay on the background document.
-    :type foreground: np.array
+    :type foreground: numpy array
     :param background: The document.
-    :type background: np.array
+    :type background: numpy array
     :param ntimes: Number copies of the foreground image to draw.
-    :type ntimes: integer
+    :type ntimes: int
     :param nscales: Scales of foreground image size.
     :type nscales: tuple, optional
     :param edge: Which edge of the page the foreground copies should be
         placed on. Selections included left, right, top, bottom, enter, random.
     :type edge: string
     :param edge_offset: How far from the edge of the page to draw the copies.
-    :type edge_offset: integer
+    :type edge_offset: int
     :param alpha: Alpha value for alpha overlay type.
     :type alpha: float
     """
@@ -77,7 +77,11 @@ class OverlayBuilder:
             self.overlay_types = "mix"
 
     def compute_offsets(self, foreground):
-        """Determine where to place the foreground image copies"""
+        """Determine where to place the foreground image copies
+
+        :param foreground: The image to overlay on the background document.
+        :type foreground: numpy array
+        """
         xdim = self.background.shape[1]
         ydim = self.background.shape[0]
 
@@ -94,7 +98,15 @@ class OverlayBuilder:
         return offset_width, offset_height
 
     def check_size(self, img_foreground, img_background, center=None):
-        """Check the fitting size of foreground to background"""
+        """Check the fitting size of foreground to background
+
+        :param img_foreground: The image to overlay on the background document.
+        :type img_foreground: numpy array
+        :param img_background: The background document.
+        :type img_background: numpy array
+        :param center: Center coordinate (x,y) of the overlaying process.
+        :type center: tuple
+        """
 
         # background size
         ysize_background, xsize_background = img_background.shape[:2]
@@ -235,7 +247,13 @@ class OverlayBuilder:
         return img_foreground, center
 
     def compose_alpha(self, img_alpha_background, img_alpha_foreground):
-        """Calculate alpha composition ratio between two images."""
+        """Calculate alpha composition ratio between two images.
+
+        :param img_alpha_background: The background image alpha layer.
+        :type img_alpha_background: numpy array
+        :param img_alpha_foreground: The foreground image alpha layer.
+        :type img_alpha_foreground: numpy array
+        """
 
         comp_alpha = np.minimum(img_alpha_background, img_alpha_foreground) * self.alpha
         new_alpha = img_alpha_background + (1.0 - img_alpha_foreground) * comp_alpha
@@ -252,7 +270,19 @@ class OverlayBuilder:
         fg_height,
         fg_width,
     ):
-        """Apply blending using cv2.seamlessClone"""
+        """Apply blending using cv2.seamlessClone.
+
+        :param overlay_background: The background image.
+        :type overlay_background: numpy array
+        :param new_foreground: The foreground iamge of overlaying process.
+        :type new_foreground: numpy array
+        :param center: Center coordinate (x,y) of the overlaying process.
+        :type center: tuple
+        :param fg_height: Height of foreground image.
+        :type fg_height: int
+        :param fg_width: Width of foreground image.
+        :type fg_width: int
+        """
 
         img_mask = np.ones((fg_height, fg_width), dtype="uint8") * 255
 
@@ -285,7 +315,21 @@ class OverlayBuilder:
         fg_height,
         fg_width,
     ):
-        """Apply blending using min or max gray value"""
+        """Apply blending using min or max gray value.
+
+        :param base: Background image.
+        :type base: numpy array
+        :param base_gray: Background image in grayscale.
+        :type base_gray: numpy array
+        :param new_foreground: Foreground_image.
+        :type new_foreground: numpy array
+        :param new_foreground_gray: Foreground image in grayscale.
+        :type new_foreground_gray: numpy array
+        :param fg_height: Height of foreground image.
+        :type fg_height: int
+        :param fg_width: Width of foreground image.
+        :type fg_width: int
+        """
 
         # can be further vectorized here, need to think about it
         for y in range(fg_height):
@@ -313,7 +357,23 @@ class OverlayBuilder:
         ystart,
         yend,
     ):
-        """Apply blending using input alpha value - normal method"""
+        """Apply blending using input alpha value (normal method).
+
+        :param overlay_background: Background image.
+        :type overlay_background: numpy array
+        :param base: A patch of background image.
+        :type base: numpy array
+        :param new_foreground: Foreground_image.
+        :type new_foreground: numpy array
+        :param xstart: x start point of the image patch.
+        :type xstart: int
+        :param xend: x end point of the image patch.
+        :type xend: int
+        :param ystart: y start point of the image patch.
+        :type ystart: int
+        :param yend: y end point of the image patch.
+        :type yend: int
+        """
 
         # convert to float (0-1)
         base_norm = base / 255.0
@@ -347,7 +407,23 @@ class OverlayBuilder:
         ystart,
         yend,
     ):
-        """Apply blending using input alpha value - multiple methods"""
+        """Apply blending using input alpha value (multiple methods).
+
+        :param overlay_background: Background image.
+        :type overlay_background: numpy array
+        :param base: A patch of background image.
+        :type base: numpy array
+        :param new_foreground: Foreground_image.
+        :type new_foreground: numpy array
+        :param xstart: x start point of the image patch.
+        :type xstart: int
+        :param xend: x end point of the image patch.
+        :type xend: int
+        :param ystart: y start point of the image patch.
+        :type ystart: int
+        :param yend: y end point of the image patch.
+        :type yend: int
+        """
 
         # convert to float (0-1)
         base_norm = base / 255.0
@@ -480,7 +556,23 @@ class OverlayBuilder:
         xstart,
         xend,
     ):
-        """Applies overlay from foreground to background"""
+        """Applies overlay from foreground to background.
+
+        :param overlay_background: Background image.
+        :type overlay_background: numpy array
+        :param offset_width: Offset width value to the overlay process.
+        :type offset_width: int
+        :param offset_height: Offset height value to the overlay process.
+        :type offset_height: int
+        :param ystart: y start point of the overlaying process.
+        :type ystart: int
+        :param yend: y end point of the overlaying process.
+        :type yend: int
+        :param xstart: x start point of the overlaying process.
+        :type xstart: int
+        :param xend: x end point of the overlaying process.
+        :type xend: int
+        """
 
         # get bgr and gray of background
         if len(overlay_background.shape) > 2:

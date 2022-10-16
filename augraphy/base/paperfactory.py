@@ -24,7 +24,6 @@ class PaperFactory(Augmentation):
     def __init__(
         self,
         texture_path="./paper_textures",
-        color_augmentation=0,
         p=1,
     ):
         """Constructor method"""
@@ -103,6 +102,11 @@ class PaperFactory(Augmentation):
                 pass
 
     def check_paper_edges(self, texture):
+        """Crop image section with better texture.
+
+        :param texture: Texture image.
+        :type texture: numpy array
+        """
 
         ysize, xsize = texture.shape[:2]
 
@@ -189,8 +193,15 @@ class PaperFactory(Augmentation):
 
         return texture_cropped
 
-    # Scales and zooms a given texture to fit a given shape.
     def resize(self, texture, shape):
+        """Scales and zooms a given texture to fit a given shape.
+
+        :param texture: Texture image.
+        :type texture: numpy array.3.
+        :param shape: x and y shape of scaled image.
+        :type shape: list or tuple
+        """
+
         texture_h = texture.shape[0]
         texture_w = texture.shape[1]
         shape_h = shape[0]
