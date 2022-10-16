@@ -22,13 +22,38 @@ An example of simple augmentation pipeline with just single augmentation in each
 ::
 
     from augraphy import *
+    import cv2
+    import numpy as np
 
-    ink_phase   = [Dithering(p=0.33)]
-    paper_phase = [ColorPaper(p=0.33)]
-    post_phase  = [PencilScribbles(p=0.33)]
+    ink_phase   = [WaterMark(p=1)]
+    paper_phase = [ColorPaper(p=1)]
+    post_phase  = [PencilScribbles(p=1)]
     pipeline    = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 
+    image = np.full((1200, 1200,3), 250, dtype="uint8")
+    cv2.putText(
+        image,
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+        (80, 250),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1.2,
+        0,
+        3,
+    )
 
+    augmented_image = pipeline.augment(image)["output"]
+
+    cv2.imshow("input image", image)
+    cv2.imshow("augmented",augmented_image)
+
+
+Input image:
+
+.. figure:: how_augraphy_works_examples/input.png
+
+Augmented image:
+
+.. figure:: how_augraphy_works_examples/simple.png
 
 --------------------------
 Example of complex pipeline
@@ -40,6 +65,8 @@ The current default augmentation pipeline is a complex pipeline with multiple au
 
     import random
     from augraphy import *
+    import cv2
+    import numpy as np
 
     ink_phase = [
         Dithering(
@@ -115,7 +142,7 @@ The current default augmentation pipeline is a complex pipeline with multiple au
                             turbulence_range=(2, 5),
                         ),
                         BrightnessTexturize(
-                            brightness_range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                     ],
@@ -123,7 +150,7 @@ The current default augmentation pipeline is a complex pipeline with multiple au
                 AugmentationSequence(
                     [
                         BrightnessTexturize(
-                            brightness_range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                         NoiseTexturize(
@@ -290,3 +317,14 @@ The current default augmentation pipeline is a complex pipeline with multiple au
     ]
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    cv2.imshow("input image", image)
+    cv2.imshow("augmented",augmented_image)
+
+Input image:
+
+.. figure:: how_augraphy_works_examples/input.png
+
+Augmented image:
+
+.. figure:: how_augraphy_works_examples/complex.png

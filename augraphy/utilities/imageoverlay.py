@@ -23,12 +23,16 @@ class ImageOverlay(Augmentation):
     """
 
     def __init__(self, foreground, position=(None, None), p=1):
-        self.position = position
         self.foreground = foreground
+        self.position = position
         super().__init__(p=p)
 
     def workspace(self, background):
-        """Creates an empty image on which to do the overlay operation"""
+        """Creates an empty image on which to do the overlay operation
+
+        :param background: The background document image.
+        :type background: np.array
+        """
 
         xdim = background.shape[0] + (2 * self.foreground.shape[0])
         ydim = background.shape[1] + (2 * self.foreground.shape[1])
@@ -39,7 +43,15 @@ class ImageOverlay(Augmentation):
         )
 
     def layerForeground(self, ambient, xloc, yloc):
-        """Put self.foreground at (xloc,yloc) on ambient"""
+        """Put self.foreground at (xloc,yloc) on ambient
+
+        :param ambient: The initial ambient image.
+        :type ambient: np.array
+        :param xloc: Coordinate of x start location.
+        :type xloc: int
+        :param yloc: Coordinate of y start location.
+        :type yloc: int
+        """
         xstop = xloc + self.foreground.shape[0]
         ystop = yloc + self.foreground.shape[1]
         fg = cv2.cvtColor(np.uint8(self.foreground), cv2.COLOR_RGB2RGBA)
@@ -57,6 +69,11 @@ class ImageOverlay(Augmentation):
         """Centers the background image over workspace, then places foreground
         somewhere on the workspace, and finally crops to the
         background dimension
+
+        :param background: Background image of overlaying process.
+        :type background: np.array
+        :param foreground: Foreground image of overlaying process.
+        :type foreground: np.array
         """
 
         # Get the boundaries of the background image
