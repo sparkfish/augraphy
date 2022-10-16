@@ -6,4 +6,3 @@ Function
     :members:
     :undoc-members:
     :show-inheritance:
-
