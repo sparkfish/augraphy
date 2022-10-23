@@ -22,7 +22,8 @@ class ForeignAugmentation(Augmentation):
         self.augmentation = foreignAugmentation
         super().__init__(p=p)
 
-    def __call__(self, image):
+    def __call__(self, image, layer=None, force=False):
+
         image = image.copy()
         result = self.augmentation(image=image)
         output = self.handleForeignAugResult(result)
