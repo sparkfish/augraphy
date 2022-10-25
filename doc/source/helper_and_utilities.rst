@@ -13,6 +13,7 @@ Usable functions
    helper_and_utilities/oneof.rst
    helper_and_utilities/foreign.rst
    helper_and_utilities/function.rst
+   helper_and_utilities/composepipelines.rst
    helper_and_utilities/paperfactory.rst
 
 

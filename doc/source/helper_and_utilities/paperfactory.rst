@@ -17,7 +17,8 @@ It applies texture into image based on a random image chosen from the provided d
 -------
 Example
 -------
-In this example, PaperFactory is use to apply texture extracted from an image in the chosen texture image directory into an input image.::
+In this example, PaperFactory is use to apply texture extracted from an image in the chosen texture image directory into an input image.
+::
 
     # import libraries
     from augraphy import *

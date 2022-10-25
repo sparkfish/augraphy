@@ -16,8 +16,8 @@ Function allows a custom defined function to be added into the augmentation pipe
 -------
 Example
 -------
-In this example, Function is use to add a manually defined function into the augmentation pipeline.::
-
+In this example, Function is use to add a manually defined function into the augmentation pipeline.
+::
 
     # import libraries
     from augraphy import *
