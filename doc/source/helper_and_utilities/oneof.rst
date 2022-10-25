@@ -17,7 +17,8 @@ OneOf function allows augmentation pipeline to select an augmentation randomly f
 Example
 -------
 In this example, OneOf function is use to select one augmentation randomly in ink phase of the augmentation pipeline.
-In post phase, two OneOf functions are nested inside another OneOf function to select augmentation randomly.::
+In post phase, two OneOf functions are nested inside another OneOf function to select augmentation randomly.
+::
 
     # import libraries
     from augraphy import *

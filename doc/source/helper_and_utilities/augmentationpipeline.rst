@@ -17,7 +17,8 @@ AugraphyPipeline is the core utility function to enable user create an augmentat
 -------------------------------
 Example to use AugraphyPipeline
 -------------------------------
-This is an example to use AugraphyPipeline in the augmentation, and both of the flag to save logs and save output images are set to true::
+This is an example to use AugraphyPipeline in the augmentation, and both of the flag to save logs and save output images are set to true.
+::
 
     # import libraries
     from augraphy import *

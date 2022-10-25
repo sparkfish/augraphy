@@ -16,8 +16,8 @@ ForeignAugmentation allows the usage of imgaug or Albumentations function in Aug
 Example
 -------
 In this example, ForeignAugmentation allows the usage of Rain augmenter from imgaug in ink phase of Augraphy pipeline.
-Paper phase is using ColorPaper from Augraphy while ForeignAugmentation in post phase to allow the usage of ElasticTransform from Albumentations.::
-
+Paper phase is using ColorPaper from Augraphy while ForeignAugmentation in post phase to allow the usage of ElasticTransform from Albumentations.
+::
 
     # import libraries
     from augraphy import *

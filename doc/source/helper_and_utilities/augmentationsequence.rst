@@ -17,8 +17,8 @@ AugmentationSequence allows augmentation pipeline to apply several augmentations
 Example
 -------
 In this example, AugmentationSequence function is use to apply two augmentations seqentially in ink phase of the augmentation pipeline.
-In post phase, two AugmentationSequence are nested inside another AugmentationSequence to apply a series of augmentations sequentially.::
-
+In post phase, two AugmentationSequence are nested inside another AugmentationSequence to apply a series of augmentations sequentially.
+::
 
     # import libraries
     from augraphy import *
