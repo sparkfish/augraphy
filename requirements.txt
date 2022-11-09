@@ -4,5 +4,5 @@ Pillow
 pydata-sphinx-theme
 requests
 scikit-image
+scikit-learn
 scipy
-sklearn
