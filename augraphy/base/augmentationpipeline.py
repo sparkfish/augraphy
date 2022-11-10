@@ -32,6 +32,8 @@ class AugraphyPipeline:
     :type save_outputs: bool, optional
     :param log: Flag to enable logging.
     :type log: bool, optional
+    :param random_seed: The initial value for PRNGs used in Augraphy.
+    :type random_seed: int, optional
     """
 
     def __init__(
@@ -43,6 +45,7 @@ class AugraphyPipeline:
         paper_color_range=(255, 255),
         save_outputs=False,
         log=False,
+        random_seed=None,
     ):
         """Constructor method"""
         self.ink_phase = self.wrapListMaybe(ink_phase)
@@ -52,6 +55,13 @@ class AugraphyPipeline:
         self.paper_color_range = paper_color_range
         self.save_outputs = save_outputs
         self.log = log
+        self.random_seed = random_seed
+
+        # ensure determinism if random_seed set
+        if self.random_seed:
+            random.seed(self.random_seed)
+            np.random.seed(self.random_seed)
+            cv2.setRNGSeed(self.random_seed)
 
         # create directory to store log files
         if self.log:
