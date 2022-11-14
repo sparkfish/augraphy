@@ -294,10 +294,6 @@ class BadPhotoCopy(Augmentation):
             edge_effect = self.edge_effect
         if edge_effect:
 
-            # add random noise range from 0-128
-            add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
-            add_edge_noise = np.vectorize(add_edge_noise_fn)
-
             # get edge mask
             image_sobel = sobel(image)
             image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
@@ -305,7 +301,12 @@ class BadPhotoCopy(Augmentation):
             image_sobel = cv2.dilate(image_sobel, (15, 15), iterations=5)
             image_sobel_sobel = sobel(image_sobel)
             image_sobel_sobel = cv2.dilate(image_sobel_sobel, (5, 5), iterations=2)
-            image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
+
+            # add random noise range from 0-128
+            image_random = (np.random.random((image.shape[0], image.shape[1])) * 128).astype("uint8")
+            image_random2 = np.random.random((image.shape[0], image.shape[1]))
+            indices = np.logical_and(image_sobel_sobel == 255, image_random2 < 0.70)
+            image_sobel[indices] = image_random[indices]
             image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
 
             image_original = image.copy()
