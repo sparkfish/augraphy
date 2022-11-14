@@ -101,7 +101,7 @@ class Letterpress(Augmentation):
                 )
 
             if self.blur:
-                # gaussian blur need uint8 input
+                # gaussian blur needs uint8 input
                 noise_mask = cv2.GaussianBlur(noise_mask, (5, 5), 0)
 
             if self.value_threshold_range[1] >= self.value_threshold_range[0]:
@@ -110,8 +110,7 @@ class Letterpress(Augmentation):
                 value_threshold = self.value_threshold_range[1]
 
             # apply noise to image
-            apply_mask_fn = lambda x, y: y if (x < value_threshold) else x
-            apply_mask = np.vectorize(apply_mask_fn)
-            image = apply_mask(image, noise_mask)
+            indices = image < value_threshold
+            image[indices] = noise_mask[indices]
 
             return image
