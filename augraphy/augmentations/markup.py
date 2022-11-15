@@ -30,6 +30,8 @@ class Markup(Augmentation):
     :type markup_color: tuple or string
     :param repetitions: Determine how many time a single markup effect should be drawn.
     :type repetitions: int
+    :param large_word_mode: Set true to draw markup on large words, else large word will be ignored.
+    :type large_word_mode: boolean
     :param single_word_mode: Set true to draw markup on a single word only.
     :type single_word_mode: boolean
     :param p: The probability that this Augmentation will be applied.
@@ -43,6 +45,7 @@ class Markup(Augmentation):
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
         markup_color="random",
+        large_word_mode=True,
         single_word_mode=False,
         repetitions=1,
         p=1,
@@ -55,12 +58,15 @@ class Markup(Augmentation):
         self.markup_type = markup_type
         self.markup_color = markup_color
         self.repetitions = repetitions
+        self.large_word_mode = large_word_mode
         self.single_word_mode = single_word_mode
 
     def __repr__(self):
         return (
             f"Markup(num_lines_range={self.num_lines_range}, markup_length_range={self.markup_length_range}, "
-            f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type} p={self.p})"
+            f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type}, "
+            f"markup_color={self.markup_color}, repetitions={self.repetitions}, "
+            f"large_word_mode={self.large_word_mode}, single_word_mode={self.single_word_mode}, p={self.p})"
         )
 
     def distribute_line(self, starting_point, ending_point, offset):
@@ -237,11 +243,18 @@ class Markup(Augmentation):
                     h < character_height_average + height_range
                 )
 
-            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10) and check_height:
+            if not self.large_word_mode:
+                conditions = (
+                    choice
+                    and (w > h * 2)
+                    and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10)
+                    and w < int(markup_img.shape[1] / 5)
+                    and check_height
+                )
+            else:
+                conditions = check_height
 
-                # avoiding too small contours (width less  5% of the image width)
-                if w < int(markup_img.shape[1] / 5):
-                    continue
+            if conditions:
                 if num_lines == 0:
                     break
                 num_lines = num_lines - 1
