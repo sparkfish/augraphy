@@ -180,7 +180,8 @@ class DirtyRollers(Augmentation):
             if rotate:
                 image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            if len(image.shape) > 2:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
             mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
 
