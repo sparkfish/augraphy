@@ -94,8 +94,15 @@ class AugraphyPipeline:
         :rtype: dictionary
         """
 
+        # Check if image has correct channel
+        if len(image.shape) > 2 and (image.shape[2] != 3):
+            raise Exception(
+                "Image should have channel number of 3 (BGR), but actual dimensions were {}.".format(
+                    image.shape,
+                ),
+            )
         # Check that image is the correct size.
-        if (image.shape[0] < 30) or (image.shape[1] < 30):
+        elif (image.shape[0] < 30) or (image.shape[1] < 30):
             raise Exception(
                 "Image should have dimensions greater than 30x30, but actual dimensions were {}.".format(
                     image.shape,
