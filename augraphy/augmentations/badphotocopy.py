@@ -151,16 +151,16 @@ class BadPhotoCopy(Augmentation):
             img_wave[: int(y_point), int(x_point)] = 1
             # additional noise, to smooth the edges between wavy mask
             for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
-                if random.random() > 0.5:
+                if random.random() > 0.7:
                     img_wave[y, int(x_point)] = 1
-                    if random.random() > 0.95:
+                    if random.random() > 0.85:
                         break
 
         # top (noise concentrated at top edge)
-        if self.noise_type == 7:
+        if self.noise_side == "top":
             mask = img_wave * mask
         # right (noise concentrated at right edge)
-        elif self.noise_type == 6:
+        elif self.noise_side == "right":
             img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(
                 img_wave,
@@ -169,11 +169,11 @@ class BadPhotoCopy(Augmentation):
             )
             mask = img_wave * mask
         # bottom (noise concentrated at bottom edge)
-        elif self.noise_type == 8:
+        elif self.noise_side == "bottom":
             img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # left (noise concentrated at left edge)
-        elif self.noise_type == 5:
+        elif self.noise_side == "left":
             img_wave = np.rot90(img_wave, 1)
             img_wave = cv2.resize(
                 img_wave,
