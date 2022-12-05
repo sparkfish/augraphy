@@ -109,6 +109,22 @@ class AugraphyPipeline:
                 ),
             )
 
+        # get and check valid image type ( uint or float)
+        image_type = str(image.dtype)
+        image_max_value = 255
+        if image_type[:5] == "float":
+            if np.max(image) <= 1:
+                image_max_value = 1
+                image = np.uint8(image * 255)
+            else:
+                image = np.uint8(image)
+        elif image_type[:4] != "uint":
+            raise Exception(
+                "Image type should be uint or float, but the image type is {}.".format(
+                    image_type,
+                ),
+            )
+
         # create augraphy cache folder
         cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
         os.makedirs(cache_folder_path, exist_ok=True)
@@ -212,7 +228,14 @@ class AugraphyPipeline:
         # apply post phase augmentations
         self.apply_phase(data, layer="post", phase=self.post_phase)
 
-        data["output"] = data["post"][-1].result.astype("uint8")
+        # revert to input image type
+        if image_type[:5] == "float":
+            if image_max_value == 1:
+                data["output"] = (data["post"][-1].result.astype(image_type)) / 255
+            else:
+                data["output"] = data["post"][-1].result.astype(image_type)
+        else:
+            data["output"] = data["post"][-1].result.astype("uint8")
 
         # save each phase augmented images
         if self.save_outputs:
