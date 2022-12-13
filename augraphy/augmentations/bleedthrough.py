@@ -5,6 +5,7 @@ from glob import glob
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
@@ -131,16 +132,13 @@ class BleedThrough(Augmentation):
         :param sigmaX: Standard deviation of the kernel along the x-axis.
         :type sigmaX: float
         """
-        intensity = random.uniform(intensity_range[0], intensity_range[1])
-        add_noise_fn = (
-            lambda x, y: random.randint(color_range[0], color_range[1])
-            if (y == 255 and random.random() < intensity)
-            else x
-        )
-        add_noise = np.vectorize(add_noise_fn)
+
         sobelized = sobel(img)
-        img_noise = np.double(add_noise(img, sobelized))
+        img_noise = np.double(
+            add_noise(img, intensity_range=intensity_range, color_range=color_range, noise_condition=1),
+        )
         img_bleed = cv2.GaussianBlur(img_noise, ksize=ksize, sigmaX=sigmaX)
+
         return img_bleed
 
     # create foreground image for bleedthrough effect

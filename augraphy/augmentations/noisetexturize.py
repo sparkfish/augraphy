@@ -58,17 +58,7 @@ class NoiseTexturize(Augmentation):
         # assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
         # assert height % ratio == 0, "Can't scale image with of size {} and ratio {}".format(height, ratio)
 
-        h = int(height / ratio)
-        w = int(width / ratio)
-
-        if h == 0:
-            h = 1
-        if w == 0:
-            w = 1
-
-        gaussian = np.vectorize(lambda x: random.gauss(mean, sigma))
-
-        result = gaussian(np.array((w, h)))
+        result = (random.gauss(mean, sigma), random.gauss(mean, sigma))
 
         result = cv2.resize(
             result,

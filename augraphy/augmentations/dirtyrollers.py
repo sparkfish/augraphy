@@ -60,9 +60,9 @@ class DirtyRollers(Augmentation):
         :type meta_mask: numpy.array (numpy.uint8)
         """
         mask = self.apply_scanline_metamask_v2(mask, meta_mask)
-        update_lambda = lambda x, y: min(255, x + (x * (1 - (y / 100))))
-        update = np.vectorize(update_lambda)
-        return update(img, mask)
+        new_image = np.add(img, np.multiply(img, (1 - (mask / 100))))
+        new_image[new_image > 255] = 255
+        return new_image
 
     def apply_scanline_metamask_v2(self, img, mask):
         """Function to apply scanline meta mask to scanline mask of dark background.
@@ -71,9 +71,9 @@ class DirtyRollers(Augmentation):
         :param mask: Meta mask of scanline effect.
         :type mask: numpy.array (numpy.uint8)
         """
-        update_lambda = lambda x, y: max(0, x - (x * (1 - (y / 100))))
-        update = np.vectorize(update_lambda)
-        return update(img, mask)
+        new_mask = np.subtract(img, np.multiply(img, (1 - (mask / 100))))
+        new_mask[new_mask < 0] = 0
+        return new_mask
 
     def apply_scanline_mask_v1(self, img, mask, meta_mask):
         """Function to apply scanline mask to input image with white background.
@@ -85,9 +85,9 @@ class DirtyRollers(Augmentation):
         :type meta_mask: numpy.array (numpy.uint8)
         """
         mask = self.apply_scanline_metamask_v1(mask, meta_mask)
-        update_lambda = lambda x, y: max(0, x - (x * (1 - (y / 100))))
-        update = np.vectorize(update_lambda)
-        return update(img, mask)
+        new_image = np.subtract(img, np.multiply(img, (1 - (mask / 100))))
+        new_image[new_image < 0] = 0
+        return new_image
 
     def apply_scanline_metamask_v1(self, img, mask):
         """Function to apply scanline meta mask to scanline mask of white background.
@@ -96,9 +96,9 @@ class DirtyRollers(Augmentation):
         :param mask: Meta mask of scanline effect.
         :type mask: numpy.array (numpy.uint8)
         """
-        update_lambda = lambda x, y: min(99, x + (x * (1 - (y / 100))))
-        update = np.vectorize(update_lambda)
-        return update(img, mask)
+        new_mask = np.add(img, np.multiply(img, (1 - (mask / 100))))
+        new_mask[new_mask > 99] = 99
+        return new_mask
 
     def create_scanline_mask(self, width, height, line_width):
         """Function to create scanline mask.

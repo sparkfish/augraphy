@@ -164,113 +164,36 @@ class NoiseGenerator:
         :param ysize: Height of image.
         :type ysize: int
         """
+
         # generate clusters of blobs
-        if self.noise_type == 3:
-            # left
-            generated_points_x_left, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, 0),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_left, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
-            # right
-            generated_points_x_right, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(xsize, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_right, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
-            # top
-            generated_points_x_top, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_top, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, 0),
-                cluster_std=std,
-                n_features=1,
-            )
-            # bottom
-            generated_points_x_bottom, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_bottom, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(ysize, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
+        generated_points_x, _ = make_blobs(
+            n_samples=n_samples_array,
+            center_box=center_x,
+            cluster_std=std,
+            n_features=1,
+        )
 
-            generated_points_x = np.concatenate(
-                (
-                    generated_points_x_left,
-                    generated_points_x_right,
-                    generated_points_x_top,
-                    generated_points_x_bottom,
-                ),
-            )
-            generated_points_y = np.concatenate(
-                (
-                    generated_points_y_left,
-                    generated_points_y_right,
-                    generated_points_y_top,
-                    generated_points_y_bottom,
-                ),
-            )
-
-        else:
-            generated_points_x, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=center_x,
-                cluster_std=std,
-                n_features=1,
-            )
-
-            generated_points_y, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=center_y,
-                cluster_std=std,
-                n_features=1,
-            )
+        generated_points_y, _ = make_blobs(
+            n_samples=n_samples_array,
+            center_box=center_y,
+            cluster_std=std,
+            n_features=1,
+        )
 
         # remove decimals
         generated_points_x = generated_points_x.astype("int")
         generated_points_y = generated_points_y.astype("int")
 
-        # delete invalid points (smaller or bigger than image size)
-        ind_delete_x = np.where(generated_points_x < 0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_x, axis=0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_x, axis=0)
-
-        ind_delete_y = np.where(generated_points_y < 0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_y, axis=0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_y, axis=0)
-
-        ind_delete_x = np.where(generated_points_x > xsize - 1)
-        generated_points_x = np.delete(generated_points_x, ind_delete_x, axis=0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_x, axis=0)
-
-        ind_delete_y = np.where(generated_points_y > ysize - 1)
-        generated_points_y = np.delete(generated_points_y, ind_delete_y, axis=0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_y, axis=0)
+        ind_delete = np.logical_or.reduce(
+            (
+                generated_points_x < 0,
+                generated_points_y < 0,
+                generated_points_x > xsize - 1,
+                generated_points_y > ysize - 1,
+            ),
+        )
+        generated_points_y = np.delete(generated_points_y, ind_delete.reshape(ind_delete.shape[0]), axis=0)
+        generated_points_x = np.delete(generated_points_x, ind_delete.reshape(ind_delete.shape[0]), axis=0)
 
         return generated_points_x, generated_points_y
 
@@ -313,14 +236,10 @@ class NoiseGenerator:
             size=(ysize, xsize),
         )
 
-        # get xy points in list form
-        x_points = list(generated_points_x)
-        y_points = list(generated_points_y)
-
         # insert random value into background
-        img_mask[y_points, x_points] = img_mask_random[y_points, x_points]
+        img_mask[generated_points_y, generated_points_x] = img_mask_random[generated_points_y, generated_points_x]
 
-        return img_mask
+        return img_mask.astype("uint8")
 
     def generate_mask_main(
         self,
@@ -480,6 +399,17 @@ class NoiseGenerator:
                 xsize,
                 ysize,
             )
+
+            # rotate and merge mask into 4 sides
+            if self.noise_type == 3:
+                img_mask = np.minimum(
+                    img_mask,
+                    cv2.resize(np.rot90(img_mask), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                )
+                img_mask = np.minimum(
+                    img_mask,
+                    cv2.resize(np.rot90(img_mask, k=2), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                )
 
         return img_mask
 
