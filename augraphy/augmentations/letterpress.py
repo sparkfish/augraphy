@@ -110,7 +110,9 @@ class Letterpress(Augmentation):
             # insert noise value according to generate points
             if len(image.shape) > 2:
                 noise_mask[generated_points_y, generated_points_x, :] = noise_mask2[
-                    generated_points_y, generated_points_x, :
+                    generated_points_y,
+                    generated_points_x,
+                    :,
                 ]
             else:
                 noise_mask[generated_points_y, generated_points_x] = noise_mask2[generated_points_y, generated_points_x]
