@@ -74,13 +74,27 @@ class BindingsAndFasteners(Augmentation):
         :type max_input_value: int
         """
 
-        noise = (
-            lambda x: random.randint(noise_value[0], noise_value[1])
-            if (x < max_input_value and noise_probability > random.random())
-            else x
-        )
-        add_noise = np.vectorize(noise)
-        image_output = add_noise(image)
+        # generate random mask
+        if len(image.shape) > 2:
+            random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+            random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+        else:
+            random_value = np.random.random((image.shape[0], image.shape[1]))
+            random_value2 = np.random.random((image.shape[0], image.shape[1]))
+
+        indices = np.logical_and(image < max_input_value, random_value <= noise_probability)
+
+        # generate random values in color_range
+        min_array_value = np.min(random_value2)
+        max_array_value = np.max(random_value2)
+        ratio = (noise_value[1] - noise_value[0]) / (max_array_value - min_array_value)
+        # scale random value within range
+        random_value2 = ((ratio * random_value2) + (noise_value[0] - (ratio * min_array_value))).astype("uint8")
+
+        # apply noise with indices
+        image_output = image.copy()
+        image_output[indices] = random_value2[indices]
+
         return image_output
 
     def create_foreground(self, image):

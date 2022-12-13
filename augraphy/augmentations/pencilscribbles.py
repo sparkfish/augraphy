@@ -3,7 +3,7 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import add_noise as lib_add_noise
+from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 
@@ -60,19 +60,10 @@ class PencilScribbles(Augmentation):
         :param image: The background image.
         :type image: numpy.array (numpy.uint8)
         """
-        apply_mask_fn = lambda x, y: y if (x < 64) else x
-        apply_mask = np.vectorize(apply_mask_fn)
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_BGR2GRAY)
-        noise_mask = lib_add_noise(stroke_image, (0.3, 0.5), (32, 128))
-
-        stroke_image = apply_mask(stroke_image, noise_mask)
-
-        intensity = random.uniform(0.4, 0.7)
-        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
-
-        add_noise = np.vectorize(add_noise_fn)
-        apply_mask = np.vectorize(apply_mask_fn)
-        stroke_image = add_noise(stroke_image, sobel)
+        noise_mask = add_noise(stroke_image, (0.3, 0.5), (32, 128), 0)
+        stroke_image[stroke_image < 64] = noise_mask[stroke_image < 64]
+        stroke_image = add_noise(stroke_image, (0.4, 0.7), (32, 128), 1, sobel)
 
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_GRAY2BGR)
         stroke_image = cv2.GaussianBlur(stroke_image, (3, 3), 0)
