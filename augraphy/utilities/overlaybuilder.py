@@ -4,6 +4,8 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import make_white_transparent
+
 
 class OverlayBuilder:
     """Takes an input image, a number of times to duplicate that image, an image
@@ -18,16 +20,18 @@ class OverlayBuilder:
     :param background: The document.
     :type background: numpy array
     :param ntimes: Number copies of the foreground image to draw.
-    :type ntimes: int
+    :type ntimes: int, optional
     :param nscales: Scales of foreground image size.
     :type nscales: tuple, optional
     :param edge: Which edge of the page the foreground copies should be
         placed on. Selections included left, right, top, bottom, enter, random.
-    :type edge: string
+    :type edge: string, optional
     :param edge_offset: How far from the edge of the page to draw the copies.
-    :type edge_offset: int
-    :param alpha: Alpha value for alpha overlay type.
-    :type alpha: float
+    :type edge_offset: int, optional
+    :param alpha: Alpha value for overlay methods that uses alpha in the blending.
+    :type alpha: float, optional
+    :param ink_color: Ink color value for ink_to_paper overlay type.
+    :type ink_color: int, optional
     """
 
     def __init__(
@@ -40,6 +44,7 @@ class OverlayBuilder:
         edge="center",
         edge_offset=0,
         alpha=0.3,
+        ink_color=-1,
     ):
         self.overlay_types = overlay_types
         self.foreground = foreground
@@ -49,13 +54,16 @@ class OverlayBuilder:
         self.edge = edge
         self.edge_offset = max(0, edge_offset)  # prevent negative
         self.alpha = alpha
+        self.ink_color = ink_color
 
         # set valid edge type
         if edge not in ["center", "random", "left", "right", "top", "bottom"]:
             self.edge = "center"
 
+        # most of the blending methods are adapted here: https://github.com/flrs/blend_modes
         # set valid overlay types
         if overlay_types not in [
+            "ink_to_paper",
             "min",
             "max",
             "mix",
@@ -261,6 +269,64 @@ class OverlayBuilder:
         ratio = comp_alpha / new_alpha
         ratio[ratio == np.NAN] = 0.0
         return ratio
+
+    def ink_to_paper_blend(
+        self,
+        overlay_background,
+        base,
+        new_foreground,
+        xstart,
+        xend,
+        ystart,
+        yend,
+    ):
+        """Apply blending using default ink to paper printing method.
+
+        :param overlay_background: Background image.
+        :type overlay_background: numpy array
+        :param base: A patch of background image.
+        :type base: numpy array
+        :param new_foreground: Foreground_image.
+        :type new_foreground: numpy array
+        :param xstart: x start point of the image patch.
+        :type xstart: int
+        :param xend: x end point of the image patch.
+        :type xend: int
+        :param ystart: y start point of the image patch.
+        :type ystart: int
+        :param yend: y end point of the image patch.
+        :type yend: int
+        """
+
+        foreground = make_white_transparent(new_foreground, self.ink_color)
+        # Split out the transparency mask from the colour info
+        overlay_img = foreground[:, :, :3]  # Grab the BRG planes
+        overlay_mask = foreground[:, :, 3:]  # And the alpha plane
+
+        # Turn the single channel alpha masks into three channel, so we can use them as weights
+        if len(foreground.shape) > 2:
+            overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
+
+        # Again calculate the inverse mask
+        background_mask = 255 - overlay_mask
+
+        # Convert background to 3 channels if they are in single channel
+        if len(base.shape) < 3:
+            base = cv2.cvtColor(base, cv2.COLOR_GRAY2BGR)
+
+        # Create a masked out face image, and masked out overlay
+        # We convert the images to floating point in range 0.0 - 1.0
+        background_part = (base * (1.0 / 255.0)) * (background_mask * (1 / 255.0))
+        overlay_part = (overlay_img * (1.0 / 255.0)) * (overlay_mask * (1.0 / 255.0))
+
+        # And finally just add them together, and rescale it back to an 8bit integer image
+        image_printed = np.uint8(
+            cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0),
+        )
+
+        overlay_background[ystart:yend, xstart:xend] = image_printed
+
+        return overlay_background
 
     def mix_blend(
         self,
@@ -696,8 +762,20 @@ class OverlayBuilder:
             else:
                 new_foreground_gray = new_foreground
 
+            # ink to paper overlay type
+            if self.overlay_types == "ink_to_paper":
+                self.ink_to_paper_blend(
+                    overlay_background,
+                    base,
+                    new_foreground,
+                    xstart,
+                    xend,
+                    ystart,
+                    yend,
+                )
+
             # min or max overlay types
-            if self.overlay_types == "min" or self.overlay_types == "max":
+            elif self.overlay_types == "min" or self.overlay_types == "max":
                 self.min_max_blend(
                     base,
                     base_gray,

@@ -8,9 +8,9 @@ from glob import glob
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import make_white_transparent
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.base.augmentationsequence import AugmentationSequence
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class AugraphyPipeline:
@@ -22,6 +22,10 @@ class AugraphyPipeline:
     :type paper_phase: base.augmentationsequence or list
     :param post_phase: Collection of Augmentations to apply.
     :type post_phase: base.augmentationsequence or list
+    :param overlay_type: Blending method to print ink into paper.
+    :type overlay_type: string, optional.
+    :param overlay_alpha: The alpha value for certain overlay methods.
+    :type overlay_alpha: float, optional.
     :param ink_color_range: Pair of ints determining the range from which to
            sample the ink color.
     :type ink_color_range: tuple, optional
@@ -41,6 +45,8 @@ class AugraphyPipeline:
         ink_phase,
         paper_phase,
         post_phase,
+        overlay_type="ink_to_paper",
+        overlay_alpha=0.3,
         ink_color_range=(-1, -1),
         paper_color_range=(255, 255),
         save_outputs=False,
@@ -51,6 +57,8 @@ class AugraphyPipeline:
         self.ink_phase = self.wrapListMaybe(ink_phase)
         self.paper_phase = self.wrapListMaybe(paper_phase)
         self.post_phase = self.wrapListMaybe(post_phase)
+        self.overlay_type = overlay_type
+        self.overlay_alpha = overlay_alpha
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
         self.save_outputs = save_outputs
@@ -520,6 +528,13 @@ class AugraphyPipeline:
         :param background: Background of overlay process, output from paper phase.
         :type background: numpy array
         """
+
+        if (self.ink_color_range[0] != -1) or (self.ink_color_range[1] != -1):
+            ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
+        else:
+            ink_color = -1
+        data["log"]["ink_color"] = ink_color
+
         # prevent inconsistency in size between background and overlay
         if overlay.shape[:2] != background.shape[:2]:
             overlay_y, overlay_x = overlay.shape[:2]
@@ -529,46 +544,25 @@ class AugraphyPipeline:
                 interpolation=cv2.INTER_AREA,
             )
 
-        if (self.ink_color_range[0] != -1) or (self.ink_color_range[1] != -1):
-            ink_color = random.randint(self.ink_color_range[0], self.ink_color_range[1])
-        else:
-            ink_color = -1
-
-        data["log"]["ink_color"] = ink_color
-
-        overlay = make_white_transparent(overlay, ink_color)
-        # Split out the transparency mask from the colour info
-        overlay_img = overlay[:, :, :3]  # Grab the BRG planes
-        overlay_mask = overlay[:, :, 3:]  # And the alpha plane
-
-        # Again calculate the inverse mask
-        background_mask = 255 - overlay_mask
-
-        # Turn the single channel alpha masks into three channel, so we can use them as weights
-        if len(overlay.shape) > 2:
-            overlay_mask = cv2.cvtColor(overlay_mask, cv2.COLOR_GRAY2BGR)
-        if len(background_mask.shape) > 2:
-            background_mask = cv2.cvtColor(background_mask, cv2.COLOR_GRAY2BGR)
-        # Convert background to 3 channels if they are in single channel
-        if len(background.shape) < 3:
-            background = cv2.cvtColor(background, cv2.COLOR_GRAY2BGR)
-        # Create a masked out face image, and masked out overlay
-        # We convert the images to floating point in range 0.0 - 1.0
-        background_part = (background * (1.0 / 255.0)) * (background_mask * (1 / 255.0))
-        overlay_part = (overlay_img * (1.0 / 255.0)) * (overlay_mask * (1.0 / 255.0))
-
-        # And finally just add them together, and rescale it back to an 8bit integer image
-        return np.uint8(
-            cv2.addWeighted(background_part, 255.0, overlay_part, 255.0, 0.0),
+        ink_to_paper_builder = OverlayBuilder(
+            overlay_types=self.overlay_type,
+            foreground=overlay,
+            background=background,
+            ntimes=1,
+            nscales=(1, 1),
+            edge="center",
+            edge_offset=0,
+            alpha=self.overlay_alpha,
+            ink_color=ink_color,
         )
+
+        return ink_to_paper_builder.build_overlay()
 
     def __repr__(self):
         r = f"ink_phase = {repr(self.ink_phase)}\n\n"
         r += f"paper_phase = {repr(self.paper_phase)}\n\n"
         r += f"post_phase = {repr(self.post_phase)}\n\n"
-
-        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range})"
-
+        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, overlay_type={self.overlay_type}, overlay_alpha={self.overlay_alpha}, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, save_outputs={self.save_outputs}, log={self.log}, random_seed={self.random_seed})"
         return r
 
     def visualize(self):
