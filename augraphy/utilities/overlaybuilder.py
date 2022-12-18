@@ -397,21 +397,18 @@ class OverlayBuilder:
         :type fg_width: int
         """
 
-        # can be further vectorized here, need to think about it
-        for y in range(fg_height):
-            for x in range(fg_width):
-                if self.overlay_types == "min":
-                    check_condition = new_foreground_gray[y, x] < base_gray[y, x]
-                else:
-                    check_condition = new_foreground_gray[y, x] > base_gray[y, x]
+        if self.overlay_types == "min":
+            indices = new_foreground_gray < base_gray
+        else:
+            indices = new_foreground_gray > base_gray
 
-                if check_condition:  # foreground is darker, get value from foreground
-                    # foreground is colour but base in gray
-                    if len(new_foreground.shape) > len(base.shape):
-                        base[y, x] = new_foreground_gray[y, x]
-                    # same channel number
-                    else:
-                        base[y, x] = new_foreground[y, x]
+        # for colour image
+        if len(base.shape) > 2:
+            for i in range(base.shape[2]):
+                base[:, :, i][indices] = new_foreground[:, :, i][indices]
+        # for grayscale
+        else:
+            base[indices] = new_foreground_gray[indices]
 
     def normal_blend(
         self,
