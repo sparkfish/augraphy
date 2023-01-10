@@ -196,7 +196,7 @@ class Faxify(Augmentation):
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
-        if force or self.should_run() or True:
+        if force or self.should_run():
             image = image.copy()
 
             # downscale image
