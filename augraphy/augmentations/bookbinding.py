@@ -30,7 +30,7 @@ class BookBinding(Augmentation):
         radius_range=(1, 100),
         curve_range=(200, 300),
         mirror_range=(0.2, 0.5),
-        curling_direction=random.choice([0, 1]),
+        curling_direction=0,
         p=1,
     ):
         super().__init__(p=p)

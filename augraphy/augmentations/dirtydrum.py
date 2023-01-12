@@ -38,7 +38,7 @@ class DirtyDrum(Augmentation):
         self,
         line_width_range=(1, 4),
         line_concentration=0.1,
-        direction=random.randint(0, 2),
+        direction=0,
         noise_intensity=0.5,
         noise_value=(0, 30),
         ksize=(3, 3),
