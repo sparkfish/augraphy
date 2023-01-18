@@ -227,8 +227,8 @@ class AugraphyPipeline:
                 None,
                 self.print_ink_to_paper(
                     data,
-                    data["ink"][-1].result,
-                    data["paper"][-1].result,
+                    data["ink"][-1].result.copy(),
+                    data["paper"][-1].result.copy(),
                 ),
             ),
         )

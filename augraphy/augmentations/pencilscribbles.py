@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 
 from augraphy.augmentations.lib import add_noise
-from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 
 
@@ -63,7 +62,6 @@ class PencilScribbles(Augmentation):
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_BGR2GRAY)
         noise_mask = add_noise(stroke_image, (0.3, 0.5), (32, 128), 0)
         stroke_image[stroke_image < 64] = noise_mask[stroke_image < 64]
-        stroke_image = add_noise(stroke_image, (0.4, 0.7), (32, 128), 1, sobel)
 
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_GRAY2BGR)
         stroke_image = cv2.GaussianBlur(stroke_image, (3, 3), 0)
