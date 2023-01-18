@@ -148,14 +148,17 @@ class AugraphyPipeline:
         # store 30 cache image files
         if len(cache_image_paths) >= 30:
             oldest_index = np.argmin(modified_time)
+            outfilename = cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png"
+            os.remove(outfilename)
             cv2.imwrite(
-                cache_folder_path + "image_" + str(file_indices[oldest_index]) + ".png",
+                outfilename,
                 image,
             )
         else:
             current_image_index = len(cache_image_paths)
+            outfilename = cache_folder_path + "image_" + str(current_image_index) + ".png"
             cv2.imwrite(
-                cache_folder_path + "image_" + str(current_image_index) + ".png",
+                outfilename,
                 image,
             )
 
