@@ -50,7 +50,10 @@ class Dithering(Augmentation):
                 image[y + 1, x - 1] += quant_error * (3 / 16)
                 image[y + 1, x] += quant_error * (5 / 16)
                 image[y + 1, x + 1] += quant_error * (1 / 16)
-        return image.astype("uint8")
+
+        # correctly normalize and convert to 8-bit unsigned int
+        image = (image.astype(np.float32) / 255.0).astype(np.uint8)
+        return image
 
     # Floyd Steinberg dithering
     def dither_Floyd_Steinberg(self, image):
@@ -74,7 +77,9 @@ class Dithering(Augmentation):
             img_dither_fs = image.copy().astype("float")
             img_dither_fs = self.apply_Floyd_Steinberg(img_dither_fs, ysize, xsize)
 
-        return img_dither_fs.astype("uint8")
+        # correctly normalize and convert to 8-bit unsigned int
+        img_dither_fs = (img_dither_fs.astype(np.float32) / 255.0).astype(np.uint8)
+        return img_dither_fs
 
     # Apply ordered dithering algorithm
     def apply_Ordered(self, image, ysize, xsize, order, ordered_matrix):
@@ -100,7 +105,10 @@ class Dithering(Augmentation):
                     image[y, x] = 255
                 else:
                     image[y, x] = 0
-        return image.astype("uint8")
+
+        # correctly normalize and convert to 8-bit unsigned int
+        image = (image.astype(np.float32) / 255.0).astype(np.uint8)
+        return image
 
     def dither_Ordered(self, image, order=5):
         """Apply ordered dithering to the input image.
@@ -141,8 +149,8 @@ class Dithering(Augmentation):
                 ordered_matrix,
             )
 
-        return img_dither_ordered.astype("uint8")
-
+        # correctly normalize and convert to 8-bit unsigned int
+        img_dither_ordered = (img_dither_ordered.astype(np.float32) / 255.0).astype(np.uint8)
         return img_dither_ordered
 
     # Adapted from https://github.com/tromero/BayerMatrix
