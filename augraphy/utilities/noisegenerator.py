@@ -15,7 +15,7 @@ class NoiseGenerator:
         4 = sparse and little noise
     :type noise_type: int, optional
     :param noise_side: Location of generated noise. Choose from:
-        "random", "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
+        "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
     :type noise_side: string, optional
     """
 
@@ -23,7 +23,6 @@ class NoiseGenerator:
         self.noise_type = noise_type
         self.noise_side = noise_side
         self.sides = [
-            "random",
             "left",
             "right",
             "top",
@@ -39,7 +38,7 @@ class NoiseGenerator:
 
         # random location with no sides if no side is chosen
         if self.noise_side not in self.sides:
-            self.noise_side = "random"
+            self.noise_side = random.choice(self.sides)
 
     def generate_clusters_and_samples(self, noise_concentration, max_size):
         """Generate number of noise clusters and number of samples in each noise cluster.
@@ -475,13 +474,8 @@ class NoiseGenerator:
                 interpolation=cv2.INTER_CUBIC,
             )
 
-            # merge noise mask in each iteration
-            img_mask *= img_mask_temporary.astype("int")
-
-            # rescale value from 0 - 255
-            max_value = 255 if np.max(img_mask) > 255 else np.max(img_mask)
-            img_mask = (img_mask - np.min(img_mask)) * max_value / (np.max(img_mask) - np.min(img_mask))
-            img_mask[img_mask_temporary <= noise_value[1]] = img_mask_temporary[img_mask_temporary <= noise_value[1]]
+            # merge noise mask in each iteration by getting their min value
+            img_mask = np.minimum(img_mask_temporary, img_mask)
 
         # output needs uint8 type
         img_mask = img_mask.astype("uint8")
