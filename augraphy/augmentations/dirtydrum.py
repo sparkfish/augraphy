@@ -18,7 +18,7 @@ class DirtyDrum(Augmentation):
     :type line_width_range: tuple, optional
     :param line_concentration: Concentration or number of dirty drum lines.
     :type line_concentration: float, optional
-    :param direction: Direction of effect, 0=horizontal, 1=vertical, 2=both.
+    :param direction: Direction of effect, -1=random, 0=horizontal, 1=vertical, 2=both.
     :type direction: int, optional
     :param noise_intensity: Intensity of dirty drum effect, recommended value
            range from 0.8 to 1.0.
@@ -38,7 +38,7 @@ class DirtyDrum(Augmentation):
         self,
         line_width_range=(1, 4),
         line_concentration=0.1,
-        direction=random.randint(0, 2),
+        direction=-1,
         noise_intensity=0.5,
         noise_value=(0, 30),
         ksize=(3, 3),
@@ -241,6 +241,10 @@ class DirtyDrum(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            if self.direction == -1:
+                # Select random direction
+                self.direction = random.choice([0, 1, 2])
 
             if self.direction == 0:
                 # Create directional masks for dirty drum effect

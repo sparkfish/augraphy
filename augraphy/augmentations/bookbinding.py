@@ -18,7 +18,7 @@ class BookBinding(Augmentation):
     :type curve_range: tuple, optional
     :param mirror_range: Tuple of floats to determine percentage of image to be mirrored.
     :type mirror_range: Tuple, optional
-    :param curling_direction: The direction of page curling, 0: up, 1: down.
+    :param curling_direction: The direction of page curling, -1: random, 0: up, 1: down.
     :type curling_direction: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
@@ -30,7 +30,7 @@ class BookBinding(Augmentation):
         radius_range=(1, 100),
         curve_range=(200, 300),
         mirror_range=(0.2, 0.5),
-        curling_direction=random.choice([0, 1]),
+        curling_direction=-1,
         p=1,
     ):
         super().__init__(p=p)
@@ -154,6 +154,10 @@ class BookBinding(Augmentation):
 
     def __call__(self, image, layer=None, force=False):
         image = image.copy()
+
+        if self.curling_direction == -1:
+            self.curling_direction = random.choice([0, 1])
+
         radius = random.randint(self.radius_range[0], self.radius_range[1])
         angle = 30
         curve_range = max(
