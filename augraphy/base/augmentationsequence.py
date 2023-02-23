@@ -32,6 +32,11 @@ class AugmentationSequence(Augmentation):
                     result = result[0]
                 current_result = augmentation(result)
                 self.results.append(current_result)
-                result = current_result
+                # make sure result is not None when parsing it to the next augmentation
+                if not isinstance(result, tuple) and current_result is not None:
+                    result = current_result
+                elif isinstance(current_result, tuple):
+                    if current_result[0] is not None:
+                        result = current_result
 
             return result, self.augmentations
