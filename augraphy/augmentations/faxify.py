@@ -64,9 +64,14 @@ class Faxify(Augmentation):
     def __repr__(self):
         return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_arguments={self.monochrome_arguments}, halftone={self.halftone}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
 
-    # rotate image based on the input angle
     def cv_rotate(self, image, angle):
+        """Rotate image based on the input angle.
 
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param angle: The angle of the rotation.
+        :type angle: int
+        """
         # image shape
         ysize, xsize = image.shape[:2]
         # center of rotation
@@ -93,7 +98,17 @@ class Faxify(Augmentation):
 
     # generate halftone effect
     def generate_halftone(self, image, half_kernel_size=2, angle=45, sigma=2):
+        """Generate halftone effect in the input image.
 
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param half_kernel_size: Half value of kernel size to generate halftone effect.
+        :type half_kernel_size: int
+        :param angle: The angle of the halftone effect.
+        :type angle: int
+        :param sigma: Sigma value of gaussian kernel for halftone effect.
+        :type sigma: int
+        """
         # get total width of the kernel
         kernel_size = kernel_size_x = kernel_size_y = 2 * half_kernel_size + 1
 
@@ -138,8 +153,18 @@ class Faxify(Augmentation):
 
         return image_halftone
 
-    # convert rgb/bgr to single channel grayscale
     def complement_rgb_to_gray(self, img, invert=1, gray_level=255, max_value=255):
+        """Convert RGB/BGR image to single channel grayscale image.
+
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param invert: Flag to invert the generated grayscale value.
+        :type invert: int
+        :param gray_level: The selected gray value.
+        :type gray_level: int
+        :param max_value: Maximum value of gray value.
+        :type max_value: int
+        """
 
         img_complement = max_value - img
 
@@ -155,8 +180,12 @@ class Faxify(Augmentation):
         else:
             return (1 - (img_gray / 255)).astype("float")
 
-    # downscale image based on the provided scale
     def downscale(self, image):
+        """Downscale image based on the user input scale value.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         ysize, xsize = image.shape[:2]
         scale = np.random.uniform(self.scale_range[0], self.scale_range[1])
@@ -167,7 +196,7 @@ class Faxify(Augmentation):
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
-        if force or self.should_run() or True:
+        if force or self.should_run():
             image = image.copy()
 
             # downscale image

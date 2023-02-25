@@ -4,6 +4,7 @@ import sys
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
 
@@ -49,27 +50,34 @@ class InkBleed(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+
             image = image.copy()
-            intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
-            add_noise_fn = (
-                lambda x, y: random.randint(self.color_range[0], self.color_range[1])
-                if (y == 255 and random.random() < intensity)
-                else x
-            )
 
-            severity = np.random.uniform(self.severity[0], self.severity[1])
-            apply_mask_fn = lambda x, y, z: x if (z != 255 or random.random() > severity) else y
-            add_noise = np.vectorize(add_noise_fn)
-            apply_mask = np.vectorize(apply_mask_fn)
+            # apply sobel filter and dilate image
             sobelized = sobel(image)
-
             kernel = np.ones(self.kernel_size, dtype="uint8")
-            sobelizedDilated = cv2.dilate(sobelized, kernel, iterations=1)
+            sobelized_dilated = cv2.dilate(sobelized, kernel, iterations=1)
 
-            noise_mask = add_noise(image, sobelizedDilated)
+            # add noise
+            noise_mask = add_noise(
+                image,
+                intensity_range=(self.intensity_range[0], self.intensity_range[1]),
+                color_range=(self.color_range[0], self.color_range[1]),
+                noise_condition=1,
+                image2=sobelized_dilated,
+            )
             noise_mask = noise_mask.astype("uint8")
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
 
-            image = apply_mask(image, noise_mask, sobelizedDilated)
+            # apply ege image based on severity
+            if len(image.shape) > 2:
+                random_array = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+            else:
+                random_array = np.random.random((image.shape[0], image.shape[1]))
 
-            return image
+            severity = np.random.uniform(self.severity[0], self.severity[1])
+            indices = np.logical_or(sobelized_dilated != 255, random_array > severity)
+            output = noise_mask.copy()
+            output[indices] = image[indices]
+
+            return output

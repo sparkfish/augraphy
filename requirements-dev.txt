@@ -5,6 +5,6 @@ pre-commit
 pytest
 requests
 scikit-image
+scikit-learn
 scipy
-sklearn
 tox

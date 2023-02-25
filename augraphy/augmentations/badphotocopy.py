@@ -92,8 +92,10 @@ class BadPhotoCopy(Augmentation):
         return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, p={self.p})"
 
     def apply_wave(self, mask):
-        """
-        applies wavy pattern mask to input mask
+        """applies wavy pattern mask to input mask.
+
+        :param mask: The image to apply the function.
+        :type mask: numpy.array (numpy.uint8)
         """
 
         # rescale mask from 0 to 255
@@ -149,16 +151,16 @@ class BadPhotoCopy(Augmentation):
             img_wave[: int(y_point), int(x_point)] = 1
             # additional noise, to smooth the edges between wavy mask
             for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
-                if random.random() > 0.5:
+                if random.random() > 0.7:
                     img_wave[y, int(x_point)] = 1
-                    if random.random() > 0.95:
+                    if random.random() > 0.85:
                         break
 
         # top (noise concentrated at top edge)
-        if self.noise_type == 7:
+        if self.noise_side == "top":
             mask = img_wave * mask
         # right (noise concentrated at right edge)
-        elif self.noise_type == 6:
+        elif self.noise_side == "right":
             img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(
                 img_wave,
@@ -167,11 +169,11 @@ class BadPhotoCopy(Augmentation):
             )
             mask = img_wave * mask
         # bottom (noise concentrated at bottom edge)
-        elif self.noise_type == 8:
+        elif self.noise_side == "bottom":
             img_wave = np.flipud(img_wave)
             mask = img_wave * mask
         # left (noise concentrated at left edge)
-        elif self.noise_type == 5:
+        elif self.noise_side == "left":
             img_wave = np.rot90(img_wave, 1)
             img_wave = cv2.resize(
                 img_wave,
@@ -197,6 +199,11 @@ class BadPhotoCopy(Augmentation):
         return mask
 
     def apply_augmentation(self, image):
+        """applies augmentation to the input image.
+
+        :param image: The image to apply the augmentation.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         image_shape_length = len(image.shape)
 
@@ -287,10 +294,6 @@ class BadPhotoCopy(Augmentation):
             edge_effect = self.edge_effect
         if edge_effect:
 
-            # add random noise range from 0-128
-            add_edge_noise_fn = lambda x, y: random.randint(0, 128) if (y == 255 and random.random() < 0.70) else x
-            add_edge_noise = np.vectorize(add_edge_noise_fn)
-
             # get edge mask
             image_sobel = sobel(image)
             image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
@@ -298,7 +301,12 @@ class BadPhotoCopy(Augmentation):
             image_sobel = cv2.dilate(image_sobel, (15, 15), iterations=5)
             image_sobel_sobel = sobel(image_sobel)
             image_sobel_sobel = cv2.dilate(image_sobel_sobel, (5, 5), iterations=2)
-            image_sobel = add_edge_noise(image_sobel, image_sobel_sobel)
+
+            # add random noise range from 0-128
+            image_random = (np.random.random((image.shape[0], image.shape[1])) * 128).astype("uint8")
+            image_random2 = np.random.random((image.shape[0], image.shape[1]))
+            indices = np.logical_and(image_sobel_sobel == 255, image_random2 < 0.70)
+            image_sobel[indices] = image_random[indices]
             image_sobel = cv2.GaussianBlur(image_sobel, (5, 5), 0)
 
             image_original = image.copy()

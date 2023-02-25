@@ -61,19 +61,48 @@ class BindingsAndFasteners(Augmentation):
     def __repr__(self):
         return f"BindingsAndFasteners(overlay_types={self.overlay_types}, foreground={self.foreground}, effect_type={self.effect_type}, ntimes={self.ntimes}, nscales={self.nscales}, edge={self.edge}, edge_offset={self.edge_offset}, use_figshare_library={self.use_figshare_library}, p={self.p})"
 
-    # Add noise to image
     def add_noise(self, image, noise_probability, noise_value, max_input_value):
+        """Add noise to input image.
 
-        noise = (
-            lambda x: random.randint(noise_value[0], noise_value[1])
-            if (x < max_input_value and noise_probability > random.random())
-            else x
-        )
-        add_noise = np.vectorize(noise)
-        image_output = add_noise(image)
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param noise_probability: The probability of applied noise.
+        :type noise_probability: float
+        :param noise_value: The value of applied noise.
+        :type noise_value: tuple
+        :param max_input_value: Maximum value of input to apply the noise effect.
+        :type max_input_value: int
+        """
+
+        # generate random mask
+        if len(image.shape) > 2:
+            random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+            random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+        else:
+            random_value = np.random.random((image.shape[0], image.shape[1]))
+            random_value2 = np.random.random((image.shape[0], image.shape[1]))
+
+        indices = np.logical_and(image < max_input_value, random_value <= noise_probability)
+
+        # generate random values in color_range
+        min_array_value = np.min(random_value2)
+        max_array_value = np.max(random_value2)
+        ratio = (noise_value[1] - noise_value[0]) / (max_array_value - min_array_value)
+        # scale random value within range
+        random_value2 = ((ratio * random_value2) + (noise_value[0] - (ratio * min_array_value))).astype("uint8")
+
+        # apply noise with indices
+        image_output = image.copy()
+        image_output[indices] = random_value2[indices]
+
         return image_output
 
     def create_foreground(self, image):
+        """Create foreground based on current input effect type.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         ysize, xsize = image.shape[:2]
 
@@ -364,6 +393,7 @@ class BindingsAndFasteners(Augmentation):
                 self.foreground.append(image_clip_bgr)
 
     def retrieve_foreground(self):
+        """Retrieve template foreground based on current input effect type."""
 
         # Id for figshare published template files
         article_ID = "16668964"

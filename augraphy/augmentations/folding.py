@@ -52,7 +52,6 @@ class Folding(Augmentation):
     def __repr__(self):
         return f"Folding(fold_x={self.fold_x}, fold_deviation={self.fold_deviation}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
 
-    # Apply perspective transform 2 times and get single folding effect
     def apply_folding(
         self,
         img,
@@ -62,6 +61,22 @@ class Folding(Augmentation):
         gradient_height,
         fold_noise,
     ):
+        """Apply perspective transform twice to get single folding effect.
+
+        :param imge: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param ysize: Height of the image.
+        :type ysize: int
+        :param xsize: Width of the image.
+        :type xsize: int
+        :param gradient_width:  Measure of the space affected by fold prior to being warped (in units of percentage of width of page).
+        :type gradient_width: int
+        :param gradient_height: Measure of depth of fold (unit measured as percentage page height).
+        :type gradient_height: int
+        :param fold_noise: Level of noise added to folding area.
+        :type fold_noise: float
+
+        """
 
         min_fold_x = min(np.ceil(gradient_width[0] * xsize), xsize).astype("int")
         max_fold_x = min(np.ceil(gradient_width[1] * xsize), xsize).astype("int")

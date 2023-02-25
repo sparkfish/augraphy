@@ -4,8 +4,7 @@ import random
 class Augmentation:
     """The base class which all pipeline augmentations inherit from.
 
-    :param p: The probability that this augmentation will be run when
-        executed as part of a pipeline.
+    :param p: The probability that this augmentation will be run when executed as part of a pipeline.
     :type p: float, optional
     """
 

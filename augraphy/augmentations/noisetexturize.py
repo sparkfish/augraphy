@@ -36,6 +36,42 @@ class NoiseTexturize(Augmentation):
     def __repr__(self):
         return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
 
+    def noise(self, width, height, channel, ratio, sigma):
+        """The function generates an image, filled with gaussian nose. If ratio
+        parameter is specified, noise will be generated for a lesser image and
+        then it will be upscaled to the original size. In that case noise will
+        generate larger square patterns. To avoid multiple lines, the upscale
+        uses interpolation.
+
+        :param width: Width of generated image.
+        :type width: int
+        :param height: Height of generated image.
+        :type height: int
+        :param channel: Channel number of generated image.
+        :type channel: int
+        :param ratio: The size of generated noise "pixels".
+        :type ratio: int
+        :param sigma: Defines bounds of noise fluctuations.
+        :type sigma: int
+        """
+        mean = 0
+        # assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
+        # assert height % ratio == 0, "Can't scale image with of size {} and ratio {}".format(height, ratio)
+
+        result = (random.gauss(mean, sigma), random.gauss(mean, sigma))
+
+        result = cv2.resize(
+            result,
+            dsize=(width, height),
+            interpolation=cv2.INTER_LINEAR,
+        )
+
+        # for multiple channels input, convert result to multiple channels
+        if channel:
+            result = np.stack([result, result, result], axis=2)
+
+        return result
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
@@ -62,41 +98,3 @@ class NoiseTexturize(Augmentation):
 
             cut = cut.astype(np.uint8)
             return cut
-
-    def noise(self, width, height, channel, ratio, sigma):
-        """The function generates an image, filled with gaussian nose. If ratio
-        parameter is specified, noise will be generated for a lesser image and
-        then it will be upscaled to the original size. In that case noise will
-        generate larger square patterns. To avoid multiple lines, the upscale
-        uses interpolation.
-
-        :param ratio: the size of generated noise "pixels"
-        :param sigma: defines bounds of noise fluctuations
-        """
-        mean = 0
-        # assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
-        # assert height % ratio == 0, "Can't scale image with of size {} and ratio {}".format(height, ratio)
-
-        h = int(height / ratio)
-        w = int(width / ratio)
-
-        if h == 0:
-            h = 1
-        if w == 0:
-            w = 1
-
-        gaussian = np.vectorize(lambda x: random.gauss(mean, sigma))
-
-        result = gaussian(np.array((w, h)))
-
-        result = cv2.resize(
-            result,
-            dsize=(width, height),
-            interpolation=cv2.INTER_LINEAR,
-        )
-
-        # for multiple channels input, convert result to multiple channels
-        if channel:
-            result = np.stack([result, result, result], axis=2)
-
-        return result

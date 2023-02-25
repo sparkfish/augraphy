@@ -44,8 +44,7 @@ class LowInkPeriodicLines(LowInkLine):
         return f"LowInkPeriodicLines(count_range={self.count_range}, period_range={self.period_range}, use_consistent_lines={self.use_consistent_lines}, p={self.p})"
 
     def add_periodic_transparency_line(self, mask, line_count, offset, alpha):
-        """Creates horizontal lines of some opacity over the input image, at
-        y-positions determined by the offset and line_count.
+        """Creates horizontal lines of some opacity over the input image, at y-positions determined by the offset and line_count.
 
         :param mask: The image to apply the line to.
         :type mask: numpy.array

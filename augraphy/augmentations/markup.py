@@ -16,7 +16,6 @@ from augraphy.utilities import *
 
 
 class Markup(Augmentation):
-
     """Uses contours detection to detect text lines and add a smooth text strikethrough, highlight or underline effect.
 
     :param num_lines_range: Pair of ints determining the number of added markup effect.
@@ -27,14 +26,14 @@ class Markup(Augmentation):
     :type markup_thickness_range: int tuple, optional
     :param markup_type: Choice of markup "strikethrough", "highlight", "underline" or "crossed".
     :type markup_type: string
-    :param markup_color: bgr color tuple.
-    :type markup_color: tuple of ints or string
-    :param repetitions: determines how many time a markup should be drawn
+    :param markup_color: BGR color tuple.
+    :type markup_color: tuple or string
+    :param repetitions: Determine how many time a single markup effect should be drawn.
     :type repetitions: int
-    :param single_word_mode: set true to draw markup on a single word only
+    :param large_word_mode: Set true to draw markup on large words, else large word will be ignored.
+    :type large_word_mode: boolean
+    :param single_word_mode: Set true to draw markup on a single word only.
     :type single_word_mode: boolean
-
-
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -46,6 +45,7 @@ class Markup(Augmentation):
         markup_thickness_range=(1, 3),
         markup_type="strikethrough",
         markup_color="random",
+        large_word_mode=True,
         single_word_mode=False,
         repetitions=1,
         p=1,
@@ -58,15 +58,28 @@ class Markup(Augmentation):
         self.markup_type = markup_type
         self.markup_color = markup_color
         self.repetitions = repetitions
+        self.large_word_mode = large_word_mode
         self.single_word_mode = single_word_mode
 
     def __repr__(self):
         return (
             f"Markup(num_lines_range={self.num_lines_range}, markup_length_range={self.markup_length_range}, "
-            f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type} p={self.p})"
+            f"markup_thickness_range={self.markup_thickness_range},  markup_type{self. markup_type}, "
+            f"markup_color={self.markup_color}, repetitions={self.repetitions}, "
+            f"large_word_mode={self.large_word_mode}, single_word_mode={self.single_word_mode}, p={self.p})"
         )
 
     def distribute_line(self, starting_point, ending_point, offset):
+        """Create smoothed line from the provided starting and ending point.
+
+        :param starting_point: Starting point (x, y) of the line.
+        :type starting_point: tuple
+        :param ending_point: Ending point (x, y) of the line.
+        :type ending_point: tuple
+        :param offset: Offset value to randomize point position.
+        :type offset: int
+        """
+
         points_count = random.randint(3, 6)  # dividing the line into points
         points = np.linspace(starting_point[0], ending_point[0], points_count)
         points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
@@ -76,21 +89,8 @@ class Markup(Augmentation):
         )  # adding a smoothing effect in points using chaikin's algorithm
         return points
 
-    def apply_crossed_off(self, image, p1, p2, offset):
-        apply_random_offset_fn = lambda p, offset: p + random.randint(-offset, offset)
-        apply_random_offset = np.vectorize(apply_random_offset_fn)
-        p1 = tuple(apply_random_offset(p1, offset))
-        p2 = tuple(apply_random_offset(p2, offset))
-        drawn = cv2.line(
-            image,
-            p1,
-            p2,
-            self.markup_color,
-            self.mar,
-            lineType=cv2.LINE_AA,
-        )
-
     def _preprocess(self, image):
+        """Preprocess image with binarization, dilation and erosion."""
         blurred = cv2.blur(image, (5, 5))
         blurred = blurred.astype("uint8")
         if len(blurred.shape) > 2 and blurred.shape[2] == 3:
@@ -127,6 +127,19 @@ class Markup(Augmentation):
         return dilation
 
     def draw_line(self, p1, p2, markup_mask, markup_thickness, reverse):
+        """Draw line across two provided points.
+
+        :param p1: Starting point (x, y) of the line.
+        :type p1: tuple
+        :param p2: Ending point (x, y) of the line.
+        :type p2: tuple
+        :param markup_mask: Mask of markup effect.
+        :type markup_mask: numpy.array (numpy.uint8)
+        :param markup_thickness: Thickness of the line.
+        :type markup_thickness: int
+        :param reverse: Reverse the order of line points distribution.
+        :type reverse: int
+        """
 
         # get min and max of points
         min_x = min(p2[0], p1[0])
@@ -165,6 +178,10 @@ class Markup(Augmentation):
             )
 
     def __call__(self, image, layer=None, force=False):
+
+        # change to 3 channels BGR format
+        if len(image.shape) < 3:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         markup_img = image.copy()
         overlay = markup_img.copy()
 
@@ -226,11 +243,18 @@ class Markup(Augmentation):
                     h < character_height_average + height_range
                 )
 
-            if choice and (w > h * 2) and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10) and check_height:
+            if not self.large_word_mode:
+                conditions = (
+                    choice
+                    and (w > h * 2)
+                    and (w * h < (markup_mask.shape[0] * markup_mask.shape[1]) / 10)
+                    and w < int(markup_img.shape[1] / 5)
+                    and check_height
+                )
+            else:
+                conditions = check_height
 
-                # avoiding too small contours (width less  5% of the image width)
-                if w < int(markup_img.shape[1] / 5):
-                    continue
+            if conditions:
                 if num_lines == 0:
                     break
                 num_lines = num_lines - 1
@@ -380,7 +404,7 @@ class Markup(Augmentation):
                 brighten_ratio = abs(markup_min_intensity - min_intensity) / markup_min_intensity
                 brighten_min = 1 + brighten_ratio
                 brighten_max = 1 + brighten_ratio + 0.5
-                brightness = Brightness(range=(brighten_min, brighten_max))
+                brightness = Brightness(brightness_range=(brighten_min, brighten_max))
                 markup_mask = brightness(markup_mask)
 
         else:

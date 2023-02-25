@@ -3,8 +3,7 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import add_noise as lib_add_noise
-from augraphy.augmentations.lib import sobel
+from augraphy.augmentations.lib import add_noise
 from augraphy.base.augmentation import Augmentation
 
 
@@ -53,19 +52,16 @@ class PencilScribbles(Augmentation):
         return f"PencilScribbles(size_range={self.size_range}, count_range={self.count_range}, stroke_count_range={self.stroke_count_range}, thickness_range={self.thickness_range}, brightness_change={self.brightness_change}, p={self.p})"
 
     def apply_pencil_stroke(self, stroke_image, image):
-        apply_mask_fn = lambda x, y: y if (x < 64) else x
-        apply_mask = np.vectorize(apply_mask_fn)
+        """Apply image with pencil strokes to background image.
+
+        :param stroke_image: Image with pencil strokes.
+        :type stroke_image: numpy.array (numpy.uint8)
+        :param image: The background image.
+        :type image: numpy.array (numpy.uint8)
+        """
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_BGR2GRAY)
-        noise_mask = lib_add_noise(stroke_image, (0.3, 0.5), (32, 128))
-
-        stroke_image = apply_mask(stroke_image, noise_mask)
-
-        intensity = random.uniform(0.4, 0.7)
-        add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
-
-        add_noise = np.vectorize(add_noise_fn)
-        apply_mask = np.vectorize(apply_mask_fn)
-        stroke_image = add_noise(stroke_image, sobel)
+        noise_mask = add_noise(stroke_image, (0.3, 0.5), (32, 128), 0)
+        stroke_image[stroke_image < 64] = noise_mask[stroke_image < 64]
 
         stroke_image = cv2.cvtColor(stroke_image, cv2.COLOR_GRAY2BGR)
         stroke_image = cv2.GaussianBlur(stroke_image, (3, 3), 0)
@@ -80,6 +76,13 @@ class PencilScribbles(Augmentation):
         return cv2.multiply(stroke_image, image, scale=1 / 255)
 
     def create_scribble(self, max_height, max_width):
+        """Create scribbles of pencil strokes in an image.
+
+        :param max_height: Maximum height of scribble effect.
+        :type max_height: int
+        :param max_width: Maximum width of scribble effect.
+        :type max_width: int
+        """
         size = random.randint(max(self.size_range[0], 30), max(40, self.size_range[1]))
         size = min([size, max_height, max_width])
         width, height = size, size  # picture's size
@@ -140,6 +143,13 @@ class PencilScribbles(Augmentation):
         return strokes_img
 
     def random_paste(self, paste, target):
+        """Randomly paste image to another image.
+
+        :param paste: Image for the paste effect.
+        :type paste: numpy.array (numpy.uint8)
+        :param target: The image to be pasted.
+        :type target: numpy.array (numpy.uint8)
+        """
 
         target_shape_length = len(target.shape)
 

@@ -1,8 +1,6 @@
 class AugmentationResult:
     """Contains the result of an Augmentation's application, as well as
-    the Augmentation applied.
-
-    AugmentationResults are stored in an AugmentationPipeline.
+    the Augmentation applied. AugmentationResults are stored in an AugmentationPipeline.
 
     :param augmentation: The augmentation that was applied.
     :type augmentation: object

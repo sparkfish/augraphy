@@ -18,7 +18,7 @@ class DirtyDrum(Augmentation):
     :type line_width_range: tuple, optional
     :param line_concentration: Concentration or number of dirty drum lines.
     :type line_concentration: float, optional
-    :param direction: Direction of effect, 0=horizontal, 1=vertical, 2=both.
+    :param direction: Direction of effect, -1=random, 0=horizontal, 1=vertical, 2=both.
     :type direction: int, optional
     :param noise_intensity: Intensity of dirty drum effect, recommended value
            range from 0.8 to 1.0.
@@ -38,7 +38,7 @@ class DirtyDrum(Augmentation):
         self,
         line_width_range=(1, 4),
         line_concentration=0.1,
-        direction=random.randint(0, 2),
+        direction=-1,
         noise_intensity=0.5,
         noise_value=(0, 30),
         ksize=(3, 3),
@@ -58,8 +58,15 @@ class DirtyDrum(Augmentation):
     def __repr__(self):
         return f"DirtyDrum(line_width_range={self.line_width_range}, line_concentration={self.line_concentration}, direction={self.direction}, noise_intensity={self.noise_intensity}, noise_value={self.noise_value}, ksize={self.ksize}, sigmaX={self.sigmaX},p={self.p})"
 
-    # Blend images to produce DirtyDrum effect
     def blend(self, img, img_dirty):
+        """Blend two images to produce DirtyDrum effect。
+
+        :param img: The background image to apply the blending function.
+        :type img: numpy.array (numpy.uint8)
+        :param img_dirty: The foreground image to apply the blending function.
+        :type img_dirty: numpy.array (numpy.uint8)
+        """
+
         ob = OverlayBuilder(
             "darken",
             img_dirty.astype("uint8"),
@@ -71,9 +78,20 @@ class DirtyDrum(Augmentation):
         )
         return ob.build_overlay()
 
-    # Add noise to stripe of image
     def add_noise(self, img, y0, yn, x0, xn):
+        """Add noise to stripe of image.
 
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param y0: The y start coordinate of the image stripe.
+        :type y0: int
+        :param yn: The y end coordinate of the image stripe.
+        :type yn: int
+        :param x0: The x start coordinate of the image stripe.
+        :type x0: int
+        :param xn: The x end coordinate of the image stripe.
+        :type xn: int
+        """
         ysize, xsize = img.shape[:2]
 
         # generate parameter values for noise generation
@@ -157,8 +175,16 @@ class DirtyDrum(Augmentation):
             self.noise_value[1],
         )
 
-    # Create mask for drity drum effect
     def create_dirty_mask(self, img, line_width_range=(6, 18), axis=1):
+        """Create mask for drity drum effect。
+
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param line_width_range: Pair of ints determining the range from which the width of a dirty drum line is sampled.
+        :type line_width_range: tuple
+        :param axis: The direction of noise line, 0 - horizontal, 1 - vertical.
+        :type axis: int
+        """
 
         # initialization
         img_dirty = np.ones_like(img).astype("uint8") * 255
@@ -206,6 +232,8 @@ class DirtyDrum(Augmentation):
         # for horizontal stripes, rotate current image
         if axis == 0:
             img_dirty = np.rot90(img_dirty, random.choice((1, 3)))
+            # resize after rotation
+            img_dirty = cv2.resize(img_dirty, (img.shape[1], img.shape[0]))
 
         return img_dirty
 
@@ -213,6 +241,10 @@ class DirtyDrum(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            if self.direction == -1:
+                # Select random direction
+                self.direction = random.choice([0, 1, 2])
 
             if self.direction == 0:
                 # Create directional masks for dirty drum effect

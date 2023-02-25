@@ -57,8 +57,6 @@ class Letterpress(Augmentation):
             ysize, xsize = image.shape[:2]
             max_box_size = max(ysize, xsize)
 
-            noise_mask = np.copy(image)
-
             generated_points = np.array([[-1, -1]], dtype="float")
 
             for i in range(random.randint(8, 12)):
@@ -82,26 +80,41 @@ class Letterpress(Augmentation):
             # remove decimals
             generated_points = generated_points.astype("int")
 
-            # delete invalid points (smaller or bigger than image size)
-            ind_delete = np.where(generated_points[:, 0] < 0)
-            generated_points = np.delete(generated_points, ind_delete, axis=0)
-            ind_delete = np.where(generated_points[:, 1] < 0)
-            generated_points = np.delete(generated_points, ind_delete, axis=0)
-            ind_delete = np.where(generated_points[:, 0] > ysize - 1)
-            generated_points = np.delete(generated_points, ind_delete, axis=0)
-            ind_delete = np.where(generated_points[:, 1] > xsize - 1)
-            generated_points = np.delete(generated_points, ind_delete, axis=0)
+            # delete location where < 0 and > image size
+            ind_delete = np.logical_or.reduce(
+                (
+                    generated_points[:, 0] < 0,
+                    generated_points[:, 1] < 0,
+                    generated_points[:, 0] > xsize - 1,
+                    generated_points[:, 1] > ysize - 1,
+                ),
+            )
+            generated_points_x = np.delete(generated_points[:, 0], ind_delete.reshape(ind_delete.shape[0]), axis=0)
+            generated_points_y = np.delete(generated_points[:, 1], ind_delete.reshape(ind_delete.shape[0]), axis=0)
 
-            # initialize mask and insert value
-            noise_mask = np.zeros_like(image, dtype="uint8")
-            for i in range(generated_points.shape[0]):
-                noise_mask[generated_points[i][0], generated_points[i][1]] = random.randint(
-                    self.value_range[0],
-                    self.value_range[1],
-                )
+            # initialize empty noise mask and noise mask with random values
+            noise_mask = np.copy(image)
+            noise_mask2 = (np.random.random((image.shape[0], image.shape[1])) * 255).astype("uint8")
+            # generate random values in value range
+            min_array_value = np.min(noise_mask2)
+            max_array_value = np.max(noise_mask2)
+            ratio = (self.value_range[1] - self.value_range[0]) / (max_array_value - min_array_value)
+            # scale random value within range
+            noise_mask2 = (ratio * noise_mask2) + (self.value_range[0] - (ratio * min_array_value))
+
+            # insert noise value according to generate points
+            if len(image.shape) > 2:
+
+                for i in range(image.shape[2]):
+                    noise_mask[generated_points_y, generated_points_x, i] = noise_mask2[
+                        generated_points_y,
+                        generated_points_x,
+                    ]
+            else:
+                noise_mask[generated_points_y, generated_points_x] = noise_mask2[generated_points_y, generated_points_x]
 
             if self.blur:
-                # gaussian blur need uint8 input
+                # gaussian blur needs uint8 input
                 noise_mask = cv2.GaussianBlur(noise_mask, (5, 5), 0)
 
             if self.value_threshold_range[1] >= self.value_threshold_range[0]:
@@ -110,8 +123,7 @@ class Letterpress(Augmentation):
                 value_threshold = self.value_threshold_range[1]
 
             # apply noise to image
-            apply_mask_fn = lambda x, y: y if (x < value_threshold) else x
-            apply_mask = np.vectorize(apply_mask_fn)
-            image = apply_mask(image, noise_mask)
+            indices = image < value_threshold
+            image[indices] = noise_mask[indices]
 
             return image
