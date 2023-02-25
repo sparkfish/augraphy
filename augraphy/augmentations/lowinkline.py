@@ -32,26 +32,6 @@ class LowInkLine(Augmentation):
         self.use_consistent_lines = use_consistent_lines
         self.noise_probability = noise_probability
 
-        inconsistent_transparency_line = lambda x: random.randint(0, 255)
-        self.inconsistent_transparency_line = np.vectorize(
-            inconsistent_transparency_line,
-        )
-
-        inconsistent_transparency_line_topbottom = (
-            lambda x: random.randint(0, 255) if random.random() > (1 - self.noise_probability) else x
-        )
-        self.inconsistent_transparency_line_topbottom = np.vectorize(
-            inconsistent_transparency_line_topbottom,
-        )
-
-        consistent_transparency_line_topbottom = lambda x, y: y if random.random() > (1 - self.noise_probability) else x
-        self.consistent_transparency_line_topbottom = np.vectorize(
-            consistent_transparency_line_topbottom,
-        )
-
-        apply_line = lambda x, y: x if x > y else y
-        self.apply_line = np.vectorize(apply_line)
-
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
         return f"LowInkLine(use_consistent_lines={self.use_consistent_lines}, p={self.p})"
@@ -69,6 +49,8 @@ class LowInkLine(Augmentation):
         :param alpha: The desired opacity of the line.
         :type alpha: int, optional
         """
+        ysize, xsize = mask.shape[:2]
+
         if alpha is None:
             alpha = random.randint(16, 224)
 
@@ -77,10 +59,13 @@ class LowInkLine(Augmentation):
 
             # add noise to top and bottom of the line
             if y - 1 >= 0:
-                low_ink_line_top = self.consistent_transparency_line_topbottom(
-                    mask[y - 1, :],
-                    alpha,
-                )
+                if len(mask.shape) > 2:
+                    indices = np.random.random((xsize, mask.shape[2])) > (1 - self.noise_probability)
+                else:
+                    indices = np.random.random((xsize)) > (1 - self.noise_probability)
+                low_ink_line_top = mask[y - 1, :].copy()
+                low_ink_line_top[indices] = alpha
+
                 if len(mask.shape) > 2:
                     low_ink_line_top = np.dstack(
                         [
@@ -91,10 +76,13 @@ class LowInkLine(Augmentation):
                     )[0]
 
             if y + 1 < mask.shape[0]:
-                low_ink_line_bottom = self.consistent_transparency_line_topbottom(
-                    mask[y + 1, :],
-                    alpha,
-                )
+                if len(mask.shape) > 2:
+                    indices = np.random.random((xsize, mask.shape[2])) > (1 - self.noise_probability)
+                else:
+                    indices = np.random.random((xsize)) > (1 - self.noise_probability)
+                low_ink_line_bottom = mask[y + 1, :].copy()
+                low_ink_line_bottom[indices] = alpha
+
                 if len(mask.shape) > 2:
                     low_ink_line_bottom = np.dstack(
                         [
@@ -105,23 +93,56 @@ class LowInkLine(Augmentation):
                     )[0]
 
         else:
-            low_ink_line = self.inconsistent_transparency_line(mask[y, :])
+            low_ink_line = (np.random.random((xsize)) * 255).astype("uint8")
+            if len(mask.shape) > 2:
+                new_low_ink_line = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                for i in range(mask.shape[2]):
+                    new_low_ink_line[:, :, i] = low_ink_line.copy()
+                low_ink_line = new_low_ink_line
 
             # add noise to top and bottom of the line
             if y - 1 >= 0:
-                low_ink_line_top = self.inconsistent_transparency_line_topbottom(
-                    mask[y - 1, :],
-                )
-            if y + 1 < mask.shape[0]:
-                low_ink_line_bottom = self.inconsistent_transparency_line_topbottom(
-                    mask[y + 1, :],
-                )
+                indices = np.random.random((xsize)) <= (1 - self.noise_probability)
+                low_ink_line_top = (np.random.random((xsize)) * 255).astype("uint8")
+                if len(mask.shape) > 2:
+                    new_low_ink_line_top = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                    for i in range(mask.shape[2]):
+                        new_low_ink_line_top[:, :, i] = low_ink_line_top.copy()
+                        new_low_ink_line_top[:, :, i][indices.reshape(1, xsize)] = mask[y - 1, :, i][indices]
+                    low_ink_line_top = new_low_ink_line_top
+                else:
+                    low_ink_line_top[indices] = mask[y - 1, :][indices]
 
-        mask[y, :] = self.apply_line(mask[y, :], low_ink_line)
-        # apply noise to top and bottom of the line
+            if y + 1 < mask.shape[0]:
+                indices = np.random.random((xsize)) <= (1 - self.noise_probability)
+                low_ink_line_bottom = (np.random.random((xsize)) * 255).astype("uint8")
+                if len(mask.shape) > 2:
+                    new_low_ink_line_bottom = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                    for i in range(mask.shape[2]):
+                        new_low_ink_line_bottom[:, :, i] = low_ink_line_bottom.copy()
+                        new_low_ink_line_bottom[:, :, i][indices.reshape(1, xsize)] = mask[y - 1, :, i][indices]
+                    low_ink_line_bottom = new_low_ink_line_bottom
+                else:
+                    low_ink_line_bottom[indices] = mask[y - 1, :][indices]
+
+        indices = mask[y, :] < low_ink_line
+        if len(mask.shape) > 2:
+            mask[y, :][indices.reshape(xsize, mask.shape[2])] = low_ink_line[indices]
+        else:
+            mask[y, :][indices] = low_ink_line[indices]
+
         if y - 1 >= 0:
-            mask[y - 1, :] = self.apply_line(mask[y - 1, :], low_ink_line_top)
+            indices = mask[y - 1, :] < low_ink_line_top
+            if len(mask.shape) > 2:
+                mask[y - 1, :][indices.reshape(xsize, mask.shape[2])] = low_ink_line_top[indices]
+            else:
+                mask[y - 1, :][indices] = low_ink_line_top[indices]
+
         if y + 1 < mask.shape[0]:
-            mask[y + 1, :] = self.apply_line(mask[y + 1, :], low_ink_line_bottom)
+            indices = mask[y - 1, :] < low_ink_line_bottom
+            if len(mask.shape) > 2:
+                mask[y + 1, :][indices.reshape(xsize, mask.shape[2])] = low_ink_line_bottom[indices]
+            else:
+                mask[y + 1, :][indices] = low_ink_line_bottom[indices]
 
         return mask

@@ -14,6 +14,7 @@ class AugmentationSequence(Augmentation):
         """Constructor method"""
         self.augmentations = augmentations
         self.p = p
+        self.results = []
 
     def __repr__(self):
         output = "AugmentationSequence([\n"
@@ -27,6 +28,15 @@ class AugmentationSequence(Augmentation):
         if force or self.should_run():
             result = image
             for augmentation in self.augmentations:
-                result = augmentation(result)
+                if isinstance(result, tuple):
+                    result = result[0]
+                current_result = augmentation(result)
+                self.results.append(current_result)
+                # make sure result is not None when parsing it to the next augmentation
+                if not isinstance(result, tuple) and current_result is not None:
+                    result = current_result
+                elif isinstance(current_result, tuple):
+                    if current_result[0] is not None:
+                        result = current_result
 
             return result, self.augmentations

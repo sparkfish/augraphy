@@ -59,8 +59,8 @@ class WaterMark(Augmentation):
         return f"WaterMark(watermark_word={self.watermark_word}, watermark_font_size={self.watermark_font_size}, watermark_font_thickness={self.watermark_font_thickness}, watermark_font_type={self.watermark_font_type}, watermark_rotation={self.watermark_rotation}, watermark_location={self.watermark_location}, watermark_color={self.watermark_color}, watermark_method={self.watermark_method}, p={self.p})"
 
     # Create watermark
-    def create_watermark(self, image):
-
+    def create_watermark(self):
+        """Create watermark image."""
         # initialize watermark word
         if self.watermark_word == "random":
             watermark_word = random.choice(
@@ -114,6 +114,13 @@ class WaterMark(Augmentation):
 
     # Apply watermark into input image
     def apply_watermark(self, watermark_foreground, image):
+        """Apply watermark foreground image to the background image.
+
+        :param watermark_foreground: Foreground image contains the watermark effect.
+        :type watermark_foreground: numpy.array (numpy.uint8)
+        :param image: The background image.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         # resize watermark foreground if the size is larger than input image
         ysize, xsize = image.shape[:2]
@@ -231,7 +238,7 @@ class WaterMark(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
-            watermark_foreground = self.create_watermark(image)
+            watermark_foreground = self.create_watermark()
             watermark_image = self.apply_watermark(watermark_foreground, image)
 
             return watermark_image

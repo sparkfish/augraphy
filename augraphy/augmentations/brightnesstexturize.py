@@ -10,26 +10,26 @@ class BrightnessTexturize(Augmentation):
     """Creates a random noise in the brightness channel to emulate paper
     textures.
 
-    :param range: Pair of floats determining the range from which to sample values
+    :param texturize_range: Pair of floats determining the range from which to sample values
            for the brightness matrix. Suggested value = <1.
-    :type range: tuple, optional
+    :type brightness_range: tuple, optional
     :param deviation: Additional variation for the uniform sample.
     :type deviation: float, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
 
-    def __init__(self, range=(0.9, 0.99), deviation=0.03, p=1):
+    def __init__(self, texturize_range=(0.9, 0.99), deviation=0.03, p=1):
         """Constructor method"""
         super().__init__(p=p)
-        self.low = range[0]
-        self.high = range[1]
+        self.low = texturize_range[0]
+        self.high = texturize_range[1]
         self.deviation = deviation
-        self.range = range
+        self.texturize_range = texturize_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BrightnessTexturize(range={self.range}, deviation={self.deviation}, p={self.p})"
+        return f"BrightnessTexturize(texturize_range={self.texturize_range}, deviation={self.deviation}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -56,8 +56,13 @@ class BrightnessTexturize(Augmentation):
             max_value = value + (value * self.deviation)
 
             # apply noise
-            makerand = np.vectorize(lambda x: random.uniform(low_value, max_value))
-            brightness_matrix = makerand(np.zeros((hsv.shape[0], hsv.shape[1])))
+            brightness_matrix = np.random.random((hsv.shape[0], hsv.shape[1]))
+            min_array_value = np.min(brightness_matrix)
+            max_array_value = np.max(brightness_matrix)
+            ratio = (max_value - low_value) / (max_array_value - min_array_value)
+            # scale random value within range of low value and high value
+            brightness_matrix = (ratio * brightness_matrix) + (low_value - (ratio * min_array_value))
+
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
@@ -73,8 +78,13 @@ class BrightnessTexturize(Augmentation):
             max_value = value + (value * self.deviation)
 
             # apply noise again
-            makerand = np.vectorize(lambda x: random.uniform(low_value, max_value))
-            brightness_matrix = makerand(np.zeros((hsv.shape[0], hsv.shape[1])))
+            brightness_matrix = np.random.random((hsv.shape[0], hsv.shape[1]))
+            min_array_value = np.min(brightness_matrix)
+            max_array_value = np.max(brightness_matrix)
+            ratio = (max_value - low_value) / (max_array_value - min_array_value)
+            # scale random value within range of low value and high value
+            brightness_matrix = (ratio * brightness_matrix) + (low_value - (ratio * min_array_value))
+
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255

@@ -84,7 +84,7 @@ def default_augraphy_pipeline():
                             turbulence_range=(2, 5),
                         ),
                         BrightnessTexturize(
-                            range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                     ],
@@ -92,7 +92,7 @@ def default_augraphy_pipeline():
                 AugmentationSequence(
                     [
                         BrightnessTexturize(
-                            range=(0.9, 0.99),
+                            texturize_range=(0.9, 0.99),
                             deviation=0.03,
                         ),
                         NoiseTexturize(
@@ -105,7 +105,7 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         Brightness(
-            range=(0.9, 1.1),
+            brightness_range=(0.9, 1.1),
             min_brightness=0,
             min_brightness_value=(120, 150),
             p=0.1,
@@ -117,6 +117,8 @@ def default_augraphy_pipeline():
             [
                 PageBorder(
                     side="random",
+                    border_background_value=(230, 255),
+                    flip_border=random.choice([0, 1]),
                     width_range=(5, 30),
                     pages=None,
                     noise_intensity_range=(0.3, 0.8),
@@ -124,6 +126,7 @@ def default_augraphy_pipeline():
                     curve_height=(2, 4),
                     curve_length_one_side=(50, 100),
                     value=(32, 150),
+                    same_page_border=random.choice([0, 1]),
                 ),
                 DirtyRollers(
                     line_width_range=(2, 32),
@@ -144,12 +147,12 @@ def default_augraphy_pipeline():
                     transparency=None,
                 ),
                 Brightness(
-                    range=(0.9, 1.1),
+                    brightness_range=(0.9, 1.1),
                     min_brightness=0,
                     min_brightness_value=(120, 150),
                 ),
             ],
-            p=0.5,
+            p=0.33,
         ),
         DirtyDrum(
             line_width_range=(1, 6),
@@ -162,7 +165,7 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         SubtleNoise(
-            range=random.randint(5, 10),
+            subtle_range=random.randint(5, 10),
             p=0.33,
         ),
         Jpeg(
@@ -196,27 +199,6 @@ def default_augraphy_pipeline():
             brightness_change=random.randint(64, 224),
             p=0.33,
         ),
-        OneOf(
-            [
-                BookBinding(
-                    radius_range=(1, 100),
-                    curve_intensity_range=(0, 70),
-                    mirror=0,
-                    mirror_range=(0.1, 0.2),
-                ),
-                BindingsAndFasteners(
-                    overlay_types="darken",
-                    foreground=None,
-                    effect_type="random",
-                    ntimes=(2, 6),
-                    nscales=(0.9, 1.0),
-                    edge="random",
-                    edge_offset=(10, 50),
-                    use_figshare_library=0,
-                ),
-            ],
-            p=0.33,
-        ),
         BadPhotoCopy(
             mask=None,
             noise_type=-1,
@@ -233,7 +215,18 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         Gamma(
-            range=(0.9, 1.1),
+            gamma_range=(0.9, 1.1),
+            p=0.33,
+        ),
+        BindingsAndFasteners(
+            overlay_types="darken",
+            foreground=None,
+            effect_type="random",
+            ntimes=(2, 6),
+            nscales=(0.9, 1.0),
+            edge="random",
+            edge_offset=(10, 50),
+            use_figshare_library=0,
             p=0.33,
         ),
         Geometric(
@@ -255,6 +248,12 @@ def default_augraphy_pipeline():
             half_kernel_size=random.choice([(1, 1), (2, 2)]),
             angle=(0, 360),
             sigma=(1, 3),
+            p=0.33,
+        ),
+        BookBinding(
+            radius_range=(1, 100),
+            curve_range=(100, 200),
+            mirror_range=(0.3, 0.5),
             p=0.33,
         ),
     ]

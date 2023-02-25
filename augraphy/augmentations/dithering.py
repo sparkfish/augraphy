@@ -29,8 +29,17 @@ class Dithering(Augmentation):
     def __repr__(self):
         return f"Dithering(dither={self.dither}, p={self.p})"
 
-    # Apply Floyd Steinberg dithering algorithm
     def apply_Floyd_Steinberg(self, image, ysize, xsize):
+        """Run Floyd Steinberg dithering algorithm to the input image.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param ysize: Height of image.
+        :type ysize: int
+        :param xsize: Width of image.
+        :type xsize: int
+        """
+
         for y in range(1, ysize - 1):
             for x in range(1, xsize - 1):
                 old_pixel = image[y, x]
@@ -41,10 +50,16 @@ class Dithering(Augmentation):
                 image[y + 1, x - 1] += quant_error * (3 / 16)
                 image[y + 1, x] += quant_error * (5 / 16)
                 image[y + 1, x + 1] += quant_error * (1 / 16)
-        return image.astype("uint8")
+
+        return image
 
     # Floyd Steinberg dithering
     def dither_Floyd_Steinberg(self, image):
+        """Apply Floyd Steinberg dithering to the input image.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         if len(image.shape) > 2:  # coloured image
             ysize, xsize, dim = image.shape
@@ -60,10 +75,26 @@ class Dithering(Augmentation):
             img_dither_fs = image.copy().astype("float")
             img_dither_fs = self.apply_Floyd_Steinberg(img_dither_fs, ysize, xsize)
 
-        return img_dither_fs.astype("uint8")
+        # correctly convert to 8-bit unsigned int
+        img_dither_fs = img_dither_fs.astype(np.uint8)
+        return img_dither_fs
 
     # Apply ordered dithering algorithm
     def apply_Ordered(self, image, ysize, xsize, order, ordered_matrix):
+        """Run ordered dithering algorithm to the input image.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param ysize: Height of image.
+        :type ysize: int
+        :param xsize: Width of image.
+        :type xsize: int
+        :param order: Order number of ordered dithering.
+        :type order: int
+        :param ordered_matrix: Ordered matrix for ordered dithering algorithm.
+        :type ordered_matrix: list
+        """
+
         for y in range(ysize):
             for x in range(xsize):
                 oy = y % order
@@ -72,11 +103,18 @@ class Dithering(Augmentation):
                     image[y, x] = 255
                 else:
                     image[y, x] = 0
-        return image.astype("uint8")
 
-    # Ordered dithering
+        return image
+
     def dither_Ordered(self, image, order=5):
+        """Apply ordered dithering to the input image.
 
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        :param order: Order number of the ordered dithering.
+        :type order: int
+
+        """
         # create bayer matrix based on the order
         ordered_matrix = self.create_bayer(0, 0, 2 ** (order), 0, 1)
         total_number = len(ordered_matrix) * len(ordered_matrix[0]) - 1
@@ -107,12 +145,27 @@ class Dithering(Augmentation):
                 ordered_matrix,
             )
 
-        return img_dither_ordered.astype("uint8")
-
+        # correctly convert to 8-bit unsigned int
+        img_dither_ordered = img_dither_ordered.astype(np.uint8)
         return img_dither_ordered
 
     # Adapted from https://github.com/tromero/BayerMatrix
     def create_bayer(self, x, y, size, value, step, matrix=[[]]):
+        """Function to create ordered matrix.
+
+        :param x: The x coordinate of current step.
+        :type x: int
+        :param y: The y coordinate of current step.
+        :type y: int
+        :param size: Size of ordered matrix.
+        :type size: int
+        :param value: Value of current step.
+        :type value: int
+        :param step: Current step value.
+        :type step: int
+        :param _matrix: The ordered matrix for ordered dithering algorithm.
+        :type matrix: list
+        """
         if matrix == [[]]:
             matrix = [[0 for i in range(size)] for i in range(size)]
         if size == 1:

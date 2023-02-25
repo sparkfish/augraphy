@@ -6,13 +6,23 @@ from sklearn.datasets import make_blobs
 
 
 class NoiseGenerator:
-    """Core object to generate mask of noise."""
+    """Core object to generate mask of noise.
+
+    :param noise_type: Types of generated noise.
+        1 = default, even spread of noise
+        2 = noise with regular pattern
+        3 = noise at all borders of image
+        4 = sparse and little noise
+    :type noise_type: int, optional
+    :param noise_side: Location of generated noise. Choose from:
+        "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
+    :type noise_side: string, optional
+    """
 
     def __init__(self, noise_type=1, noise_side=None):
         self.noise_type = noise_type
         self.noise_side = noise_side
         self.sides = [
-            "random",
             "left",
             "right",
             "top",
@@ -22,32 +32,21 @@ class NoiseGenerator:
             "bottom_left",
             "bottom_right",
         ]
-        """
-        noise_type:
-        1 = default, even spread of noise
-        2 = noise with regular pattern
-        3 = noise at all borders of image
-        4 = sparse and little noise
-
-        noise_side:
-        1. All sides valid for noise_type = 1 and 4
-        2. For noise_type = 2, valid noise_side are only left, right, top and bottom.
-        3. For noise_type = 3, noise_side is not applicable.
-
-        """
-
         # any invalid noise type will reset noise type to 0
         if self.noise_type not in [1, 2, 3, 4]:
             self.noise_type = random.randint(1, 4)
 
         # random location with no sides if no side is chosen
         if self.noise_side not in self.sides:
-            self.noise_side = "random"
+            self.noise_side = random.choice(self.sides)
 
     def generate_clusters_and_samples(self, noise_concentration, max_size):
-        """
-        Generate number of noise clusters and number of samples in each
-        noise cluster.
+        """Generate number of noise clusters and number of samples in each noise cluster.
+
+        :param noise_concentration: Pair of floats determining concentration of noise.
+        :type noise_concentration: tuple
+        :param max_size: Maximum between width and height of image.
+        :type max_size: int
         """
 
         if self.noise_type == 4:
@@ -79,8 +78,16 @@ class NoiseGenerator:
         return n_samples_array
 
     def generate_sparsity_std(self, noise_sparsity, xsize, ysize, max_size):
-        """
-        Generate standard deviation(std) to control the sparsity of the noise.
+        """Generate standard deviation(std) to control the sparsity of the noise.
+
+        :param noise_sparsity: Pair of floats determining sparseness of noise.
+        :type noise_sparsity: tuple
+        :param xsize: Width of image.
+        :type xsize: int
+        :param ysize: Height of image.
+        :type ysize: int
+        :param max_size: Maximum between width and height of image.
+        :type max_size: int
         """
 
         if self.noise_type == 2:
@@ -141,116 +148,51 @@ class NoiseGenerator:
         return std, center_x, center_y
 
     def generate_points(self, n_samples_array, std, center_x, center_y, xsize, ysize):
+        """Generate x&y coordinates of noise.
+
+        :param n_samples_array: List contains number of points sample for each cluster.
+        :type n_samples_array: list
+        :param std: Standard deviation to determine sparseness of generated points.
+        :type std: int
+        :param center_x: Center x of the generated noises.
+        :type center_x: int
+        :param center_y: Center y of the generated noises.
+        :type center_y: int
+        :param xsize: Width of image.
+        :type xsize: int
+        :param ysize: Height of image.
+        :type ysize: int
         """
-        Generate x&y coordinates of noise.
-        """
+
         # generate clusters of blobs
-        if self.noise_type == 3:
-            # left
-            generated_points_x_left, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, 0),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_left, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
-            # right
-            generated_points_x_right, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(xsize, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_right, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
-            # top
-            generated_points_x_top, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_top, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, 0),
-                cluster_std=std,
-                n_features=1,
-            )
-            # bottom
-            generated_points_x_bottom, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(0, xsize),
-                cluster_std=std,
-                n_features=1,
-            )
-            generated_points_y_bottom, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=(ysize, ysize),
-                cluster_std=std,
-                n_features=1,
-            )
+        generated_points_x, _ = make_blobs(
+            n_samples=n_samples_array,
+            center_box=center_x,
+            cluster_std=std,
+            n_features=1,
+        )
 
-            generated_points_x = np.concatenate(
-                (
-                    generated_points_x_left,
-                    generated_points_x_right,
-                    generated_points_x_top,
-                    generated_points_x_bottom,
-                ),
-            )
-            generated_points_y = np.concatenate(
-                (
-                    generated_points_y_left,
-                    generated_points_y_right,
-                    generated_points_y_top,
-                    generated_points_y_bottom,
-                ),
-            )
-
-        else:
-            generated_points_x, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=center_x,
-                cluster_std=std,
-                n_features=1,
-            )
-
-            generated_points_y, _ = make_blobs(
-                n_samples=n_samples_array,
-                center_box=center_y,
-                cluster_std=std,
-                n_features=1,
-            )
+        generated_points_y, _ = make_blobs(
+            n_samples=n_samples_array,
+            center_box=center_y,
+            cluster_std=std,
+            n_features=1,
+        )
 
         # remove decimals
         generated_points_x = generated_points_x.astype("int")
         generated_points_y = generated_points_y.astype("int")
 
-        # delete invalid points (smaller or bigger than image size)
-        ind_delete_x = np.where(generated_points_x < 0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_x, axis=0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_x, axis=0)
-
-        ind_delete_y = np.where(generated_points_y < 0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_y, axis=0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_y, axis=0)
-
-        ind_delete_x = np.where(generated_points_x > xsize - 1)
-        generated_points_x = np.delete(generated_points_x, ind_delete_x, axis=0)
-        generated_points_y = np.delete(generated_points_y, ind_delete_x, axis=0)
-
-        ind_delete_y = np.where(generated_points_y > ysize - 1)
-        generated_points_y = np.delete(generated_points_y, ind_delete_y, axis=0)
-        generated_points_x = np.delete(generated_points_x, ind_delete_y, axis=0)
+        ind_delete = np.logical_or.reduce(
+            (
+                generated_points_x < 0,
+                generated_points_y < 0,
+                generated_points_x > xsize - 1,
+                generated_points_y > ysize - 1,
+            ),
+        )
+        generated_points_y = np.delete(generated_points_y, ind_delete.reshape(ind_delete.shape[0]), axis=0)
+        generated_points_x = np.delete(generated_points_x, ind_delete.reshape(ind_delete.shape[0]), axis=0)
 
         return generated_points_x, generated_points_y
 
@@ -263,8 +205,20 @@ class NoiseGenerator:
         xsize,
         ysize,
     ):
-        """
-        Generate mask of noise.
+        """Generate mask of noise.
+
+        :param noise_background: Tuple of ints to determine background value of mask.
+        :type noise_background: tuple
+        :param noise_value: Tuple of ints to determine value of noise.
+        :type noise_value: tuple
+        :param generated_points_x: x point value of noise.
+        :type generated_points_x: numpy array
+        :param generated_points_y: y point value of noise.
+        :type generated_points_y: numpy array
+        :param xsize: Width of image.
+        :type xsize: int
+        :param ysize: Height of image.
+        :type ysize: int
         """
 
         # background of noise mask
@@ -281,14 +235,10 @@ class NoiseGenerator:
             size=(ysize, xsize),
         )
 
-        # get xy points in list form
-        x_points = list(generated_points_x)
-        y_points = list(generated_points_y)
-
         # insert random value into background
-        img_mask[y_points, x_points] = img_mask_random[y_points, x_points]
+        img_mask[generated_points_y, generated_points_x] = img_mask_random[generated_points_y, generated_points_x]
 
-        return img_mask
+        return img_mask.astype("uint8")
 
     def generate_mask_main(
         self,
@@ -299,8 +249,20 @@ class NoiseGenerator:
         xsize,
         ysize,
     ):
-        """
-        Main function to generate mask of noise in each iteration.
+        """Main function to generate mask of noise in each iteration.
+
+        :param noise_value: Tuple of ints to determine value of noise.
+        :type noise_value: tuple
+        :param noise_background: Tuple of ints to determine background value of mask.
+        :type noise_background: tuple
+        :param noise_sparsity: Pair of floats determining sparseness of noise.
+        :type noise_sparsity: tuple, optional
+        :param noise_concentration: Pair of floats determining concentration of noise.
+        :type noise_concentration: tuple, optional
+        :param xsize: Width of image.
+        :type xsize: int
+        :param ysize: Height of image.
+        :type ysize: int
         """
 
         # get max of y or x size
@@ -437,6 +399,17 @@ class NoiseGenerator:
                 ysize,
             )
 
+            # rotate and merge mask into 4 sides
+            if self.noise_type == 3:
+                img_mask = np.minimum(
+                    img_mask,
+                    cv2.resize(np.rot90(img_mask), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                )
+                img_mask = np.minimum(
+                    img_mask,
+                    cv2.resize(np.rot90(img_mask, k=2), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                )
+
         return img_mask
 
     def generate_noise(
@@ -450,8 +423,8 @@ class NoiseGenerator:
         xsize=1500,
         ysize=1500,
     ):
-        """
-        Main function to generate noise
+        """Main function to generate noise.
+
         :param noise_iteration: Pair of ints to determine number of iterations to apply noise in the mask.
         :type noise_type: tuple, optional
         :param noise_size: Pair of ints to determine scale of noise in the mask.
@@ -501,13 +474,8 @@ class NoiseGenerator:
                 interpolation=cv2.INTER_CUBIC,
             )
 
-            # merge noise mask in each iteration
-            img_mask *= img_mask_temporary.astype("int")
-
-            # rescale value from 0 - 255
-            max_value = 255 if np.max(img_mask) > 255 else np.max(img_mask)
-            img_mask = (img_mask - np.min(img_mask)) * max_value / (np.max(img_mask) - np.min(img_mask))
-            img_mask[img_mask_temporary <= noise_value[1]] = img_mask_temporary[img_mask_temporary <= noise_value[1]]
+            # merge noise mask in each iteration by getting their min value
+            img_mask = np.minimum(img_mask_temporary, img_mask)
 
         # output needs uint8 type
         img_mask = img_mask.astype("uint8")

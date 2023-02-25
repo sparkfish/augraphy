@@ -26,7 +26,7 @@ class Function(Augmentation):
 
         return current
 
-    def __call__(self, image, force=False):
+    def __call__(self, image, layer=None, force=False):
         image = image.copy()
         output = self.applyFs(self.fs, image)
 

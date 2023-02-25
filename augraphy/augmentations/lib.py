@@ -16,12 +16,13 @@ from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
 
 
-def rotate_image(mat, angle):
+def rotate_image(mat, angle, white_background=1):
     """Rotates an image (angle in degrees) and expands image to avoid
     cropping.
     """
 
-    mat = cv2.bitwise_not(mat)
+    if white_background:
+        mat = cv2.bitwise_not(mat)
     height, width = mat.shape[:2]  # image shape has 3 dimensions
     image_center = (
         width / 2,
@@ -44,7 +45,10 @@ def rotate_image(mat, angle):
 
     # rotate image with the new bounds and translated rotation matrix
     rotated_mat = cv2.warpAffine(mat, rotation_mat, (bound_w, bound_h))
-    rotated_mat = cv2.bitwise_not(rotated_mat)
+
+    if white_background:
+        rotated_mat = cv2.bitwise_not(rotated_mat)
+
     return rotated_mat
 
 
@@ -278,7 +282,7 @@ def smooth(points, iter):
     return points
 
 
-def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
+def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_condition=0, image2=None):
     """Applies random noise to the input image.
 
     :param image: The image to noise.
@@ -287,13 +291,54 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224)):
     :type intensity_range: tuple, optional
     :param color_range: Pair of bounds for 8-bit colors.
     :type color_range: tuple, optional
+    :param noise_condition: Condition to apply noise mask.
+    :type noise_condition: int, optional
+    :param image2: Image for the noise evaluation.
+    :type image2: numpy.array, optional
     """
 
-    intensity = random.uniform(intensity_range[0], intensity_range[1])
-    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
-    add_noise = np.vectorize(noise)
+    #    intensity = random.uniform(intensity_range[0], intensity_range[1])
+    #    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
+    #    add_noise = np.vectorize(noise)
+    #    return add_noise(image)
 
-    return add_noise(image)
+    intensity = random.uniform(intensity_range[0], intensity_range[1])
+    # generate random mask
+    if len(image.shape) > 2:
+        random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+        random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+    else:
+        random_value = np.random.random((image.shape[0], image.shape[1]))
+        random_value2 = np.random.random((image.shape[0], image.shape[1]))
+
+    # check not None and use image2 as checking image
+    if image2 is not None:
+        checking_image = image2
+    else:
+        checking_image = image
+
+    # find indices where sobelized image value == 255 and random value < intensity
+    if noise_condition == 0:
+        condition_evaluation = checking_image == 0
+    elif noise_condition == 1:
+        condition_evaluation = checking_image == 255
+    elif noise_condition == 2:
+        condition_evaluation = checking_image > 255
+
+    indices = np.logical_and(condition_evaluation, random_value < intensity)
+
+    # generate random values in color_range
+    min_array_value = np.min(random_value2)
+    max_array_value = np.max(random_value2)
+    ratio = (color_range[1] - color_range[0]) / (max_array_value - min_array_value)
+    # scale random value within range
+    random_value2 = (ratio * random_value2) + (color_range[0] - (ratio * min_array_value))
+
+    # apply nosie with indices
+    image_noise = image.copy()
+    image_noise[indices] = random_value2[indices]
+
+    return image_noise
 
 
 def _create_blob(
