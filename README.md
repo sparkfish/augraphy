@@ -63,18 +63,14 @@ If you used Augraphy in your research, please cite the project.
 
 BibTeX:
 ```
-@software{The_Augraphy_Project,
-author = {{The Augraphy Project}},
-title = {{Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes}},
+@software{The_Augraphy_Project},
+author = {The Augraphy Project},
+title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
 url = {https://github.com/sparkfish/augraphy},
 version = {8.1.0}
 }
 ```
 
-APA:
-```
-The Augraphy Project. Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes (Version 8.1.0) [Computer software]. https://github.com/sparkfish/augraphy
-```
 # License
 Copyright 2023 Sparkfish LLC
 
