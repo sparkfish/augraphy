@@ -1,4 +1,4 @@
-numpy == 1.20.3
+numpy >= 1.20.1
 opencv-python
 Pillow
 pre-commit
