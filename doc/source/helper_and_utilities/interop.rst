@@ -1,8 +1,8 @@
-*******************
-ForeignAugmentation
-*******************
+*******
+Interop
+*******
 
-.. autoclass:: augraphy.utilities.foreign.ForeignAugmentation
+.. autoclass:: augraphy.utilities.interop.Interop
     :members:
     :undoc-members:
     :show-inheritance:
@@ -10,20 +10,20 @@ ForeignAugmentation
 --------
 Overview
 --------
-ForeignAugmentation allows the usage of imgaug or Albumentations function in Augraphy pipeline.
+Interop allows the usage of imgaug or Albumentations function in Augraphy pipeline.
 
 -------
 Example
 -------
-In this example, ForeignAugmentation allows the usage of Rain augmenter from imgaug in ink phase of Augraphy pipeline.
-Paper phase is using ColorPaper from Augraphy while ForeignAugmentation in post phase to allow the usage of ElasticTransform from Albumentations.
+In this example, Interop allows the usage of Rain augmenter from imgaug in ink phase of Augraphy pipeline.
+Paper phase is using ColorPaper from Augraphy while Interop in post phase to allow the usage of ElasticTransform from Albumentations.
 ::
 
     # import libraries
     from augraphy import *
     import cv2
     import numpy as np
-    from augraphy.utilities.foreign import ForeignAugmentation
+    from augraphy.utilities.interop import Interop
 
     # import imgaug and albumentations
     import imgaug.augmenters as iaa
@@ -32,11 +32,11 @@ Paper phase is using ColorPaper from Augraphy while ForeignAugmentation in post 
 
     # initialize phases and pipeline
     # ink phase with imgaug
-    ink_phase   = [ForeignAugmentation(foreignAugmentation=iaa.Rain(drop_size=(0.10, 0.20)),p=1)]
+    ink_phase   = [Interop(augmentation=iaa.Rain(drop_size=(0.10, 0.20)),p=1)]
     # paper phase with augraphy
     paper_phase = [ColorPaper(hue_range=(0,10), saturation_range=(128, 255), p=1)]
     # post phase with albumentations
-    post_phase  = [ForeignAugmentation(foreignAugmentation=ElasticTransform(alpha_affine=100, p=1),p=1)]
+    post_phase  = [Interop(augmentation=ElasticTransform(alpha_affine=100, p=1),p=1)]
 
     # initialize pipeline
     pipeline    = AugraphyPipeline(ink_phase, paper_phase, post_phase)
@@ -63,4 +63,4 @@ Input image:
 
 Augmented image:
 
-.. figure:: foreign/output.png
+.. figure:: interop/output.png
