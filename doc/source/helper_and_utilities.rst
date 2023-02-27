@@ -11,7 +11,7 @@ Usable functions
    helper_and_utilities/augmentationpipeline.rst
    helper_and_utilities/augmentationsequence.rst
    helper_and_utilities/oneof.rst
-   helper_and_utilities/foreign.rst
+   helper_and_utilities/interop.rst
    helper_and_utilities/function.rst
    helper_and_utilities/composepipelines.rst
    helper_and_utilities/paperfactory.rst
