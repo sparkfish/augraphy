@@ -570,3 +570,6 @@ class AugraphyPipeline:
 
     def visualize(self):
         print(repr(self))
+
+    def __call__(self, image):
+        return self.augment(image)["output"]
