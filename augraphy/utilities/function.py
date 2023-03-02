@@ -6,25 +6,22 @@ class Function(Augmentation):
     """Accepts an arbitrary function or list of functions to apply in the pipeline.
 
     :param fs: The function(s) to apply.
-    :type fs: function or list of functions
+    :type fs: function
+    :param kwargs: Arguments to the function.
+    :type fs: argument name and value
     """
 
-    def __init__(self, fs, p=1):
+    def __init__(self, fs, p=1, **kwargs):
         self.fs = fs
+        self.kwargs = kwargs
         super().__init__(p=p)
 
     def applyFs(self, fs, img):
         """Applies any fs to img sequentially."""
-        current = img
 
-        if type(fs) == list:
-            for f in fs:
-                current = f(current)
+        img = fs(img, **self.kwargs)
 
-        else:
-            current = fs(current)
-
-        return current
+        return img
 
     def __call__(self, image, layer=None, force=False):
         image = image.copy()
