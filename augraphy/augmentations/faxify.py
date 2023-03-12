@@ -37,10 +37,10 @@ class Faxify(Augmentation):
     def __init__(
         self,
         scale_range=(1.0, 1.25),
-        monochrome=1,
+        monochrome=-1,
         monochrome_method="random",
         monochrome_arguments={},
-        halftone=1,
+        halftone=-1,
         invert=1,
         half_kernel_size=(1, 1),
         angle=(0, 360),
@@ -198,6 +198,12 @@ class Faxify(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            if self.monochrome == -1:
+                self.monochrome = random.choice([0, 1])
+
+            if self.halftone == -1:
+                self.halftone = random.choice([0, 1])
 
             # downscale image
             image_out = self.downscale(image)

@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 
 from augraphy.base.augmentation import Augmentation
@@ -7,18 +9,18 @@ class Dithering(Augmentation):
     """
     Applies Ordered or Floyd Steinberg dithering to the input image.
 
-    :param dither: Types of dithering, ordered or Floyd Steinberg dithering.
+    :param dither: Types of dithering, random, ordered, Floyd Steinberg dithering.
     :type dither: string, optional
-    :param order: Order number for ordered dithering.
-    :type order: int, optional
+    :param order: Pair of ints determining the range of order number for ordered dithering.
+    :type order: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
-        dither="ordered",
-        order=5,
+        dither="random",
+        order=(2, 5),
         p=1,
     ):
         super().__init__(p=p)
@@ -191,8 +193,12 @@ class Dithering(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            if self.dither == "random":
+                self.dither = random.choice(["ordered", "Floyd Steinberg"])
+
             if self.dither == "ordered":
-                image_dither = self.dither_Ordered(image, self.order)
+                image_dither = self.dither_Ordered(image, random.randint(self.order[0], self.order[1]))
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)
 
