@@ -13,7 +13,7 @@ def default_augraphy_pipeline():
     ink_phase = [
         Dithering(
             dither=random.choice(["ordered", "floyd-steinberg"]),
-            order=random.randint(3, 5),
+            order=(3, 5),
             p=0.33,
         ),
         InkBleed(
@@ -236,6 +236,7 @@ def default_augraphy_pipeline():
             flipud=random.choice([True, False]),
             crop=(),
             rotate_range=(-5, 5),
+            randomize=0,
             p=0.33,
         ),
         Faxify(
