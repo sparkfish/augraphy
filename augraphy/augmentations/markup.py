@@ -43,9 +43,9 @@ class Markup(Augmentation):
         num_lines_range=(2, 7),
         markup_length_range=(0.5, 1),
         markup_thickness_range=(1, 3),
-        markup_type="strikethrough",
+        markup_type="random",
         markup_color="random",
-        large_word_mode=True,
+        large_word_mode="random",
         single_word_mode=False,
         repetitions=1,
         p=1,
@@ -191,6 +191,12 @@ class Markup(Augmentation):
             single_color = cv2.resize(image, (1, 1), interpolation=cv2.INTER_AREA)
             self.markup_color = 255 - single_color[0][0]
             self.markup_color = self.markup_color.tolist()
+
+        if self.large_word_mode == "random":
+            self.large_word_mode = random.choice([True, False])
+
+        if self.markup_type == "random":
+            self.markup_type = random.choice(["strikethrough", "crossed", "underline", "highlight"])
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         markup_thickness = random.randint(

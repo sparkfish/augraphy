@@ -23,6 +23,8 @@ class Geometric(Augmentation):
     :param rotate_range: Pair of ints determining the range from which to sample
            the image rotation.
     :type rotate_range: tuple, optional
+    :param randomize: Flag to apply random geometric transformations.
+    :param randomize: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -35,6 +37,7 @@ class Geometric(Augmentation):
         flipud=0,
         crop=(),
         rotate_range=(0, 0),
+        randomize=1,
         p=1,
     ):
         """Constructor method"""
@@ -45,15 +48,38 @@ class Geometric(Augmentation):
         self.flipud = flipud
         self.crop = crop
         self.rotate_range = rotate_range
+        self.randomize = randomize
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, p={self.p})"
+        return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, randomize={self.randomize}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            if self.randomize:
+                # randomize scale
+                scale = (random.uniform(0.5, 1), random.uniform(1, 1.5))
+
+                # randomize translation value
+                ysize, xsize = image.shape[:2]
+                self.translation = (random.randint(0, int(xsize * 0.1)), random.randint(0, int(ysize * 0.1)))
+
+                # randomize flip
+                self.fliplr = random.choice([0, 1])
+                self.flipud = random.choice([0, 1])
+
+                # randomize crop
+                cx1 = random.randint(0, int(xsize / 5))
+                cx2 = random.randint(int(xsize / 2), xsize - 1)
+                cy1 = random.randint(0, int(ysize / 5))
+                cy2 = random.randint(int(ysize / 2), ysize - 1)
+                self.crop = (cx1, cy1, cx2, cy2)
+
+                # randomize rotate
+                self.rotate_range = (-10, 10)
 
             # crop image
             if self.crop:
