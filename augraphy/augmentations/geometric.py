@@ -24,7 +24,13 @@ class Geometric(Augmentation):
            the image rotation.
     :type rotate_range: tuple, optional
     :param randomize: Flag to apply random geometric transformations.
-    :param randomize: int, optional
+    :type randomize: int, optional
+    :param padding: Padding amount on each [left, right, top, bottom] side.
+    :type padding: tuple, optional
+    :param padding_type: Padding methods, select from fill,duplicate and mirror.
+    :type paddng_type: string, optional
+    :param padding_value: Padding value (in RGB) for fill padding method.
+    :type paddng_value: tuple, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -37,6 +43,9 @@ class Geometric(Augmentation):
         flipud=0,
         crop=(),
         rotate_range=(0, 0),
+        padding=[0, 0, 0, 0],
+        padding_type="fill",
+        padding_value=(255, 255, 255),
         randomize=1,
         p=1,
     ):
@@ -49,10 +58,13 @@ class Geometric(Augmentation):
         self.crop = crop
         self.rotate_range = rotate_range
         self.randomize = randomize
+        self.padding = padding
+        self.padding_type = padding_type
+        self.padding_value = padding_value
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, randomize={self.randomize}, p={self.p})"
+        return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, padding={self.padding}, padding_type={self.padding_type}, padding_value={self.padding_value}, randomize={self.randomize}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -81,6 +93,16 @@ class Geometric(Augmentation):
                 # randomize rotate
                 self.rotate_range = (-10, 10)
 
+                # randomize padding
+                self.padding = [
+                    random.randint(0, int(xsize / 5)),
+                    random.randint(0, int(xsize / 5)),
+                    random.randint(0, int(ysize / 5)),
+                    random.randint(0, int(ysize / 5)),
+                ]
+                self.padding_value = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                self.padding_typee = random.choice(["fill", "mirror", "duplicate"])
+
             # crop image
             if self.crop:
                 # make sure there's only 4 inputs, x0, y0, xn, yn
@@ -98,6 +120,88 @@ class Geometric(Augmentation):
                     # crop image
                     if check_y and check_x:
                         image = image[ystart:yend, xstart:xend]
+
+            if any(self.padding):
+
+                # convert from rgb to grayscale using their average
+                if len(image.shape) < 3:
+                    self.padding_value = np.mean(self.padding_value)
+
+                # padding on left side
+                if self.padding[0] > 0:
+                    # get image size
+                    ysize, xsize = image.shape[:2]
+                    # different padding shape for grayscale and colored image
+                    if len(image.shape) > 2:
+                        padding_shape = (ysize, self.padding[0], image.shape[2])
+                    else:
+                        padding_shape = (ysize, self.padding[0])
+                    # create the padding image
+                    if self.padding_type == "duplicate":
+                        image_padding = image[:, -self.padding[0] :].copy()
+                    elif self.padding_type == "mirror":
+                        image_padding = np.fliplr(image[:, : self.padding[0]].copy())
+                    else:
+                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                    # combine padding image and original image
+                    image = np.concatenate([image_padding, image], axis=1)
+
+                # padding on right side
+                if self.padding[1] > 0:
+                    # get image size
+                    ysize, xsize = image.shape[:2]
+                    # different padding shape for grayscale and colored image
+                    if len(image.shape) > 2:
+                        padding_shape = (ysize, self.padding[1], image.shape[2])
+                    else:
+                        padding_shape = (ysize, self.padding[1])
+                    # create the padding image
+                    if self.padding_type == "duplicate":
+                        image_padding = image[:, : self.padding[1]].copy()
+                    elif self.padding_type == "mirror":
+                        image_padding = np.fliplr(image[:, -self.padding[1] :].copy())
+                    else:
+                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                    # combine padding image and original image
+                    image = np.concatenate([image, image_padding], axis=1)
+
+                # padding on top side
+                if self.padding[2] > 0:
+                    # get image size
+                    ysize, xsize = image.shape[:2]
+                    # different padding shape for grayscale and colored image
+                    if len(image.shape) > 2:
+                        padding_shape = (self.padding[2], xsize, image.shape[2])
+                    else:
+                        padding_shape = (self.padding[2], xsize)
+                    # create the padding image
+                    if self.padding_type == "duplicate":
+                        image_padding = image[-self.padding[2] :, :].copy()
+                    elif self.padding_type == "mirror":
+                        image_padding = np.flipud(image[: self.padding[2], :].copy())
+                    else:
+                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                    # combine padding image and original image
+                    image = np.concatenate([image_padding, image], axis=0)
+
+                # padding on bottom side
+                if self.padding[3] > 0:
+                    # get image size
+                    ysize, xsize = image.shape[:2]
+                    # different padding shape for grayscale and colored image
+                    if len(image.shape) > 2:
+                        padding_shape = (self.padding[3], xsize, image.shape[2])
+                    else:
+                        padding_shape = (self.padding[3], xsize)
+                    # create the padding image
+                    if self.padding_type == "duplicate":
+                        image_padding = image[: self.padding[3], :].copy()
+                    elif self.padding_type == "mirror":
+                        image_padding = np.flipud(image[-self.padding[3] :, :].copy())
+                    else:
+                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                    # combine padding image and original image
+                    image = np.concatenate([image, image_padding], axis=0)
 
             # resize based on scale
             if self.scale[1] > 0 and self.scale[0] > 0:
