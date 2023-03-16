@@ -29,7 +29,7 @@ class Geometric(Augmentation):
     :type padding: tuple, optional
     :param padding_type: Padding methods, select from fill,duplicate and mirror.
     :type paddng_type: string, optional
-    :param padding_value: Padding value (in RGB) for fill padding method.
+    :param padding_value: Padding value (in BGR) for fill padding method.
     :type paddng_value: tuple, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
