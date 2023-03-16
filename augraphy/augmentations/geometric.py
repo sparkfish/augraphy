@@ -12,7 +12,8 @@ class Geometric(Augmentation):
 
     :param scale: Pair of floats determining new scale of image.
     :type scale: tuple, optional
-    :param translation: Pair of ints determining x and y translation value.
+    :param translation: Pair of values determining x and y translation value.
+            The translation value will be in percentage of the image size if the value is less than 1.
     :type translation: tuple, optional
     :param fliplr: Flag to flip image in left right direction.
     :type fliplr: int, optional
@@ -25,7 +26,8 @@ class Geometric(Augmentation):
     :type rotate_range: tuple, optional
     :param randomize: Flag to apply random geometric transformations.
     :type randomize: int, optional
-    :param padding: Padding amount on each [left, right, top, bottom] side.
+    :param padding: Padding amount on each (left, right, top, bottom) side.
+            The padding amount will be in percentage of the image size if the value is less than 1.
     :type padding: tuple, optional
     :param padding_type: Padding methods, select from fill,duplicate and mirror.
     :type paddng_type: string, optional
@@ -43,7 +45,7 @@ class Geometric(Augmentation):
         flipud=0,
         crop=(),
         rotate_range=(0, 0),
-        padding=[0, 0, 0, 0],
+        padding=(0, 0, 0, 0),
         padding_type="fill",
         padding_value=(255, 255, 255),
         randomize=1,
@@ -131,6 +133,11 @@ class Geometric(Augmentation):
                 if self.padding[0] > 0:
                     # get image size
                     ysize, xsize = image.shape[:2]
+                    # convert percentage into pixel amount
+                    if self.padding[0] < 1:
+                        self.padding = list(self.padding)
+                        self.padding[0] = int(self.padding[0] * xsize)
+
                     # different padding shape for grayscale and colored image
                     if len(image.shape) > 2:
                         padding_shape = (ysize, self.padding[0], image.shape[2])
@@ -150,6 +157,11 @@ class Geometric(Augmentation):
                 if self.padding[1] > 0:
                     # get image size
                     ysize, xsize = image.shape[:2]
+                    # convert percentage into pixel amount
+                    if self.padding[1] < 1:
+                        self.padding = list(self.padding)
+                        self.padding[1] = int(self.padding[1] * xsize)
+
                     # different padding shape for grayscale and colored image
                     if len(image.shape) > 2:
                         padding_shape = (ysize, self.padding[1], image.shape[2])
@@ -169,6 +181,11 @@ class Geometric(Augmentation):
                 if self.padding[2] > 0:
                     # get image size
                     ysize, xsize = image.shape[:2]
+                    # convert percentage into pixel amount
+                    if self.padding[2] < 1:
+                        self.padding = list(self.padding)
+                        self.padding[2] = int(self.padding[2] * ysize)
+
                     # different padding shape for grayscale and colored image
                     if len(image.shape) > 2:
                         padding_shape = (self.padding[2], xsize, image.shape[2])
@@ -188,6 +205,11 @@ class Geometric(Augmentation):
                 if self.padding[3] > 0:
                     # get image size
                     ysize, xsize = image.shape[:2]
+                    # convert percentage into pixel amount
+                    if self.padding[3] < 1:
+                        self.padding = list(self.padding)
+                        self.padding[3] = int(self.padding[3] * ysize)
+
                     # different padding shape for grayscale and colored image
                     if len(image.shape) > 2:
                         padding_shape = (self.padding[3], xsize, image.shape[2])
@@ -214,6 +236,14 @@ class Geometric(Augmentation):
 
             # translate image based on translation value
             if self.translation[0] != 0 or self.translation[1] != 0:
+
+                ysize, xsize = image.shape[:2]
+                if self.translation[0] < 1:
+                    self.translation = list(self.translation)
+                    self.translation[0] = int(self.translation[0] * xsize)
+                if self.translation[1] < 1:
+                    self.translation = list(self.translation)
+                    self.translation[1] = int(self.translation[1] * ysize)
 
                 image_new = np.full_like(image, fill_value=255).astype("uint8")
                 offset_x = self.translation[0]

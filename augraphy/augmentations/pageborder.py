@@ -13,18 +13,19 @@ class PageBorder(Augmentation):
     """Add border effect to sides of input image.
 
     :param side: One of the four sides of page i:e top,right,left,bottom,random.
-                By default it is "random"
+            Default value it is "random".
     :type side: string , optional
     :param border_background_value: Pair of ints determining the background value of border effect.
     :type border_background_value: tuple, optional
     :param flip_border: Flag to choose whether the created border will be flipped or not.
     :type flip_border: int, optional
-    :param width_range: Pair of ints determining the width of the page border effect.
+    :param width_range: Pair of values determining the width of the page border effect.
+            Width range value will be in percentage of the image shorter edge if the value is less than 1.
     :type width_range: tuple, optional
     :param pages: An integer determining the number of page shadows in the border.
     :type pages: int , optional
     :param noise_intensity_range: A pair of floats determining the intensity of
-                                  noise being applied around the borders.
+            noise being applied around the borders.
     :type noise_intensity_range: tuple , optional
     :param curve_frequency: Number of curvy section in the generated shadow lines.
     :type curve_frequency: tuple, optional
@@ -275,14 +276,19 @@ class PageBorder(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+            height, width = image.shape[:2]
 
             noise_intensity = random.uniform(
                 self.noise_intensity_range[0],
                 self.noise_intensity_range[1],
             )
+
+            if self.width_range[0] < 1:
+                self.width_range = list(self.width_range)
+                self.width_range[0] = np.ceil(self.width_range[0] * min(height, width))
+                self.width_range[1] = np.ceil(self.width_range[1] * min(height, width))
             border_width = random.randint(self.width_range[0], self.width_range[1])
 
-            height, width = image.shape[:2]
             if len(image.shape) > 2:
                 channel = image.shape[2]
             else:

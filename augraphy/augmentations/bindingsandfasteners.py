@@ -26,7 +26,8 @@ class BindingsAndFasteners(Augmentation):
     :param edge: Which edge of the page the foreground copies should be
         placed on.
     :type edge: string, optional
-    :param edge_offset: Pair of ints to determine how far from the edge of the page to draw the copies.
+    :param edge_offset: Pair of values to determine how far from the edge of the page to draw the copies.
+        The offset value will be in percentage of the image shorter edge if the value is less than 1.
     :type edge_offset: tuple, optional
     :param use_figshare_library: Flag to download foreground images from figshare library.
     :type use_figshare_library: int, optional
@@ -434,6 +435,7 @@ class BindingsAndFasteners(Augmentation):
                 self.foreground = None
 
             image = image.copy()
+            ysize, xsize = image.shape[:2]
 
             # generate randomized overlay types
             if self.overlay_types == "random":
@@ -468,6 +470,11 @@ class BindingsAndFasteners(Augmentation):
             ntimes = random.randint(self.ntimes[0], self.ntimes[1])
 
             # generate randomized offset
+            if self.edge_offset[0] < 1 and self.edge_offset[1] < 1:
+                self.edge_offset = list(self.edge_offset)
+                self.edge_offset[0] = np.ceil(self.edge_offset[0] * min(ysize, xsize))
+                self.edge_offset[1] = np.ceil(self.edge_offset[1] * min(ysize, xsize))
+
             edge_offset = random.randint(self.edge_offset[0], self.edge_offset[1])
 
             # if user input image path
