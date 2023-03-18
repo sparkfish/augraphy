@@ -226,7 +226,7 @@ class Geometric(Augmentation):
                     image = np.concatenate([image, image_padding], axis=0)
 
             # resize based on scale
-            if self.scale[1] > 0 and self.scale[0] > 0:
+            if self.scale[1] != 1 and self.scale[0] != 1:
                 scale = random.uniform(self.scale[0], self.scale[1])
                 if scale > 0:
                     new_width = int(image.shape[1] * scale)
@@ -238,10 +238,10 @@ class Geometric(Augmentation):
             if self.translation[0] != 0 or self.translation[1] != 0:
 
                 ysize, xsize = image.shape[:2]
-                if self.translation[0] < 1:
+                if self.translation[0] < 1 and self.translation[0] > -1:
                     self.translation = list(self.translation)
                     self.translation[0] = int(self.translation[0] * xsize)
-                if self.translation[1] < 1:
+                if self.translation[1] < 1 and self.translation[1] > -1:
                     self.translation = list(self.translation)
                     self.translation[1] = int(self.translation[1] * ysize)
 
