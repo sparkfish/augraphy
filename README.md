@@ -52,6 +52,43 @@ augmented = data["output"]
 # Documentation
 For full documentation, including installation and tutorials, check the [doc directory](https://github.com/sparkfish/augraphy/tree/dev/doc).
 
+# Benchmark Results
+The benchmarks results are computed with Augraphy 8.10 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
+To run the benchmark with different images, you can run with run_benchmarks.py in the folder of /benchmark using the following command:
+
+```
+python run_benchmarks.py --folder_path folder_path_with_images
+```
+
+|    Augmentation    |Images per second|
+|--------------------|----------------:|
+|BadPhotoCopy        |             0.32|
+|BindingsAndFasteners|            24.39|
+|BleedThrough        |             0.22|
+|BookBinding         |             0.03|
+|Brightness          |             3.22|
+|BrightnessTexturize |             1.16|
+|ColorPaper          |             3.98|
+|DirtyDrum           |             0.40|
+|DirtyRollers        |             0.59|
+|Dithering           |             0.02|
+|Faxify              |             0.12|
+|Folding             |             1.55|
+|Gamma               |            33.11|
+|Geometric           |            11.64|
+|InkBleed            |             0.68|
+|Jpeg                |             4.37|
+|Letterpress         |             0.25|
+|LightingGradient    |             0.14|
+|LowInkPeriodicLines |             7.41|
+|LowInkRandomLines   |            89.29|
+|Markup              |             0.24|
+|NoiseTexturize      |             0.53|
+|PageBorder          |             0.31|
+|PencilScribbles     |             0.99|
+|SubtleNoise         |             1.04|
+|WaterMark           |             0.65|
+
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
 
