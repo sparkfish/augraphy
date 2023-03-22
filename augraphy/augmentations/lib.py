@@ -3,6 +3,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 from numpy.linalg import norm
 from skimage.filters import threshold_li
 from skimage.filters import threshold_local
@@ -65,6 +67,7 @@ def generate_average_intensity(image):
 
 
 # Generate noise to edges of folding
+@jit(nopython=True, cache=True)
 def add_folding_noise(img, side, p=0.1):
     # side = flag to put more noise at certain side
     #   0  = left side
