@@ -420,20 +420,25 @@ class Markup(Augmentation):
             # add scribble similar realistic effect
             markup_mask_copy = markup_mask.copy()
 
-            apply_mask_fn = lambda x, y: y if (x < 224) else x
-            apply_mask = np.vectorize(apply_mask_fn)
             if len(markup_mask_copy.shape) > 2:
                 markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_BGR2GRAY)
             noise_mask = lib_add_noise(markup_mask_copy, (0.3, 0.5), (32, 128))
 
-            markup_mask_copy = apply_mask(markup_mask_copy, noise_mask)
+            # add noise
+            indices = markup_mask_copy < 224
+            markup_mask_copy[indices] = noise_mask[indices]
+
+            # add noise
             intensity = random.uniform(0.4, 0.7)
-            add_noise_fn = lambda x, y: random.randint(32, 128) if (y == 255 and random.random() < intensity) else x
+            min_value = 32
+            max_value = 128
+            ysize, xsize = markup_mask_copy.shape[:2]
+            # create random value between min and max
+            random_value = np.random.uniform(low=min_value, high=max_value, size=(ysize, xsize)).astype("uint8")
+            random_intensity_map = np.random.random((ysize, xsize))
+            indices = sobel == 255 and random_intensity_map < intensity
+            markup_mask_copy[indices] = random_value[indices]
 
-            add_noise = np.vectorize(add_noise_fn)
-            apply_mask = np.vectorize(apply_mask_fn)
-
-            markup_mask_copy = add_noise(markup_mask_copy, sobel)
             markup_mask_copy = cv2.cvtColor(markup_mask_copy, cv2.COLOR_GRAY2BGR)
             markup_mask_copy = cv2.GaussianBlur(markup_mask_copy, (3, 3), 0)
 
