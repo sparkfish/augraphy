@@ -424,6 +424,7 @@ class OverlayBuilder:
         xend,
         ystart,
         yend,
+        alpha,
     ):
         """Apply blending using input alpha value (normal method).
 
@@ -441,23 +442,26 @@ class OverlayBuilder:
         :type ystart: int
         :param yend: y end point of the image patch.
         :type yend: int
+        :param alpha: Alpha value of the foreground.
+        :type alpha: float
         """
 
         # convert to float (0-1)
         base_norm = base / 255.0
         foreground_norm = new_foreground / 255.0
 
-        # add alpha value of base and foreground
-        img_base_alpha = np.zeros_like(base_norm) + 1.0
-        img_foreground_alpha = np.zeros_like(foreground_norm) + self.alpha
+        # get alpha layer from base if there is any
+        if len(base_norm.shape) > 3:
+            base_alpha = (base_norm[:, :, 3] * 255).astype("uint8")
+            base_alpha = cv2.cvtColor(base_alpha, cv2.COLOR_GRAY2BGR) / 255
+        else:
+            base_alpha = 1
 
-        # blend base and foreground
-        img_blended = (foreground_norm * img_foreground_alpha) + (
-            base_norm * img_base_alpha * (1 - img_foreground_alpha)
-        )
+        # blend by alpha value
+        img_blended = (foreground_norm * self.alpha) + (base_norm * base_alpha * (1 - alpha))
 
         # normalized by alpha value
-        img_blended_norm = img_blended / (img_foreground_alpha + img_base_alpha * (1 - img_foreground_alpha))
+        img_blended_norm = img_blended / (self.alpha + (base_alpha * (1 - alpha)))
 
         # convert blended image back to uint8
         img_blended_norm = (img_blended_norm * 255.0).astype("uint8")
@@ -816,6 +820,7 @@ class OverlayBuilder:
                     xend,
                     ystart,
                     yend,
+                    self.alpha,
                 )
 
             # overlay types:

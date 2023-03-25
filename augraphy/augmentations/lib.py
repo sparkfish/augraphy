@@ -300,25 +300,93 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
     :type image2: numpy.array, optional
     """
 
-    #    intensity = random.uniform(intensity_range[0], intensity_range[1])
-    #    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
-    #    add_noise = np.vectorize(noise)
-    #    return add_noise(image)
-
-    intensity = random.uniform(intensity_range[0], intensity_range[1])
-    # generate random mask
-    if len(image.shape) > 2:
-        random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-        random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-    else:
-        random_value = np.random.random((image.shape[0], image.shape[1]))
-        random_value2 = np.random.random((image.shape[0], image.shape[1]))
-
     # check not None and use image2 as checking image
     if image2 is not None:
         checking_image = image2
     else:
         checking_image = image
+
+    # output
+    image_noise = image.copy()
+
+    if len(image.shape) > 2:
+        random_value, random_value2 = generate_random_mask_multiple_channels(image)
+    else:
+        random_value, random_value2 = generate_random_mask_single_channel(image)
+
+    indices = compute_noise_indices(
+        image,
+        random_value,
+        random_value2,
+        intensity_range,
+        color_range,
+        noise_condition,
+        checking_image,
+    )
+
+    # apply noise with indices
+    image_noise[indices] = random_value2[indices]
+
+    return image_noise
+
+
+@jit(nopython=True, cache=True)
+def generate_random_mask_multiple_channels(image):
+    """Generate mask of random value with multiple channels.
+
+    :param image: The image to noise.
+    :type image: numpy.array
+    """
+    # generate random mask
+    random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+    random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
+
+    return random_value, random_value2
+
+
+@jit(nopython=True, cache=True)
+def generate_random_mask_single_channel(image):
+    """Generate mask of random value with single channel.
+
+    :param image: The image to noise.
+    :type image: numpy.array
+    """
+
+    random_value = np.random.random((image.shape[0], image.shape[1]))
+    random_value2 = np.random.random((image.shape[0], image.shape[1]))
+
+    return random_value, random_value2
+
+
+@jit(nopython=True, cache=True)
+def compute_noise_indices(
+    image,
+    random_value,
+    random_value2,
+    intensity_range,
+    color_range,
+    noise_condition,
+    checking_image,
+):
+    """Compute indices of noise from noise mask based on provided condition.
+
+    :param image: The image to noise.
+    :type image: numpy.array
+    :param random_value: The mask image of random value.
+    :type random_value: numpy.array
+    :param random_value2: The mask image of random value.
+    :type random_value2: numpy.array
+    :param intensity_range: Pair of bounds for intensity sample.
+    :type intensity_range: tuple
+    :param color_range: Pair of bounds for 8-bit colors.
+    :type color_range: tuple
+    :param noise_condition: Condition to apply noise mask.
+    :type noise_condition: int
+    :param checking_image: Image for the noise evaluation.
+    :type checing_image: numpy.array
+    """
+
+    intensity = random.uniform(intensity_range[0], intensity_range[1])
 
     # find indices where sobelized image value == 255 and random value < intensity
     if noise_condition == 0:
@@ -328,20 +396,18 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
     elif noise_condition == 2:
         condition_evaluation = checking_image > 255
 
-    indices = np.logical_and(condition_evaluation, random_value < intensity)
+    condition_evaluation2 = random_value < intensity
+    indices = np.logical_and(condition_evaluation, condition_evaluation2)
 
     # generate random values in color_range
     min_array_value = np.min(random_value2)
     max_array_value = np.max(random_value2)
     ratio = (color_range[1] - color_range[0]) / (max_array_value - min_array_value)
+
     # scale random value within range
     random_value2 = (ratio * random_value2) + (color_range[0] - (ratio * min_array_value))
 
-    # apply nosie with indices
-    image_noise = image.copy()
-    image_noise[indices] = random_value2[indices]
-
-    return image_noise
+    return indices
 
 
 def _create_blob(

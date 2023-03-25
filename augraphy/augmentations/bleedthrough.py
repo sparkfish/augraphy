@@ -7,9 +7,8 @@ import numpy as np
 
 from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import generate_average_intensity
-from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
-from augraphy.utilities import *
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class BleedThrough(Augmentation):
@@ -83,7 +82,9 @@ class BleedThrough(Augmentation):
         img_bleed_brightness = generate_average_intensity(img_bleed)
         img_brightness = generate_average_intensity(img)
         if img_bleed_brightness < img_brightness:
-            self.alpha *= (img_bleed_brightness / img_brightness) / 2
+            new_alpha = self.alpha * (img_bleed_brightness / img_brightness) / 2
+        else:
+            new_alpha = self.alpha
 
         ob = OverlayBuilder(
             "normal",
@@ -93,7 +94,7 @@ class BleedThrough(Augmentation):
             (1, 1),
             "center",
             0,
-            self.alpha,
+            new_alpha,
         )
         return ob.build_overlay()
 
@@ -133,7 +134,6 @@ class BleedThrough(Augmentation):
         :type sigmaX: float
         """
 
-        sobelized = sobel(img)
         img_noise = np.double(
             add_noise(img, intensity_range=intensity_range, color_range=color_range, noise_condition=1),
         )
