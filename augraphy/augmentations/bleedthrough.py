@@ -174,16 +174,14 @@ class BleedThrough(Augmentation):
                     (image.shape[1], image.shape[0]),
                     interpolation=cv2.INTER_AREA,
                 )
-                # flip left-right
-                image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
-
             else:
-                image_bleedthrough_foreground = cv2.flip(image, 1)
+                image_bleedthrough_foreground = image
 
         else:
+            image_bleedthrough_foreground = image
 
-            # flip left-right only, flip top-bottom get inverted text, which is not realistic
-            image_bleedthrough_foreground = cv2.flip(image, 1)
+        # flip left-right only, flip top-bottom get inverted text, which is not realistic
+        image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
 
         return image_bleedthrough_foreground
 
