@@ -142,7 +142,7 @@ class BleedThrough(Augmentation):
         return img_bleed
 
     # create foreground image for bleedthrough effect
-    def create_bleedthrough_foreground(self, image):
+    def create_bleedthrough_foreground(self, image: np.ndarray):
         """Create foreground image for bleedthrough effect.
 
         :param image: The background image of the bleedthrough effect.
@@ -166,19 +166,22 @@ class BleedThrough(Augmentation):
             # get random image
             image_bleedthrough_foreground = cv2.imread(cache_image_paths[image_index])
 
-            # resize foreground
-            image_bleedthrough_foreground = cv2.resize(
-                image_bleedthrough_foreground,
-                (image.shape[1], image.shape[0]),
-                interpolation=cv2.INTER_AREA,
-            )
-            # flip left-right
-            image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
+            if image_bleedthrough_foreground is not None:
+
+                # resize foreground
+                image_bleedthrough_foreground = cv2.resize(
+                    image_bleedthrough_foreground,
+                    (image.shape[1], image.shape[0]),
+                    interpolation=cv2.INTER_AREA,
+                )
+            else:
+                image_bleedthrough_foreground = image
 
         else:
+            image_bleedthrough_foreground = image
 
-            # flip left-right only, flip top-bottom get inverted text, which is not realistic
-            image_bleedthrough_foreground = cv2.flip(image, 1)
+        # flip left-right only, flip top-bottom get inverted text, which is not realistic
+        image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
 
         return image_bleedthrough_foreground
 
