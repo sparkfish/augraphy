@@ -272,16 +272,47 @@ def chaikin(points):
     return path
 
 
-def smooth(points, iter):
+@jit(nopython=True, cache=True)
+def smooth(points, iterations):
     """
+    Smooth points using chaikin method.
+
     :param points: a list of more than 2 points, where each point is a tuple/array of len=2
     :type points: array
     :param iter: number of times to apply chaikin algorithm
     :type iter: int
     :return:
     """
-    for i in range(iter):
-        points = chaikin(points)
+
+    percent = 0.25
+    for i in range(iterations):
+        current_ysize = points.shape[0]
+        path = np.zeros((current_ysize * 2, 2), dtype="float")
+        # first and last point are the same
+        path[0] = points[0]
+        path[-1] = points[-1]
+        n = 1
+        for i in range(current_ysize - 1):
+            p0 = points[i]
+            p1 = points[i + 1]
+            # distance between x values of two subsequent points
+            dx = p1[0] - p0[0]
+            # distance between y values of two subsequent points
+            dy = p1[1] - p0[1]
+            # creating two new points having 25% and 75% distance from the previous point
+            new_px0, new_py0 = p0[0] + dx * percent, p0[1] + dy * percent
+            new_px1, new_py1 = p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent)
+
+            # 2 new points per current single point
+            path[n][0] = new_px0
+            path[n][1] = new_py0
+            path[n + 1][0] = new_px1
+            path[n + 1][1] = new_py1
+            n += 2
+
+        # update points for next iteration
+        points = path
+
     return points
 
 
@@ -306,85 +337,8 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
     else:
         checking_image = image
 
-    # output
-    image_noise = image.copy()
-
-    if len(image.shape) > 2:
-        random_value, random_value2 = generate_random_mask_multiple_channels(image)
-    else:
-        random_value, random_value2 = generate_random_mask_single_channel(image)
-
-    indices = compute_noise_indices(
-        image,
-        random_value,
-        random_value2,
-        intensity_range,
-        color_range,
-        noise_condition,
-        checking_image,
-    )
-
-    # apply noise with indices
-    image_noise[indices] = random_value2[indices]
-
-    return image_noise
-
-
-@jit(nopython=True, cache=True)
-def generate_random_mask_multiple_channels(image):
-    """Generate mask of random value with multiple channels.
-
-    :param image: The image to noise.
-    :type image: numpy.array
-    """
-    # generate random mask
-    random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-    random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-
-    return random_value, random_value2
-
-
-@jit(nopython=True, cache=True)
-def generate_random_mask_single_channel(image):
-    """Generate mask of random value with single channel.
-
-    :param image: The image to noise.
-    :type image: numpy.array
-    """
-
-    random_value = np.random.random((image.shape[0], image.shape[1]))
-    random_value2 = np.random.random((image.shape[0], image.shape[1]))
-
-    return random_value, random_value2
-
-
-@jit(nopython=True, cache=True)
-def compute_noise_indices(
-    image,
-    random_value,
-    random_value2,
-    intensity_range,
-    color_range,
-    noise_condition,
-    checking_image,
-):
-    """Compute indices of noise from noise mask based on provided condition.
-
-    :param image: The image to noise.
-    :type image: numpy.array
-    :param random_value: The mask image of random value.
-    :type random_value: numpy.array
-    :param random_value2: The mask image of random value.
-    :type random_value2: numpy.array
-    :param intensity_range: Pair of bounds for intensity sample.
-    :type intensity_range: tuple
-    :param color_range: Pair of bounds for 8-bit colors.
-    :type color_range: tuple
-    :param noise_condition: Condition to apply noise mask.
-    :type noise_condition: int
-    :param checking_image: Image for the noise evaluation.
-    :type checing_image: numpy.array
-    """
+    random_value = np.random.uniform(0, 1, size=image.shape)
+    random_value2 = np.random.randint(color_range[0], color_range[1] + 1, size=image.shape)
 
     intensity = random.uniform(intensity_range[0], intensity_range[1])
 
@@ -399,15 +353,13 @@ def compute_noise_indices(
     condition_evaluation2 = random_value < intensity
     indices = np.logical_and(condition_evaluation, condition_evaluation2)
 
-    # generate random values in color_range
-    min_array_value = np.min(random_value2)
-    max_array_value = np.max(random_value2)
-    ratio = (color_range[1] - color_range[0]) / (max_array_value - min_array_value)
+    # output
+    image_noise = image.copy()
 
-    # scale random value within range
-    random_value2 = (ratio * random_value2) + (color_range[0] - (ratio * min_array_value))
+    # apply noise with indices
+    image_noise[indices] = random_value2[indices]
 
-    return indices
+    return image_noise
 
 
 def _create_blob(

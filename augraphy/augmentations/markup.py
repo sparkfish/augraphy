@@ -81,10 +81,10 @@ class Markup(Augmentation):
         """
 
         points_count = random.randint(3, 6)  # dividing the line into points
-        points = np.linspace(starting_point[0], ending_point[0], points_count)
-        points = [[int(x), (starting_point[1] + random.randint(-offset, offset))] for x in points]
+        points_x = np.linspace(starting_point[0], ending_point[0], points_count)
+        points_y = [starting_point[1] + random.uniform(-offset, offset) for _ in points_x]
         points = smooth(
-            points,
+            np.column_stack((points_x, points_y)).astype("float"),
             6,
         )  # adding a smoothing effect in points using chaikin's algorithm
         return points
@@ -155,8 +155,7 @@ class Markup(Augmentation):
         points_y = [min_y, random.randint(min_y, max_y), max_y]
 
         # smooth points
-        points = [[point_x, point_y] for point_x, point_y in zip(points_x, points_y)]
-        points = smooth(points, 6)
+        points = smooth(np.column_stack((points_x, points_y)).astype("float"), 6)
 
         # draw curvy lines
         for (point1_x, point1_y), (point2_x, point2_y) in zip(points[:-1], points[1:]):
@@ -357,13 +356,14 @@ class Markup(Augmentation):
                             starting_point,
                             ending_point,
                             offset,
-                        )
+                        ).astype("int")
+
                         for i in range(len(points_list) - 1):
                             p1 = (int(points_list[i][0]), int(points_list[i][1]))
                             if self.markup_type == "highlight":
                                 p2 = (
-                                    int(points_list[i + 1][0]),
-                                    int(points_list[i + 1][1] - h),
+                                    points_list[i + 1][0],
+                                    points_list[i + 1][1] - h,
                                 )
                                 # A filled rectangle
                                 markup_mask = cv2.rectangle(
@@ -376,8 +376,8 @@ class Markup(Augmentation):
 
                             else:
                                 p2 = (
-                                    int(points_list[i + 1][0]),
-                                    int(points_list[i + 1][1]),
+                                    points_list[i + 1][0],
+                                    points_list[i + 1][1],
                                 )
                                 markup_mask = cv2.line(
                                     markup_mask,
@@ -414,6 +414,7 @@ class Markup(Augmentation):
                 markup_mask = brightness(markup_mask)
 
         else:
+
             # blur markup mask
             markup_mask = cv2.GaussianBlur(markup_mask, (3, 3), cv2.BORDER_DEFAULT)
 

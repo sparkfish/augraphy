@@ -86,6 +86,7 @@ class Brightness(Augmentation):
 
             hsv = np.array(hsv, dtype=np.float64)
             hsv[:, :, 2] = hsv[:, :, 2] * value
+            hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
 
             # increase intensity value for area with intensity below min brightness value
             if self.min_brightness:
