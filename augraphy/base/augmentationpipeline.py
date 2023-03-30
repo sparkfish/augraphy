@@ -399,10 +399,11 @@ class AugraphyPipeline:
             # augmentations inside sequence
             else:
                 augmentation_name += current_augmentation.__class__.__name__
-                cv2.imwrite(
-                    save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png",
-                    result,
-                )
+                if result is not None:
+                    cv2.imwrite(
+                        save_path + "p" + str(n) + "_" + layer_name + str(i) + "_" + augmentation_name + ".png",
+                        result,
+                    )
                 n += 1
             s += 1
         return n
