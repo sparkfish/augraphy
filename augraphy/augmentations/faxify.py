@@ -228,15 +228,19 @@ class Faxify(Augmentation):
             image = image.copy()
 
             if self.monochrome == -1:
-                self.monochrome = random.choice([0, 1])
+                monochrome = random.choice([0, 1])
+            else:
+                monochrome = self.monochrome
 
             if self.halftone == -1:
-                self.halftone = random.choice([0, 1])
+                halftone = random.choice([0, 1])
+            else:
+                halftone = self.halftone
 
             # downscale image
             image_out = self.downscale(image)
 
-            if self.monochrome:
+            if monochrome:
                 # randomly select threshold method
                 if self.monochrome_method == "random":
                     all_monochrome_method = [
@@ -316,7 +320,7 @@ class Faxify(Augmentation):
                 )
 
             # check and apply halftone
-            if self.halftone:
+            if halftone:
 
                 # convert to gray
                 image_out = self.complement_rgb_to_gray(image_out, invert=self.invert)

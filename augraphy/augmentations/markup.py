@@ -126,7 +126,7 @@ class Markup(Augmentation):
 
         return dilation
 
-    def draw_line(self, p1, p2, markup_mask, markup_thickness, reverse):
+    def draw_line(self, p1, p2, markup_mask, markup_thickness, markup_color, reverse):
         """Draw line across two provided points.
 
         :param p1: Starting point (x, y) of the line.
@@ -137,6 +137,8 @@ class Markup(Augmentation):
         :type markup_mask: numpy.array (numpy.uint8)
         :param markup_thickness: Thickness of the line.
         :type markup_thickness: int
+        :param markup_color: Color of the line in BGR format.
+        :type markup_color: tuple
         :param reverse: Reverse the order of line points distribution.
         :type reverse: int
         """
@@ -171,7 +173,7 @@ class Markup(Augmentation):
                 markup_mask,
                 point1,
                 point2,
-                self.markup_color,
+                markup_color,
                 markup_thickness,
                 lineType=cv2.LINE_AA,
             )
@@ -185,17 +187,23 @@ class Markup(Augmentation):
         overlay = markup_img.copy()
 
         if self.markup_color == "random":
-            self.markup_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            markup_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         elif self.markup_color == "contrast":
             single_color = cv2.resize(image, (1, 1), interpolation=cv2.INTER_AREA)
-            self.markup_color = 255 - single_color[0][0]
-            self.markup_color = self.markup_color.tolist()
+            markup_color = 255 - single_color[0][0]
+            markup_color = markup_color.tolist()
+        else:
+            markup_color = self.markup_color
 
         if self.large_word_mode == "random":
-            self.large_word_mode = random.choice([True, False])
+            large_word_mode = random.choice([True, False])
+        else:
+            large_word_mode = self.large_word_mode
 
         if self.markup_type == "random":
-            self.markup_type = random.choice(["strikethrough", "crossed", "underline", "highlight"])
+            markup_type = random.choice(["strikethrough", "crossed", "underline", "highlight"])
+        else:
+            markup_type = self.markup_type
 
         num_lines = random.randint(self.num_lines_range[0], self.num_lines_range[1])
         markup_thickness = random.randint(
@@ -248,7 +256,9 @@ class Markup(Augmentation):
                     h < character_height_average + height_range
                 )
 
-            if not self.large_word_mode:
+            if large_word_mode:
+                conditions = check_height
+            else:
                 conditions = (
                     choice
                     and (w > h * 2)
@@ -256,8 +266,6 @@ class Markup(Augmentation):
                     and w < int(markup_img.shape[1] / 5)
                     and check_height
                 )
-            else:
-                conditions = check_height
 
             if conditions:
                 if num_lines == 0:
@@ -275,11 +283,11 @@ class Markup(Augmentation):
                 offset = 6
 
                 # for strikethrough we need center points
-                if self.markup_type == "strikethrough":
+                if markup_type == "strikethrough":
                     starting_point = [x, int(y + (h / 2))]
                     ending_point = [x + w, int(y + (h / 2))]
                 # for corossed-off we need points representing primary diagonal
-                elif self.markup_type == "crossed":
+                elif markup_type == "crossed":
                     starting_point = [x, y]
                     ending_point = [x + w, y + h]
                 else:
@@ -288,7 +296,7 @@ class Markup(Augmentation):
                     ending_point = [x + w, y + h]
 
                 for i in range(self.repetitions):
-                    if self.markup_type == "crossed":
+                    if markup_type == "crossed":
 
                         ysize, xsize = markup_img.shape[:2]
 
@@ -319,7 +327,7 @@ class Markup(Augmentation):
                         )
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
-                        self.draw_line(p1, p2, markup_mask, markup_thickness, 0)
+                        self.draw_line(p1, p2, markup_mask, markup_thickness, markup_color, 0)
 
                         # drawing secondary diagonal
                         markup_thickness = random.randint(
@@ -348,7 +356,7 @@ class Markup(Augmentation):
                         )
                         p1 = (p1_x, p1_y)
                         p2 = (p2_x, p2_y)
-                        self.draw_line(p1, p2, markup_mask, markup_thickness, 1)
+                        self.draw_line(p1, p2, markup_mask, markup_thickness, markup_color, 1)
 
                     else:
                         # dividing the line into points to mimic a smoothing effect
@@ -360,7 +368,7 @@ class Markup(Augmentation):
 
                         for i in range(len(points_list) - 1):
                             p1 = (int(points_list[i][0]), int(points_list[i][1]))
-                            if self.markup_type == "highlight":
+                            if markup_type == "highlight":
                                 p2 = (
                                     points_list[i + 1][0],
                                     points_list[i + 1][1] - h,
@@ -370,7 +378,7 @@ class Markup(Augmentation):
                                     markup_mask,
                                     p1,
                                     p2,
-                                    self.markup_color,
+                                    markup_color,
                                     -1,
                                 )
 
@@ -383,13 +391,13 @@ class Markup(Augmentation):
                                     markup_mask,
                                     p1,
                                     p2,
-                                    self.markup_color,
+                                    markup_color,
                                     markup_thickness,
                                     lineType=cv2.LINE_AA,
                                 )
 
         # smoothen highlight mask to make it more realistic
-        if self.markup_type == "highlight":
+        if markup_type == "highlight":
             # blur markup mask
             markup_mask = cv2.GaussianBlur(markup_mask, (7, 7), cv2.BORDER_DEFAULT)
 

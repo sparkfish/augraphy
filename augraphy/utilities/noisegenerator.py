@@ -32,24 +32,19 @@ class NoiseGenerator:
             "bottom_left",
             "bottom_right",
         ]
-        # any invalid noise type will reset noise type to 0
-        if self.noise_type not in [1, 2, 3, 4]:
-            self.noise_type = random.randint(1, 4)
 
-        # random location with no sides if no side is chosen
-        if self.noise_side not in self.sides:
-            self.noise_side = random.choice(self.sides)
-
-    def generate_clusters_and_samples(self, noise_concentration, max_size):
+    def generate_clusters_and_samples(self, noise_type, noise_concentration, max_size):
         """Generate number of noise clusters and number of samples in each noise cluster.
 
+        :param noise_type: Types of generated noise.
+        :type noise_type: int
         :param noise_concentration: Pair of floats determining concentration of noise.
         :type noise_concentration: tuple
         :param max_size: Maximum between width and height of image.
         :type max_size: int
         """
 
-        if self.noise_type == 4:
+        if noise_type == 4:
             n_clusters = (
                 int((noise_concentration[0]) * (max_size / 50)),
                 int((noise_concentration[1]) * (max_size / 30)),
@@ -77,9 +72,13 @@ class NoiseGenerator:
 
         return n_samples_array
 
-    def generate_sparsity_std(self, noise_sparsity, xsize, ysize, max_size):
+    def generate_sparsity_std(self, noise_type, noise_side, noise_sparsity, xsize, ysize, max_size):
         """Generate standard deviation(std) to control the sparsity of the noise.
 
+        :param noise_type: Types of generated noise.
+        :type noise_type: int
+        :param noise_side: Location of generated noise.
+        :type noise_side: string
         :param noise_sparsity: Pair of floats determining sparseness of noise.
         :type noise_sparsity: tuple
         :param xsize: Width of image.
@@ -90,12 +89,12 @@ class NoiseGenerator:
         :type max_size: int
         """
 
-        if self.noise_type == 2:
+        if noise_type == 2:
             std_range = (
                 int((noise_sparsity[0]) * (max_size / 5)),
                 int((noise_sparsity[1]) * (max_size / 5)),
             )
-        elif self.noise_type == 3:
+        elif noise_type == 3:
             std_range = (
                 int((noise_sparsity[0]) * (max_size / 3)),
                 int((noise_sparsity[1]) * (max_size / 3)),
@@ -108,35 +107,35 @@ class NoiseGenerator:
 
         # for noise concentrated at certain part of image
         # left
-        if self.noise_side == "left":
+        if noise_side == "left":
             center_x = (0, 0)
             center_y = (0, ysize)
         # right
-        elif self.noise_side == "right":
+        elif noise_side == "right":
             center_x = (xsize, xsize)
             center_y = (0, ysize)
         # top
-        elif self.noise_side == "top":
+        elif noise_side == "top":
             center_x = (0, xsize)
             center_y = (0, 0)
         # bottom
-        elif self.noise_side == "bottom":
+        elif noise_side == "bottom":
             center_x = (0, xsize)
             center_y = (ysize, ysize)
         # top_left
-        elif self.noise_side == "top_left":
+        elif noise_side == "top_left":
             center_x = (0, int(xsize / 4))
             center_y = (0, int(ysize / 4))
         # top_right
-        elif self.noise_side == "top_right":
+        elif noise_side == "top_right":
             center_x = (int(xsize * 0.75), xsize)
             center_y = (0, int(ysize / 4))
         # bottom_left
-        elif self.noise_side == "bottom_left":
+        elif noise_side == "bottom_left":
             center_x = (0, int(xsize / 4))
             center_y = (int(ysize * 0.75), ysize)
         # bottom_right
-        elif self.noise_side == "bottom_right":
+        elif noise_side == "bottom_right":
             center_x = (int(xsize * 0.75), xsize)
             center_y = (int(ysize * 0.75), ysize)
         else:
@@ -242,6 +241,8 @@ class NoiseGenerator:
 
     def generate_mask_main(
         self,
+        noise_type,
+        noise_side,
         noise_value,
         noise_background,
         noise_sparsity,
@@ -251,6 +252,10 @@ class NoiseGenerator:
     ):
         """Main function to generate mask of noise in each iteration.
 
+        :param noise_type: Types of generated noise.
+        :type noise_type: int
+        :param noise_side: Location of generated noise.
+        :type noise_side: string
         :param noise_value: Tuple of ints to determine value of noise.
         :type noise_value: tuple
         :param noise_background: Tuple of ints to determine background value of mask.
@@ -270,19 +275,22 @@ class NoiseGenerator:
 
         # generate number of clusters and number of samples in each cluster
         n_samples_array = self.generate_clusters_and_samples(
+            noise_type,
             noise_concentration,
             max_size,
         )
 
         # For sparsity of the noises (distance to centroid of cluster)
         std, center_x, center_y = self.generate_sparsity_std(
+            noise_type,
+            noise_side,
             noise_sparsity,
             xsize,
             ysize,
             max_size,
         )
 
-        if self.noise_type == 2:
+        if noise_type == 2:
 
             # reduce sparsity
             std = int(std / 5)
@@ -367,13 +375,13 @@ class NoiseGenerator:
             )
 
             # rotate mask according to noise_side
-            if self.noise_side == "top" or self.noise_side == "top_left" or self.noise_side == "top_right":
+            if noise_side == "top" or noise_side == "top_left" or noise_side == "top_right":
                 img_mask = img_mask
-            elif self.noise_side == "bottom" or self.noise_side == "bottom_left" or self.noise_side == "bottom_right":
+            elif noise_side == "bottom" or noise_side == "bottom_left" or noise_side == "bottom_right":
                 img_mask = np.flipud(img_mask)
-            elif self.noise_side == "left":
+            elif noise_side == "left":
                 img_mask = np.rot90(img_mask, 1)
-            elif self.noise_side == "right":
+            elif noise_side == "right":
                 img_mask = np.rot90(img_mask, 3)
             else:
                 img_mask = np.rot90(img_mask, random.randint(0, 3))
@@ -400,7 +408,7 @@ class NoiseGenerator:
             )
 
             # rotate and merge mask into 4 sides
-            if self.noise_type == 3:
+            if noise_type == 3:
                 img_mask = np.minimum(
                     img_mask,
                     cv2.resize(np.rot90(img_mask), (xsize, ysize), interpolation=cv2.INTER_AREA),
@@ -452,6 +460,14 @@ class NoiseGenerator:
         # initialize blank noise mask
         img_mask = np.full((xsize, ysize), fill_value=background_value).astype("int")
 
+        # any invalid noise type will reset noise type to 0
+        if self.noise_type not in [1, 2, 3, 4]:
+            noise_type = random.randint(1, 4)
+
+        # random location with no sides if no side is chosen
+        if self.noise_side not in self.sides:
+            noise_side = random.choice(self.sides)
+
         # loop each iterations
         for _ in range(iterations):
 
@@ -461,6 +477,8 @@ class NoiseGenerator:
 
             # generate noise mask for current iteration
             img_mask_temporary = self.generate_mask_main(
+                noise_type,
+                noise_side,
                 noise_value,
                 noise_background,
                 noise_sparsity,
