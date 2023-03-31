@@ -200,9 +200,11 @@ class Dithering(Augmentation):
             image = image.copy()
 
             if self.dither == "random":
-                self.dither = random.choice(["ordered", "Floyd Steinberg"])
+                dither_type = random.choice(["ordered", "Floyd Steinberg"])
+            else:
+                dither_type = self.dither
 
-            if self.dither == "ordered":
+            if dither_type == "ordered":
                 image_dither = self.dither_Ordered(image, random.randint(self.order[0], self.order[1]))
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)

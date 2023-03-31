@@ -182,8 +182,11 @@ class BookBinding(Augmentation):
     def __call__(self, image, layer=None, force=False):
         image = image.copy()
 
+        # get bending direction
         if self.curling_direction == -1:
-            self.curling_direction = random.choice([0, 1])
+            curve_down = random.choice([0, 1])
+        else:
+            curve_down = self.curling_direction
 
         radius = random.randint(self.radius_range[0], self.radius_range[1])
         angle = 30
@@ -194,9 +197,6 @@ class BookBinding(Augmentation):
                 self.curve_range[1],
             ),
         )
-
-        # get bending direction
-        curve_down = self.curling_direction
 
         added_border_height = int(image.shape[0] / 10)
 
