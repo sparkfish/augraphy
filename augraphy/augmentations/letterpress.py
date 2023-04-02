@@ -95,12 +95,12 @@ class Letterpress(Augmentation):
             # initialize empty noise mask and noise mask with random values
             noise_mask = np.copy(image)
             noise_mask2 = (np.random.random((image.shape[0], image.shape[1])) * 255).astype("uint8")
-            # generate random values in value range
-            min_array_value = np.min(noise_mask2)
-            max_array_value = np.max(noise_mask2)
-            ratio = (self.value_range[1] - self.value_range[0]) / (max_array_value - min_array_value)
-            # scale random value within range
-            noise_mask2 = (ratio * noise_mask2) + (self.value_range[0] - (ratio * min_array_value))
+            noise_mask2 = np.random.randint(
+                self.value_range[0],
+                self.value_range[1],
+                size=(image.shape[0], image.shape[1]),
+                dtype="uint8",
+            )
 
             # insert noise value according to generate points
             if len(image.shape) > 2:
