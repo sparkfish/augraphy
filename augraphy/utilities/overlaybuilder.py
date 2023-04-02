@@ -533,8 +533,11 @@ class OverlayBuilder:
             comp_value = 1.0 - (1.0 - base_norm[:, :, :3]) * (1.0 - foreground_norm[:, :, :3])
 
         elif self.overlay_types == "dodge":
+            # prevent zero division
+            divisor = 1.0 - foreground_norm[:, :, :3]
+            divisor[divisor == 0.0] = 1.0
             comp_value = np.minimum(
-                base_norm[:, :, :3] / (1.0 - foreground_norm[:, :, :3]),
+                base_norm[:, :, :3] / divisor,
                 1.0,
             )
 

@@ -308,7 +308,7 @@ class BadPhotoCopy(Augmentation):
             image_sobel_sobel = cv2.dilate(image_sobel_sobel, (5, 5), iterations=2)
 
             # add random noise range from 0-128
-            image_random = (np.random.random((image.shape[0], image.shape[1])) * 128).astype("uint8")
+            image_random = np.random.randint(0, 128, (image.shape[0], image.shape[1]), dtype="uint8")
             image_random2 = np.random.random((image.shape[0], image.shape[1]))
             indices = np.logical_and(image_sobel_sobel == 255, image_random2 < 0.70)
             image_sobel[indices] = image_random[indices]
