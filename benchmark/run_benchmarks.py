@@ -1,6 +1,7 @@
 # import libraries
 import argparse
 import random
+import tracemalloc
 from glob import glob
 from time import time
 
@@ -28,6 +29,7 @@ def run_benchmarks(augmentations, folder_path):
 
     augmentations_init_time = []
     augmentations_augment_time = []
+    augmentations_memory_usage = []
     augmentations_name = []
 
     for augmentation in augmentations:
@@ -36,9 +38,14 @@ def run_benchmarks(augmentations, folder_path):
 
         initialization_times = []
         augmentation_times = []
+        augmentations_memory = []
         for i in tqdm(range(len(file_paths))):
             image = cv2.imread(file_paths[i])
             start_time = time()
+
+            tracemalloc.start()
+            memory_list_start = tracemalloc.get_traced_memory()
+
             # use default params
             augmentor = augmentation(p=1)
             # time to initialize the class
@@ -47,30 +54,44 @@ def run_benchmarks(augmentations, folder_path):
             start_time = time()
             # apply augmentation
             image_output = augmentor(image)
+
+            memory_list_stop = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+
+            # memory consumed = maximum memory - initial memory
+            augmentations_memory += [memory_list_stop[1] - memory_list_start[0]]
+
             # time to augment the image
             augmentation_times += [time() - start_time]
 
         average_initialization_time = np.mean(initialization_times)
         average_augmentation_time = np.mean(augmentation_times)
+        average_memory_usage = np.mean(augmentations_memory)
 
         augmentations_name += [augmentation.__name__]
         augmentations_init_time += [average_initialization_time]
         augmentations_augment_time += [average_augmentation_time]
+        augmentations_memory_usage += [average_memory_usage]
 
         print("Average time per initialization = " + str(average_initialization_time) + " seconds")
         print("Average time per augmentation = " + str(average_augmentation_time) + " seconds")
+        print("Average memory usage per augmentation = " + str(average_memory_usage / 1e6) + " MB")
         print(" ")
 
-    return augmentations_name, augmentations_init_time, augmentations_augment_time
+    return augmentations_name, augmentations_init_time, augmentations_augment_time, augmentations_memory_usage
 
 
-def generate_markdown_table(augmentations_name, augmentations_augment_time):
+def generate_markdown_table(augmentations_name, augmentations_augment_time, augmentations_memory_usage):
 
     table_name = "Benchmarking results"
-    headers = ["Augmentation", "Images per second"]
+    headers = ["Augmentation", "Images per second", "Memory usage (MB)"]
     value_matrix = []
-    for name, augmentation_time in zip(augmentations_name, augmentations_augment_time):
-        value_matrix.append([name, np.round(1 / augmentation_time, 2)])
+    for name, augmentation_time, memory_usage in zip(
+        augmentations_name,
+        augmentations_augment_time,
+        augmentations_memory_usage,
+    ):
+        value_matrix.append([name, np.round(1 / augmentation_time, 2), np.round(memory_usage / 1e6, 2)])
 
     writer = MarkdownTableWriter(
         table_name=table_name,
@@ -114,10 +135,15 @@ def main(folder_path):
     ]
 
     # run and process image with each augmentation
-    augmentations_name, augmentations_init_time, augmentations_augment_time = run_benchmarks(augmentations, folder_path)
+    (
+        augmentations_name,
+        augmentations_init_time,
+        augmentations_augment_time,
+        augmentations_memory_usage,
+    ) = run_benchmarks(augmentations, folder_path)
 
     # generate table
-    generate_markdown_table(augmentations_name, augmentations_augment_time)
+    generate_markdown_table(augmentations_name, augmentations_augment_time, augmentations_memory_usage)
 
 
 if __name__ == "__main__":
