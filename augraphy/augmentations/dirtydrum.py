@@ -244,9 +244,11 @@ class DirtyDrum(Augmentation):
 
             if self.direction == -1:
                 # Select random direction
-                self.direction = random.choice([0, 1, 2])
+                direction = random.choice([0, 1, 2])
+            else:
+                direction = self.direction
 
-            if self.direction == 0:
+            if direction == 0:
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 0)
                 # Apply gaussian blur to mask of dirty drum
@@ -255,7 +257,7 @@ class DirtyDrum(Augmentation):
                     ksize=self.ksize,
                     sigmaX=self.sigmaX,
                 )
-            elif self.direction == 1:
+            elif direction == 1:
                 # Create directional masks for dirty drum effect
                 image_dirty = self.create_dirty_mask(image, self.line_width_range, 1)
                 # Apply gaussian blur to mask of dirty drum

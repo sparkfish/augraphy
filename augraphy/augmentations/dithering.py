@@ -1,4 +1,8 @@
+import random
+
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.base.augmentation import Augmentation
 
@@ -7,29 +11,60 @@ class Dithering(Augmentation):
     """
     Applies Ordered or Floyd Steinberg dithering to the input image.
 
-    :param dither: Types of dithering, ordered or Floyd Steinberg dithering.
+    :param dither: Types of dithering, random, ordered, Floyd Steinberg dithering.
     :type dither: string, optional
-    :param order: Order number for ordered dithering.
-    :type order: int, optional
+    :param order: Pair of ints determining the range of order number for ordered dithering.
+    :type order: tuple, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
         self,
-        dither="ordered",
-        order=5,
+        dither="random",
+        order=(2, 5),
+        numba_jit=1,
         p=1,
     ):
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.dither = dither
         self.order = order
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Dithering(dither={self.dither}, p={self.p})"
+        return f"Dithering(dither={self.dither}, order={self.order}, numba_jit={self.numba_jit}, p={self.p})"
 
-    def apply_Floyd_Steinberg(self, image, ysize, xsize):
+    # Floyd Steinberg dithering
+    def dither_Floyd_Steinberg(self, image):
+        """Apply Floyd Steinberg dithering to the input image.
+
+        :param image: The image to apply the function.
+        :type image: numpy.array (numpy.uint8)
+        """
+
+        if len(image.shape) > 2:  # coloured image
+            ysize, xsize, dim = image.shape
+            img_dither_fs = image.copy().astype("float")
+            for channel_num in range(dim):
+                self.apply_Floyd_Steinberg(
+                    img_dither_fs[:, :, channel_num],
+                    ysize,
+                    xsize,
+                )
+        else:  # grayscale or binary
+            ysize, xsize = image.shape
+            img_dither_fs = image.copy().astype("float")
+            self.apply_Floyd_Steinberg(img_dither_fs, ysize, xsize)
+
+        return img_dither_fs.astype("uint8")
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_Floyd_Steinberg(image, ysize, xsize):
         """Run Floyd Steinberg dithering algorithm to the input image.
 
         :param image: The image to apply the function.
@@ -51,36 +86,9 @@ class Dithering(Augmentation):
                 image[y + 1, x] += quant_error * (5 / 16)
                 image[y + 1, x + 1] += quant_error * (1 / 16)
 
-        return image
-
-    # Floyd Steinberg dithering
-    def dither_Floyd_Steinberg(self, image):
-        """Apply Floyd Steinberg dithering to the input image.
-
-        :param image: The image to apply the function.
-        :type image: numpy.array (numpy.uint8)
-        """
-
-        if len(image.shape) > 2:  # coloured image
-            ysize, xsize, dim = image.shape
-            img_dither_fs = image.copy().astype("float")
-            for channel_num in range(dim):
-                img_dither_fs[:, :, channel_num] = self.apply_Floyd_Steinberg(
-                    img_dither_fs[:, :, channel_num],
-                    ysize,
-                    xsize,
-                )
-        else:  # grayscale or binary
-            ysize, xsize = image.shape
-            img_dither_fs = image.copy().astype("float")
-            img_dither_fs = self.apply_Floyd_Steinberg(img_dither_fs, ysize, xsize)
-
-        # correctly convert to 8-bit unsigned int
-        img_dither_fs = img_dither_fs.astype(np.uint8)
-        return img_dither_fs
-
-    # Apply ordered dithering algorithm
-    def apply_Ordered(self, image, ysize, xsize, order, ordered_matrix):
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_Ordered(image, ysize, xsize, order, ordered_matrix):
         """Run ordered dithering algorithm to the input image.
 
         :param image: The image to apply the function.
@@ -99,12 +107,10 @@ class Dithering(Augmentation):
             for x in range(xsize):
                 oy = y % order
                 ox = x % order
-                if image[y, x] > ordered_matrix[oy][ox]:
+                if image[y, x] > ordered_matrix[oy, ox]:
                     image[y, x] = 255
                 else:
                     image[y, x] = 0
-
-        return image
 
     def dither_Ordered(self, image, order=5):
         """Apply ordered dithering to the input image.
@@ -122,12 +128,13 @@ class Dithering(Augmentation):
         for y, row in enumerate(ordered_matrix):
             for x, value in enumerate(row):
                 ordered_matrix[y][x] = np.floor((value / total_number) * 255)
+        ordered_matrix = np.array(ordered_matrix, dtype="float64")
 
         if len(image.shape) > 2:  # coloured image
             ysize, xsize, dim = image.shape
             img_dither_ordered = image.copy().astype("float")
             for channel_num in range(dim):
-                img_dither_ordered[:, :, channel_num] = self.apply_Ordered(
+                self.apply_Ordered(
                     img_dither_ordered[:, :, channel_num],
                     ysize,
                     xsize,
@@ -137,7 +144,7 @@ class Dithering(Augmentation):
         else:  # grayscale or binary
             ysize, xsize = image.shape
             img_dither_ordered = image.copy().astype("float")
-            img_dither_ordered = self.apply_Ordered(
+            self.apply_Ordered(
                 img_dither_ordered,
                 ysize,
                 xsize,
@@ -145,8 +152,8 @@ class Dithering(Augmentation):
                 ordered_matrix,
             )
 
-        # correctly convert to 8-bit unsigned int
-        img_dither_ordered = img_dither_ordered.astype(np.uint8)
+        return img_dither_ordered.astype("uint8")
+
         return img_dither_ordered
 
     # Adapted from https://github.com/tromero/BayerMatrix
@@ -191,8 +198,14 @@ class Dithering(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            if self.dither == "ordered":
-                image_dither = self.dither_Ordered(image, self.order)
+
+            if self.dither == "random":
+                dither_type = random.choice(["ordered", "Floyd Steinberg"])
+            else:
+                dither_type = self.dither
+
+            if dither_type == "ordered":
+                image_dither = self.dither_Ordered(image, random.randint(self.order[0], self.order[1]))
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)
 

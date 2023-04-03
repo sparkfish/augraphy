@@ -2,7 +2,8 @@ import random
 
 import cv2
 import numpy as np
-from scipy.stats import norm
+from numba import config
+from numba import jit
 
 from augraphy.base.augmentation import Augmentation
 
@@ -30,6 +31,8 @@ class LightingGradient(Augmentation):
     :type linear_decay_rate: float, optional
     :param transparency: Transparency of input image.
     :type transparency: float, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -43,10 +46,11 @@ class LightingGradient(Augmentation):
         mode="gaussian",
         linear_decay_rate=None,
         transparency=None,
+        numba_jit=1,
         p=1,
     ):
         """Constructor method"""
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.light_position = light_position
         self.direction = direction
         self.max_brightness = max_brightness
@@ -54,10 +58,12 @@ class LightingGradient(Augmentation):
         self.mode = mode
         self.linear_decay_rate = linear_decay_rate
         self.transparency = transparency
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"LightingGradient(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, p={self.p})"
+        return f"LightingGradient(light_position={self.light_position}, direction={self.direction}, max_brightness={self.max_brightness}, min_brightness={self.min_brightness}, mode='{self.mode}', linear_decay_rate={self.linear_decay_rate}, transparency={self.transparency}, numba_jit={self.numba_jit}, p={self.p})"
 
     def generate_parallel_light_mask(
         self,
@@ -98,13 +104,12 @@ class LightingGradient(Augmentation):
         if linear_decay_rate is None:
             if mode == "linear_static":
                 linear_decay_rate = random.uniform(0.2, 2)
+        # change invalid mode into gaussian
+        if mode not in ["linear_dynamic", "linear_static", "gaussian"]:
+            mode = "gaussian"
         if mode == "linear_dynamic":
             linear_decay_rate = (max_brightness - min_brightness) / max(mask_size)
-        assert mode in [
-            "linear_dynamic",
-            "linear_static",
-            "gaussian",
-        ], "mode must be linear_dynamic, linear_static or gaussian"
+
         padding = int(max(mask_size) * np.sqrt(2))
         # add padding to satisfy cropping after rotating
         canvas_x = padding * 2 + mask_size[0]
@@ -114,26 +119,13 @@ class LightingGradient(Augmentation):
         init_mask_ul = (int(padding), int(padding))
         init_mask_br = (int(padding + mask_size[0]), int(padding + mask_size[1]))
         init_light_pos = (padding + pos_x, padding + pos_y)
+
         # fill in mask row by row with value decayed from center
-        for i in range(canvas_y):
-            if mode == "linear":
-                i_value = self._decayed_value_in_linear(
-                    i,
-                    max_brightness,
-                    init_light_pos[1],
-                    linear_decay_rate,
-                )
-            elif mode == "gaussian":
-                i_value = self._decayed_value_in_norm(
-                    i,
-                    max_brightness,
-                    min_brightness,
-                    init_light_pos[1],
-                    mask_size[1],
-                )
-            else:
-                i_value = 0
-            mask[i] = i_value
+        if mode == "gaussian":
+            self.apply_decay_value_norm(mask, canvas_y, max_brightness, min_brightness, init_light_pos[1], mask_size[1])
+        else:
+            self.apply_decay_value_linear(mask, canvas_y, max_brightness, init_light_pos[1], linear_decay_rate)
+
         # rotate mask
         rotate_M = cv2.getRotationMatrix2D(init_light_pos, direction, 1)
         mask = cv2.warpAffine(mask, rotate_M, (canvas_x, canvas_y))
@@ -149,11 +141,17 @@ class LightingGradient(Augmentation):
 
         return mask
 
-    def _decayed_value_in_norm(self, x, max_value, min_value, center, grange):
+    # thanks to the formula in this discussion to replace the usage of norm.pdf:
+    # https://stackoverflow.com/questions/8669235/alternative-for-scipy-stats-norm-pdf
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_decay_value_norm(mask, canvas_y, max_value, min_value, center, grange):
         """Decay from max to min value following Gaussian distribution
 
-        :param x: Current x position.
-        :type x: int
+        :param mask: Output image
+        :type mask: numpy.array
+        :param canvas_y: Lighting image canvas max size.
+        :type canvas_y: int
         :param max_value: Max of decayed value.
         :type max_value: int
         :param min_value: Min of decayed value.
@@ -163,17 +161,27 @@ class LightingGradient(Augmentation):
         :param grange: Range of decay.
         :type grange: int
         """
-        radius = grange / 3
-        center_prob = norm.pdf(center, center, radius)
-        x_prob = norm.pdf(x, center, radius)
-        x_value = (x_prob / center_prob) * (max_value - min_value) + min_value
-        return x_value
 
-    def _decayed_value_in_linear(self, x, max_value, padding_center, decay_rate):
+        for x in range(canvas_y):
+
+            radius = grange / 3
+            center_prob = 1 / (np.sqrt(2 * np.pi) * abs(radius))
+
+            u = (x - center) / abs(radius)
+            x_prob = (1 / (np.sqrt(2 * np.pi) * abs(radius))) * np.exp(-u * u / 2)
+
+            x_value = (x_prob / center_prob) * (max_value - min_value) + min_value
+            mask[x] = x_value
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_decay_value_linear(mask, canvas_y, max_value, padding_center, decay_rate):
         """Decay from max to min value with static linear decay rate.
 
-        :param x: Current x position.
-        :type x: int
+        :param mask: Output image
+        :type mask: numpy.array
+        :param canvas_y: Lighting image canvas max size.
+        :type canvas_y: int
         :param max_value: Max of decayed value.
         :type max_value: int
         :param padding_center: Center padding position.
@@ -182,9 +190,12 @@ class LightingGradient(Augmentation):
         :type decay_rate: float
         """
 
-        x_value = max_value - abs(padding_center - x) * decay_rate
-        if x_value < 0:
-            x_value = 1
+        for x in range(canvas_y):
+            x_value = max_value - abs(padding_center - x) * decay_rate
+            if x_value < 0:
+                x_value = 1
+            mask[x] = x_value
+
         return x_value
 
     # Applies the Augmentation to input data.

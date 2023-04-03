@@ -13,7 +13,7 @@ def default_augraphy_pipeline():
     ink_phase = [
         Dithering(
             dither=random.choice(["ordered", "floyd-steinberg"]),
-            order=random.randint(3, 5),
+            order=(3, 5),
             p=0.33,
         ),
         InkBleed(
@@ -236,6 +236,7 @@ def default_augraphy_pipeline():
             flipud=random.choice([True, False]),
             crop=(),
             rotate_range=(-5, 5),
+            randomize=0,
             p=0.33,
         ),
         Faxify(
@@ -268,3 +269,389 @@ def default_augment(img):
     default_pipeline = default_augraphy_pipeline()
 
     return default_pipeline.augment(img)
+
+
+def pipeline_archetype2():
+
+    ink_phase = [
+        Markup(
+            num_lines_range=(3, 4),
+            markup_length_range=(0.5, 1),
+            markup_thickness_range=(3, 5),
+            markup_type="underline",
+            markup_color=(0, 0, 0),
+            single_word_mode=False,
+            large_word_mode=False,
+            repetitions=1,
+        ),
+        InkBleed(
+            intensity_range=(0.9, 0.9),
+            color_range=(0, 0),
+            kernel_size=(3, 3),
+            severity=(0.1, 0.2),
+        ),
+    ]
+
+    paper_phase = [
+        BindingsAndFasteners(
+            overlay_types="darken",
+            foreground=None,
+            effect_type="punch_holes",
+            ntimes=(3, 3),
+            nscales=(1, 1),
+            edge="left",
+            edge_offset=(40, 40),
+        ),
+        PageBorder(
+            side="right",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(5, 10),
+        ),
+        PageBorder(
+            side="top",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(3, 6),
+        ),
+        PageBorder(
+            side="left",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(1, 2),
+        ),
+        PageBorder(
+            side="bottom",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(1, 1),
+        ),
+    ]
+
+    post_phase = [
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="top",
+            noise_iteration=(2, 3),
+            noise_size=(1, 1),
+            noise_value=(15, 30),
+            noise_sparsity=(0.2, 0.3),
+            noise_concentration=(0.05, 0.05),
+            wave_pattern=0,
+            edge_effect=1,
+        ),
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="bottom",
+            noise_value=(0, 15),
+            noise_sparsity=(0.025, 0.025),
+            noise_concentration=(0.015, 0.015),
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+        Geometric(rotate_range=(2, 2), randomize=0),
+        Geometric(padding=(0.1, 0.2, 0.2, 0.05), randomize=0),
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="left",
+            noise_value=(0, 15),
+            noise_sparsity=(0.025, 0.025),
+            noise_concentration=(0.025, 0.025),
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+        PencilScribbles(
+            size_range=(200, 300),
+            count_range=(2, 2),
+            stroke_count_range=(1, 1),
+            thickness_range=(2, 6),
+            brightness_change=128,
+        ),
+        BindingsAndFasteners(
+            foreground=None,
+            overlay_types="darken",
+            effect_type="clips",
+            ntimes=(3, 3),
+            nscales=(1, 1),
+            edge="bottom",
+            edge_offset=(10, 10),
+        ),
+        BindingsAndFasteners(
+            foreground=None,
+            overlay_types="darken",
+            effect_type="binding_holes",
+            ntimes=(5, 5),
+            nscales=(1, 1),
+            edge="right",
+            edge_offset=(10, 10),
+        ),
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="top",
+            noise_value=(0, 15),
+            noise_sparsity=(0.7, 0.7),
+            noise_concentration=(0.05, 0.05),
+            wave_pattern=0,
+            edge_effect=1,
+        ),
+        BadPhotoCopy(
+            noise_type=4,
+            noise_iteration=(2, 4),
+            noise_size=(1, 2),
+            noise_value=(0, 5),
+            noise_sparsity=(0.7, 0.7),
+            noise_concentration=(0.1, 0.1),
+            wave_pattern=0,
+            edge_effect=1,
+        ),
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="right",
+            noise_value=(0, 15),
+            noise_sparsity=(0.025, 0.025),
+            noise_concentration=(0.015, 0.015),
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+        Geometric(padding=(0.01, 0.01, 0.01, 0), randomize=0),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype3():
+
+    ink_phase = [
+        InkBleed(
+            intensity_range=(0.9, 0.9),
+            color_range=(0, 0),
+            kernel_size=(7, 7),
+            severity=(0.3, 0.3),
+        ),
+    ]
+
+    paper_phase = [
+        BadPhotoCopy(
+            noise_type=3,
+            noise_side="top",
+            noise_value=(110, 110),
+            noise_sparsity=(0.0025, 0.0025),
+            noise_concentration=(0.3, 0.4),
+            blur_noise=1,
+            blur_noise_kernel=(31, 31),
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        BadPhotoCopy(
+            noise_type=3,
+            noise_side="top",
+            noise_iteration=(1, 2),
+            noise_size=(1, 1),
+            noise_value=(140, 150),
+            noise_sparsity=(0.1, 0.1),
+            noise_concentration=(0.1, 0.2),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+    ]
+
+    post_phase = [
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="right",
+            noise_iteration=(4, 5),
+            noise_size=(5, 7),
+            noise_value=(100, 120),
+            noise_sparsity=(0.4, 0.5),
+            noise_concentration=(0.05, 0.05),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        BadPhotoCopy(
+            noise_type=4,
+            noise_iteration=(3, 4),
+            noise_size=(3, 5),
+            noise_value=(15, 39),
+            noise_sparsity=(0.3, 0.6),
+            noise_concentration=(0.15, 0.25),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        LightingGradient(
+            light_position=(800, 2000),
+            direction=0,
+            max_brightness=255,
+            min_brightness=25,
+            mode="gaussian",
+            transparency=0.75,
+        ),
+        BleedThrough(
+            intensity_range=(0.01, 0.02),
+            color_range=(0, 10),
+            ksize=(7, 7),
+            sigmaX=0,
+            alpha=0.2,
+            offsets=(10, 20),
+        ),
+        Geometric(rotate_range=(2, 2), randomize=0),
+        SubtleNoise(p=1),
+        Jpeg(p=1),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype5():
+
+    ink_phase = [
+        Faxify(
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+        ),
+        InkBleed(
+            intensity_range=(0.3, 0.4),
+            color_range=(0, 0),
+            kernel_size=(3, 3),
+            severity=(1.0, 1.0),
+        ),
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="right",
+            noise_iteration=(30, 30),
+            noise_size=(1, 4),
+            noise_value=(0, 1),
+            noise_sparsity=(0.7, 0.7),
+            noise_concentration=(0.025, 0.025),
+            blur_noise=0,
+            blur_noise_kernel=(5, 5),
+            wave_pattern=0,
+            edge_effect=1,
+        ),
+        BadPhotoCopy(
+            noise_type=2,
+            noise_side="left",
+            noise_iteration=(30, 30),
+            noise_size=(1, 4),
+            noise_value=(0, 1),
+            noise_sparsity=(0.1, 0.1),
+            noise_concentration=(0.01, 0.01),
+            blur_noise=0,
+            blur_noise_kernel=(5, 5),
+            wave_pattern=0,
+            edge_effect=1,
+        ),
+        Geometric(randomize=0, padding=(0, 0.02, 0, 0)),
+    ]
+
+    paper_phase = [
+        PageBorder(
+            side="right",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(4, 5),
+        ),
+        PageBorder(
+            side="bottom",
+            noise_intensity_range=(0.5, 0.8),
+            width_range=(4, 5),
+        ),
+    ]
+
+    post_phase = [
+        Geometric(randomize=0, rotate_range=(-2, -2)),
+        Geometric(randomize=0, translation=(0.02, -0.05)),
+        PageBorder(
+            side="left",
+            width_range=(6, 7),
+            pages=5,
+            noise_intensity_range=(0.0, 0.2),
+        ),
+        PageBorder(
+            side="bottom",
+            width_range=(8, 12),
+            pages=5,
+            noise_intensity_range=(0.0, 0.2),
+        ),
+        BindingsAndFasteners(
+            overlay_types="min",
+            effect_type="clips",
+            ntimes=(2, 2),
+            nscales=(1.5, 1.5),
+            edge="bottom",
+            edge_offset=(20, 20),
+        ),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype9():
+
+    ink_phase = [
+        Letterpress(
+            n_samples=(200, 300),
+            n_clusters=(500, 680),
+            std_range=(2500, 2500),
+            value_range=(245, 255),
+            value_threshold_range=(128, 128),
+            blur=0,
+        ),
+        Geometric(scale=(2, 2), randomize=0),
+        Faxify(
+            scale_range=(1.0, 1.0),
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+            invert=1,
+            half_kernel_size=(1, 1),
+            angle=(73, 73),
+            sigma=(3, 3),
+        ),
+        Dithering(dither="ordered", order=(2, 2)),
+        Geometric(scale=(0.5, 0.5), randomize=0),
+        Markup(
+            num_lines_range=(1, 1),
+            markup_length_range=(0.4, 0.4),
+            markup_thickness_range=(2, 3),
+            markup_type="underline",
+            markup_color=(0, 0, 0),
+            single_word_mode=False,
+            large_word_mode=False,
+        ),
+        Geometric(translation=(0, 0.15), randomize=0),
+    ]
+
+    paper_phase = [
+        DirtyDrum(
+            line_width_range=(1, 1),
+            line_concentration=0.15,
+            direction=0,
+            noise_intensity=0.15,
+            noise_value=(0, 15),
+            ksize=(3, 3),
+        ),
+        Geometric(translation=(0, 0.9), randomize=0),
+        BadPhotoCopy(
+            noise_type=4,
+            noise_iteration=(2, 3),
+            noise_size=(1, 3),
+            noise_value=(0, 1),
+            noise_sparsity=(0.2, 0.3),
+            noise_concentration=(0.1, 0.1),
+            blur_noise=0,
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+    ]
+    post_phase = [
+        Geometric(rotate_range=(-1, -1), randomize=0),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline

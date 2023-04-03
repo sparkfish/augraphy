@@ -3,6 +3,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 from numpy.linalg import norm
 from skimage.filters import threshold_li
 from skimage.filters import threshold_local
@@ -65,6 +67,7 @@ def generate_average_intensity(image):
 
 
 # Generate noise to edges of folding
+@jit(nopython=True, cache=True)
 def add_folding_noise(img, side, p=0.1):
     # side = flag to put more noise at certain side
     #   0  = left side
@@ -269,16 +272,47 @@ def chaikin(points):
     return path
 
 
-def smooth(points, iter):
+@jit(nopython=True, cache=True)
+def smooth(points, iterations):
     """
+    Smooth points using chaikin method.
+
     :param points: a list of more than 2 points, where each point is a tuple/array of len=2
     :type points: array
     :param iter: number of times to apply chaikin algorithm
     :type iter: int
     :return:
     """
-    for i in range(iter):
-        points = chaikin(points)
+
+    percent = 0.25
+    for i in range(iterations):
+        current_ysize = points.shape[0]
+        path = np.zeros((current_ysize * 2, 2), dtype="float")
+        # first and last point are the same
+        path[0] = points[0]
+        path[-1] = points[-1]
+        n = 1
+        for i in range(current_ysize - 1):
+            p0 = points[i]
+            p1 = points[i + 1]
+            # distance between x values of two subsequent points
+            dx = p1[0] - p0[0]
+            # distance between y values of two subsequent points
+            dy = p1[1] - p0[1]
+            # creating two new points having 25% and 75% distance from the previous point
+            new_px0, new_py0 = p0[0] + dx * percent, p0[1] + dy * percent
+            new_px1, new_py1 = p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent)
+
+            # 2 new points per current single point
+            path[n][0] = new_px0
+            path[n][1] = new_py0
+            path[n + 1][0] = new_px1
+            path[n + 1][1] = new_py1
+            n += 2
+
+        # update points for next iteration
+        points = path
+
     return points
 
 
@@ -297,25 +331,16 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
     :type image2: numpy.array, optional
     """
 
-    #    intensity = random.uniform(intensity_range[0], intensity_range[1])
-    #    noise = lambda x: random.randint(color_range[0], color_range[1]) if (x == 0 and random.random() < intensity) else x
-    #    add_noise = np.vectorize(noise)
-    #    return add_noise(image)
-
-    intensity = random.uniform(intensity_range[0], intensity_range[1])
-    # generate random mask
-    if len(image.shape) > 2:
-        random_value = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-        random_value2 = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-    else:
-        random_value = np.random.random((image.shape[0], image.shape[1]))
-        random_value2 = np.random.random((image.shape[0], image.shape[1]))
-
     # check not None and use image2 as checking image
     if image2 is not None:
         checking_image = image2
     else:
         checking_image = image
+
+    random_value = np.random.uniform(0, 1, size=image.shape)
+    random_value2 = np.random.randint(color_range[0], color_range[1] + 1, size=image.shape)
+
+    intensity = random.uniform(intensity_range[0], intensity_range[1])
 
     # find indices where sobelized image value == 255 and random value < intensity
     if noise_condition == 0:
@@ -325,17 +350,13 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
     elif noise_condition == 2:
         condition_evaluation = checking_image > 255
 
-    indices = np.logical_and(condition_evaluation, random_value < intensity)
+    condition_evaluation2 = random_value < intensity
+    indices = np.logical_and(condition_evaluation, condition_evaluation2)
 
-    # generate random values in color_range
-    min_array_value = np.min(random_value2)
-    max_array_value = np.max(random_value2)
-    ratio = (color_range[1] - color_range[0]) / (max_array_value - min_array_value)
-    # scale random value within range
-    random_value2 = (ratio * random_value2) + (color_range[0] - (ratio * min_array_value))
-
-    # apply nosie with indices
+    # output
     image_noise = image.copy()
+
+    # apply noise with indices
     image_noise[indices] = random_value2[indices]
 
     return image_noise

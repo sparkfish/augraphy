@@ -2,11 +2,13 @@ import math
 import random
 
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.augmentations.lib import four_point_transform
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.base.augmentation import Augmentation
-from augraphy.utilities import *
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class BookBinding(Augmentation):
@@ -20,6 +22,8 @@ class BookBinding(Augmentation):
     :type mirror_range: Tuple, optional
     :param curling_direction: The direction of page curling, -1: random, 0: up, 1: down.
     :type curling_direction: int, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
 
@@ -31,16 +35,19 @@ class BookBinding(Augmentation):
         curve_range=(200, 300),
         mirror_range=(0.2, 0.5),
         curling_direction=-1,
+        numba_jit=1,
         p=1,
     ):
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.radius_range = radius_range
         self.curve_range = curve_range
         self.mirror_range = mirror_range
         self.curling_direction = curling_direction
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"BookBinding(radius_range={self.radius_range}, curve_range={self.curve_range}, mirror_range={self.mirror_range}, curling_direction={self.curling_direction}, p={self.p})"
+        return f"BookBinding(radius_range={self.radius_range}, curve_range={self.curve_range}, mirror_range={self.mirror_range}, curling_direction={self.curling_direction}, numba_jit={self.numba_jit}, p={self.p})"
 
     def add_book_shadow(self, img, radius, angle):
         """Add shadow effect in the input image.
@@ -95,9 +102,6 @@ class BookBinding(Augmentation):
         if curve_range > cols / 2:
             curve_range = int(cols / 2)
 
-        # x coordinate when offset_y starts to become negative
-        x_negative = -1
-
         # reassign variable name for clarity
         max_offset_y = curve_range
 
@@ -107,9 +111,33 @@ class BookBinding(Augmentation):
                 (rows + max_offset_y, cols, channels),
                 dtype=img.dtype,
             )
+
         else:
             img_output = np.zeros((rows + max_offset_y, cols), dtype=img.dtype)
 
+        img_output = self.curve_page_processing(img, img_output, curve_range, rows, cols)
+
+        return img_output
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def curve_page_processing(img, img_output, curve_range, rows, cols):
+        """Core function for curvy effect processing.
+
+        :param img: The image to apply the function.
+        :type img: numpy.array (numpy.uint8)
+        :param img_output: The output image from the function.
+        :type img_output: numpy.array (numpy.uint8)
+        :param curve_range: Tuple of pixels by which the page text should be curved.
+        :type curve_range: tuple
+        :param rows: Number of rows in input image.
+        :type rows: int
+        :param cols: Number of columns in input image.
+        :type cols: int
+        """
+        # x coordinate when offset_y starts to become negative
+        x_negative = -1
+        max_offset_y = curve_range
         for y in range(rows):
             y_new = y + max_offset_y
             for x in range(cols):
@@ -139,7 +167,6 @@ class BookBinding(Augmentation):
                         (offseted_x) % cols,
                     ]
                 else:
-                    # img_output[y_new, x] = 0
                     # add top section
                     img_output[(y_new - rows), x] = img[
                         (offseted_y) % (rows),
@@ -155,8 +182,11 @@ class BookBinding(Augmentation):
     def __call__(self, image, layer=None, force=False):
         image = image.copy()
 
+        # get bending direction
         if self.curling_direction == -1:
-            self.curling_direction = random.choice([0, 1])
+            curve_down = random.choice([0, 1])
+        else:
+            curve_down = self.curling_direction
 
         radius = random.randint(self.radius_range[0], self.radius_range[1])
         angle = 30
@@ -167,9 +197,6 @@ class BookBinding(Augmentation):
                 self.curve_range[1],
             ),
         )
-
-        # get bending direction
-        curve_down = self.curling_direction
 
         added_border_height = int(image.shape[0] / 10)
 

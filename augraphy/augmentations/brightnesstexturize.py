@@ -41,14 +41,14 @@ class BrightnessTexturize(Augmentation):
                 hsv = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_BGR2HSV)
             # for gray image
             else:
-                bgr = hsv = cv2.cvtColor(
+                bgr = cv2.cvtColor(
                     image_output.astype("uint8"),
                     cv2.COLOR_GRAY2BGR,
                 )
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
             # compute random value
             value = random.uniform(self.low, self.high)
-            # convert to float (range 0-1)
+            # convert to float
             hsv = np.array(hsv, dtype=np.float64)
 
             # add noise using deviation
@@ -56,13 +56,7 @@ class BrightnessTexturize(Augmentation):
             max_value = value + (value * self.deviation)
 
             # apply noise
-            brightness_matrix = np.random.random((hsv.shape[0], hsv.shape[1]))
-            min_array_value = np.min(brightness_matrix)
-            max_array_value = np.max(brightness_matrix)
-            ratio = (max_value - low_value) / (max_array_value - min_array_value)
-            # scale random value within range of low value and high value
-            brightness_matrix = (ratio * brightness_matrix) + (low_value - (ratio * min_array_value))
-
+            brightness_matrix = np.random.uniform(low_value, max_value, size=(hsv.shape[0], hsv.shape[1]))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
@@ -78,13 +72,7 @@ class BrightnessTexturize(Augmentation):
             max_value = value + (value * self.deviation)
 
             # apply noise again
-            brightness_matrix = np.random.random((hsv.shape[0], hsv.shape[1]))
-            min_array_value = np.min(brightness_matrix)
-            max_array_value = np.max(brightness_matrix)
-            ratio = (max_value - low_value) / (max_array_value - min_array_value)
-            # scale random value within range of low value and high value
-            brightness_matrix = (ratio * brightness_matrix) + (low_value - (ratio * min_array_value))
-
+            brightness_matrix = np.random.uniform(low_value, max_value, size=(hsv.shape[0], hsv.shape[1]))
             hsv[:, :, 1] *= brightness_matrix
             hsv[:, :, 2] *= brightness_matrix
             hsv[:, :, 1][hsv[:, :, 1] > 255] = 255

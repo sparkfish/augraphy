@@ -6,11 +6,14 @@ class Augmentation:
 
     :param p: The probability that this augmentation will be run when executed as part of a pipeline.
     :type p: float, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     """
 
-    def __init__(self, p=0.5):
+    def __init__(self, p=0.5, numba_jit=1):
         """Constructor method"""
         self.p = p
+        self.numba_jit = numba_jit
 
     def should_run(self):
         """Determines whether or not the augmentation should be applied

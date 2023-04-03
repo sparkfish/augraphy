@@ -9,28 +9,28 @@ import numpy
 from augraphy.base.augmentation import Augmentation
 
 
-class ForeignAugmentation(Augmentation):
+class Interop(Augmentation):
     """A wrapper for augmentations from other projects.
 
-    :param foreignAugmentation: The fully-applied constructor for the foreign transform.
-    :type foreignAugmentation: object
+    :param augmentation: The fully-applied constructor for the interop transform.
+    :type augmentation: object
     :param p: The probability that augmentation will be applied.
     :type p: float, optional
     """
 
-    def __init__(self, foreignAugmentation, p=1):
-        self.augmentation = foreignAugmentation
+    def __init__(self, augmentation, p=1):
+        self.augmentation = augmentation
         super().__init__(p=p)
 
     def __call__(self, image, layer=None, force=False):
 
         image = image.copy()
         result = self.augmentation(image=image)
-        output = self.handleForeignAugResult(result)
+        output = self.handle_augmentation_result(result)
         return output
 
-    def handleForeignAugResult(*res):
-        """The argument to this depends on the foreign augmentation applied.
+    def handle_augmentation_result(*res):
+        """The argument to this depends on the augmentation applied.
         If an Albumentation augmentation is used, the result is a dict with the
         output image at key "image".
         If an imgaug augmenter is used, the result is a numpy.ndarray.
