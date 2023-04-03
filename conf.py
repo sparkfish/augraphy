@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath("/augraphy"))
 # -- Project information -----------------------------------------------------
 
 project = "augraphy"
-copyright = "2022, Sparkfish LLC"
+copyright = "2023, Sparkfish LLC"
 author = "Sparkfish LLC"
 
 # The full version, including alpha/beta/rc tags
-release = "8.0.2"
+release = "8.2.0"
 
 
 # -- General configuration ---------------------------------------------------

@@ -53,41 +53,42 @@ augmented = data["output"]
 For full documentation, including installation and tutorials, check the [doc directory](https://github.com/sparkfish/augraphy/tree/dev/doc).
 
 # Benchmark Results
-The benchmarks results are computed with Augraphy 8.10 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
+The benchmarks results are computed with Augraphy 8.20 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
 To run the benchmark with different images, you can run with run_benchmarks.py in the folder of /benchmark using the following command:
 
 ```
 python run_benchmarks.py --folder_path folder_path_with_images
 ```
 
-|    Augmentation    |Images per second|
-|--------------------|----------------:|
-|BadPhotoCopy        |             0.32|
-|BindingsAndFasteners|            24.39|
-|BleedThrough        |             0.22|
-|BookBinding         |             0.03|
-|Brightness          |             3.22|
-|BrightnessTexturize |             1.16|
-|ColorPaper          |             3.98|
-|DirtyDrum           |             0.40|
-|DirtyRollers        |             0.59|
-|Dithering           |             0.02|
-|Faxify              |             0.12|
-|Folding             |             1.55|
-|Gamma               |            33.11|
-|Geometric           |            11.64|
-|InkBleed            |             0.68|
-|Jpeg                |             4.37|
-|Letterpress         |             0.25|
-|LightingGradient    |             0.14|
-|LowInkPeriodicLines |             7.41|
-|LowInkRandomLines   |            89.29|
-|Markup              |             0.24|
-|NoiseTexturize      |             0.53|
-|PageBorder          |             0.31|
-|PencilScribbles     |             0.99|
-|SubtleNoise         |             1.04|
-|WaterMark           |             0.65|
+# Benchmarking results
+|    Augmentation    |Images per second|Memory usage (MB)|
+|--------------------|----------------:|----------------:|
+|BadPhotoCopy        |             0.31|           138.25|
+|BindingsAndFasteners|            26.11|            20.81|
+|BleedThrough        |             0.27|           684.69|
+|BookBinding         |             0.06|           683.50|
+|Brightness          |             3.31|           147.99|
+|BrightnessTexturize |             1.25|           181.74|
+|ColorPaper          |             3.14|           105.66|
+|DirtyDrum           |             0.55|           481.19|
+|DirtyRollers        |             1.51|           173.45|
+|Dithering           |             2.27|           126.82|
+|Faxify              |             0.96|           142.97|
+|Folding             |             5.73|            67.75|
+|Gamma               |            25.39|            25.36|
+|Geometric           |             5.24|            40.85|
+|InkBleed            |             0.67|           294.73|
+|Jpeg                |             3.59|            25.86|
+|Letterpress         |             0.23|           158.60|
+|LightingGradient    |             0.34|           638.31|
+|LowInkPeriodicLines |             2.94|            12.74|
+|LowInkRandomLines   |            71.05|            12.74|
+|Markup              |             0.71|           533.16|
+|NoiseTexturize      |             0.53|           249.36|
+|PageBorder          |             0.52|           465.19|
+|PencilScribbles     |             1.15|           138.13|
+|SubtleNoise         |             1.03|           202.87|
+|WaterMark           |             1.19|           373.41|
 
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
@@ -104,7 +105,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.1.0}
+    version = {8.2.0}
 }
 ```
 
