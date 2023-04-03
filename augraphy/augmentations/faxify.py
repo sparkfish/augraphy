@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.augmentations.lib import binary_threshold
 from augraphy.base.augmentation import Augmentation
@@ -30,6 +32,8 @@ class Faxify(Augmentation):
     :type angle: tuple, optional
     :param sigma: Pair of ints to determine sigma value of gaussian kernel in halftone effect.
     :type sigma: tuple, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -37,19 +41,20 @@ class Faxify(Augmentation):
     def __init__(
         self,
         scale_range=(1.0, 1.25),
-        monochrome=1,
+        monochrome=-1,
         monochrome_method="random",
         monochrome_arguments={},
-        halftone=1,
+        halftone=-1,
         invert=1,
         half_kernel_size=(1, 1),
         angle=(0, 360),
         sigma=(1, 3),
+        numba_jit=1,
         p=1,
     ):
 
         """Constructor method"""
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.scale_range = scale_range
         self.monochrome = monochrome
         self.monochrome_method = monochrome_method
@@ -59,10 +64,12 @@ class Faxify(Augmentation):
         self.half_kernel_size = half_kernel_size
         self.angle = angle
         self.sigma = sigma
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_arguments={self.monochrome_arguments}, halftone={self.halftone}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, p={self.p})"
+        return f"Faxify(scale_range={self.scale_range}, monochrome={self.monochrome}, monochrome_method={self.monochrome_method}, monochrome_arguments={self.monochrome_arguments}, halftone={self.halftone}, invert={self.invert}, half_kernel_size={self.half_kernel_size}, angle={self.angle}, sigma={self.sigma}, numba_jit={self.numba_jit}, p={self.p})"
 
     def cv_rotate(self, image, angle):
         """Rotate image based on the input angle.
@@ -95,6 +102,31 @@ class Faxify(Augmentation):
         image_rotated = cv2.warpAffine(image, M, (bound_x, bound_y))
 
         return image_rotated
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_halftone(image_halftone, gaussian_kernel, rotated, ysize, xsize, kernel_size):
+        """Run loops and apply halftone effect in the input image.
+
+        :param image_halftone: The image with halftone effect.
+        :type image_halftone: numpy.array (numpy.uint8)
+        :param gaussian_kernel: Gaussian kernel to generate the halftone effect.
+        :type gaussian_kernel: numpy.array (numpy.uint8)
+        :param rotated: The rotated input image
+        :type rotated: numpy.array (numpy.uint8)
+        :param ysize: Row numbers of the input image.
+        :type ysize: int
+        :param xsize: Column numbers of the input image.
+        :type xsize: int
+        :param kernel_size: Kernel size to generate the halftone effect.
+        :type kernel_size: int
+        """
+
+        for y in range(0, ysize - kernel_size + 1, kernel_size):
+            for x in range(0, xsize - kernel_size + 1, kernel_size):
+                image_halftone[y : y + kernel_size, x : x + kernel_size] = (
+                    np.mean(rotated[y : y + kernel_size, x : x + kernel_size]) * gaussian_kernel
+                )
 
     # generate halftone effect
     def generate_halftone(self, image, half_kernel_size=2, angle=45, sigma=2):
@@ -132,12 +164,8 @@ class Faxify(Augmentation):
         # initialize empty image
         image_halftone = np.zeros((ysize, xsize))
 
-        # generate halftone effect by using (image window average value * gaussian kernel)
-        for y in range(0, ysize - kernel_size + 1, kernel_size):
-            for x in range(0, xsize - kernel_size + 1, kernel_size):
-                image_halftone[y : y + kernel_size, x : x + kernel_size] = (
-                    np.mean(rotated[y : y + kernel_size, x : x + kernel_size]) * gaussian_kernel
-                )
+        # apply halftone effect to image
+        self.apply_halftone(image_halftone, gaussian_kernel, rotated, ysize, xsize, kernel_size)
 
         # rotate back using negative angle
         image_halftone = self.cv_rotate(image_halftone, -angle)
@@ -199,10 +227,20 @@ class Faxify(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            if self.monochrome == -1:
+                monochrome = random.choice([0, 1])
+            else:
+                monochrome = self.monochrome
+
+            if self.halftone == -1:
+                halftone = random.choice([0, 1])
+            else:
+                halftone = self.halftone
+
             # downscale image
             image_out = self.downscale(image)
 
-            if self.monochrome:
+            if monochrome:
                 # randomly select threshold method
                 if self.monochrome_method == "random":
                     all_monochrome_method = [
@@ -282,7 +320,7 @@ class Faxify(Augmentation):
                 )
 
             # check and apply halftone
-            if self.halftone:
+            if halftone:
 
                 # convert to gray
                 image_out = self.complement_rgb_to_gray(image_out, invert=self.invert)

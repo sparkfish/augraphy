@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.augmentations.lib import warp_fold_left_side
 from augraphy.augmentations.lib import warp_fold_right_side
@@ -13,18 +15,19 @@ class PageBorder(Augmentation):
     """Add border effect to sides of input image.
 
     :param side: One of the four sides of page i:e top,right,left,bottom,random.
-                By default it is "random"
+            Default value it is "random".
     :type side: string , optional
     :param border_background_value: Pair of ints determining the background value of border effect.
     :type border_background_value: tuple, optional
     :param flip_border: Flag to choose whether the created border will be flipped or not.
     :type flip_border: int, optional
-    :param width_range: Pair of ints determining the width of the page border effect.
+    :param width_range: Pair of values determining the width of the page border effect.
+            Width range value will be in percentage of the image shorter edge if the value is less than 1.
     :type width_range: tuple, optional
     :param pages: An integer determining the number of page shadows in the border.
     :type pages: int , optional
     :param noise_intensity_range: A pair of floats determining the intensity of
-                                  noise being applied around the borders.
+            noise being applied around the borders.
     :type noise_intensity_range: tuple , optional
     :param curve_frequency: Number of curvy section in the generated shadow lines.
     :type curve_frequency: tuple, optional
@@ -36,6 +39,8 @@ class PageBorder(Augmentation):
     :type value: tuple, optional
     :param same_page_border: Flag to decide whether the added borders will be within the input image or not.
     :type same_page_border: int, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -53,10 +58,11 @@ class PageBorder(Augmentation):
         curve_length_one_side=(50, 100),
         value=(30, 120),
         same_page_border=1,
+        numba_jit=1,
         p=1,
     ):
         """Constructor method"""
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.side = side
         self.border_background_value = border_background_value
         self.flip_border = flip_border
@@ -68,9 +74,11 @@ class PageBorder(Augmentation):
         self.curve_length_one_side = curve_length_one_side
         self.value = value
         self.same_page_border = same_page_border
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"PageBorder(side={self.side}, border_background_value={self.border_background_value}, flip_border={self.flip_border}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, value={self.value}, same_page_border={self.same_page_border}, p={self.p})"
+        return f"PageBorder(side={self.side}, border_background_value={self.border_background_value}, flip_border={self.flip_border}, width_range={self.width_range}, pages={self.pages}, noise_intensity_range={self.noise_intensity_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, value={self.value}, same_page_border={self.same_page_border}, numba_jit={self.numba_jit}, p={self.p})"
 
     def add_corner_noise(self, border, intensity=0.2):
         """Add noise to the input border image.
@@ -97,6 +105,30 @@ class PageBorder(Augmentation):
 
         Y, X = edge.shape
         idx_list = np.where(edge == 255)
+
+        self.corner_noise(border, idx_list, self.width_range, self.value, intensity, X)
+
+        return border
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def corner_noise(border, idx_list, width_range, value, intensity, X):
+        """Function to add noise to the input border image.
+
+        :param border: The input border image.
+        :type boder: numpy.array (numpy.uint8)
+        :param idx_list: Intensity of the noise.
+        :type idx_list: numpy.array
+        :param width_range: Pair of values determining the width of the page border effect.
+        :type width_range: tuple
+        :param value: Pair of ints determining intensity of generated shadow lines.
+        :type value: tuple
+        :param X: Number of columns in the input image.
+        :type X: int
+        :param intensity: Intensity of the noise.
+        :type intensity: float
+        """
+
         for i in range(len(idx_list[0])):
             x = idx_list[0][i]
             y = idx_list[1][i]
@@ -105,24 +137,26 @@ class PageBorder(Augmentation):
             for i in range(reps):
                 if intensity > random.random():
                     # add noise to one side of the line
-                    spread = random.randint(1, max(1, int(self.width_range[0] / 18)))
+                    spread = random.randint(1, max(1, int(width_range[0] / 18)))
                     d = int(random.uniform(1, spread * 2))
                     border[x, min(X - 1, y + d)] = random.randint(
-                        self.value[0],
-                        self.value[1],
+                        value[0],
+                        value[1],
                     )
                     # add noise to another side of the line
-                    spread = random.randint(1, max(1, int(self.width_range[0] / 18)))
+                    spread = random.randint(1, max(1, int(width_range[0] / 18)))
                     d = int(random.uniform(1, spread * 2))
                     border[x, max(0, y - d)] = random.randint(
-                        self.value[0],
-                        self.value[1],
+                        value[0],
+                        value[1],
                     )
 
-        return border
-
     def random_folding(self, image):
-        """Create random folding effect at the image border."""
+        """Create random folding effect at the image border.
+
+        :param Image: Image to be folded.
+        :type image: numpy.array (numpy.uint8)
+        """
 
         # rotate image due to folding algorithm process image in another direction
         image_rotate = np.rot90(image, 1)
@@ -275,14 +309,19 @@ class PageBorder(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+            height, width = image.shape[:2]
 
             noise_intensity = random.uniform(
                 self.noise_intensity_range[0],
                 self.noise_intensity_range[1],
             )
+
+            if self.width_range[0] < 1:
+                self.width_range = list(self.width_range)
+                self.width_range[0] = np.ceil(self.width_range[0] * min(height, width))
+                self.width_range[1] = np.ceil(self.width_range[1] * min(height, width))
             border_width = random.randint(self.width_range[0], self.width_range[1])
 
-            height, width = image.shape[:2]
             if len(image.shape) > 2:
                 channel = image.shape[2]
             else:

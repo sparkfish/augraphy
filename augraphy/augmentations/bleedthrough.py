@@ -7,9 +7,8 @@ import numpy as np
 
 from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import generate_average_intensity
-from augraphy.augmentations.lib import sobel
 from augraphy.base.augmentation import Augmentation
-from augraphy.utilities import *
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class BleedThrough(Augmentation):
@@ -83,7 +82,9 @@ class BleedThrough(Augmentation):
         img_bleed_brightness = generate_average_intensity(img_bleed)
         img_brightness = generate_average_intensity(img)
         if img_bleed_brightness < img_brightness:
-            self.alpha *= (img_bleed_brightness / img_brightness) / 2
+            new_alpha = self.alpha * (img_bleed_brightness / img_brightness) / 2
+        else:
+            new_alpha = self.alpha
 
         ob = OverlayBuilder(
             "normal",
@@ -93,7 +94,7 @@ class BleedThrough(Augmentation):
             (1, 1),
             "center",
             0,
-            self.alpha,
+            new_alpha,
         )
         return ob.build_overlay()
 
@@ -133,7 +134,6 @@ class BleedThrough(Augmentation):
         :type sigmaX: float
         """
 
-        sobelized = sobel(img)
         img_noise = np.double(
             add_noise(img, intensity_range=intensity_range, color_range=color_range, noise_condition=1),
         )
@@ -142,7 +142,7 @@ class BleedThrough(Augmentation):
         return img_bleed
 
     # create foreground image for bleedthrough effect
-    def create_bleedthrough_foreground(self, image):
+    def create_bleedthrough_foreground(self, image: np.ndarray):
         """Create foreground image for bleedthrough effect.
 
         :param image: The background image of the bleedthrough effect.
@@ -166,19 +166,22 @@ class BleedThrough(Augmentation):
             # get random image
             image_bleedthrough_foreground = cv2.imread(cache_image_paths[image_index])
 
-            # resize foreground
-            image_bleedthrough_foreground = cv2.resize(
-                image_bleedthrough_foreground,
-                (image.shape[1], image.shape[0]),
-                interpolation=cv2.INTER_AREA,
-            )
-            # flip left-right
-            image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
+            if image_bleedthrough_foreground is not None:
+
+                # resize foreground
+                image_bleedthrough_foreground = cv2.resize(
+                    image_bleedthrough_foreground,
+                    (image.shape[1], image.shape[0]),
+                    interpolation=cv2.INTER_AREA,
+                )
+            else:
+                image_bleedthrough_foreground = image
 
         else:
+            image_bleedthrough_foreground = image
 
-            # flip left-right only, flip top-bottom get inverted text, which is not realistic
-            image_bleedthrough_foreground = cv2.flip(image, 1)
+        # flip left-right only, flip top-bottom get inverted text, which is not realistic
+        image_bleedthrough_foreground = cv2.flip(image_bleedthrough_foreground, 1)
 
         return image_bleedthrough_foreground
 

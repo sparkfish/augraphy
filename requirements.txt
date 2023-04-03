@@ -1,7 +1,7 @@
+numba
 numpy >= 1.20.1
 opencv-python
 Pillow
-pydata-sphinx-theme
 requests
 scikit-image
 scikit-learn

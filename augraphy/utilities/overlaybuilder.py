@@ -3,6 +3,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.augmentations.lib import make_white_transparent
 
@@ -254,20 +256,23 @@ class OverlayBuilder:
 
         return img_foreground, center
 
-    def compose_alpha(self, img_alpha_background, img_alpha_foreground):
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def compose_alpha(img_alpha_background, img_alpha_foreground, alpha):
         """Calculate alpha composition ratio between two images.
 
         :param img_alpha_background: The background image alpha layer.
         :type img_alpha_background: numpy array
         :param img_alpha_foreground: The foreground image alpha layer.
         :type img_alpha_foreground: numpy array
+        :param alpha: Alpha value for the blending process.
+        :type alpha: float
         """
 
-        comp_alpha = np.minimum(img_alpha_background, img_alpha_foreground) * self.alpha
+        comp_alpha = np.minimum(img_alpha_background, img_alpha_foreground) * alpha
         new_alpha = img_alpha_background + (1.0 - img_alpha_foreground) * comp_alpha
-        np.seterr(divide="ignore", invalid="ignore")
         ratio = comp_alpha / new_alpha
-        ratio[ratio == np.NAN] = 0.0
+
         return ratio
 
     def ink_to_paper_blend(
@@ -419,6 +424,7 @@ class OverlayBuilder:
         xend,
         ystart,
         yend,
+        alpha,
     ):
         """Apply blending using input alpha value (normal method).
 
@@ -436,23 +442,26 @@ class OverlayBuilder:
         :type ystart: int
         :param yend: y end point of the image patch.
         :type yend: int
+        :param alpha: Alpha value of the foreground.
+        :type alpha: float
         """
 
         # convert to float (0-1)
         base_norm = base / 255.0
         foreground_norm = new_foreground / 255.0
 
-        # add alpha value of base and foreground
-        img_base_alpha = np.zeros_like(base_norm) + 1.0
-        img_foreground_alpha = np.zeros_like(foreground_norm) + self.alpha
+        # get alpha layer from base if there is any
+        if len(base_norm.shape) > 3:
+            base_alpha = (base_norm[:, :, 3] * 255).astype("uint8")
+            base_alpha = cv2.cvtColor(base_alpha, cv2.COLOR_GRAY2BGR) / 255
+        else:
+            base_alpha = 1
 
-        # blend base and foreground
-        img_blended = (foreground_norm * img_foreground_alpha) + (
-            base_norm * img_base_alpha * (1 - img_foreground_alpha)
-        )
+        # blend by alpha value
+        img_blended = (foreground_norm * self.alpha) + (base_norm * base_alpha * (1 - alpha))
 
         # normalized by alpha value
-        img_blended_norm = img_blended / (img_foreground_alpha + img_base_alpha * (1 - img_foreground_alpha))
+        img_blended_norm = img_blended / (self.alpha + (base_alpha * (1 - alpha)))
 
         # convert blended image back to uint8
         img_blended_norm = (img_blended_norm * 255.0).astype("uint8")
@@ -492,26 +501,17 @@ class OverlayBuilder:
         base_norm = base / 255.0
         foreground_norm = new_foreground / 255.0
 
+        check_alpha_ratio = 0
         # get alpha layer (if any)
-        if len(base_norm.shape) > 3:
+        if len(base_norm.shape) > 3 and len(foreground_norm.shape) > 3:
             img_base_alpha = base_norm[:, :, 3]
-        else:
-            img_base_alpha = np.ones(
-                (base_norm.shape[0], base_norm.shape[1]),
-                dtype="float",
-            )
-
-        # get alpha layer (if any)
-        if len(foreground_norm.shape) > 3:
             img_foreground_alpha = foreground_norm[:, :, 3]
-        else:
-            img_foreground_alpha = np.ones(
-                (foreground_norm.shape[0], foreground_norm.shape[1]),
-                dtype="float",
-            )
+            check_alpha_ratio = 1
 
-        # compose alpha ratio from background and foreground alpha value
-        ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha)
+            # compose alpha ratio from background and foreground alpha value
+            ratio = self.compose_alpha(img_base_alpha, img_foreground_alpha, self.alpha)
+            # remove infinity value due to zero division
+            ratio[ratio == np.inf] = 0
 
         # compute alpha value
         if self.overlay_types == "lighten":
@@ -533,8 +533,11 @@ class OverlayBuilder:
             comp_value = 1.0 - (1.0 - base_norm[:, :, :3]) * (1.0 - foreground_norm[:, :, :3])
 
         elif self.overlay_types == "dodge":
+            # prevent zero division
+            divisor = 1.0 - foreground_norm[:, :, :3]
+            divisor[divisor == 0.0] = 1.0
             comp_value = np.minimum(
-                base_norm[:, :, :3] / (1.0 - foreground_norm[:, :, :3]),
+                base_norm[:, :, :3] / divisor,
                 1.0,
             )
 
@@ -585,29 +588,47 @@ class OverlayBuilder:
             inverse_base_foreground_product = 1 - (2 * (1 - base_norm[:, :, :3]) * (1 - foreground_norm[:, :, :3]))
             comp_value = (base_less * base_foreground_product) + (base_greater_equal * inverse_base_foreground_product)
 
-        # get reshaped ratio
-        ratio_rs = np.reshape(
-            np.repeat(ratio, 3),
-            (base_norm.shape[0], base_norm.shape[1], 3),
-        )
-
-        # blend image
-        if self.overlay_types == "addition" or self.overlay_types == "subtract":
-            # clip value for addition or subtract
-            img_blended = np.clip(
-                (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs)),
-                0.0,
-                1.0,
+        # apply alpha ratio only if both images have alpha layer
+        if check_alpha_ratio:
+            # get reshaped ratio
+            ratio_rs = np.reshape(
+                np.repeat(ratio, 3),
+                (base_norm.shape[0], base_norm.shape[1], 3),
             )
 
+            # blend image
+            if self.overlay_types == "addition" or self.overlay_types == "subtract":
+                # clip value for addition or subtract
+                img_blended = np.clip(
+                    (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs)),
+                    0.0,
+                    1.0,
+                )
+            else:
+                img_blended = self.apply_ratio(comp_value, base_norm, ratio_rs)
         else:
-            img_blended = (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
+            img_blended = comp_value
 
         # get blended image in uint8
         img_blended = (img_blended * 255).astype("uint8")
 
         # add patch of blended image back to background
         overlay_background[ystart:yend, xstart:xend] = img_blended
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def apply_ratio(comp_value, base_norm, ratio_rs):
+        """Function to apply alpha ratio to both foreground and background image
+
+        :param comp_value: The resulting image from blending process.
+        :type comP_value: numpy array
+        :param base_norm: The background.
+        :type base_norm: numpy array
+        :param ratio_rs: Alpha ratio for each pixel.
+        :type ratio_rs: numpy array
+        """
+
+        return (comp_value * ratio_rs) + (base_norm * (1.0 - ratio_rs))
 
     def apply_overlay(
         self,
@@ -802,6 +823,7 @@ class OverlayBuilder:
                     xend,
                     ystart,
                     yend,
+                    self.alpha,
                 )
 
             # overlay types:

@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 
 from augraphy.augmentations.lib import smooth
 from augraphy.augmentations.lib import sobel
@@ -36,6 +38,8 @@ class BadPhotoCopy(Augmentation):
     :type wave_pattern: int, optional
     :param edge_effect: To add sobel edge effect into the noise mask. Use -1 to select randomly.
     :type edge_effect: int, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -54,10 +58,11 @@ class BadPhotoCopy(Augmentation):
         blur_noise_kernel=(5, 5),
         wave_pattern=-1,
         edge_effect=-1,
+        numba_jit=1,
         p=1,
     ):
         """Constructor method"""
-        super().__init__(p=p)
+        super().__init__(p=p, numba_jit=numba_jit)
         self.mask = mask
         self.noise_type = noise_type
         self.noise_side = noise_side
@@ -70,6 +75,8 @@ class BadPhotoCopy(Augmentation):
         self.blur_noise_kernel = blur_noise_kernel
         self.wave_pattern = wave_pattern
         self.edge_effect = edge_effect
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
         # clamp values
         # noise value range from 0-255
@@ -89,7 +96,32 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, p={self.p})"
+        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, numba_jit={self.numba_jit}, p={self.p})"
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def fill_wave_mask(img_wave, smooth_points, mask_ysize, mask_y_one_twelve_size):
+        """Fill wavy pattern mask with value.
+
+        :param img_wave: The image of wavy pattern mask.
+        :type img_wave: numpy.array
+        :param smooth_points: Coordinates of wavy pattern.
+        :type smooth_points: numpy.array
+        :param mask_ysize: Height of mask.
+        :type mask_ysize: int
+        :param mask_y_one_twelve_size: One twelve of mask height.
+        :type mask_y_one_twelve_size: int
+        """
+
+        # fill mask by draw wavy line across image
+        for (x_point, y_point) in smooth_points:
+            img_wave[:y_point, x_point] = 1
+            # additional noise, to smooth the edges between wavy mask
+            for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
+                if random.random() > 0.5:
+                    img_wave[y, int(x_point)] = 1
+                    if random.random() > 0.85:
+                        break
 
     def apply_wave(self, mask):
         """applies wavy pattern mask to input mask.
@@ -111,50 +143,23 @@ class BadPhotoCopy(Augmentation):
         # get mask size measurements
         mask_y_third_quarter_size = int(mask_ysize * 3 / 4)
         mask_y_one_twelve_size = int(mask_ysize / 12)
-        mask_x_one_twelve_size = int(mask_xsize / 12)
 
-        # generate points and at least 12 points
+        # generate points and at least 6 points
         number_points = random.randint(6, 12)
+        points_x = np.linspace(0, mask_xsize - 1, number_points)
 
-        # generate random x location
-        x_points = [
-            random.randint(mask_x_one_twelve_size, mask_xsize - mask_x_one_twelve_size)
-            for _ in range(number_points - 2)
-        ]
-        x_points.sort()
-
-        # 1st point
-        points = [
-            (0, random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size)),
-        ]
-        for i in range(1, number_points - 1, 1):
+        points = np.zeros((number_points, 2), dtype="float")
+        points[0] = [0, random.uniform(mask_y_one_twelve_size, mask_y_third_quarter_size)]
+        points[-1] = [mask_xsize - 1, random.uniform(mask_y_one_twelve_size, mask_y_third_quarter_size)]
+        for i in range(1, number_points - 1):
             # points between 1st and last point
-            points.append(
-                (
-                    x_points[i - 1],
-                    random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size),
-                ),
-            )  # last point
-        # last point
-        points.append(
-            (
-                mask_xsize - 1,
-                random.randint(mask_y_one_twelve_size, mask_y_third_quarter_size),
-            ),
-        )  # last point
+            points[i] = [points_x[i - 1], random.uniform(mask_y_one_twelve_size, mask_y_third_quarter_size)]
 
         # smooth points
-        smooth_points = smooth(points, 12)
+        smooth_points = smooth(points, 12).astype("int")
+        smooth_points = np.unique(smooth_points, axis=0)
 
-        # draw wavy line across image
-        for (x_point, y_point) in smooth_points:
-            img_wave[: int(y_point), int(x_point)] = 1
-            # additional noise, to smooth the edges between wavy mask
-            for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
-                if random.random() > 0.7:
-                    img_wave[y, int(x_point)] = 1
-                    if random.random() > 0.85:
-                        break
+        self.fill_wave_mask(img_wave, smooth_points, mask_ysize, mask_y_one_twelve_size)
 
         # top (noise concentrated at top edge)
         if self.noise_side == "top":
@@ -303,7 +308,7 @@ class BadPhotoCopy(Augmentation):
             image_sobel_sobel = cv2.dilate(image_sobel_sobel, (5, 5), iterations=2)
 
             # add random noise range from 0-128
-            image_random = (np.random.random((image.shape[0], image.shape[1])) * 128).astype("uint8")
+            image_random = np.random.randint(0, 128, (image.shape[0], image.shape[1]), dtype="uint8")
             image_random2 = np.random.random((image.shape[0], image.shape[1]))
             indices = np.logical_and(image_sobel_sobel == 255, image_random2 < 0.70)
             image_sobel[indices] = image_random[indices]
