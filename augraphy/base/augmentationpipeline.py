@@ -92,7 +92,63 @@ class AugraphyPipeline:
         else:
             return augs
 
-    def augment(self, image):
+    def augment(self, image, return_dict=1):
+        """Applies the Augmentations in each phase of the pipeline.
+
+        :param image: The image to apply Augmentations to. Minimum 30x30 pixels.
+        :type image: numpy.array or list
+        :return: 1. A dictionary of AugmentationResults representing the changes in each phase of the pipeline if the input is image.
+                 2. A list contains output images if the input is list of images.
+                 3. A four dimensional numpy array if the input is a four dimensional numpy array (batch size, channels, height, width).
+        :rtype: 1. dictionary
+                2. list
+                3. numpy array (B, C, H, W)
+        :param return_dict: Flag to return output in dictionary format.
+                Not applicable when input is 4 dimensional array.
+                When input is 4 dimensional numpy array, output will be a 4 dimensional array too.
+        :type return_dict: int
+        """
+
+        # image is a list of images
+        if isinstance(image, list):
+            output = []
+            for single_image in image:
+                data = self.augment_single_image(single_image)
+                if return_dict:
+                    output.append(data)
+                else:
+                    output.append(data["output"])
+
+        # image is a 4 dimensional numpy array
+        elif len(image.shape) == 4:
+            batch_size, channels, height, width = image.shape
+            output = np.zeros((batch_size, channels, height, width), dtype=image.dtype)
+            for i in range(batch_size):
+                single_image = image[i].reshape(height, width, channels)
+                output_image = self.augment_single_image(single_image)["output"]
+
+                # output is color image but input is in grayscale, convert output to grayscale
+                if len(output_image.shape) > channels:
+                    output_image = cv2.cvtColor(output_image, cv2.COLOR_BGR2GRAY)
+                # output is in grayscale but input is color image, convert output to color image
+                if len(output_image.shape) != channels:
+                    output_image = cv2.cvtColor(output_image, cv2.COLOR_GRAY2BGR)
+                # rescale image size if the image size is changes after the augmentation
+                if output_image.shape[0] != height or output_image.shape[1] != width:
+                    output_image = cv2.resize(output_image, (width, height), interpolation=cv2.INTER_AREA)
+                output[i] = output_image.reshape(channels, height, width)
+
+        # single image
+        else:
+            data = self.augment_single_image(image)
+            if return_dict:
+                output = data
+            else:
+                output = data["output"]
+
+        return output
+
+    def augment_single_image(self, image):
         """Applies the Augmentations in each phase of the pipeline.
 
         :param image: The image to apply Augmentations to. Minimum 30x30 pixels.
@@ -109,8 +165,9 @@ class AugraphyPipeline:
                     image.shape,
                 ),
             )
+
         # Check that image is the correct size.
-        elif (image.shape[0] < 30) or (image.shape[1] < 30):
+        if (image.shape[0] < 30) or (image.shape[1] < 30):
             raise Exception(
                 "Image should have dimensions greater than 30x30, but actual dimensions were {}.".format(
                     image.shape,
@@ -573,4 +630,4 @@ class AugraphyPipeline:
         print(repr(self))
 
     def __call__(self, image):
-        return self.augment(image)["output"]
+        return self.augment(image, return_dict=0)
