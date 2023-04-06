@@ -35,4 +35,3 @@ python run_benchmarks.py --folder_path folder_path_with_images
 |PencilScribbles     |             1.15|           138.13|
 |SubtleNoise         |             1.03|           202.87|
 |WaterMark           |             1.19|           373.41|
-
