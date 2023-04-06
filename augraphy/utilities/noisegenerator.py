@@ -463,10 +463,14 @@ class NoiseGenerator:
         # any invalid noise type will reset noise type to 0
         if self.noise_type not in [1, 2, 3, 4]:
             noise_type = random.randint(1, 4)
+        else:
+            noise_type = self.noise_type
 
         # random location with no sides if no side is chosen
         if self.noise_side not in self.sides:
             noise_side = random.choice(self.sides)
+        else:
+            noise_side = self.noise_side
 
         # loop each iterations
         for _ in range(iterations):
