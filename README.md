@@ -53,14 +53,8 @@ augmented = data["output"]
 For full documentation, including installation and tutorials, check the [doc directory](https://github.com/sparkfish/augraphy/tree/dev/doc).
 
 # Benchmark Results
-The benchmarks results are computed with Augraphy 8.20 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
-To run the benchmark with different images, you can run with run_benchmarks.py in the folder of /benchmark using the following command:
+The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
 
-```
-python run_benchmarks.py --folder_path folder_path_with_images
-```
-
-# Benchmarking results
 |    Augmentation    |Images per second|Memory usage (MB)|
 |--------------------|----------------:|----------------:|
 |BadPhotoCopy        |             0.31|           138.25|
@@ -105,7 +99,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.2.0}
+    version = {8.2.1}
 }
 ```
 

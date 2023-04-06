@@ -28,6 +28,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     python_requires=">=3.7",
     install_requires=[
+        "numba",
         "numpy >= 1.20.1",
         "opencv-python >= 4.5.1.48",
         "scikit-learn >= 0.0",
