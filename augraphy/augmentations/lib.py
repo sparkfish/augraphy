@@ -543,7 +543,7 @@ def binary_threshold(
         return grayscale
 
     if threshold_arguments:
-        # get input arguments for threhold function
+        # get input arguments for threshold function
         input_arguments = ""
         for input_argument in threshold_arguments:
             # for string argument value

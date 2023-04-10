@@ -776,6 +776,214 @@ def pipeline_archetype5():
     return pipeline
 
 
+def pipeline_archetype6():
+
+    ink_phase = [
+        Markup(
+            num_lines_range=(2, 2),
+            markup_length_range=(0.4, 0.4),
+            markup_thickness_range=(2, 3),
+            markup_type="strikethrough",
+            markup_color=(0, 0, 0),
+            single_word_mode=False,
+            large_word_mode=False,
+        ),
+    ]
+    paper_phase = [
+        PageBorder(
+            side="bottom",
+            width_range=(2, 2),
+            pages=1,
+            noise_intensity_range=(0.0, 0.0),
+        ),
+        Letterpress(
+            n_samples=(200, 300),
+            n_clusters=(500, 680),
+            std_range=(500, 500),
+            value_range=(245, 255),
+            value_threshold_range=(128, 128),
+            blur=0,
+        ),
+        Geometric(translation=(0, -0.05), randomize=0),
+    ]
+    post_phase = [
+        Dithering(dither="ordered", order=(4, 4)),
+        InkBleed(
+            intensity_range=(0.1, 0.2),
+            color_range=(0, 0),
+            kernel_size=(3, 3),
+            severity=(0.2, 0.2),
+        ),
+        Geometric(rotate_range=(-1, -1), randomize=0),
+        Faxify(
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+        ),
+        BadPhotoCopy(
+            noise_type=4,
+            noise_side="random",
+            noise_iteration=(4, 5),
+            noise_size=(1, 4),
+            noise_value=(0, 0),
+            noise_sparsity=(0.5, 0.6),
+            noise_concentration=(0.5, 0.5),
+            blur_noise=0,
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype7():
+
+    ink_phase = [
+        InkBleed(
+            intensity_range=(0.6, 0.6),
+            color_range=(0, 0),
+            kernel_size=(3, 3),
+            severity=(0.8, 0.8),
+        ),
+        BadPhotoCopy(
+            noise_type=3,
+            noise_side="top",
+            noise_iteration=(4, 5),
+            noise_size=(2, 4),
+            noise_value=(0, 5),
+            noise_sparsity=(0.025, 0.025),
+            noise_concentration=(0.05, 0.05),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        Geometric(padding=(0, 0, 0, 0.025), randomize=0),
+    ]
+    paper_phase = [
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="top",
+            noise_iteration=(4, 5),
+            noise_size=(4, 8),
+            noise_value=(0, 5),
+            noise_sparsity=(0.015, 0.015),
+            noise_concentration=(0.05, 0.05),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        Geometric(translation=(0, 0.97), randomize=0),
+    ]
+    post_phase = [
+        BadPhotoCopy(
+            noise_type=4,
+            noise_side="random",
+            noise_iteration=(6, 8),
+            noise_size=(1, 7),
+            noise_value=(0, 0),
+            noise_sparsity=(0.5, 0.6),
+            noise_concentration=(0.5, 0.5),
+            blur_noise=0,
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+        Geometric(rotate_range=(1, 1), randomize=0),
+        Faxify(
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+        ),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype8():
+
+    ink_phase = [
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="left",
+            noise_iteration=(4, 5),
+            noise_size=(1, 8),
+            noise_value=(0, 5),
+            noise_sparsity=(0.005, 0.005),
+            noise_concentration=(0.1, 0.1),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        BookBinding(
+            radius_range=(10, 10),
+            curve_range=(100, 100),
+            mirror_range=(0.2, 0.2),
+            curling_direction=0,
+        ),
+        Geometric(crop=(0, 0, 1, 0.85), randomize=0),
+    ]
+
+    paper_phase = [
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="right",
+            noise_iteration=(4, 5),
+            noise_size=(1, 2),
+            noise_value=(0, 5),
+            noise_sparsity=(0.005, 0.005),
+            noise_concentration=(0.1, 0.1),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        Geometric(translation=(-0.05, 0), randomize=0),
+        BadPhotoCopy(
+            noise_type=1,
+            noise_side="right",
+            noise_iteration=(4, 5),
+            noise_size=(1, 2),
+            noise_value=(0, 5),
+            noise_sparsity=(0.005, 0.005),
+            noise_concentration=(0.1, 0.1),
+            blur_noise=0,
+            edge_effect=0,
+            wave_pattern=0,
+        ),
+        Geometric(translation=(-0.9, 0), randomize=0),
+    ]
+
+    post_phase = [
+        PageBorder(
+            side="right",
+            border_background_value=(230, 255),
+            flip_border=random.choice([0, 1]),
+            width_range=(1, 2),
+            pages=None,
+            noise_intensity_range=(0.3, 0.8),
+            curve_frequency=(2, 8),
+            curve_height=(2, 4),
+            curve_length_one_side=(50, 100),
+            value=(250, 255),
+            same_page_border=random.choice([0, 1]),
+        ),
+        Geometric(padding=(0, 0, 0.05, 0), padding_value=0, randomize=0),
+        Geometric(padding=(0, 0.1, 0, 0.1), padding_value=255, randomize=0),
+        Faxify(
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+        ),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
 def pipeline_archetype9():
 
     ink_phase = [
@@ -836,6 +1044,44 @@ def pipeline_archetype9():
     ]
     post_phase = [
         Geometric(rotate_range=(-1, -1), randomize=0),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype10():
+
+    ink_phase = [
+        BadPhotoCopy(
+            noise_type=4,
+            noise_side="random",
+            noise_iteration=(6, 8),
+            noise_size=(1, 7),
+            noise_value=(0, 0),
+            noise_sparsity=(0.5, 0.6),
+            noise_concentration=(0.2, 0.2),
+            blur_noise=0,
+            wave_pattern=0,
+            edge_effect=0,
+        ),
+        Letterpress(
+            n_samples=(200, 300),
+            n_clusters=(500, 680),
+            std_range=(2500, 2500),
+            value_range=(245, 255),
+            value_threshold_range=(128, 128),
+            blur=1,
+        ),
+    ]
+    paper_phase = []
+    post_phase = [
+        Faxify(
+            monochrome=1,
+            monochrome_method="threshold_otsu",
+            halftone=0,
+        ),
     ]
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
