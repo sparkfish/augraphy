@@ -40,7 +40,6 @@ class Noise:
     of applications in computer graphics and simulations. 
     
     
-    Email: sxs200326@utdallas.edu
     '''
 
     def __init__(self):

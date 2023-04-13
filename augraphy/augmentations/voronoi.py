@@ -72,7 +72,6 @@ class VoronoiTessellation(Augmentation):
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float 
 
-    Email: sxs200326@utdallas.edu
 
     '''
     def __init__(self, width = 200, height = 200, mult= (50, 80), seed = 19829813472, num_cells = (1000,9000), perlin = True, background_value  = (200,256), ws = 200, p = 1):

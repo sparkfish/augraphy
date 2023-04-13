@@ -4,7 +4,6 @@ version: 0.0.1
 
 Dependencies
 - scipy
-- matplotlib
 - numpy
 - opencv
 
@@ -13,8 +12,6 @@ Dependencies
 References:
 
 - Scipy Documentation: https://docs.scipy.org/doc/scipy/
-
-- Matplotlib Documentation: https://matplotlib.org/stable/index.html
 
 - Numpy Documentation: https://numpy.org/doc/
 
@@ -27,18 +24,12 @@ References:
 *********************************
 
 '''
-
 import random 
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.spatial import Delaunay
-import matplotlib as mpl
-from matplotlib.colors import LinearSegmentedColormap
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.meshgenerator import Noise
 from augraphy.utilities.slidingwindow import PatternMaker
-import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -69,13 +60,12 @@ class DelaunayTessellation(Augmentation):
     :type ws: int
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float 
-
-    Email: sxs200326@utdallas.edu
-    
     
     '''
-    def __init__(self, n_points = (500, 800), n_horizontal_points=(5, 50), n_vertical_points= (5, 50),  perlin = True, ws = 200, p =1):
+    def __init__(self, width = 500, height = 500, n_points = (500, 800), n_horizontal_points=(5, 50), n_vertical_points= (5, 50),  perlin = True, ws = 200, p =1):
         super().__init__(p=p)
+        self.width = width
+        self.height = height
         self.n_points = random.randint(n_points[0], n_points[1])
         self.n_horizontal_points = random.randint(n_horizontal_points[0], n_horizontal_points[1])
         self.n_vertical_points = random.randint(n_vertical_points[0], n_vertical_points[1])
@@ -84,14 +74,21 @@ class DelaunayTessellation(Augmentation):
 
 
     def __repr__(self):
-        return f"Delaunay Tessellation no. of random points on geometric plane = {self.n_points}, no. of horizontal edge points = {self.n_horizontal_points}, no. of vertical edge points = {self.n_vertical_points}, perlin_noise = {self.perlin}, window_size = {self.ws}"
+        return f"Delaunay Tessellation pattern_width = {self.width}, pattern_height= {self.height}, no. of random points on geometric plane = {self.n_points}, no. of horizontal edge points = {self.n_horizontal_points}, no. of vertical edge points = {self.n_vertical_points}, perlin_noise = {self.perlin}, window_size = {self.ws}"
         
     def _edge_points(self, image):
         '''
         Generate Random Points on the edge of an document image
 
         :param image: opencv image array
-        :
+        :param length_scale: how far to space out the points in the goemetric
+                             document image plane
+        :param n_horizontal_points: number of points in the horizontal edge
+                                    Leave as None to use length_scale to determine 
+                                    the value. 
+        :param n_vertical_points: number of points in the vertical edge
+                                  Leave as None to use length_scale to determine
+                                  the value
         :return: array of coordinates
         '''
         ymax, xmax = image.shape[:2]
@@ -112,43 +109,54 @@ class DelaunayTessellation(Augmentation):
               + [[xmax, delta_y * i] for i in range(1, self.n_vertical_points)]
             )
     
+    
     def apply_augmentation(self):
-        # Generate a set of random points
-        im = np.zeros((1, 1), dtype = np.uint) * 255
-        points = np.array([(random.uniform(0, 1), random.uniform(0, 1)) for i in range(self.n_points)]) 
-        points = np.concatenate([points, self._edge_points(im)])
+        # Create an empty numpy array of zeros with the given size
+        img = np.ones((self.height, self.width, 3), np.uint8) 
+        # Define some points to use for the Delaunay triangulation
+        points = np.array([(random.uniform(0, self.width), random.uniform(0, self.height)) for i in range(self.n_points)]) 
+        points = np.concatenate([points, self._edge_points(img)])
+        # Perform the Delaunay triangulation on the points
+        rect = (0, 0, self.width, self.height)
+        subdiv = cv2.Subdiv2D(rect)
+        for p in points:
+            if p[0] >= 0 and p[0] < self.width and p[1] >= 0 and p[1] < self.height:
+                subdiv.insert((int(p[0]), int(p[1])))
+
+        triangles = subdiv.getTriangleList()
+        triangles = triangles.astype(np.int32)
+        # adding perlin noise
+        
         if self.perlin:
             obj_noise = Noise()
-            # Compute the Perlin noise values for each point
-            noise_vals = np.array([obj_noise.noise2D(x*10, y*10) for x, y in points])
+            img = [[obj_noise.noise2D(j/200 , i/200)*50 + 100  for j in range(self.width)] for i in range(self.height)]
+            img = np.array(img, np.uint8)
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
-        # Compute the Delaunay triangulation of the points
-        tri = Delaunay(points)
+            # Draw the Delaunay triangulation on the empty numpy array
+            for t in triangles:
+                pt1 = (t[0], t[1])
+                pt2 = (t[2], t[3])
+                pt3 = (t[4], t[5])
+                cv2.line(img, pt1, pt2, (255, 255, 255), 1)
+                cv2.line(img, pt2, pt3, (255, 255, 255), 1)
+                cv2.line(img, pt3, pt1, (255, 255, 255), 1)
+        else:
+            img = img*255
+            min_val = 150
+            max_val = 255
+            for t in triangles:
+                pt1 = (t[0], t[1])
+                pt2 = (t[2], t[3])
+                pt3 = (t[4], t[5])
+                color = (np.random.randint(min_val, max_val), np.random.randint(min_val, max_val), np.random.randint(min_val, max_val))
+                cv2.fillConvexPoly(img, np.array([pt1, pt2, pt3]), color)
+        return img
 
-        # Create a colormap based on grayscale
-        cmap_name = 'my_cmap'
-        cmap = LinearSegmentedColormap.from_list(cmap_name, [(0.8, 0.8, 0.8), (1.0, 1.0, 1.0)], N=256)
-        mpl.rcParams['savefig.pad_inches'] = 0
-        # Plot the triangles
-        _, ax = plt.subplots(figsize=(4,4))
-        ax.axis("off")
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.margins(x=0, y=0)
-        for _, simplex in enumerate(tri.simplices):
-            if self.perlin:
-                avg_noise = np.mean(noise_vals[simplex])
-                color = cmap(avg_noise)
-            else:
-                color  = cmap(0)
-            ax.add_patch(plt.Polygon(points[simplex], fill=True, edgecolor='white', facecolor=color))
-        ax.plot(points[:,0], points[:,1], '.', color='white')
-        plt.savefig('images/delaunay_perlin.png', dpi=300, bbox_inches='tight')
-        mesh = cv2.imread("images/delaunay_perlin.png")
-        # cv2.imshow("Mesh image", mesh)
-        # cv2.waitKey(0)
-        os.remove("images/delaunay_perlin.png")
-        return mesh
+
+
+
+
 
 
     # Applies the Augmentation to input data.
@@ -157,7 +165,11 @@ class DelaunayTessellation(Augmentation):
             result = image.copy()
             h, w, _ = result.shape
             delaunay_mesh = self.apply_augmentation()
-            delaunay_mesh = delaunay_mesh[10: h -10, 10: w-10, :]
+            if self.perlin:
+                crop_thresh = delaunay_mesh.shape[0]//50
+            else:
+                crop_thresh = delaunay_mesh.shape[0]//20
+            delaunay_mesh = delaunay_mesh[crop_thresh: h -crop_thresh, crop_thresh: w-crop_thresh, :]
             delaunay_mesh = cv2.resize(delaunay_mesh, (self.ws,self.ws), interpolation=cv2.INTER_LINEAR)
             sw = PatternMaker()
             result = sw.make_patterns(result, delaunay_mesh, self.ws)

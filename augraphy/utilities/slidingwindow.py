@@ -14,6 +14,7 @@ References
 - Numpy Documentation: https://numpy.org/doc/
 
 - OpenCV Documentation: https://docs.opencv.org/4.x/
+
 *********************************
 
 
@@ -32,7 +33,6 @@ class PatternMaker:
         an mesh image/filter/pattern over the original image using weighted sum and for making 
         patterns by passing a patch across the sliding window.
 
-        Email: sxs200326@utdallas.edu
         '''
         self.alpha = alpha
         self.gamma = gamma

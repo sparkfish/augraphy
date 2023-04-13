@@ -44,7 +44,6 @@ class PatternGenerator(Augmentation):
         :type n_rotation: tuple (int)
 
 
-        Email: sxs200326@utdallas.edu
         '''
         super().__init__(p=p)
         self.imgx = imgx
