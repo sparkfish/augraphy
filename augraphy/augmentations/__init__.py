@@ -24,6 +24,10 @@ from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.pencilscribbles import PencilScribbles
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.watermark import WaterMark
+from augraphy.augmentations.delaunay import DelaunayTessellation
+from augraphy.augmentations.voronoi import VoronoiTessellation
+from augraphy.augmentations.quasicrystal import PatternGenerator
+
 
 __all__ = [
     "BadPhotoCopy",
@@ -52,4 +56,8 @@ __all__ = [
     "PencilScribbles",
     "SubtleNoise",
     "WaterMark",
+    "DelaunayTessellation",
+    "VoronoiTessellation",
+    "PatternGenerator",
+    
 ]
