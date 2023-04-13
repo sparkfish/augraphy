@@ -1087,3 +1087,136 @@ def pipeline_archetype10():
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 
     return pipeline
+
+
+
+def pipeline_archetype11():
+
+    ink_phase = [
+        Dithering(
+            dither=random.choice(["ordered", "floyd-steinberg"]),
+            order=(3, 5),
+            p=0.33,
+        ),
+
+    ]
+
+    paper_phase = [
+        OneOf(
+        [
+        PaperFactory(),
+        PatternGenerator(),
+        DelaunayTessellation(n_points = (500, 800), 
+                                        n_horizontal_points=(5, 50), 
+                                        n_vertical_points=(5, 50), 
+                                        perlin = True,  
+                                        ws = 200),
+        VoronoiTessellation(width=200,
+                             height = 200,
+                             mult = (50,80),
+                             seed = 19829813472 ,
+                             num_cells = (1000,9000),
+                             perlin = True,
+                             background_value = (200, 256), 
+                             ws = 200
+                            )
+                
+        ], p=0.99
+        )
+        ,
+        ColorPaper(
+            hue_range=(0, 255),
+            saturation_range=(10, 40),
+            p=0.33,
+        ),
+    ]
+
+    post_phase = [
+                 PageBorder(
+                    side="random",
+                    border_background_value=(230, 255),
+                    flip_border=random.choice([0, 1]),
+                    width_range=(5, 30),
+                    pages=None,
+                    noise_intensity_range=(0.3, 0.8),
+                    curve_frequency=(2, 8),
+                    curve_height=(2, 4),
+                    curve_length_one_side=(50, 100),
+                    value=(32, 150),
+                    same_page_border=random.choice([0, 1]),
+                    p =1.0,
+                ),
+
+        DirtyDrum(
+            line_width_range=(1, 6),
+            line_concentration=random.uniform(0.05, 0.15),
+            direction=random.randint(0, 2),
+            noise_intensity=random.uniform(0.6, 0.95),
+            noise_value=(64, 224),
+            ksize=random.choice([(3, 3), (5, 5), (7, 7)]),
+            sigmaX=0,
+            p=0.33,
+        ),
+        SubtleNoise(
+            subtle_range=random.randint(5, 10),
+            p=0.33,
+        ),
+        Jpeg(
+            quality_range=(25, 95),
+            p=0.33,
+        ),
+        Folding(
+            fold_x=None,
+            fold_deviation=(0, 0),
+            fold_count=random.randint(1, 6),
+            fold_noise=random.uniform(0, 0.2),
+            gradient_width=(0.1, 0.2),
+            gradient_height=(0.01, 0.02),
+            p=0.33,
+        ),
+        Markup(
+            num_lines_range=(2, 7),
+            markup_length_range=(0.5, 1),
+            markup_thickness_range=(1, 2),
+            markup_type=random.choice(["strikethrough", "crossed", "highlight", "underline"]),
+            markup_color="random",
+            single_word_mode=False,
+            repetitions=1,
+            p=0.33,
+        ),
+        PencilScribbles(
+            size_range=(100, 800),
+            count_range=(1, 6),
+            stroke_count_range=(1, 2),
+            thickness_range=(2, 6),
+            brightness_change=random.randint(64, 224),
+            p=0.33,
+        ),
+        BadPhotoCopy(
+            mask=None,
+            noise_type=-1,
+            noise_side="random",
+            noise_iteration=(1, 2),
+            noise_size=(1, 3),
+            noise_value=(128, 196),
+            noise_sparsity=(0.3, 0.6),
+            noise_concentration=(0.1, 0.6),
+            blur_noise=random.choice([True, False]),
+            blur_noise_kernel=random.choice([(3, 3), (5, 5), (7, 7)]),
+            wave_pattern=random.choice([True, False]),
+            edge_effect=random.choice([True, False]),
+            p=0.33,
+        ),
+        Gamma(
+            gamma_range=(0.9, 1.1),
+            p=0.33,
+        ),
+
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, log=False)
+
+    return pipeline
+
+
+
