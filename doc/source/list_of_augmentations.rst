@@ -31,3 +31,6 @@ List of Augmentations
    augmentations/pencilscribbles.rst
    augmentations/subtlenoise.rst
    augmentations/watermark.rst
+   augmentations/voronoi.rst
+   augmentations/delaunay.rst
+   augmentations/quasi_crystal.rst
