@@ -45,8 +45,8 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a PatternGenerator instance with number of rotation is set between 30 and 40. 
-The background image size is set of width = 512 and height = 512. 
+In this example, a PatternGenerator instance with number of rotation is set between 10 and 15.
+The background image size is set of width = 512 and height = 512.
 
 Code example:
 
@@ -55,9 +55,9 @@ Code example:
     quasi_pattern = PatternGenerator(
         imgx = 512,
         imgy= 512,
-        n_rotation = (30,40)
+        n_rotation = (10,15)
     )
-                             
+
     img_final = quasi_pattern(image)
     cv2.imshow("Image", img_final)
 
