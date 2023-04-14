@@ -31,4 +31,3 @@ Functions for internal usage only
    helper_and_utilities/internal_overlaybuilder.rst
    helper_and_utilities/internal_meshgenerator.rst
    helper_and_utilities/internal_slidingwindow.rst
-
