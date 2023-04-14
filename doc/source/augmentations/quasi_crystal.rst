@@ -48,6 +48,7 @@ Example 1
 In this example, a PatternGenerator instance with number of rotation is set between 10 and 15.
 The background image size is set of width = 512 and height = 512.
 
+
 Code example:
 
 ::
