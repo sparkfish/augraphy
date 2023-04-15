@@ -89,7 +89,15 @@ class PatternMaker:
         initial_coords = [0, 0]
         top = bottom = np.int32(window_size - 1)
         left = right = np.int32(window_size - 1)
-        image = cv2.copyMakeBorder(image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+        image = cv2.copyMakeBorder(
+            image,
+            top,
+            bottom,
+            left,
+            right,
+            cv2.BORDER_CONSTANT,
+            value=[255, 255, 255],
+        )
         h, w, _ = image.shape
         img = image.copy()
         direction = "right"
@@ -98,7 +106,10 @@ class PatternMaker:
                 initial_coords[0] += window_size
             elif direction == "left":
                 initial_coords[0] -= window_size
-            bottom_right_corner = (initial_coords[0] + window_size, initial_coords[1] + window_size)
+            bottom_right_corner = (
+                initial_coords[0] + window_size,
+                initial_coords[1] + window_size,
+            )
             hy = abs(initial_coords[1] - bottom_right_corner[1])
             wx = abs(initial_coords[1] - bottom_right_corner[1])
             if (
@@ -110,9 +121,15 @@ class PatternMaker:
                 and initial_coords[1] + hy > 0
             ):
                 image[
-                    initial_coords[1] : initial_coords[1] + hy, initial_coords[0] : initial_coords[0] + wx, :
+                    initial_coords[1] : initial_coords[1] + hy,
+                    initial_coords[0] : initial_coords[0] + wx,
+                    :,
                 ] = self.superimpose(
-                    img[initial_coords[1] : initial_coords[1] + hy, initial_coords[0] : initial_coords[0] + wx, :],
+                    img[
+                        initial_coords[1] : initial_coords[1] + hy,
+                        initial_coords[0] : initial_coords[0] + wx,
+                        :,
+                    ],
                     mesh_img,
                 )
             img = image.copy()

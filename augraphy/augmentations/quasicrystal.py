@@ -95,7 +95,11 @@ class PatternGenerator(Augmentation):
                 c = int(round(255 * z / self.n_rotation))  # color
                 pixels[kx, ky] = (c, c, c)  # # RGB value
         # pattern_image = ImageOps.autocontrast(pattern_image) # increasing the contrast of the image
-        pattern_image.save("images/guilloche_pattern.png", "PNG")  # save the image as DPI = 300 to make it standard
+        pattern_image.save(
+            "images/guilloche_pattern.png",
+            "PNG",
+            dpi=(300, 300),
+        )  # save the image as DPI = 300 to make it standard
         pattern = cv2.imread("images/guilloche_pattern.png")  # load the image
         os.remove("images/guilloche_pattern.png")  # delete the image
 

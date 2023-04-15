@@ -180,15 +180,11 @@ class DelaunayTessellation(Augmentation):
             img = ndimage.gaussian_filter(img, sigma=(3, 3, 0), order=0)  # applying gaussian filter
             colors = [
                 (240, 240, 240),
-                (217, 217, 217),
+                (250, 250, 250),
                 (234, 234, 234),
-                (201, 201, 202),
-                (220, 222, 222),
-                (205, 205, 205),
-                (237, 237, 227),
-                (204, 214, 224),
-                (231, 221, 222),
-                (210, 212, 212),
+                (244, 244, 244),
+                (254, 254, 254),
+                (243, 243, 243),
             ]
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             # Draw the Delaunay triangulation on the empty numpy array
@@ -222,13 +218,13 @@ class DelaunayTessellation(Augmentation):
             result = image.copy()
             h, w, _ = result.shape
             delaunay_mesh = self.apply_augmentation()
-            if self.perlin:
-                crop_thresh = delaunay_mesh.shape[0] // 50
-            else:
-                crop_thresh = delaunay_mesh.shape[0] // 20
-            delaunay_mesh = delaunay_mesh[crop_thresh : h - crop_thresh, crop_thresh : w - crop_thresh, :]
+            # if self.perlin:
+            #     crop_thresh = delaunay_mesh.shape[1] // 50
+            # else:
+            #     crop_thresh = delaunay_mesh.shape[0] // 20
+            delaunay_mesh = delaunay_mesh[18 : h - 18, 18 : w - 18, :]
             delaunay_mesh = cv2.resize(delaunay_mesh, (self.ws, self.ws), interpolation=cv2.INTER_LINEAR)
             sw = PatternMaker()
-            result = sw.make_patterns(result, delaunay_mesh, self.ws)
+            result = sw.make_patterns(result, delaunay_mesh)
             result = result[self.ws : h + self.ws, self.ws : w + self.ws, :]
             return result
