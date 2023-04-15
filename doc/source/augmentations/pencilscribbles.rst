@@ -45,20 +45,29 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a PencilScribbles augmentation instance is initialized and size of scribble effect is set to 400 x 800 (400, 800).
-Number of scribbles is set in between 2 to 3 (2,3) and number of stroke count per scribble is set to 1 (1,1).
-Thickenss of scribbles is set to random value in between 1 and 3 (1,3) and the beightness change of scribble is set to 128.
+In this example, a PencilScribbles augmentation instance is initialized and the scribbles type is set to "random", where it selects "lines" or "text" based scribbles randomly.
+The location of scribbles is "random" and the size of scribbles effect is set in between 250 to 600 pixels (250, 600).
+Number of scribbles is set in between 2 to 3 (2,3) and the thickness of scribbles is set to random value in between 1 and 3 (1,3).
+The brightness change of scribbles effect is set to select randomly from 32, 64 and 128 [32. 64. 128].
+If the scribbles type is "text", the scribbles text value and font type is set to "random" where it selects randomly from the internal settings.
+Additionally, the scribbles text rotate range is set to rotate randomly in any angle between 0 to 360 degree (0, 360).
+If the scribbles type is "lines", the stroke count for each scribbles is set at random value in between 1 and 6 (1, 6).
 
 Code example:
 
 ::
 
-    pencil_scribbles = PencilScribbles(size_range=(400, 800),
-                                       count_range=(2, 3),
-                                       stroke_count_range=(1, 1),
-                                       thickness_range=(1, 3),
-                                       brightness_change=128
-                                       )
+    pencil_scribbles = PencilScribbles(scribbles_type="random",
+                                       scribbles_location="random",
+                                       scribbles_size_range=(250, 600),
+                                       scribbles_count_range=(2, 3),
+                                       scribbles_thickness_range=(1, 3),
+                                       scribbles_brightness_change=[32, 64, 128],
+                                       scribbles_text="random",
+                                       scribbles_text_font="random",
+                                       scribbles_text_rotate_range=(0, 360),
+                                       scribbles_lines_stroke_count_range=(1, 6)
+				       )
 
     img_pencil_scribbles = pencil_scribbles(image)
     cv2.imshow("pencil_scribbles", img_pencil_scribbles)
