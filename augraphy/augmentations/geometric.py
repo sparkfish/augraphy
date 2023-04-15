@@ -14,7 +14,7 @@ class Geometric(Augmentation):
     :type scale: tuple, optional
     :param translation: Pair of values determining x and y translation value.
             The translation value will be in percentage of the image size if the value is in between 0 - 1:
-            x (int) = image width  * x (float and 0 - 1)
+            x (int) = image width  * x (float and 0 - 1);
             y (int) = image height * y (float and 0 - 1)
     :type translation: tuple, optional
     :param fliplr: Flag to flip image in left right direction.
@@ -23,9 +23,9 @@ class Geometric(Augmentation):
     :type flipud: int, optional
     :param crop: Tuple of 4 (x0, y0, xn, yn) to crop section of image.
              The value will be in percentage of the image size if the value is in between 0 - 1:
-             x0 (int) = image width  * x0 (float and 0 - 1)
-             y0 (int) = image height * y0 (float and 0 - 1)
-             xn (int) = image width  * xn (float and 0 - 1)
+             x0 (int) = image width  * x0 (float and 0 - 1);
+             y0 (int) = image height * y0 (float and 0 - 1);
+             xn (int) = image width  * xn (float and 0 - 1);
              yn (int) = image height * yn (float and 0 - 1)
     :type crop: tuple, optional
     :param rotate_range: Pair of ints determining the range from which to sample
@@ -35,9 +35,9 @@ class Geometric(Augmentation):
     :type randomize: int, optional
     :param padding: Padding amount on each (left, right, top, bottom) side.
             The padding amount will be in percentage of the image size if the value is in between 0 - 1:
-            left   (int) = image width  * left   (float and 0 - 1)
-            right  (int) = image height * right  (float and 0 - 1)
-            top    (int) = image width  * top    (float and 0 - 1)
+            left   (int) = image width  * left   (float and 0 - 1);
+            right  (int) = image height * right  (float and 0 - 1);
+            top    (int) = image width  * top    (float and 0 - 1);
             bottom (int) = image height * bottom (float and 0 - 1)
     :type padding: tuple, optional
     :param padding_type: Padding methods, select from fill,duplicate and mirror.
@@ -123,10 +123,14 @@ class Geometric(Augmentation):
                     ysize, xsize = image.shape[:2]
                     xstart, ystart, xend, yend = self.crop
 
-                    if xstart < 1 and ystart < 1 and (xend <= 1 and xend > 0) and (yend <= 1 and yend > 0):
+                    # when value is float and in between 0-1, scale it with image size
+                    if xstart >= 0 and xstart <= 1 and isinstance(xstart, float):
                         xstart = int(xstart * xsize)
+                    if ystart >= 0 and ystart <= 1 and isinstance(ystart, float):
                         ystart = int(ystart * ysize)
+                    if xend >= 0 and xend <= 1 and isinstance(xend, float):
                         xend = int(xend * xsize)
+                    if yend >= 0 and yend <= 1 and isinstance(yend, float):
                         yend = int(yend * ysize)
 
                     # when value is set to -1, it takes image size
@@ -152,7 +156,7 @@ class Geometric(Augmentation):
                     # get image size
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
-                    if self.padding[0] < 1:
+                    if self.padding[0] <= 1 and isinstance(self.padding[0], float):
                         self.padding = list(self.padding)
                         self.padding[0] = int(self.padding[0] * xsize)
 
@@ -176,7 +180,7 @@ class Geometric(Augmentation):
                     # get image size
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
-                    if self.padding[1] < 1:
+                    if self.padding[1] <= 1 and isinstance(self.padding[1], float):
                         self.padding = list(self.padding)
                         self.padding[1] = int(self.padding[1] * xsize)
 
@@ -200,7 +204,7 @@ class Geometric(Augmentation):
                     # get image size
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
-                    if self.padding[2] < 1:
+                    if self.padding[2] <= 1 and isinstance(self.padding[2], float):
                         self.padding = list(self.padding)
                         self.padding[2] = int(self.padding[2] * ysize)
 
@@ -224,7 +228,7 @@ class Geometric(Augmentation):
                     # get image size
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
-                    if self.padding[3] < 1:
+                    if self.padding[3] <= 1 and isinstance(self.padding[3], float):
                         self.padding = list(self.padding)
                         self.padding[3] = int(self.padding[3] * ysize)
 
@@ -244,6 +248,10 @@ class Geometric(Augmentation):
                     image = np.concatenate([image, image_padding], axis=0)
 
             # resize based on scale
+            # remove negative value (if any)
+            self.scale = list(self.scale)
+            self.scale[0] = abs(self.scale[0])
+            self.scale[1] = abs(self.scale[1])
             if self.scale[1] != 1 and self.scale[0] != 1:
                 scale = random.uniform(self.scale[0], self.scale[1])
                 if scale > 0:
@@ -256,10 +264,10 @@ class Geometric(Augmentation):
             if self.translation[0] != 0 or self.translation[1] != 0:
 
                 ysize, xsize = image.shape[:2]
-                if self.translation[0] < 1 and self.translation[0] > -1:
+                if self.translation[0] <= 1 and self.translation[0] >= -1 and isinstance(self.translation[0], float):
                     self.translation = list(self.translation)
                     self.translation[0] = int(self.translation[0] * xsize)
-                if self.translation[1] < 1 and self.translation[1] > -1:
+                if self.translation[1] <= 1 and self.translation[1] >= -1 and isinstance(self.translation[1], float):
                     self.translation = list(self.translation)
                     self.translation[1] = int(self.translation[1] * ysize)
 
