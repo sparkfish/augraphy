@@ -44,9 +44,10 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a VoronoiTessellation instance with  Perlin Noise set to True is initialized, a background pattern is created and the patch is passed through the original image like a Sliding Window.
-The number of points on the geometric plane is set in between 500 and 800. The number of horizontal edge points is set between 1 and 50.
-The number of vertical points is set between 1 and 50. The shape (h,w) of the pattern patch is set to 20 which passes through the Original Image like a Sliding Window.
+In this example, a Delaunay Tessellation instance with  Noise type is set to "random", if the perlin is selected (randomly) from the algorithm, a background pattern is created
+and the patch is passed through the original image like a Sliding Window. The range of number of points on the geometric plane is set in between 500 and 800. The range of
+number of horizontal edge points is set between 50 and 100. The range of number of vertical points is set between 50 and 100.
+
 
 
 Code example:
@@ -54,19 +55,23 @@ Code example:
 ::
 
     delaunay_pattern = DelaunayTessellation(
-                                        width = 500,
-                                        height = 500,
-                                        n_points = (400, 800),
-                                        n_horizontal_points=(1, 50),
-                                        n_vertical_points=(1, 50),
-                                        perlin = True ,
-                                        ws = 200,
-                                        color_background=(200,255))
+                                            n_points_range = (500, 800),
+                                            n_horizontal_points_range=(50, 100),
+                                            n_vertical_points_range=(50, 100),
+                                            noise_type = "random")
 
     img_final = delaunay_pattern(image)
     cv2.imshow("Delaunay Image", img_final)
 
 
+
+
 Augmented image:
 
 .. figure:: augmentations/delaunay/delaunay.png
+
+`Delaunay Tessellation pattern_width = 480, pattern_height= 480, no. of random points on geometric plane = 502, no. of horizontal edge points = 65, no. of vertical edge points = 68, perlin_noise = True, window_size = 120`
+
+.. figure:: augmentations/delaunay/delaunay1.png
+
+`Delaunay Tessellation pattern_width = 640, pattern_height= 640, no. of random points on geometric plane = 661, no. of horizontal edge points = 86, no. of vertical edge points = 73, perlin_noise = False, window_size = 160`
