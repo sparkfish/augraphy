@@ -17,6 +17,7 @@ from augraphy.augmentations.inkbleed import InkBleed
 from augraphy.augmentations.jpeg import Jpeg
 from augraphy.augmentations.letterpress import Letterpress
 from augraphy.augmentations.lightinggradient import LightingGradient
+from augraphy.augmentations.linesdegradation import LinesDegradation
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.markup import Markup
@@ -37,6 +38,7 @@ __all__ = [
     "Brightness",
     "BrightnessTexturize",
     "ColorPaper",
+    "DelaunayTessellation",
     "DirtyDrum",
     "DirtyRollers",
     "Dithering",
@@ -48,15 +50,15 @@ __all__ = [
     "Jpeg",
     "Letterpress",
     "LightingGradient",
+    "LinesDegradation",
     "LowInkPeriodicLines",
     "LowInkRandomLines",
     "Markup",
     "NoiseTexturize",
     "PageBorder",
+    "PatternGenerator",
     "PencilScribbles",
     "SubtleNoise",
-    "WaterMark",
-    "DelaunayTessellation",
     "VoronoiTessellation",
-    "PatternGenerator",
+    "WaterMark",
 ]
