@@ -13,20 +13,20 @@ class Geometric(Augmentation):
     :param scale: Pair of floats determining new scale of image.
     :type scale: tuple, optional
     :param translation: Pair of values determining x and y translation value.
-            The translation value will be in percentage of the image size if the value is in between 0 - 1:
-            x (int) = image width  * x (float and 0 - 1);
-            y (int) = image height * y (float and 0 - 1)
+            The translation value will be in percentage of the image size if the value is float and in between 0.0 - 1.0:
+            x (int) = image width  * x (float and 0.0 - 1.0);
+            y (int) = image height * y (float and 0.0 - 1.0)
     :type translation: tuple, optional
     :param fliplr: Flag to flip image in left right direction.
     :type fliplr: int, optional
     :param flipud: Flag to flip image in up down direction.
     :type flipud: int, optional
     :param crop: Tuple of 4 (x0, y0, xn, yn) to crop section of image.
-             The value will be in percentage of the image size if the value is in between 0 - 1:
-             x0 (int) = image width  * x0 (float and 0 - 1);
-             y0 (int) = image height * y0 (float and 0 - 1);
-             xn (int) = image width  * xn (float and 0 - 1);
-             yn (int) = image height * yn (float and 0 - 1)
+             The value will be in percentage of the image size if the value is float and in between 0.0 - 1.0:
+             x0 (int) = image width  * x0 (float and 0.0 - 1.0);
+             y0 (int) = image height * y0 (float and 0.0 - 1.0);
+             xn (int) = image width  * xn (float and 0.0 - 1.0);
+             yn (int) = image height * yn (float and 0.0 - 1.0)
     :type crop: tuple, optional
     :param rotate_range: Pair of ints determining the range from which to sample
            the image rotation.
@@ -34,12 +34,12 @@ class Geometric(Augmentation):
     :param randomize: Flag to apply random geometric transformations.
     :type randomize: int, optional
     :param padding: Padding amount on each (left, right, top, bottom) side.
-            The padding amount will be in percentage of the image size if the value is in between 0 - 1:
-            left   (int) = image width  * left   (float and 0 - 1);
-            right  (int) = image height * right  (float and 0 - 1);
-            top    (int) = image width  * top    (float and 0 - 1);
-            bottom (int) = image height * bottom (float and 0 - 1)
-    :type padding: tuple, optional
+            The padding amount will be in percentage of the image size if the value is float and in between 0.0 - 1.0:
+            left   (int) = image width  * left   (float and 0.0 - 1.0);
+            right  (int) = image height * right  (float and 0.0 - 1.0);
+            top    (int) = image width  * top    (float and 0.0 - 1.0);
+            bottom (int) = image height * bottom (float and 0.0 - 1.0)
+    :type padding: list, optional
     :param padding_type: Padding methods, select from fill,duplicate and mirror.
     :type paddng_type: string, optional
     :param padding_value: Padding value (in BGR) for fill padding method.
@@ -56,7 +56,7 @@ class Geometric(Augmentation):
         flipud=0,
         crop=(),
         rotate_range=(0, 0),
-        padding=(0, 0, 0, 0),
+        padding=[0, 0, 0, 0],
         padding_type="fill",
         padding_value=(255, 255, 255),
         randomize=1,
@@ -157,7 +157,6 @@ class Geometric(Augmentation):
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
                     if self.padding[0] <= 1 and isinstance(self.padding[0], float):
-                        self.padding = list(self.padding)
                         self.padding[0] = int(self.padding[0] * xsize)
 
                     # different padding shape for grayscale and colored image
@@ -181,7 +180,6 @@ class Geometric(Augmentation):
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
                     if self.padding[1] <= 1 and isinstance(self.padding[1], float):
-                        self.padding = list(self.padding)
                         self.padding[1] = int(self.padding[1] * xsize)
 
                     # different padding shape for grayscale and colored image
@@ -205,7 +203,6 @@ class Geometric(Augmentation):
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
                     if self.padding[2] <= 1 and isinstance(self.padding[2], float):
-                        self.padding = list(self.padding)
                         self.padding[2] = int(self.padding[2] * ysize)
 
                     # different padding shape for grayscale and colored image
@@ -229,7 +226,6 @@ class Geometric(Augmentation):
                     ysize, xsize = image.shape[:2]
                     # convert percentage into pixel amount
                     if self.padding[3] <= 1 and isinstance(self.padding[3], float):
-                        self.padding = list(self.padding)
                         self.padding[3] = int(self.padding[3] * ysize)
 
                     # different padding shape for grayscale and colored image
