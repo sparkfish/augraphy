@@ -44,25 +44,21 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a VoronoiTessellation instance with  Perlin Noise set to True is initialized, a background pattern is created and the patch is passed through the original image like a Sliding Window.
-Pattern width and height is 200 and the pattern background value for each randomly selected point is set to bright value (250, 256).
-The number of random points generated is set in between 1000 and 9000.
-Amplification factor for Perlin Noise is set in between 50 and 80 and the seed is set to 19829813472.
-The shape (h,w) of the pattern patch is set to 40 which passes through the Original Image like a Sliding Window.
+In this example, a VoronoiTessellation instance with  with  Noise type is set to "random", if the perlin is selected (randomly) from the algorithm, a background pattern is created
+and the patch is passed through the original image like a Sliding Window. The pattern background value for each randomly selected point is set to bright value (250, 256).
+The number of random points generated is set in between 500 and 800. Amplification factor for Perlin Noise is set in between 50 and 80 and the seed is set to 19829813472.
 
 
 Code example:
 
 ::
 
-    voronoi_pattern = VoronoiTessellation(width=200,
-                             height = 200,
-                             mult = (50,80),
+    voronoi_pattern = VoronoiTessellation(
+                             mult_range = (50,80),
                              seed = 19829813472 ,
-                             num_cells = (1000,9000),
-                             perlin = True ,
-                             background_value = (200, 256),
-                             ws = 200
+                             num_cells_range = (500,800),
+                             noise_type = "random",
+                             background_value = (200, 256)
                             )
 
     img_voronoi = voronoi_pattern(image)
@@ -72,3 +68,11 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/voronoi/voronoi.png
+
+.. figure:: augmentations/voronoi/voronoi_1.png
+
+`Voronoi Tessellation: width = 140. height = 140,  amplification_factor_range = 64 , seed = 19829813472, number of random points = 1975, perlin=True, background_value = (200, 256), window_size=70`
+
+.. figure:: augmentations/voronoi/voronoi_2.png
+
+`Voronoi Tessellation: width = 200. height = 200,  amplification_factor_range = 63 , seed = 19829813472, number of random points = 733, perlin=False, background_value = (200, 256), window_size=200`

@@ -135,7 +135,6 @@ class DelaunayTessellation(Augmentation):
 
         triangles = subdiv.getTriangleList()
         triangles = triangles.astype(np.int32)
-        thresh = 240
         # adding perlin noise
         if self.perlin:
             obj_noise = Noise()
