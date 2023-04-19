@@ -72,6 +72,6 @@ Augmented image:
 
 `Delaunay Tessellation pattern_width = 480, pattern_height= 480, no. of random points on geometric plane = 502, no. of horizontal edge points = 65, no. of vertical edge points = 68, perlin_noise = True, window_size = 120`
 
-.. figure:: augmentations/delaunay/delaunay1.png
+.. figure:: augmentations/delaunay/delaunay_1.png
 
 `Delaunay Tessellation pattern_width = 640, pattern_height= 640, no. of random points on geometric plane = 661, no. of horizontal edge points = 86, no. of vertical edge points = 73, perlin_noise = False, window_size = 160`
