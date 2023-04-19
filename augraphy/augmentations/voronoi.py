@@ -165,13 +165,13 @@ class VoronoiTessellation(Augmentation):
 
             if self.perlin:
                 self.width = self.height = random.choice(
-                    [80, 100, 120, 140, 160, 180, 200],
+                    [100, 120, 140, 160, 180, 200],
                 )
                 lst = [50, 70, 80, 90]
                 find_random_divisor = (
                     lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
                     if any(x != 0 and b % x == 0 for x in lst)
-                    else None
+                    else 40
                 )
                 self.ws = find_random_divisor(
                     lst,
@@ -181,11 +181,11 @@ class VoronoiTessellation(Augmentation):
                 self.width = self.height = random.choice(
                     [200, 210, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400],
                 )
-                lst = [120, 140, 150, 160, 200, 210]
+                lst = [100, 120, 140, 150, 160]
                 find_random_divisor = (
                     lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
                     if any(x != 0 and b % x == 0 for x in lst)
-                    else None
+                    else 40
                 )
                 self.ws = find_random_divisor(
                     lst,
@@ -196,6 +196,10 @@ class VoronoiTessellation(Augmentation):
             self.num_cells = random.randint(self.num_cells_range[0], self.num_cells_range[1])
             voronoi_mesh = self.apply_augmentation()
             voronoi_mesh = cv2.resize(voronoi_mesh, (self.ws, self.ws), interpolation=(cv2.INTER_LINEAR))
+            if len(image.shape) < 3:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) == 3 and image.shape[2] == 1:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
             sw = PatternMaker()
             # to ensure the voronoi tessellation covers the whole image,
             # original image is padded and voronoi_mesh passes through it like a sliding window

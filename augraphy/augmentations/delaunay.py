@@ -279,7 +279,7 @@ class DelaunayTessellation(Augmentation):
             find_random_divisor = (
                 lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
                 if any(x != 0 and b % x == 0 for x in lst)
-                else None
+                else 40
             )
             self.ws = find_random_divisor(
                 lst,
@@ -291,6 +291,10 @@ class DelaunayTessellation(Augmentation):
             threshold = self.ws // 20
             delaunay_mesh = delaunay_mesh[threshold : h - threshold, threshold : w - threshold]
             delaunay_mesh = cv2.resize(delaunay_mesh, (self.ws, self.ws), interpolation=cv2.INTER_LINEAR)
+            if len(image.shape) < 3:
+                delaunay_mesh = cv2.cvtColor(delaunay_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) == 3 and image.shape[2] == 1:
+                delaunay_mesh = cv2.cvtColor(delaunay_mesh, cv2.COLOR_RGB2GRAY)
             sw = PatternMaker(alpha=0.49)
             result = sw.make_patterns(image=result, mesh_img=delaunay_mesh, window_size=self.ws)
             result = result[self.ws : h + self.ws, self.ws : w + self.ws]

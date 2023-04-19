@@ -136,7 +136,6 @@ class PatternMaker:
                         sub_img,
                     )
                 else:
-                    sub_img = cv2.cvtColor(sub_img, cv2.COLOR_BGR2GRAY)
                     image[
                         initial_coords[1] : initial_coords[1] + hy,
                         initial_coords[0] : initial_coords[0] + wx,
