@@ -28,7 +28,9 @@ import random
 import warnings
 
 import cv2
+import numba as nb
 import numpy as np
+from numba import jit
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.slidingwindow import PatternMaker
@@ -67,26 +69,26 @@ class PatternGenerator(Augmentation):
         # return f"QuasiPattern Distortion: width = {self.imgx} , height = {self.imgy}, n_rotation = {self.n_rotation}"
         return f"QuasiPattern Distortion:  n_rotation_range = {self.n_rotation_range}"
 
-    def apply_augmentation(self):
+    @staticmethod
+    @jit(nopython=True)
+    def apply_augmentation(ndim, pattern_image, frequency, phase, n_rotation):
         # Applies the Augmentation to input data.
-        pattern_image = np.zeros((self.imgy, self.imgx, 3), dtype=np.uint8)
-        frequency = random.random() * 100 + 18  # determines the frequency of pattern
-        phase = random.random() * math.pi  # phase shift of the pattern
+        width, height = ndim
         # apply transformation, each pixel is transformed to cosine function
-        for ky in range(self.imgy):
-            y = np.float32(ky) / (self.imgy - 1) * 4 * math.pi - 2 * math.pi  # normalized coordinates of y-coordinate
-            for kx in range(self.imgx):
+        for ky in range(height):
+            y = np.float32(ky) / (height - 1) * 4 * math.pi - 2 * math.pi  # normalized coordinates of y-coordinate
+            for kx in range(width):
                 x = (
-                    np.float32(kx) / (self.imgx - 1) * 4 * math.pi - 2 * math.pi
+                    np.float32(kx) / (width - 1) * 4 * math.pi - 2 * math.pi
                 )  # normalized coordinates of the x-coordinate
                 z = 0.0  # z value will determine the intensity of the color, initially set to zero
-                for i in range(self.n_rotation):
+                for i in range(n_rotation):
                     r = math.hypot(x, y)  # distance between the point to the origin
                     a = (
-                        math.atan2(y, x) + i * math.pi * 2.0 / self.n_rotation
+                        math.atan2(y, x) + i * math.pi * 2.0 / n_rotation
                     )  # angle the point makes to the origin plus rotation angle
                     z += math.cos(r * math.sin(a) * frequency + phase)  # function of cosine added as an offet
-                c = int(round(255 * z / self.n_rotation))  # color
+                c = int(round(255 * z / n_rotation))  # color
                 pattern_image[ky, kx] = (c, c, c)  # RGB value
 
         return pattern_image
@@ -96,7 +98,11 @@ class PatternGenerator(Augmentation):
             result = image.copy()
             h, w = result.shape[:2]
             self.n_rotation = random.randint(self.n_rotation_range[0], self.n_rotation_range[1])
-            pattern = self.apply_augmentation()
+            pattern_image = np.zeros((self.imgy, self.imgx, 3), dtype=np.uint8)
+            frequency = random.random() * 100 + 18  # determines the frequency of pattern
+            phase = random.random() * math.pi  # phase shift of the pattern
+            ndim = (self.imgx, self.imgy)  # dimensions of pattern
+            pattern = self.apply_augmentation(ndim, pattern_image, frequency, phase, n_rotation=self.n_rotation)
             invert = cv2.bitwise_not(pattern)  # performing bitwise not operation
             invert = cv2.resize(invert, (w, h), interpolation=cv2.INTER_LINEAR)
             if len(image.shape) < 3:
