@@ -5,6 +5,7 @@ from augraphy.utilities.imageoverlay import ImageOverlay
 from augraphy.utilities.interop import Interop
 from augraphy.utilities.meshgenerator import Noise
 from augraphy.utilities.overlaybuilder import OverlayBuilder
+from augraphy.utilities.pixelbleed import PixelBleed
 from augraphy.utilities.slidingwindow import PatternMaker
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "OverlayBuilder",
     "Noise",
     "PatternMaker",
+    "PixelBleed",
 ]
