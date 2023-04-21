@@ -34,6 +34,7 @@ import random
 import warnings
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import jit
 from PIL import Image
@@ -59,10 +60,12 @@ class VoronoiTessellation(Augmentation):
     :param seed: The seed value for generating the Perlin Noise, default value is 19829813472
     :type seed: int, optional
     :param num_cells_range: Range for the number of cells used to generate the Voronoi Tessellation. Default
-                      lies between 1000 and 9000.
+                            lies between 1000 and 9000.
     :type num_cells_range: tuple (int), optional
-    :param noise_type: if "random", integration of Perlin Noise in the pipeline is randomly selected. Otherwise no Perlin Noise is added to the image.
-    Perlin Noise is added to the image to create a smoother, more organic looking tessellation. .
+    :param noise_type: If "random", integration of Perlin Noise in the pipeline is randomly selected.
+                       If noise_type is "perlin", perlin noise is added to the background pattern,
+                       otherwise no Perlin Noise is added.Perlin Noise is added to the image to create a smoother,
+                       more organic looking tessellation.
     :type noise_type: string, optional
     :param background_value: Range for background color assigned to each point
     :type background_value: tuple (int)
@@ -95,13 +98,13 @@ class VoronoiTessellation(Augmentation):
     @jit(nopython=True, cache=True)
     def generate_voronoi(width, height, num_cells, nsize, pixel_data, perlin_noise_2d):
         """
-        Generates Voronoi Tessellation Image
+        Generates Voronoi Tessellation
         """
         img_array = np.zeros((width, height), dtype=np.uint8)
-        for y in range(width):
-            for x in range(height):
+        for y in nb.prange(width):
+            for x in nb.prange(height):
                 dmin = math.hypot(height, width)
-                for i in range(num_cells):
+                for i in nb.prange(num_cells):
                     d = math.hypot(
                         (pixel_data[0][i] - x + perlin_noise_2d[0][x][y]),
                         (pixel_data[1][i] - y + perlin_noise_2d[1][x][y]),
@@ -149,6 +152,7 @@ class VoronoiTessellation(Augmentation):
         )
         image = Image.fromarray(img_array)
         image.save("images/Voronoi_example.png", "PNG", dpi=(300, 300))
+        # reads it in a format so that it can be applied as a background pattern to the original image
         mesh = cv2.imread("images/Voronoi_example.png")
         os.remove("images/Voronoi_example.png")
         return mesh
@@ -160,6 +164,8 @@ class VoronoiTessellation(Augmentation):
             h, w = result.shape[:2]
             if self.noise_type == "random":
                 self.perlin = random.choice([True, False])
+            elif self.noise_type == "perlin":
+                self.perlin = True
             else:
                 self.perlin = False
 

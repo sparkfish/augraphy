@@ -59,8 +59,10 @@ class DelaunayTessellation(Augmentation):
     :type n_horizontal_points_range: tuple (int), optional
     :param n_vertical_points_range: Range for the number of points in the vertical edge, from 500 to 800. The value is randomly selected.
     :type n_vertical_points_range: tuple (int), optional
-    :param noise_type: if "random", integration of Perlin Noise in the pipeline is randomly selected. Otherwise no Perlin Noise is added to the image.
-    Perlin Noise is added to the image to create a smoother, more organic looking tessellation. .
+    :param noise_type: If "random", integration of Perlin Noise in the pipeline is randomly selected.
+                       If noise_type is "perlin", perlin noise is added to the background pattern,
+                       otherwise no Perlin Noise is added.
+     Perlin Noise is added to the image to create a smoother, more organic looking tessellation.
     :type noise_type: string, optional
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float, optional
@@ -115,7 +117,7 @@ class DelaunayTessellation(Augmentation):
             + [[delta_x * i, ymax] for i in range(1, self.n_horizontal_points)]
             + [[0, delta_y * i] for i in range(1, self.n_vertical_points)]
             + [[xmax, delta_y * i] for i in range(1, self.n_vertical_points)]
-            + [[xmax - delta_x * i, ymax] for i in range(1, self.n_vertical_points + 30)],
+            + [[xmax - delta_x * i, ymax] for i in range(1, self.n_vertical_points)],
         )
 
     def apply_augmentation(self):
@@ -273,6 +275,8 @@ class DelaunayTessellation(Augmentation):
                 self.perlin = random.choice(
                     [True, False],
                 )  # randomly select to apply Perlin Noise on top of the Tessellation
+            elif self.noise_type == "perlin":
+                self.perlin = True
             else:
                 self.perlin = False
             lst = [100, 120, 160]
