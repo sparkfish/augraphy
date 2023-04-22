@@ -30,7 +30,7 @@ List of Augmentations
    augmentations/markup.rst
    augmentations/noisetexturize.rst
    augmentations/pageborder.rst
-   augmentations/pencilscribbles.rst
+   augmentations/scribbles.rst
    augmentations/quasi_crystal.rst
    augmentations/subtlenoise.rst
    augmentations/voronoi.rst

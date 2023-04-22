@@ -27,7 +27,7 @@ An example of simple augmentation pipeline with just single augmentation in each
 
     ink_phase   = [WaterMark(p=1)]
     paper_phase = [ColorPaper(p=1)]
-    post_phase  = [PencilScribbles(p=1)]
+    post_phase  = [Scribbles(p=1)]
     pipeline    = AugraphyPipeline(ink_phase, paper_phase, post_phase)
 
     image = np.full((1200, 1200,3), 250, dtype="uint8")
@@ -249,7 +249,7 @@ The current default augmentation pipeline is a complex pipeline with multiple au
             repetitions=1,
             p=0.33,
         ),
-        PencilScribbles(
+        Scribbles(
             size_range=(100, 800),
             count_range=(1, 6),
             stroke_count_range=(1, 2),
