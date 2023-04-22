@@ -71,7 +71,7 @@ Code example:
                           scribbles_text="random",
                           scribbles_text_font="random",
                           scribbles_text_rotate_range=(0, 360),
-                          scribbles_lines_stroke_count_range=(1, 6), 
+                          scribbles_lines_stroke_count_range=(1, 6),
                           scribbles_pencil_skeletonize = "random",
 		          )
 

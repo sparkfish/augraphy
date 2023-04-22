@@ -66,18 +66,18 @@ class Scribbles(Augmentation):
     def __init__(
         self,
         scribbles_type="random",
-        scribbles_ink = "random",
+        scribbles_ink="random",
         scribbles_location="random",
         scribbles_size_range=(250, 600),
         scribbles_count_range=(1, 6),
         scribbles_thickness_range=(1, 3),
         scribbles_brightness_change=[32, 64, 128],
-        scribbles_color = "random",
+        scribbles_color="random",
         scribbles_text="random",
         scribbles_text_font="random",
         scribbles_text_rotate_range=(0, 360),
         scribbles_lines_stroke_count_range=(1, 6),
-        scribbles_pencil_skeletonize = "random",
+        scribbles_pencil_skeletonize="random",
         p=1,
     ):
         """Constructor method"""
@@ -133,7 +133,7 @@ class Scribbles(Augmentation):
         :param image: The background image.
         :type image: numpy.array (numpy.uint8)
         """
-        
+
         # 50% transparency for marker
         return cv2.addWeighted(scribbles_image, 0.5, image, 0.5, 0)
 
@@ -166,29 +166,29 @@ class Scribbles(Augmentation):
 
         # thicker for marker
         if scribbles_ink == "marker":
-            scribbles_thickness =  random.randint(
-                        self.scribbles_thickness_range[0] * 5,
-                        self.scribbles_thickness_range[1] * 5,
-                    )  
+            scribbles_thickness = random.randint(
+                self.scribbles_thickness_range[0] * 5,
+                self.scribbles_thickness_range[1] * 5,
+            )
         else:
-            scribbles_thickness =  random.randint(
-                        self.scribbles_thickness_range[0],
-                        self.scribbles_thickness_range[1],
-                    )
+            scribbles_thickness = random.randint(
+                self.scribbles_thickness_range[0],
+                self.scribbles_thickness_range[1],
+            )
             # for pen and lines, set min thickness = 2 to prevent weird thin lines
             if scribbles_ink == "pen" and scribbles_type == "lines":
-                scribbles_thickness = max(scribbles_thickness, 2)  
-            
+                scribbles_thickness = max(scribbles_thickness, 2)
+
         # always black color for pencil
         if scribbles_ink == "pencil":
-            scribbles_color = (0,0,0)
+            scribbles_color = (0, 0, 0)
             if self.scribbles_pencil_skeletonize == "random":
-                scribbles_pencil_skeletonize = random.choice([0,1])
+                scribbles_pencil_skeletonize = random.choice([0, 1])
             else:
                 scribbles_pencil_skeletonize = self.scribbles_pencil_skeletonize
-            
+
         elif self.scribbles_color == "random":
-            scribbles_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            scribbles_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         else:
             scribbles_color = self.scribbles_color
 
@@ -249,7 +249,7 @@ class Scribbles(Augmentation):
                     [verts],
                     False,
                     scribbles_color,
-                    thickness=scribbles_thickness
+                    thickness=scribbles_thickness,
                 )
 
                 if scribbles_ink == "pen":
@@ -260,7 +260,7 @@ class Scribbles(Augmentation):
                     scribbles_image = self.apply_marker_scribbles(scribble_image, scribbles_image)
                 else:
                     # apply pencil scribbles effect
-                    if scribbles_pencil_skeletonize :
+                    if scribbles_pencil_skeletonize:
                         scribble_image = self.skeletonize_scribbles(scribble_image)
                     scribbles_image = self.apply_pencil_scribbles(scribble_image, scribbles_image)
 
@@ -316,50 +316,49 @@ class Scribbles(Augmentation):
                 scribbles_image = self.apply_marker_scribbles(scribble_image, scribbles_image)
             else:
                 # apply pencil scribbles effect
-                if scribbles_pencil_skeletonize :
+                if scribbles_pencil_skeletonize:
                     scribble_image = self.skeletonize_scribbles(scribble_image)
                 scribbles_image = self.apply_pencil_scribbles(scribble_image, scribbles_image)
 
             # remove additional blank area
             binary_image = binary_threshold(scribbles_image, threshold_method="threshold_otsu", threshold_arguments={})
-            
+
             coordinates = cv2.findNonZero(255 - binary_image)
             x, y, w, h = cv2.boundingRect(coordinates)
             scribbles_image = scribbles_image[y : y + h, x : x + w]
 
-        if scribbles_ink == "marker":        
-            scribbles_image = cv2.GaussianBlur(scribbles_image, (7,7), 0)
-        elif scribbles_ink == "pen":        
-            scribbles_image = cv2.GaussianBlur(scribbles_image, (3,3), 0)
-    
-        return scribbles_image
+        if scribbles_ink == "marker":
+            scribbles_image = cv2.GaussianBlur(scribbles_image, (7, 7), 0)
+        elif scribbles_ink == "pen":
+            scribbles_image = cv2.GaussianBlur(scribbles_image, (3, 3), 0)
 
+        return scribbles_image
 
     # adapted from here:
     # http://opencvpython.blogspot.com/2012/05/skeletonization-using-opencv-python.html
     def skeletonize_scribbles(self, scribbles_image):
         """Skeletonize input image
-        
+
         :param scribbles_image: Image for the skeletonization effect.
         :type scribbles_image: numpy.array (numpy.uint8)
         """
 
-        scribbles_image = 255-scribbles_image
-        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
-        skeletonized_image = np.zeros(scribbles_image.shape,dtype="uint8")
+        scribbles_image = 255 - scribbles_image
+        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+        skeletonized_image = np.zeros(scribbles_image.shape, dtype="uint8")
         size = np.size(scribbles_image)
-        
+
         while True:
             eroded_image = cv2.erode(scribbles_image, kernel)
-            dilated_image = cv2.dilate(eroded_image,kernel)
-            subtracted_image = cv2.subtract(scribbles_image,dilated_image)
-            skeletonized_image = cv2.bitwise_or(skeletonized_image,subtracted_image)
+            dilated_image = cv2.dilate(eroded_image, kernel)
+            subtracted_image = cv2.subtract(scribbles_image, dilated_image)
+            skeletonized_image = cv2.bitwise_or(skeletonized_image, subtracted_image)
             scribbles_image = eroded_image.copy()
             zeros = size - cv2.countNonZero(scribbles_image.flatten())
-            if zeros==size:
-                skeletonized_image = 255-skeletonized_image
+            if zeros == size:
+                skeletonized_image = 255 - skeletonized_image
                 break
-            
+
         return skeletonized_image
 
     def paste_scribbles(self, paste, target):
@@ -403,13 +402,14 @@ class Scribbles(Augmentation):
             elif target_y + pysize >= tysize:
                 target_y = tysize - pysize - 1
 
-        target[
-            target_y : target_y + paste.shape[0],
-            target_x : target_x + paste.shape[1],
-        ] = cv2.multiply(target[
-            target_y : target_y + paste.shape[0],
-            target_x : target_x + paste.shape[1],
-        ], paste, scale=1 / 255)
+        target[target_y : target_y + paste.shape[0], target_x : target_x + paste.shape[1]] = cv2.multiply(
+            target[
+                target_y : target_y + paste.shape[0],
+                target_x : target_x + paste.shape[1],
+            ],
+            paste,
+            scale=1 / 255,
+        )
 
         # convert target back to original channel
         if target_shape_length < 3:
