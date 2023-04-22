@@ -191,7 +191,7 @@ def default_augraphy_pipeline():
             repetitions=1,
             p=0.33,
         ),
-        PencilScribbles(
+        Scribbles(
             scribbles_type="random",
             scribbles_location="random",
             scribbles_size_range=(250, 600),
@@ -280,7 +280,7 @@ def pipeline_archetype1():
 
     ink_phase = [
         Geometric(
-            padding=(0, 0, 0.05, 0),
+            padding=[0, 0, 0.05, 0],
             randomize=0,
         ),
         BindingsAndFasteners(
@@ -307,13 +307,15 @@ def pipeline_archetype1():
             width_range=(2, 3),
             same_page_border=0,
         ),
-        PencilScribbles(
+        Scribbles(
             scribbles_type="text",
+            scribbles_ink="pen",
             scribbles_location=(0.9, 0.75),
             scribbles_size_range=(700, 700),
             scribbles_count_range=(1, 1),
             scribbles_thickness_range=(1, 1),
             scribbles_brightness_change=[96],
+            scribbles_color=(0, 0, 0),
             scribbles_text="600",
             scribbles_text_font="random",
             scribbles_text_rotate_range=(30, 30),
@@ -354,16 +356,19 @@ def pipeline_archetype1():
             value_threshold_range=(255, 255),
             blur=0,
         ),
-        PencilScribbles(
+        Scribbles(
             scribbles_type="text",
+            scribbles_ink="pencil",
             scribbles_location=(0.5, 0.95),
             scribbles_size_range=(700, 700),
             scribbles_count_range=(1, 1),
             scribbles_thickness_range=(1, 1),
             scribbles_brightness_change=[0],
+            scribbles_color=(0, 0, 0),
             scribbles_text="P·142",
             scribbles_text_font="random",
             scribbles_text_rotate_range=(3, 3),
+            scribbles_pencil_skeletonize=0,
         ),
         BadPhotoCopy(
             noise_type=1,
@@ -471,7 +476,7 @@ def pipeline_archetype2():
             edge_effect=0,
         ),
         Geometric(rotate_range=(2, 2), randomize=0),
-        Geometric(padding=(0.1, 0.2, 0.2, 0.05), randomize=0),
+        Geometric(padding=[0.1, 0.2, 0.2, 0.05], randomize=0),
         BadPhotoCopy(
             noise_type=2,
             noise_side="left",
@@ -481,13 +486,15 @@ def pipeline_archetype2():
             wave_pattern=0,
             edge_effect=0,
         ),
-        PencilScribbles(
+        Scribbles(
             scribbles_type="lines",
+            scribbles_ink="pencil",
             scribbles_location="random",
             scribbles_size_range=(200, 300),
             scribbles_count_range=(2, 2),
             scribbles_thickness_range=(2, 6),
             scribbles_brightness_change=[64, 128],
+            scribbles_color=(0, 0, 0),
             scribbles_lines_stroke_count_range=(1, 1),
         ),
         BindingsAndFasteners(
@@ -536,7 +543,7 @@ def pipeline_archetype2():
             wave_pattern=0,
             edge_effect=0,
         ),
-        Geometric(padding=(0.01, 0.01, 0.01, 0), randomize=0),
+        Geometric(padding=[0.01, 0.01, 0.01, 0], randomize=0),
     ]
 
     pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
@@ -679,7 +686,7 @@ def pipeline_archetype4():
         ),
         Geometric(
             rotate_range=(-1, -1),
-            padding=(0, 0.05, 0, 0),
+            padding=[0, 0.05, 0, 0],
             randomize=0,
         ),
         Geometric(
@@ -733,13 +740,15 @@ def pipeline_archetype5():
             kernel_size=(3, 3),
             severity=(1.0, 1.0),
         ),
-        PencilScribbles(
+        Scribbles(
             scribbles_type="text",
+            scribbles_ink="pen",
             scribbles_location=(0.8, 0.8),
             scribbles_size_range=(650, 650),
             scribbles_count_range=(1, 1),
             scribbles_thickness_range=(2, 2),
             scribbles_brightness_change=[0],
+            scribbles_color=(0, 0, 0),
             scribbles_text="Dr Architg \n \n  Dr Lynn added that \n me to Dereene etan \n with you . He feel that \n we should stay away \n from the mystery that could \n help to .FTC on  \n In attend the president \n of the committee \n       Cloude ",
             scribbles_text_font="https://www.fontsquirrel.com/fonts/download/Windsong",
             scribbles_text_rotate_range=(15, 15),
@@ -770,7 +779,7 @@ def pipeline_archetype5():
             wave_pattern=0,
             edge_effect=1,
         ),
-        Geometric(randomize=0, padding=(0, 0.02, 0, 0)),
+        Geometric(randomize=0, padding=[0, 0.02, 0, 0]),
     ]
 
     paper_phase = [
@@ -900,7 +909,7 @@ def pipeline_archetype7():
             edge_effect=0,
             wave_pattern=0,
         ),
-        Geometric(padding=(0, 0, 0, 0.025), randomize=0),
+        Geometric(padding=[0, 0, 0, 0.025], randomize=0),
     ]
     paper_phase = [
         BadPhotoCopy(
@@ -946,13 +955,15 @@ def pipeline_archetype7():
 def pipeline_archetype8():
 
     ink_phase = [
-        PencilScribbles(
+        Scribbles(
             scribbles_type="text",
+            scribbles_ink="pen",
             scribbles_location=(0.7, 0.01),
             scribbles_size_range=(300, 300),
             scribbles_count_range=(1, 1),
             scribbles_thickness_range=(1, 1),
             scribbles_brightness_change=[32],
+            scribbles_color=(0, 0, 0),
             scribbles_text="-~ ETS  Literature",
             scribbles_text_font="random",
             scribbles_text_rotate_range=(0, 0),
@@ -1021,8 +1032,8 @@ def pipeline_archetype8():
             value=(250, 255),
             same_page_border=random.choice([0, 1]),
         ),
-        Geometric(padding=(0, 0, 0.05, 0), padding_value=0, randomize=0),
-        Geometric(padding=(0, 0.1, 0, 0.1), padding_value=255, randomize=0),
+        Geometric(padding=[0, 0, 0.05, 0], padding_value=0, randomize=0),
+        Geometric(padding=[0, 0.1, 0, 0.1], padding_value=255, randomize=0),
         Faxify(
             monochrome=1,
             monochrome_method="threshold_otsu",
