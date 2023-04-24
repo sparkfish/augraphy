@@ -85,7 +85,6 @@ class PatternMaker:
         :param window_size: height and width of patch, default value is 200
         :type window_size: int
         """
-        h, w, _ = image.shape
         initial_coords = [0, 0]
         top = bottom = np.int32(window_size - 1)
         left = right = np.int32(window_size - 1)
@@ -96,11 +95,12 @@ class PatternMaker:
             left,
             right,
             cv2.BORDER_CONSTANT,
-            value=[255, 255, 255],
+            value=[232, 232, 232],
         )
-        h, w, _ = image.shape
+        h, w = image.shape[:2]
         img = image.copy()
         direction = "right"
+        sub_img = mesh_img
         while True:
             if direction == "right":
                 initial_coords[0] += window_size
@@ -111,27 +111,42 @@ class PatternMaker:
                 initial_coords[1] + window_size,
             )
             hy = abs(initial_coords[1] - bottom_right_corner[1])
-            wx = abs(initial_coords[1] - bottom_right_corner[1])
+            wx = abs(initial_coords[0] - bottom_right_corner[0])
             if (
                 hy > 0
                 and wx > 0
-                and initial_coords[0] + wx < w
-                and initial_coords[1] + hy < h
+                and initial_coords[0] + wx <= w
+                and initial_coords[1] + hy <= h
                 and initial_coords[0] + wx > 0
                 and initial_coords[1] + hy > 0
             ):
-                image[
-                    initial_coords[1] : initial_coords[1] + hy,
-                    initial_coords[0] : initial_coords[0] + wx,
-                    :,
-                ] = self.superimpose(
-                    img[
+                sub_img = cv2.flip(mesh_img, 0)
+
+                if len(image.shape) > 2:
+                    image[
                         initial_coords[1] : initial_coords[1] + hy,
                         initial_coords[0] : initial_coords[0] + wx,
                         :,
-                    ],
-                    mesh_img,
-                )
+                    ] = self.superimpose(
+                        img[
+                            initial_coords[1] : initial_coords[1] + hy,
+                            initial_coords[0] : initial_coords[0] + wx,
+                            :,
+                        ],
+                        sub_img,
+                    )
+                else:
+                    image[
+                        initial_coords[1] : initial_coords[1] + hy,
+                        initial_coords[0] : initial_coords[0] + wx,
+                    ] = self.superimpose(
+                        img[
+                            initial_coords[1] : initial_coords[1] + hy,
+                            initial_coords[0] : initial_coords[0] + wx,
+                        ],
+                        sub_img,
+                    )
+
             img = image.copy()
             if bottom_right_corner[0] >= w:
                 direction = "left"

@@ -51,55 +51,40 @@ class DelaunayTessellation(Augmentation):
     The Delaunay Condition states that the circumcircle of each triangle in the triangulation must contain no other points in its interior.
     The class inherits methods and properties from the Augmentation base class.
 
-    :param n_points: Range for the number of triangulating points
-    :type n_points: tuple (int)
-    :param n_horizontal_points: Range for the number of points in the horizontal edge, default = 200
-    :type n_horizontal_points: tuple (int)
-    :param n_vertical_points: Range for the number of points in the vertical edge, default = 200
-    :type n_vertical_points: tuple (int)
-    :param perlin: if True, Perlin Noise is added to the distance between each point and its closest random point to
-    create a smoother, more organic looking tessellation. Default is True.
-    :type perlin: bool
-    :param ws: patch height and width, default value is 200
-    :type ws: int
+
+
+    :param n_points_range: Range for the number of triangulating points from 500 to 800. Randomly selected.
+    :type n_points_range: tuple (int), optional
+    :param n_horizontal_points_range: Range for the number of points in the horizontal edge, from 500 to 800. The value is randomly selected.
+    :type n_horizontal_points_range: tuple (int), optional
+    :param n_vertical_points_range: Range for the number of points in the vertical edge, from 500 to 800. The value is randomly selected.
+    :type n_vertical_points_range: tuple (int), optional
+    :param noise_type: If "random", integration of Perlin Noise in the pipeline is randomly selected.
+                       If noise_type is "perlin", perlin noise is added to the background pattern,
+                       otherwise no Perlin Noise is added.
+     Perlin Noise is added to the image to create a smoother, more organic looking tessellation.
+    :type noise_type: string, optional
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
-    :type p: float
+    :type p: float, optional
 
     """
 
     def __init__(
         self,
-        width=500,
-        height=500,
-        n_points=(400, 800),
-        n_horizontal_points=(1, 50),
-        n_vertical_points=(1, 50),
-        perlin=True,
-        ws=200,
-        color_background=(200, 255),
+        n_points_range=(500, 800),
+        n_horizontal_points_range=(500, 800),
+        n_vertical_points_range=(500, 800),
+        noise_type="random",
         p=1,
     ):
         super().__init__(p=p)
-        self.width = width
-        self.height = height
-        self.n_points = random.randint(
-            n_points[0],
-            n_points[1],
-        )  # no. of random points generated on the geometric plane
-        self.n_horizontal_points = random.randint(
-            n_horizontal_points[0],
-            n_horizontal_points[1],
-        )  # no. of horizontal edge points
-        self.n_vertical_points = random.randint(
-            n_vertical_points[0],
-            n_vertical_points[1],
-        )  # no. of edge vertical points
-        self.perlin = perlin  # apply perlin or not
-        self.ws = ws
-        self.color_background = color_background
+        self.n_points_range = n_points_range  # no. of random points generated on the geometric plane
+        self.n_horizontal_points_range = n_horizontal_points_range  # no. of horizontal edge points
+        self.n_vertical_points_range = n_vertical_points_range  # no. of edge vertical points
+        self.noise_type = noise_type  # apply perlin or not
 
     def __repr__(self):
-        return f"Delaunay Tessellation pattern_width = {self.width}, pattern_height= {self.height}, no. of random points on geometric plane = {self.n_points}, no. of horizontal edge points = {self.n_horizontal_points}, no. of vertical edge points = {self.n_vertical_points}, perlin_noise = {self.perlin}, window_size = {self.ws}"
+        return f"Delaunay Tessellation range of random points on geometric plane = {self.n_points_range}, range of horizontal edge points = {self.n_horizontal_points_range}, range of vertical edge points = {self.n_vertical_points_range}, noise_type = {self.noise_type}"
 
     def _edge_points(self, image):
         """
@@ -131,7 +116,8 @@ class DelaunayTessellation(Augmentation):
             + [[delta_x * i, 0] for i in range(1, self.n_horizontal_points)]
             + [[delta_x * i, ymax] for i in range(1, self.n_horizontal_points)]
             + [[0, delta_y * i] for i in range(1, self.n_vertical_points)]
-            + [[xmax, delta_y * i] for i in range(1, self.n_vertical_points)],
+            + [[xmax, delta_y * i] for i in range(1, self.n_vertical_points)]
+            + [[xmax - delta_x * i, ymax] for i in range(1, self.n_vertical_points)],
         )
 
     def apply_augmentation(self):
@@ -152,7 +138,6 @@ class DelaunayTessellation(Augmentation):
         triangles = subdiv.getTriangleList()
         triangles = triangles.astype(np.int32)
         # adding perlin noise
-
         if self.perlin:
             obj_noise = Noise()
             noise = np.array(
@@ -179,52 +164,142 @@ class DelaunayTessellation(Augmentation):
             )  # creating a white texture from the perlin noise mesh
             img = ndimage.gaussian_filter(img, sigma=(3, 3, 0), order=0)  # applying gaussian filter
             colors = [
-                (240, 240, 240),
-                (250, 250, 250),
-                (234, 234, 234),
-                (244, 244, 244),
-                (254, 254, 254),
-                (243, 243, 243),
+                (250, 235, 215),
+                (240, 240, 230),
+                (253, 245, 230),
+                (255, 245, 238),
+                (255, 248, 220),
+                (248, 248, 255),
+                (255, 240, 245),
+                (245, 255, 250),
+                (255, 250, 250),
+                (240, 248, 255),
+                (240, 255, 255),
+                (240, 255, 240),
+                (255, 245, 238),
+                (243, 229, 171),
+                (250, 250, 210),
+            ]
+            alt_colors = [
+                (255, 255, 240),
+                (255, 250, 205),
+                (238, 232, 170),
+                (255, 255, 224),
+                (255, 239, 213),
             ]
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             # Draw the Delaunay triangulation on the empty numpy array
+
             for t in triangles:
                 pt1 = (t[0], t[1])
                 pt2 = (t[2], t[3])
                 pt3 = (t[4], t[5])
-                color = colors[np.random.randint(len(colors))]  # choose from colors
+                if (
+                    pt1[0]
+                    and pt2[0]
+                    and pt3[0] <= self.width * 0.80
+                    and (pt1[0] and pt2[0] and pt3[0] >= self.width * 0.40)
+                ):
+                    color = colors[np.random.randint(len(colors))]  # choose from colors
+
+                elif pt1[0] and pt2[0] and pt3[0] <= self.width * 0.40:
+                    color = alt_colors[np.random.randint(len(alt_colors))]
+                else:
+                    color = alt_colors[np.random.randint(len(alt_colors))]
+
                 cv2.fillConvexPoly(img, np.array([pt1, pt2, pt3]), color)
-                cv2.line(img, pt1, pt2, (255, 255, 255), 1)
-                cv2.line(img, pt2, pt3, (255, 255, 255), 1)
-                cv2.line(img, pt3, pt1, (255, 255, 255), 1)
         else:
-            min_val = self.color_background[0]
-            max_val = self.color_background[1]
             for t in triangles:
                 pt1 = (t[0], t[1])
                 pt2 = (t[2], t[3])
                 pt3 = (t[4], t[5])
-                color = (
-                    np.random.randint(min_val, max_val),
-                    np.random.randint(min_val, max_val),
-                    np.random.randint(min_val, max_val),
-                )
+                colors = [
+                    (250, 235, 215),
+                    (240, 240, 230),
+                    (253, 245, 230),
+                    (255, 245, 238),
+                    (255, 248, 220),
+                    (248, 248, 255),
+                    (255, 240, 245),
+                    (245, 255, 250),
+                    (255, 250, 250),
+                    (240, 248, 255),
+                    (240, 255, 255),
+                    (240, 255, 240),
+                    (255, 245, 238),
+                    (243, 229, 171),
+                    (250, 250, 210),
+                ]
+                alt_colors = [
+                    (255, 255, 240),
+                    (255, 250, 205),
+                    (238, 232, 170),
+                    (255, 255, 224),
+                    (255, 239, 213),
+                ]
+                if (
+                    pt1[0]
+                    and pt2[0]
+                    and pt3[0] <= self.width * 0.80
+                    and (pt1[0] and pt2[0] and pt3[0] >= self.width * 0.40)
+                ):
+                    color = colors[np.random.randint(len(colors))]  # choose from colors
+
+                elif pt1[0] and pt2[0] and pt3[0] <= self.width * 0.40:
+                    color = alt_colors[np.random.randint(len(alt_colors))]
+                else:
+                    color = alt_colors[np.random.randint(len(alt_colors))]
+                color = colors[np.random.randint(len(colors))]  # choose from colors
                 cv2.fillConvexPoly(img, np.array([pt1, pt2, pt3]), color)
         return img
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+            self.width = self.height = random.choice(
+                [400, 480, 500, 600, 640, 720],
+            )  # randomly selecting the width and the height of the background pattern
+            self.n_points = random.randint(
+                self.n_points_range[0],
+                self.n_points_range[1],
+            )  # randomly selecting the number of points in the geometric plane
+            self.n_horizontal_points = random.randint(
+                self.n_horizontal_points_range[0],
+                self.n_horizontal_points_range[1],
+            )  # randomly selecting the edge horizontal points in the goemetric plane
+            self.n_vertical_points = random.randint(
+                self.n_vertical_points_range[0],
+                self.n_vertical_points_range[1],
+            )  # randonly selecting the edge vertical points in the geometric plane
+            if self.noise_type == "random":
+                self.perlin = random.choice(
+                    [True, False],
+                )  # randomly select to apply Perlin Noise on top of the Tessellation
+            elif self.noise_type == "perlin":
+                self.perlin = True
+            else:
+                self.perlin = False
+            lst = [100, 120, 160]
+            find_random_divisor = (
+                lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
+                if any(x != 0 and b % x == 0 for x in lst)
+                else 40
+            )
+            self.ws = find_random_divisor(
+                lst,
+                self.width,
+            )  # finding the window size for the patch, which will be passed over the original image like a Sliding-Window
             result = image.copy()
-            h, w, _ = result.shape
+            h, w = result.shape[:2]
             delaunay_mesh = self.apply_augmentation()
-            # if self.perlin:
-            #     crop_thresh = delaunay_mesh.shape[1] // 50
-            # else:
-            #     crop_thresh = delaunay_mesh.shape[0] // 20
-            delaunay_mesh = delaunay_mesh[18 : h - 18, 18 : w - 18, :]
+            threshold = self.ws // 20
+            delaunay_mesh = delaunay_mesh[threshold : h - threshold, threshold : w - threshold]
             delaunay_mesh = cv2.resize(delaunay_mesh, (self.ws, self.ws), interpolation=cv2.INTER_LINEAR)
-            sw = PatternMaker()
-            result = sw.make_patterns(result, delaunay_mesh)
-            result = result[self.ws : h + self.ws, self.ws : w + self.ws, :]
+            if len(image.shape) < 3:
+                delaunay_mesh = cv2.cvtColor(delaunay_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) == 3 and image.shape[2] == 1:
+                delaunay_mesh = cv2.cvtColor(delaunay_mesh, cv2.COLOR_RGB2GRAY)
+            sw = PatternMaker(alpha=0.49)
+            result = sw.make_patterns(image=result, mesh_img=delaunay_mesh, window_size=self.ws)
+            result = result[self.ws : h + self.ws, self.ws : w + self.ws]
             return result

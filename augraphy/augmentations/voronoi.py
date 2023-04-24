@@ -34,6 +34,7 @@ import random
 import warnings
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import jit
 from PIL import Image
@@ -54,24 +55,20 @@ class VoronoiTessellation(Augmentation):
     The class inherits methods and properties from the Augmentation base class.
 
 
-    :param width: width of the tesellation, default is 200
-    :type width: int
-    :param height: height of the tessellation, default is 200
-    :type height: int
-    :param mult: range for amplification factor to generate Perlin noise , default lies between 50 and 80
-    :type mult: int
+    :param mult_range: range for amplification factor to generate Perlin noise , default lies between 50 and 80
+    :type mult_range: tuple (int), optional
     :param seed: The seed value for generating the Perlin Noise, default value is 19829813472
-    :type seed: int
-    :param num_cells: Range for the number of cells used to generate the Voronoi Tessellation. Default
-                      lies between 1000 and 9000.
-    :type num_cells: tuple (int)
-    :param perlin: if True, Perlin Noise is added to the distance between each point and its closest random point to
-    create a smoother, more organic looking tessellation. Default is True.
-    :type perlin: bool
+    :type seed: int, optional
+    :param num_cells_range: Range for the number of cells used to generate the Voronoi Tessellation. Default
+                            lies between 1000 and 9000.
+    :type num_cells_range: tuple (int), optional
+    :param noise_type: If "random", integration of Perlin Noise in the pipeline is randomly selected.
+                       If noise_type is "perlin", perlin noise is added to the background pattern,
+                       otherwise no Perlin Noise is added.Perlin Noise is added to the image to create a smoother,
+                       more organic looking tessellation.
+    :type noise_type: string, optional
     :param background_value: Range for background color assigned to each point
     :type background_value: tuple (int)
-    :param ws: patch height and width, default value is 200
-    :type ws: int
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float
 
@@ -80,40 +77,34 @@ class VoronoiTessellation(Augmentation):
 
     def __init__(
         self,
-        width=200,
-        height=200,
-        mult=(50, 80),
+        mult_range=(50, 80),
         seed=19829813472,
-        num_cells=(1000, 9000),
-        perlin=True,
+        num_cells_range=(500, 1000),
+        noise_type="random",
         background_value=(200, 256),
-        ws=200,
         p=1,
     ):
         super().__init__(p=p)
-        self.width = width
-        self.height = height
-        self.mult = random.randint(mult[0], mult[1])
+        self.mult_range = mult_range
         self.seed = seed
-        self.num_cells = random.randint(num_cells[0], num_cells[1])
-        self.perlin = perlin
+        self.num_cells_range = num_cells_range
+        self.noise_type = noise_type
         self.background_value = background_value
-        self.ws = ws
 
     def __repr__(self):
-        return f"Voronoi Tessellation: mesh_width = {self.width}, mesh_height={self.height}, amplification_factor = {self.mult} , seed = {self.seed}, number of random points = {self.num_cells}, perlin_noise={self.perlin}, background_value = {self.background_value}, window_size= {self.ws}"
+        return f"Voronoi Tessellation: amplification_factor_range = {self.mult_range} , seed = {self.seed}, range of random points = {self.num_cells_range}, noise_type={self.noise_type}, background_value = {self.background_value}"
 
     @staticmethod
     @jit(nopython=True, cache=True)
     def generate_voronoi(width, height, num_cells, nsize, pixel_data, perlin_noise_2d):
         """
-        Generates Voronoi Tessellation Image
+        Generates Voronoi Tessellation
         """
         img_array = np.zeros((width, height), dtype=np.uint8)
-        for y in range(width):
-            for x in range(height):
+        for y in nb.prange(width):
+            for x in nb.prange(height):
                 dmin = math.hypot(height, width)
-                for i in range(num_cells):
+                for i in nb.prange(num_cells):
                     d = math.hypot(
                         (pixel_data[0][i] - x + perlin_noise_2d[0][x][y]),
                         (pixel_data[1][i] - y + perlin_noise_2d[1][x][y]),
@@ -161,6 +152,7 @@ class VoronoiTessellation(Augmentation):
         )
         image = Image.fromarray(img_array)
         image.save("images/Voronoi_example.png", "PNG", dpi=(300, 300))
+        # reads it in a format so that it can be applied as a background pattern to the original image
         mesh = cv2.imread("images/Voronoi_example.png")
         os.remove("images/Voronoi_example.png")
         return mesh
@@ -169,12 +161,54 @@ class VoronoiTessellation(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             result = image.copy()
-            h, w, _ = result.shape
+            h, w = result.shape[:2]
+            if self.noise_type == "random":
+                self.perlin = random.choice([True, False])
+            elif self.noise_type == "perlin":
+                self.perlin = True
+            else:
+                self.perlin = False
+
+            if self.perlin:
+                self.width = self.height = random.choice(
+                    [100, 120, 140, 160, 180, 200],
+                )
+                lst = [50, 70, 80, 90]
+                find_random_divisor = (
+                    lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
+                    if any(x != 0 and b % x == 0 for x in lst)
+                    else 40
+                )
+                self.ws = find_random_divisor(
+                    lst,
+                    self.width,
+                )
+            else:
+                self.width = self.height = random.choice(
+                    [200, 210, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400],
+                )
+                lst = [100, 120, 140, 150, 160]
+                find_random_divisor = (
+                    lambda lst, b: random.choice([x for x in lst if x != 0 and b % x == 0])
+                    if any(x != 0 and b % x == 0 for x in lst)
+                    else 40
+                )
+                self.ws = find_random_divisor(
+                    lst,
+                    self.width,
+                )
+
+            self.mult = random.randint(self.mult_range[0], self.mult_range[1])
+            self.num_cells = random.randint(self.num_cells_range[0], self.num_cells_range[1])
             voronoi_mesh = self.apply_augmentation()
             voronoi_mesh = cv2.resize(voronoi_mesh, (self.ws, self.ws), interpolation=(cv2.INTER_LINEAR))
+            if len(image.shape) < 3:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) == 3 and image.shape[2] == 1:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
             sw = PatternMaker()
             # to ensure the voronoi tessellation covers the whole image,
             # original image is padded and voronoi_mesh passes through it like a sliding window
             result = sw.make_patterns(result, voronoi_mesh, self.ws)
-            result = result[self.ws : h + self.ws, self.ws : w + self.ws, :]
+            result = result[self.ws : h + self.ws, self.ws : w + self.ws]
             return result
