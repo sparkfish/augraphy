@@ -4,6 +4,7 @@ from augraphy.utilities.function import Function
 from augraphy.utilities.imageoverlay import ImageOverlay
 from augraphy.utilities.interop import Interop
 from augraphy.utilities.meshgenerator import Noise
+from augraphy.utilities.noisegenerator import NoiseGenerator
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 from augraphy.utilities.slidingwindow import PatternMaker
 
