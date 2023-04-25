@@ -316,7 +316,7 @@ class PageBorder(Augmentation):
                 self.noise_intensity_range[1],
             )
 
-            if self.width_range[0] < 1:
+            if self.width_range[0] > 0 and self.width_range[0] <= 1 and isinstance(self.width_range[0], float):
                 self.width_range = list(self.width_range)
                 self.width_range[0] = np.ceil(self.width_range[0] * min(height, width))
                 self.width_range[1] = np.ceil(self.width_range[1] * min(height, width))
@@ -352,7 +352,6 @@ class PageBorder(Augmentation):
                     border = np.flipud(border)
                 if self.same_page_border:
                     border_y, border_x = border.shape[:2]
-                    border_image = np.full_like(image, fill_value=255)
                     border_image[:, :border_x] = border
                 else:
                     image_output = np.hstack((border, image))
@@ -363,9 +362,8 @@ class PageBorder(Augmentation):
                     border = np.flipud(border)
 
                 if self.same_page_border:
-
                     border_y, border_x = border.shape[:2]
-                    border_image[-border_y:, -border_x:] = border
+                    border_image[:, -border_x:] = border
                 else:
                     image_output = np.hstack((image, border))
 
