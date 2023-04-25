@@ -2,7 +2,7 @@
 DelaunayTessellation
 **********
 
-.. autoclass:: augraphy.augmentations.voronoi.DelaunayTessellation
+.. autoclass:: augraphy.augmentations.delaunay.DelaunayTessellation
     :members:
     :undoc-members:
     :show-inheritance:
