@@ -2,7 +2,7 @@
 PatternGenerator
 **********
 
-.. autoclass:: augraphy.augmentations.quasi_crystal.PatternGenerator
+.. autoclass:: augraphy.augmentations.quasicrystal.PatternGenerator
     :members:
     :undoc-members:
     :show-inheritance:
