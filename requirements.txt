@@ -1,3 +1,4 @@
+matplotlib
 numba
 numpy >= 1.20.1
 opencv-python

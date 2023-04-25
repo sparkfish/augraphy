@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="images/logo/augraphy.png?raw=true" width="600" title="Augraphy Logo">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/logo/augraphy.png?raw=true" width="600" title="Augraphy Logo">
 </p>
 
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
@@ -27,11 +27,11 @@ After both the ink and paper phases are completed, processing continues by apply
 The end result is an image that mimics real documents.
 
 <p align="center" width="100%">
-    <img src="images/Pipeline.png">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/Pipeline.png?raw=true">
 </p>
 
 ## Example Before / After Images
-![examples](https://user-images.githubusercontent.com/74747193/135170284-8249fbab-2748-4230-821c-e56815e797cf.png)
+![examples](https://github.com/sparkfish/augraphy/blob/dev/images/basic_examples.png)
 
 
 # Example Usage
@@ -83,6 +83,9 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 |PencilScribbles     |             1.15|           138.13|
 |SubtleNoise         |             1.03|           202.87|
 |WaterMark           |             1.19|           373.41|
+|VoronoiTessellation |             0.47|            15.90|
+|DelaunayTessellation|             0.76|            36.33|
+|Quasi Crystals      |             0.25|              7.5|
 
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
@@ -99,7 +102,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.2.1}
+    version = {8.2.2}
 }
 ```
 

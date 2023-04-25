@@ -113,6 +113,7 @@ def main(folder_path):
         Brightness,
         BrightnessTexturize,
         ColorPaper,
+        DelaunayTessellation,
         DirtyDrum,
         DirtyRollers,
         Dithering,
@@ -129,8 +130,10 @@ def main(folder_path):
         Markup,
         NoiseTexturize,
         PageBorder,
-        PencilScribbles,
+        PatternGenerator,
+        Scribbles,
         SubtleNoise,
+        VoronoiTessellation,
         WaterMark,
     ]
 
