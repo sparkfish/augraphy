@@ -12,7 +12,7 @@ __all__ = [
     "FigshareDownloader",
     "Function",
     "ImageOverlay",
-    "InkGenerator" "Interop",
+    "Interop",
     "OverlayBuilder",
     "Noise",
     "NoiseGenerator",
