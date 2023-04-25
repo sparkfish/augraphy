@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="images/logo/augraphy.png?raw=true" width="600" title="Augraphy Logo">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/logo/augraphy.png?raw=true" width="600" title="Augraphy Logo">
 </p>
 
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
@@ -27,11 +27,11 @@ After both the ink and paper phases are completed, processing continues by apply
 The end result is an image that mimics real documents.
 
 <p align="center" width="100%">
-    <img src="images/Pipeline.png">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/Pipeline.png?raw=true">
 </p>
 
 ## Example Before / After Images
-![examples](https://user-images.githubusercontent.com/74747193/135170284-8249fbab-2748-4230-821c-e56815e797cf.png)
+![examples](https://github.com/sparkfish/augraphy/blob/dev/images/basic_examples.png)
 
 
 # Example Usage

@@ -9,11 +9,12 @@ from augraphy.utilities.slidingwindow import PatternMaker
 
 __all__ = [
     "ComposePipelines",
-    "Interop",
     "FigshareDownloader",
     "Function",
     "ImageOverlay",
+    "InkGenerator" "Interop",
     "OverlayBuilder",
     "Noise",
+    "NoiseGenerator",
     "PatternMaker",
 ]
