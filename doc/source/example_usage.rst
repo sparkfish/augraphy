@@ -145,7 +145,7 @@ To initialize a custom augmentation pipeline and augment an image::
             repetitions=1,
             p=0.33,
         ),
-        PencilScribbles(
+        Scribbles(
             size_range=(100, 800),
             count_range=(1, 6),
             stroke_count_range=(1, 2),

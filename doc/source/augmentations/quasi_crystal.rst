@@ -2,7 +2,7 @@
 PatternGenerator
 **********
 
-.. autoclass:: augraphy.augmentations.quasi_crystal.PatternGenerator
+.. autoclass:: augraphy.augmentations.quasicrystal.PatternGenerator
     :members:
     :undoc-members:
     :show-inheritance:
@@ -56,7 +56,7 @@ Code example:
     quasi_pattern = PatternGenerator(
         imgx = 512,
         imgy= 512,
-        n_rotation = (10,15)
+        n_rotation_range = (10,15)
     )
 
     img_final = quasi_pattern(image)
