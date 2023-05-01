@@ -3,5 +3,5 @@ message: "If you use this software in a publication, please cite it as below."
 authors:
 - name: The Augraphy Project
 title: "Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes"
-version: 8.2.1
+version: 8.2
 url: "https://github.com/sparkfish/augraphy"
