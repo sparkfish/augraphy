@@ -349,6 +349,8 @@ def add_noise(image, intensity_range=(0.1, 0.2), color_range=(0, 224), noise_con
         condition_evaluation = checking_image == 255
     elif noise_condition == 2:
         condition_evaluation = checking_image > 255
+    elif noise_condition == 4:
+        condition_evaluation = checking_image < 255
 
     condition_evaluation2 = random_value < intensity
     indices = np.logical_and(condition_evaluation, condition_evaluation2)
