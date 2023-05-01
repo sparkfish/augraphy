@@ -31,7 +31,9 @@ The end result is an image that mimics real documents.
 </p>
 
 ## Example Before / After Images
-![examples](https://github.com/sparkfish/augraphy/blob/dev/images/basic_examples.png)
+<p align="center" width="100%">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/basic_examples.png?raw=true">
+</p>
 
 
 # Example Usage
@@ -80,7 +82,7 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 |Markup              |             0.71|           533.16|
 |NoiseTexturize      |             0.53|           249.36|
 |PageBorder          |             0.52|           465.19|
-|PencilScribbles     |             1.15|           138.13|
+|Scribbles           |             1.15|           138.13|
 |SubtleNoise         |             1.03|           202.87|
 |WaterMark           |             1.19|           373.41|
 |VoronoiTessellation |             0.47|            15.90|
@@ -102,7 +104,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.2.2}
+    version = {8.2.3}
 }
 ```
 

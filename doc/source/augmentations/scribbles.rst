@@ -54,7 +54,6 @@ The color of scribbles is set to black (0, 0, 0).
 If the scribbles type is "text", the scribbles text value and font type is set to "random" where it selects randomly from the internal settings.
 Additionally, the scribbles text rotate range is set to rotate randomly in any angle between 0 to 360 degree (0, 360).
 If the scribbles type is "lines", the stroke count for each scribbles is set at random value in between 1 and 6 (1, 6).
-If the scribbles ink is "pencil", it applies skeletonization randomly to the sribbles.
 
 Code example:
 
@@ -72,7 +71,6 @@ Code example:
                           scribbles_text_font="random",
                           scribbles_text_rotate_range=(0, 360),
                           scribbles_lines_stroke_count_range=(1, 6),
-                          scribbles_pencil_skeletonize = "random",
 		          )
 
     img_scribbles = scribbles(image)
