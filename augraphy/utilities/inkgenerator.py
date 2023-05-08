@@ -446,16 +446,16 @@ class InkGenerator:
                 ystart = random.randint(0, max(1, max_height - ysize - 1))
             else:
                 xstart, ystart = self.ink_location
-                xstart -= offset
-                ystart -= offset
+                xstart = max(0, xstart - offset)
+                ystart = max(0, ystart - offset)
                 if xstart < 0:
                     xstart = 0
                 elif xstart + xsize >= max_width:
-                    xstart = xsize - max_width - 1
+                    xsize = max_width - xstart
                 if ystart < 0:
                     ystart = 0
                 elif ystart + ysize >= max_height:
-                    ystart = ysize - max_height - 1
+                    ysize = max_height - ystart
 
             # create each stroke of lines
             for i in range(ink_lines_stroke_count):
@@ -661,8 +661,8 @@ class InkGenerator:
 
             if self.ink_location == "random":
                 # random paste location
-                xstart = random.randint(0, max_width - xsize - 1)
-                ystart = random.randint(0, max_height - ysize - 1)
+                xstart = random.randint(0, max(0, max_width - xsize - 1))
+                ystart = random.randint(0, max(0, max_height - ysize - 1))
             else:
                 xstart, ystart = self.ink_location
                 if xstart < 0:
