@@ -661,8 +661,8 @@ class InkGenerator:
 
             if self.ink_location == "random":
                 # random paste location
-                xstart = random.randint(0, max_width - xsize - 1)
-                ystart = random.randint(0, max_height - ysize - 1)
+                xstart = random.randint(0, max(0, max_width - xsize - 1))
+                ystart = random.randint(0, max(0, max_height - ysize - 1))
             else:
                 xstart, ystart = self.ink_location
                 if xstart < 0:
