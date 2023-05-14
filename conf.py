@@ -37,7 +37,7 @@ extensions = [
     "sphinx.ext.autosummary",
 ]
 
-source_suffix = [".rst", ".ipynb"]
+source_suffix = ".rst"
 
 # The master toctree document.
 master_doc = "index"
