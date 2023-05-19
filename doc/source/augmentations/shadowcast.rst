@@ -50,7 +50,7 @@ The shadow_vertices_range is set to any value between 2 and 3 (2,3) so that the 
 The width and height of the shadow is set to any value between 50% to 80% (0.5, 0.8) of the image size.
 The shadow color is set to black (0,0,0) and the opacity is set to any value between 50% and 60% (0.5, 0.6).
 The number of stacked shadow effect is set to random value in between 1 and 2 (1,2).
-The value of kernel to blur the shadow is set to a high value and the value is between 101 and 301 (101, 301). 
+The value of kernel to blur the shadow is set to a high value and the value is between 101 and 301 (101, 301).
 
 Code example:
 
