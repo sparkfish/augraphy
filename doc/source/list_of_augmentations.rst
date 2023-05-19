@@ -31,6 +31,7 @@ List of Augmentations
    augmentations/noisetexturize.rst
    augmentations/pageborder.rst
    augmentations/scribbles.rst
+   augmentations/shadowcast.rst
    augmentations/quasi_crystal.rst
    augmentations/subtlenoise.rst
    augmentations/voronoi.rst
