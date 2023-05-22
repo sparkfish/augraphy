@@ -15,7 +15,7 @@ from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
-
+    :param pre_phase: Collection of Augmentations to apply
     :param ink_phase: Collection of Augmentations to apply.
     :type ink_phase: base.augmentationsequence or list
     :param paper_phase: Collection of Augmentations to apply.
@@ -45,6 +45,7 @@ class AugraphyPipeline:
         ink_phase,
         paper_phase,
         post_phase,
+        pre_phase=None,
         overlay_type="ink_to_paper",
         overlay_alpha=0.3,
         ink_color_range=(-1, -1),
@@ -54,6 +55,7 @@ class AugraphyPipeline:
         random_seed=None,
     ):
         """Constructor method"""
+        self.pre_phase = self.wrapListMaybe(pre_phase)
         self.ink_phase = self.wrapListMaybe(ink_phase)
         self.paper_phase = self.wrapListMaybe(paper_phase)
         self.post_phase = self.wrapListMaybe(post_phase)
@@ -79,6 +81,7 @@ class AugraphyPipeline:
         if self.save_outputs:
             # create each phase folder
             self.save_paths = []
+            self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/pre/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/ink/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/paper/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/post/"))
@@ -234,12 +237,23 @@ class AugraphyPipeline:
         data["log"]["image_shape"] = image.shape
 
         data["image"] = image.copy()
-        ink = data["image"].copy()
 
         data["pipeline"] = self
+        data["pre"] = list()
         data["ink"] = list()
         data["paper"] = list()
         data["post"] = list()
+
+        if self.pre_phase is None or self.pre_phase == []:
+            self.pre_phase = AugmentationSequence([])
+            ink = data["image"].copy()
+        else:
+            # apply pre phase augmentation
+            pre = data["image"].copy()
+            data["pre"].append(AugmentationResult(None, pre))
+            self.apply_phase(data, layer="pre", phase=self.pre_phase)
+            if data["pre"][-1].result["rescaled_img"] is not None:
+                ink = data["pre"][-1].result["rescaled_img"]
 
         data["ink"].append(AugmentationResult(None, ink))
 
@@ -322,13 +336,14 @@ class AugraphyPipeline:
         :type data: dictionary
         """
 
-        layer_names = ["ink", "paper", "post"]
+        layer_names = ["pre", "ink", "paper", "post"]
+        pre_layers = data["pre"]
         ink_layers = data["ink"]
         paper_layers = data["paper"]
         post_layers = data["post"]
 
         n = 0
-        for j, layers in enumerate([ink_layers, paper_layers, post_layers]):
+        for j, layers in enumerate([pre_layers, ink_layers, paper_layers, post_layers]):
 
             # output path for each ink, paper and post phase images
             save_path = self.save_paths[j]
@@ -540,9 +555,16 @@ class AugraphyPipeline:
         :param phase: Collection of Augmentations to apply.
         :type phase: base.augmentationsequence or list
         """
+        if layer == "post" and data["pre"] != []:
+            if data["pre"][-1].result["original_dpi"] != data["pre"][-1].result["output_dpi"]:
+                doc_dim = data["pre"][-1].result["doc_dimensions"]
+                img_dims = (
+                    int(doc_dim[0] * data["pre"][-1].result["original_dpi"]),
+                    int(doc_dim[1] * data["pre"][-1].result["original_dpi"]),
+                )
+                data[layer][-1].result = cv2.resize(data[layer][-1].result, (img_dims), cv2.INTER_AREA)
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
-
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
                 result = augmentation(result, layer, force=True)
@@ -620,10 +642,11 @@ class AugraphyPipeline:
         return ink_to_paper_builder.build_overlay()
 
     def __repr__(self):
-        r = f"ink_phase = {repr(self.ink_phase)}\n\n"
+        r = f"pre_phase = {repr(self.pre_phase)}\n\n"
+        r += f"ink_phase = {repr(self.ink_phase)}\n\n"
         r += f"paper_phase = {repr(self.paper_phase)}\n\n"
         r += f"post_phase = {repr(self.post_phase)}\n\n"
-        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, overlay_type={self.overlay_type}, overlay_alpha={self.overlay_alpha}, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, save_outputs={self.save_outputs}, log={self.log}, random_seed={self.random_seed})"
+        r += f"AugraphyPipeline(pre_phase , ink_phase, paper_phase, post_phase, overlay_type={self.overlay_type}, overlay_alpha={self.overlay_alpha}, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, save_outputs={self.save_outputs}, log={self.log}, random_seed={self.random_seed})"
         return r
 
     def visualize(self):
