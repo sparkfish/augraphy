@@ -29,6 +29,7 @@ from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.voronoi import VoronoiTessellation
 from augraphy.augmentations.watermark import WaterMark
+from augraphy.augmentations.rescale import Rescale
 
 
 __all__ = [
@@ -63,4 +64,5 @@ __all__ = [
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",
+    "Rescale",
 ]
