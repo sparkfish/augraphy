@@ -10,6 +10,10 @@ from augraphy import *
 
 def default_augraphy_pipeline():
 
+    pre_phase = [
+        Rescale(target_dpi=300),
+    ]
+
     ink_phase = [
         Dithering(
             dither=random.choice(["ordered", "floyd-steinberg"]),
@@ -264,7 +268,8 @@ def default_augraphy_pipeline():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, log=False)
+    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, pre_phase=None, log=False)
+    # pipeline = AugraphyPipeline( ink_phase, paper_phase, post_phase, pre_phase = pre_phase , log=False)
 
     return pipeline
 
