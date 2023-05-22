@@ -9,6 +9,7 @@ from augraphy.utilities.noisegenerator import NoiseGenerator
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 from augraphy.utilities.pixelbleed import PixelBleed
 from augraphy.utilities.slidingwindow import PatternMaker
+from augraphy.utilities.detectdpi import DPIMetrics
 
 __all__ = [
     "ComposePipelines",
@@ -22,4 +23,5 @@ __all__ = [
     "NoiseGenerator",
     "PatternMaker",
     "PixelBleed",
+    "DPIMetrics",
 ]
