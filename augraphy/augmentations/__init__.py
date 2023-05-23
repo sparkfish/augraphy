@@ -14,6 +14,7 @@ from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.geometric import Geometric
 from augraphy.augmentations.inkbleed import InkBleed
+from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
 from augraphy.augmentations.letterpress import Letterpress
 from augraphy.augmentations.lightinggradient import LightingGradient
@@ -30,7 +31,6 @@ from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.voronoi import VoronoiTessellation
 from augraphy.augmentations.watermark import WaterMark
-
 
 __all__ = [
     "BadPhotoCopy",
@@ -65,4 +65,5 @@ __all__ = [
     "VoronoiTessellation",
     "WaterMark",
     "Rescale",
+    "InkShifter",
 ]
