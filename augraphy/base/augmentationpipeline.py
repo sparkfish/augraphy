@@ -42,10 +42,10 @@ class AugraphyPipeline:
 
     def __init__(
         self,
-        ink_phase,
-        paper_phase,
-        post_phase,
-        pre_phase=None,
+        pre_phase=[],
+        ink_phase=[],
+        paper_phase=[],
+        post_phase=[],
         overlay_type="ink_to_paper",
         overlay_alpha=0.3,
         ink_color_range=(-1, -1),
@@ -244,16 +244,25 @@ class AugraphyPipeline:
         data["paper"] = list()
         data["post"] = list()
 
-        if self.pre_phase is None or self.pre_phase == []:
+        if len(self.pre_phase) == 0:
+
             self.pre_phase = AugmentationSequence([])
+
             ink = data["image"].copy()
         else:
             # apply pre phase augmentation
             pre = data["image"].copy()
+
             data["pre"].append(AugmentationResult(None, pre))
+
             self.apply_phase(data, layer="pre", phase=self.pre_phase)
+
             if data["pre"][-1].result["rescaled_img"] is not None:
+
                 ink = data["pre"][-1].result["rescaled_img"]
+            else:
+
+                ink = data["image"].copy()
 
         data["ink"].append(AugmentationResult(None, ink))
 
@@ -280,13 +289,14 @@ class AugraphyPipeline:
 
         # If phases were defined None or [] in a custom pipeline, they wouldn't
         # be callable objects, so make them empty AugmentationSequences
-        if self.ink_phase is None or self.ink_phase == []:
+
+        if len(self.ink_phase) == 0:
             self.ink_phase = AugmentationSequence([])
 
-        if self.paper_phase is None or self.paper_phase == []:
+        if len(self.paper_phase) == 0:
             self.paper_phase = AugmentationSequence([])
 
-        if self.post_phase is None or self.post_phase == []:
+        if len(self.post_phase) == 0:
             self.post_phase = AugmentationSequence([])
 
         # apply ink phase augmentation
@@ -555,14 +565,7 @@ class AugraphyPipeline:
         :param phase: Collection of Augmentations to apply.
         :type phase: base.augmentationsequence or list
         """
-        if layer == "post" and data["pre"] != []:
-            if data["pre"][-1].result["original_dpi"] != data["pre"][-1].result["output_dpi"]:
-                doc_dim = data["pre"][-1].result["doc_dimensions"]
-                img_dims = (
-                    int(doc_dim[0] * data["pre"][-1].result["original_dpi"]),
-                    int(doc_dim[1] * data["pre"][-1].result["original_dpi"]),
-                )
-                data[layer][-1].result = cv2.resize(data[layer][-1].result, (img_dims), cv2.INTER_AREA)
+
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
             if augmentation.should_run():

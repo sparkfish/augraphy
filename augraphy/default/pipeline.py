@@ -11,7 +11,7 @@ from augraphy import *
 def default_augraphy_pipeline():
 
     pre_phase = [
-        Rescale(target_dpi=300),
+        # Rescale(optimal_scale=300, p = 1.0),
     ]
 
     ink_phase = [
@@ -266,10 +266,16 @@ def default_augraphy_pipeline():
             mirror_range=(0.3, 0.5),
             p=0.33,
         ),
+        # Rescale(original_scale = 600 , p = 1.0)
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, pre_phase=None, log=False)
-    # pipeline = AugraphyPipeline( ink_phase, paper_phase, post_phase, pre_phase = pre_phase , log=False)
+    pipeline = AugraphyPipeline(
+        pre_phase=pre_phase,
+        ink_phase=ink_phase,
+        paper_phase=paper_phase,
+        post_phase=post_phase,
+        log=False,
+    )
 
     return pipeline
 
