@@ -17,8 +17,9 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.base.augmentation import Augmentation
+
+# from augraphy.augmentations.shadowcast import ShadowCast
 
 # from collections import namedtuple
 
