@@ -3,6 +3,7 @@ version: 0.0.01
 """
 import math
 
+import numba
 
 lookup_table = [
     "8.3 x 11.7,300",
