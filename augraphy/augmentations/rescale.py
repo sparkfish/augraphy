@@ -26,7 +26,7 @@ from augraphy.utilities.detectdpi import DPIMetrics
 
 
 class Rescale(Augmentation):
-    def __init__(self, optimal_scale=None, original_scale=None, p=1.0):
+    def __init__(self, scale=None, target_dpi=300, p=1.0):
         """
         Rescale the image to the desired output
 
@@ -39,48 +39,42 @@ class Rescale(Augmentation):
         """
         super().__init__(p=p)
 
-        self.optimal_scale = optimal_scale
+        self.scale = scale
 
-        self.original_scale = original_scale
+        self.target_dpi = target_dpi
 
-    def _dpi_resize(self, image, doc_dimensions, scale):
+    def _dpi_resize(self, image, doc_dimensions, target_dpi=300):
 
         width_inches, height_inches = doc_dimensions[0], doc_dimensions[1]
 
-        width = width_inches * scale
+        width = width_inches * target_dpi
 
-        height = height_inches * scale
+        height = height_inches * target_dpi
 
         output_image = cv2.resize(image, (int(width), int(height)), interpolation=cv2.INTER_AREA)
 
         return output_image
 
-    def __call__(self, image, layer=None, force=None):
+    def __call__(self, image, layer=None, force=None, doc_dims=(None, None), original_dpi=None):
 
         if force or self.should_run():
 
             new_img = None
+            if self.scale == "optimal":  # rescaling to user defined dpi before passing the img to augmentation pipeline
+                obj = DPIMetrics(image)
+                original_dpi, doc_dimensions = obj()
+                if original_dpi != self.target_dpi:
 
-            obj = DPIMetrics(image)
-
-            original_dpi, doc_dimensions = obj()
-
-            if (
-                self.optimal_scale is not None
-            ):  # rescaling to user defined dpi before passing the img to augmentation pipeline
-
-                if original_dpi != self.optimal_scale:
-                    new_img = self._dpi_resize(image=image, doc_dimensions=doc_dimensions, scale=self.optimal_scale)
+                    new_img = self._dpi_resize(image=image, doc_dimensions=doc_dimensions, target_dpi=self.target_dpi)
 
                 return {
                     "original_dpi": original_dpi,
                     "doc_dimensions": doc_dimensions,
                     "rescaled_img": new_img,
-                    "output_dpi": self.optimal_scale,
+                    "output_dpi": self.target_dpi,
                 }
 
-            else:
-
-                new_img = self._dpi_resize(image=image, doc_dimensions=doc_dimensions, scale=self.original_scale)
+            if self.scale == "original":
+                new_img = self._dpi_resize(image=image, doc_dimensions=doc_dims, target_dpi=original_dpi)
 
                 return new_img
