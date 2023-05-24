@@ -571,13 +571,16 @@ class AugraphyPipeline:
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
                 if (augmentation.__class__.__name__ == "Rescale") and layer == "post":
-                    result = augmentation(
-                        result,
-                        layer,
-                        force=True,
-                        doc_dims=data["pre"][1].result["doc_dimensions"],
-                        original_dpi=data["pre"][1].result["original_dpi"],
-                    )
+                    if len(data["pre"]):
+                        result = augmentation(
+                            result,
+                            layer,
+                            force=True,
+                            doc_dims=data["pre"][1].result["doc_dimensions"],
+                            original_dpi=data["pre"][1].result["original_dpi"],
+                        )
+                    else:
+                        continue
                 else:
                     result = augmentation(result, layer, force=True)
                 end = time.process_time()  # time at end of execution
