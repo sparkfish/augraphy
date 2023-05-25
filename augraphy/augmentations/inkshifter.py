@@ -54,6 +54,9 @@ class InkShifter(Augmentation):
         self.blur_kernel_size = blur_kernel_size
         self.blur_sigma = blur_sigma
 
+    def __repr(self):
+        return f"InkShifter: text_shift_scale_range = {self.text_shift_scale_range}, text_shift_factor_range = {self.text_shift_factor_range}, text_fade_range = {self.text_fade_range}, noise_type = {self.noise_type}, blur_kernel_size = {self.blur_kernel_size}, blur_sigma = {self.blur_sigma}"
+
     def displace_image(self, img, mapx, mapy, fill=(255, 255, 255)):
         """
         Apply displacement map to an image.
