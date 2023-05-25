@@ -68,8 +68,8 @@ Code example:
                                      reflected_light_color = (255,255,255),
                                      reflected_light_internal_max_brightness_range=(0.9,1.0),
                                      reflected_light_external_max_brightness_range=(0.9,0.9),
-                                     reflected_light_location = "random", 
-                                     reflected_light_ellipse_angle_range = (0, 360), 
+                                     reflected_light_location = "random",
+                                     reflected_light_ellipse_angle_range = (0, 360),
                                      reflected_light_gaussian_kernel_size_range = (5,310),
                                      )
 
