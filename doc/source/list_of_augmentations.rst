@@ -30,6 +30,7 @@ List of Augmentations
    augmentations/markup.rst
    augmentations/noisetexturize.rst
    augmentations/pageborder.rst
+   augmentations/reflectedlight.rst
    augmentations/scribbles.rst
    augmentations/shadowcast.rst
    augmentations/quasi_crystal.rst
