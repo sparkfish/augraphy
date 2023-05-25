@@ -1,4 +1,5 @@
 from augraphy.utilities.composepipelines import ComposePipelines
+from augraphy.utilities.detectdpi import DPIMetrics
 from augraphy.utilities.figsharedownloader import FigshareDownloader
 from augraphy.utilities.function import Function
 from augraphy.utilities.imageoverlay import ImageOverlay
@@ -22,4 +23,5 @@ __all__ = [
     "NoiseGenerator",
     "PatternMaker",
     "PixelBleed",
+    "DPIMetrics",
 ]

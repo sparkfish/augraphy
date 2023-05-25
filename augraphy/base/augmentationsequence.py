@@ -16,6 +16,9 @@ class AugmentationSequence(Augmentation):
         self.p = p
         self.results = []
 
+    def __len__(self):
+        return len(self.augmentations)
+
     def __repr__(self):
         output = "AugmentationSequence([\n"
         for aug in self.augmentations:

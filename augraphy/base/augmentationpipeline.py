@@ -15,7 +15,7 @@ from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
-
+    :param pre_phase: Collection of Augmentations to apply
     :param ink_phase: Collection of Augmentations to apply.
     :type ink_phase: base.augmentationsequence or list
     :param paper_phase: Collection of Augmentations to apply.
@@ -42,9 +42,10 @@ class AugraphyPipeline:
 
     def __init__(
         self,
-        ink_phase,
-        paper_phase,
-        post_phase,
+        pre_phase=[],
+        ink_phase=[],
+        paper_phase=[],
+        post_phase=[],
         overlay_type="ink_to_paper",
         overlay_alpha=0.3,
         ink_color_range=(-1, -1),
@@ -54,6 +55,7 @@ class AugraphyPipeline:
         random_seed=None,
     ):
         """Constructor method"""
+        self.pre_phase = self.wrapListMaybe(pre_phase)
         self.ink_phase = self.wrapListMaybe(ink_phase)
         self.paper_phase = self.wrapListMaybe(paper_phase)
         self.post_phase = self.wrapListMaybe(post_phase)
@@ -79,6 +81,7 @@ class AugraphyPipeline:
         if self.save_outputs:
             # create each phase folder
             self.save_paths = []
+            self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/pre/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/ink/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/paper/"))
             self.save_paths.append(os.path.join(os.getcwd(), "augmentation_images/post/"))
@@ -234,12 +237,32 @@ class AugraphyPipeline:
         data["log"]["image_shape"] = image.shape
 
         data["image"] = image.copy()
-        ink = data["image"].copy()
 
         data["pipeline"] = self
+        data["pre"] = list()
         data["ink"] = list()
         data["paper"] = list()
         data["post"] = list()
+
+        if len(self.pre_phase) == 0:
+
+            self.pre_phase = AugmentationSequence([])
+
+            ink = data["image"].copy()
+        else:
+            # apply pre phase augmentation
+            pre = data["image"].copy()
+
+            data["pre"].append(AugmentationResult(None, pre))
+
+            self.apply_phase(data, layer="pre", phase=self.pre_phase)
+
+            if data["pre"][-1].result["rescaled_img"] is not None:
+
+                ink = data["pre"][-1].result["rescaled_img"]
+            else:
+
+                ink = data["image"].copy()
 
         data["ink"].append(AugmentationResult(None, ink))
 
@@ -266,13 +289,14 @@ class AugraphyPipeline:
 
         # If phases were defined None or [] in a custom pipeline, they wouldn't
         # be callable objects, so make them empty AugmentationSequences
-        if self.ink_phase is None or self.ink_phase == []:
+
+        if len(self.ink_phase) == 0:
             self.ink_phase = AugmentationSequence([])
 
-        if self.paper_phase is None or self.paper_phase == []:
+        if len(self.paper_phase) == 0:
             self.paper_phase = AugmentationSequence([])
 
-        if self.post_phase is None or self.post_phase == []:
+        if len(self.post_phase) == 0:
             self.post_phase = AugmentationSequence([])
 
         # apply ink phase augmentation
@@ -322,13 +346,14 @@ class AugraphyPipeline:
         :type data: dictionary
         """
 
-        layer_names = ["ink", "paper", "post"]
+        layer_names = ["pre", "ink", "paper", "post"]
+        pre_layers = data["pre"]
         ink_layers = data["ink"]
         paper_layers = data["paper"]
         post_layers = data["post"]
 
         n = 0
-        for j, layers in enumerate([ink_layers, paper_layers, post_layers]):
+        for j, layers in enumerate([pre_layers, ink_layers, paper_layers, post_layers]):
 
             # output path for each ink, paper and post phase images
             save_path = self.save_paths[j]
@@ -540,12 +565,24 @@ class AugraphyPipeline:
         :param phase: Collection of Augmentations to apply.
         :type phase: base.augmentationsequence or list
         """
+
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
-
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
-                result = augmentation(result, layer, force=True)
+                if (augmentation.__class__.__name__ == "Rescale") and layer == "post":
+                    if len(data["pre"]):
+                        result = augmentation(
+                            result,
+                            layer,
+                            force=True,
+                            doc_dims=data["pre"][1].result["doc_dimensions"],
+                            original_dpi=data["pre"][1].result["original_dpi"],
+                        )
+                    else:
+                        continue
+                else:
+                    result = augmentation(result, layer, force=True)
                 end = time.process_time()  # time at end of execution
                 elapsed = end - start  # execution duration
                 data["log"]["time"].append((augmentation, elapsed))
@@ -620,10 +657,11 @@ class AugraphyPipeline:
         return ink_to_paper_builder.build_overlay()
 
     def __repr__(self):
-        r = f"ink_phase = {repr(self.ink_phase)}\n\n"
+        r = f"pre_phase = {repr(self.pre_phase)}\n\n"
+        r += f"ink_phase = {repr(self.ink_phase)}\n\n"
         r += f"paper_phase = {repr(self.paper_phase)}\n\n"
         r += f"post_phase = {repr(self.post_phase)}\n\n"
-        r += f"AugraphyPipeline(ink_phase, paper_phase, post_phase, overlay_type={self.overlay_type}, overlay_alpha={self.overlay_alpha}, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, save_outputs={self.save_outputs}, log={self.log}, random_seed={self.random_seed})"
+        r += f"AugraphyPipeline(pre_phase , ink_phase, paper_phase, post_phase, overlay_type={self.overlay_type}, overlay_alpha={self.overlay_alpha}, ink_color_range={self.ink_color_range}, paper_color_range={self.paper_color_range}, save_outputs={self.save_outputs}, log={self.log}, random_seed={self.random_seed})"
         return r
 
     def visualize(self):
