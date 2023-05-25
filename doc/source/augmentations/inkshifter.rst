@@ -59,6 +59,15 @@ default option for producing the desired effect. By following the documentation,
 users can effectively utilize the InkShifter augmentation to introduce text
 jittering effects with customizable noise options and parameters.
 
+By modifying the text_shift_scale_range and text_shift_factor_range parameters,
+we can control the level of text distortion in the augmentation. Adjusting the
+text_shift_scale_range allows us to change the extent of the text's left and
+right movement, while modifying the text_shift_factor_range enables us to
+manipulate the text's vertical and horizontal displacement. In this way, we
+have the flexibility to customize the amount and direction of the text's
+movement according to our desired effect.
+
+
 Inspiration Repository : https://github.com/sherlockdoyle/Handwriter/tree/main
 
 Code example:
@@ -79,3 +88,5 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/inkshifter/inkshifter.png
+
+.. figure:: augmentations/inkshifter/inkshifter1.png
