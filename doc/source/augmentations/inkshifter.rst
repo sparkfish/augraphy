@@ -59,6 +59,8 @@ default option for producing the desired effect. By following the documentation,
 users can effectively utilize the InkShifter augmentation to introduce text
 jittering effects with customizable noise options and parameters.
 
+Inspiration Repository : https://github.com/sherlockdoyle/Handwriter/tree/main
+
 Code example:
 
 ::

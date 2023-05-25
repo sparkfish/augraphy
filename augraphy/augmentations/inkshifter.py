@@ -1,13 +1,17 @@
 """
 version: 0.0.1
 
+
 Dependencies
 *******************************************************************************
     - opencv
     - numpy
 
+
 Documentation
 ********************************************************************************
+
+    - Handwriter Repository: https://github.com/sherlockdoyle/Handwriter/tree/main
     - Noise Generation: https://pvigier.github.io/2018/06/13/perlin-noise-numpy.html
     - OpenCV remap() function : https://docs.opencv.org/3.4/d1/da0/tutorial_remap.html
     - Opencv meshgrid() function: https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html
@@ -27,6 +31,8 @@ class InkShifter(Augmentation):
         text_shift_scale_range=(18, 27),
         text_shift_factor_range=(1, 4),
         text_fade_range=(0, 2),
+        blur_kernel_size=(5, 5),
+        blur_sigma=0,
         noise_type="random",
         p=1.0,
     ):
@@ -45,6 +51,8 @@ class InkShifter(Augmentation):
         self.text_shift_factor_range = text_shift_factor_range
         self.text_fade_range = text_fade_range
         self.noise_type = noise_type
+        self.blur_kernel_size = blur_kernel_size
+        self.blur_sigma = blur_sigma
 
     def displace_image(self, img, mapx, mapy, fill=(255, 255, 255)):
         """
@@ -93,9 +101,11 @@ class InkShifter(Augmentation):
         t = 6 * grid**5 - 15 * grid**4 + 10 * grid**3
         n0 = (1 - t[:, :, 0]) * n00 + t[:, :, 0] * n10
         n1 = (1 - t[:, :, 0]) * n01 + t[:, :, 0] * n11
-        return (np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1))[: orig_shape[0], : orig_shape[1]].astype(
+        noise = (np.sqrt(2) * ((1 - t[:, :, 1]) * n0 + t[:, :, 1] * n1))[: orig_shape[0], : orig_shape[1]].astype(
             np.float32,
         )
+        noise_blurred = cv2.GaussianBlur(noise, self.blur_kernel_size, self.blur_sigma)
+        return noise_blurred
 
     def noise_map_fractal(self, shape, res=(64, 64), octaves=1, persistence=0.5):
         """
@@ -133,6 +143,7 @@ class InkShifter(Augmentation):
             h, w, _ = image.shape
             text_shift_scale = random.randint(self.text_shift_scale_range[0], self.text_shift_scale_range[1])
             text_shift_factor = random.randint(self.text_shift_factor_range[0], self.text_shift_factor_range[1])
+
             if self.noise_type == "random":
                 perlin_noise = random.choice([True, False])
             elif self.noise_type == "perlin":
