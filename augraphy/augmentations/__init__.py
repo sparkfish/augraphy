@@ -14,6 +14,7 @@ from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.geometric import Geometric
 from augraphy.augmentations.inkbleed import InkBleed
+from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
 from augraphy.augmentations.letterpress import Letterpress
 from augraphy.augmentations.lightinggradient import LightingGradient
@@ -66,4 +67,5 @@ __all__ = [
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",
+    "InkShifter",
 ]
