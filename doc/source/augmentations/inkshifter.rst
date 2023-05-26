@@ -1,5 +1,5 @@
 **********
-VoronoiTessellation
+InkShifter
 **********
 
 .. autoclass:: augraphy.augmentations.inkshifter.InkShifter

@@ -21,6 +21,7 @@ from augraphy.augmentations.lightinggradient import LightingGradient
 from augraphy.augmentations.linesdegradation import LinesDegradation
 from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
+from augraphy.augmentations.lowlightnoise import LowLightNoise
 from augraphy.augmentations.markup import Markup
 from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.pageborder import PageBorder
@@ -50,12 +51,14 @@ __all__ = [
     "Gamma",
     "Geometric",
     "InkBleed",
+    "InkShifter",
     "Jpeg",
     "Letterpress",
     "LightingGradient",
     "LinesDegradation",
     "LowInkPeriodicLines",
     "LowInkRandomLines",
+    "LowLightNoise",
     "Markup",
     "NoiseTexturize",
     "PageBorder",
@@ -67,5 +70,4 @@ __all__ = [
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",
-    "InkShifter",
 ]
