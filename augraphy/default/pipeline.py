@@ -270,10 +270,10 @@ def default_augraphy_pipeline():
     ]
 
     pipeline = AugraphyPipeline(
-        pre_phase=pre_phase,
         ink_phase=ink_phase,
         paper_phase=paper_phase,
         post_phase=post_phase,
+        pre_phase=pre_phase,
         log=False,
     )
 
