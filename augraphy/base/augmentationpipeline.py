@@ -42,10 +42,10 @@ class AugraphyPipeline:
 
     def __init__(
         self,
-        pre_phase=[],
         ink_phase=[],
         paper_phase=[],
         post_phase=[],
+        pre_phase=[],
         overlay_type="ink_to_paper",
         overlay_alpha=0.3,
         ink_color_range=(-1, -1),
