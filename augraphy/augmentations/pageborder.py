@@ -99,6 +99,10 @@ class PageBorder(Augmentation):
             max(5, self.curve_length_one_side[1]),
         )
 
+        # prevent single side of curvy length exceeded xsize/2
+        if curve_width_one_side > xsize / 2:
+            curve_width_one_side = max(5, int(xsize / 2) - 5)
+
         # center of curvy part
         curve_x = random.randint(
             curve_width_one_side + 1,
