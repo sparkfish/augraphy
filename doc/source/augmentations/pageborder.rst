@@ -10,7 +10,7 @@ PageBorder
 --------
 Overview
 --------
-The Page Border augmentation applies a shadow of underlying pages on any side of the page, creating an effect of single or multiple borders on specified side of the page.
+The Page Border augmentation stacking multiple images, creating an effect of single or multiple page borders on any side of the page.
 
 Initially, a clean image with single line of text is created.
 
@@ -45,28 +45,27 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a PageBorder augmentation instance is initialized and the page borders effect is added to random side of the image ("random").
-Number of pages is set to 4 (4) and the border background value is set to bright value (230,255).
-Border width is in between 40 to 80 pixels (40, 80) and the noise intensity is set at moderate value (0.4,0.5).
-The curvy frequency of page border is set in between 4 and 8 (4, 8) and each with height 2 to 4 picels (2,4).
-The border value is set in between 30 to 120 (30, 120).
+In this example, a PageBorder augmentation instance is initialized and the page borders effect width and height is set to 30 and 40 pixels (30,40).
+The page border color is set to black (0,0,0) and the background color is set to white (255,255,255).
+The number of pages is set to 5 (5) and there is no rotation in the page border effect (0,0).
+The curvy frequency in the borders is set to random value between 2 and 3 (2,3), each with height of 2 to 4 pixels (2,4).
+The curvy one side length is set to random value in between 50 to 100 (50, 100).
+The page border effect is applied within the page (same_page_border=1) so that no padding will be done.
 
 Code example:
 
 ::
 
-    page_border = PageBorder(side="random",
-                             border_background_value = (230,255),
-                             flip_border = 0,
-                             width_range=(40, 80),
-                             pages=4,
-                             noise_intensity_range=(0.4, 0.5),
-                             curve_frequency = (4, 8),
-                             curve_height = (2, 4),
-                             curve_length_one_side = (50, 100),
-                             value=(30, 120),
-                             same_page_border=0,
-                                )
+    page_border = PageBorder(page_border_width_height = (30, 40),
+                             page_border_color=(0, 0, 0),
+			     page_border_background_color=(255, 255, 255),
+                             page_numbers = 5,
+                             page_rotation_angle_range = (0, 0),
+                             curve_frequency=(2, 3),
+                             curve_height=(2, 4),
+                             curve_length_one_side=(50, 100),
+                             same_page_border=1,
+                             )
     img_page_border = page_border(image)
     cv2.imshow("page_border", img_page_border)
 

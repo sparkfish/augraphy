@@ -120,17 +120,16 @@ def default_augraphy_pipeline():
         OneOf(
             [
                 PageBorder(
-                    side="random",
-                    border_background_value=(230, 255),
-                    flip_border=random.choice([0, 1]),
-                    width_range=(5, 30),
-                    pages=None,
-                    noise_intensity_range=(0.3, 0.8),
+                    page_border_width_height="random",
+                    page_border_color=(0, 0, 0),
+                    page_border_background_color=(0, 0, 0),
+                    page_numbers="random",
+                    page_rotation_angle_range=(-3, 3),
                     curve_frequency=(2, 8),
                     curve_height=(2, 4),
                     curve_length_one_side=(50, 100),
-                    value=(32, 150),
                     same_page_border=random.choice([0, 1]),
+                    numba_jit=1,
                 ),
                 DirtyRollers(
                     line_width_range=(2, 32),
@@ -312,10 +311,14 @@ def pipeline_archetype1():
 
     paper_phase = [
         PageBorder(
-            side="right",
-            border_background_value=(0, 0),
-            pages=1,
-            width_range=(2, 3),
+            page_border_width_height=(0, 2),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
+            curve_frequency=(2, 8),
+            curve_height=(2, 4),
+            curve_length_one_side=(50, 100),
             same_page_border=0,
         ),
         Scribbles(
@@ -407,7 +410,7 @@ def pipeline_archetype1():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -444,24 +447,32 @@ def pipeline_archetype2():
             edge_offset=(40, 40),
         ),
         PageBorder(
-            side="right",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(5, 10),
+            page_border_width_height=(5, 0),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=2,
+            page_rotation_angle_range=(0, 0),
         ),
         PageBorder(
-            side="top",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(3, 6),
+            page_border_width_height=(0, -5),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
         PageBorder(
-            side="left",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(1, 2),
+            page_border_width_height=(0, 1),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
         PageBorder(
-            side="bottom",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(1, 1),
+            page_border_width_height=(-1, 0),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
     ]
 
@@ -557,7 +568,7 @@ def pipeline_archetype2():
         Geometric(padding=[0.01, 0.01, 0.01, 0], randomize=0),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -644,7 +655,7 @@ def pipeline_archetype3():
         Jpeg(p=1),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -674,17 +685,19 @@ def pipeline_archetype4():
 
     paper_phase = [
         PageBorder(
-            side="top",
-            border_background_value=(0, 0),
-            pages=1,
-            width_range=(0.03, 0.03),
+            page_border_width_height=(0, -0.03),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
             same_page_border=0,
         ),
         PageBorder(
-            side="bottom",
-            border_background_value=(0, 0),
-            pages=1,
-            width_range=(0.05, 0.05),
+            page_border_width_height=(0, 0.05),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
             same_page_border=0,
         ),
     ]
@@ -732,7 +745,7 @@ def pipeline_archetype4():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -795,14 +808,18 @@ def pipeline_archetype5():
 
     paper_phase = [
         PageBorder(
-            side="right",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(4, 5),
+            page_border_width_height=(4, 0),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
         PageBorder(
-            side="bottom",
-            noise_intensity_range=(0.5, 0.8),
-            width_range=(4, 5),
+            page_border_width_height=(0, 5),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
     ]
 
@@ -810,16 +827,18 @@ def pipeline_archetype5():
         Geometric(randomize=0, rotate_range=(-2, -2)),
         Geometric(randomize=0, translation=(0.02, -0.05)),
         PageBorder(
-            side="left",
-            width_range=(6, 7),
-            pages=5,
-            noise_intensity_range=(0.0, 0.2),
+            page_border_width_height=(-6, 0),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=5,
+            page_rotation_angle_range=(0, 0),
         ),
         PageBorder(
-            side="bottom",
-            width_range=(8, 12),
-            pages=5,
-            noise_intensity_range=(0.0, 0.2),
+            page_border_width_height=(0, 10),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=5,
+            page_rotation_angle_range=(0, 0),
         ),
         BindingsAndFasteners(
             overlay_types="min",
@@ -831,7 +850,7 @@ def pipeline_archetype5():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -851,10 +870,11 @@ def pipeline_archetype6():
     ]
     paper_phase = [
         PageBorder(
-            side="bottom",
-            width_range=(2, 2),
-            pages=1,
-            noise_intensity_range=(0.0, 0.0),
+            page_border_width_height=(0, 2),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(0, 0, 0),
+            page_numbers=1,
+            page_rotation_angle_range=(0, 0),
         ),
         Letterpress(
             n_samples=(200, 300),
@@ -894,7 +914,7 @@ def pipeline_archetype6():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -958,7 +978,7 @@ def pipeline_archetype7():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -1031,16 +1051,11 @@ def pipeline_archetype8():
 
     post_phase = [
         PageBorder(
-            side="right",
-            border_background_value=(230, 255),
-            flip_border=random.choice([0, 1]),
-            width_range=(1, 2),
-            pages=None,
-            noise_intensity_range=(0.3, 0.8),
-            curve_frequency=(2, 8),
-            curve_height=(2, 4),
-            curve_length_one_side=(50, 100),
-            value=(250, 255),
+            page_border_width_height=(0, 2),
+            page_border_color=(0, 0, 0),
+            page_border_background_color=(255, 255, 255),
+            page_numbers=random.randint(3, 8),
+            page_rotation_angle_range=(0, 0),
             same_page_border=random.choice([0, 1]),
         ),
         Geometric(padding=[0, 0, 0.05, 0], padding_value=0, randomize=0),
@@ -1052,7 +1067,7 @@ def pipeline_archetype8():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -1119,7 +1134,7 @@ def pipeline_archetype9():
         Geometric(rotate_range=(-1, -1), randomize=0),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline
 
@@ -1157,6 +1172,6 @@ def pipeline_archetype10():
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     return pipeline

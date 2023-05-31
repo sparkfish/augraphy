@@ -203,17 +203,16 @@ class BookBinding(Augmentation):
         # right page - add page border, add shadow and then bend page
         if curve_down:
             page_border = PageBorder(
-                side="top",
-                border_background_value=(100, 120),
-                flip_border=0,
-                width_range=(added_border_height, added_border_height),
-                pages=random.randint(6, 8),
-                noise_intensity_range=(0.05, 0.1),
+                page_border_width_height=(int(added_border_height / 2), -added_border_height),
+                page_border_color=(0, 0, 0),
+                page_border_background_color=(0, 0, 0),
+                page_numbers=random.randint(6, 8),
+                page_rotation_angle_range=(-3, 3),
                 curve_frequency=(1, 3),
                 curve_height=(1, 3),
                 curve_length_one_side=(10, 10),
-                value=(30, 60),
                 same_page_border=0,
+                numba_jit=1,
                 p=1,
             )
 
@@ -222,38 +221,35 @@ class BookBinding(Augmentation):
             image_right = np.flipud(self.curve_page(image_shadow_right, curve_range))
         else:
             page_border = PageBorder(
-                side="bottom",
-                border_background_value=(100, 120),
-                flip_border=1,
-                width_range=(added_border_height, added_border_height),
-                pages=random.randint(6, 8),
-                noise_intensity_range=(0.05, 0.1),
+                page_border_width_height=(int(added_border_height / 2), added_border_height),
+                page_border_color=(0, 0, 0),
+                page_border_background_color=(0, 0, 0),
+                page_numbers=random.randint(6, 8),
+                page_rotation_angle_range=(-3, 3),
                 curve_frequency=(1, 3),
                 curve_height=(1, 3),
                 curve_length_one_side=(10, 10),
-                value=(30, 60),
                 same_page_border=0,
+                numba_jit=1,
                 p=1,
             )
 
             image_added_border_right = page_border(image)
             image_shadow_right = self.add_book_shadow(image_added_border_right, radius, angle)
             image_right = self.curve_page(image_shadow_right, curve_range)
-
         # left page - add page border, add shadow and then bend page
         if curve_down:
             page_border = PageBorder(
-                side="top",
-                border_background_value=(100, 120),
-                flip_border=1,
-                width_range=(added_border_height, added_border_height),
-                pages=random.randint(6, 8),
-                noise_intensity_range=(0.05, 0.1),
+                page_border_width_height=(int(-added_border_height / 2), added_border_height),
+                page_border_color=(0, 0, 0),
+                page_border_background_color=(0, 0, 0),
+                page_numbers=random.randint(6, 8),
+                page_rotation_angle_range=(-3, 3),
                 curve_frequency=(1, 3),
                 curve_height=(1, 3),
-                curve_length_one_side=(10, 10),
-                value=(30, 60),
+                curve_length_one_side=(30, 90),
                 same_page_border=0,
+                numba_jit=1,
                 p=1,
             )
 
@@ -262,17 +258,16 @@ class BookBinding(Augmentation):
             image_left = self.curve_page(np.fliplr(np.flipud(image_shadow_left)), curve_range * 3)
         else:
             page_border = PageBorder(
-                side="top",
-                border_background_value=(100, 120),
-                flip_border=0,
-                width_range=(added_border_height, added_border_height),
-                pages=random.randint(6, 8),
-                noise_intensity_range=(0.05, 0.1),
+                page_border_width_height=(int(-added_border_height / 2), -added_border_height),
+                page_border_color=(0, 0, 0),
+                page_border_background_color=(0, 0, 0),
+                page_numbers=random.randint(6, 8),
+                page_rotation_angle_range=(-3, 3),
                 curve_frequency=(1, 3),
                 curve_height=(1, 3),
-                curve_length_one_side=(10, 10),
-                value=(30, 60),
+                curve_length_one_side=(30, 90),
                 same_page_border=0,
+                numba_jit=1,
                 p=1,
             )
 
