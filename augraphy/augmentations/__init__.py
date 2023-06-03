@@ -5,6 +5,7 @@ from augraphy.augmentations.bookbinding import BookBinding
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
 from augraphy.augmentations.colorpaper import ColorPaper
+from augraphy.augmentations.colorshift import ColorShift
 from augraphy.augmentations.delaunay import DelaunayTessellation
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
@@ -13,6 +14,7 @@ from augraphy.augmentations.faxify import Faxify
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.geometric import Geometric
+from augraphy.augmentations.glitcheffect import GlitchEffect
 from augraphy.augmentations.inkbleed import InkBleed
 from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
@@ -42,6 +44,7 @@ __all__ = [
     "Brightness",
     "BrightnessTexturize",
     "ColorPaper",
+    "ColorShift",
     "DelaunayTessellation",
     "DirtyDrum",
     "DirtyRollers",
@@ -50,6 +53,7 @@ __all__ = [
     "Folding",
     "Gamma",
     "Geometric",
+    "GlitchEffect",
     "InkBleed",
     "InkShifter",
     "Jpeg",
