@@ -12,6 +12,7 @@ List of Augmentations
    augmentations/brightness.rst
    augmentations/brightnesstexturize.rst
    augmentations/colorpaper.rst
+   augmentations/colorshift.rst
    augmentations/delaunay.rst
    augmentations/dirtydrum.rst
    augmentations/dirtyrollers.rst
@@ -20,20 +21,23 @@ List of Augmentations
    augmentations/folding.rst
    augmentations/gamma.rst
    augmentations/geometric.rst
+   augmentations/glitcheffect.rst
    augmentations/inkbleed.rst
+   augmentations/inkshifter.rst
    augmentations/jpeg.rst
    augmentations/letterpress.rst
    augmentations/lightinggradient.rst
    augmentations/linesdegradation.rst
    augmentations/lowinkperiodiclines.rst
    augmentations/lowinkrandomlines.rst
+   augmentations/lowlightnoise
    augmentations/markup.rst
    augmentations/noisetexturize.rst
    augmentations/pageborder.rst
+   augmentations/quasi_crystal.rst
    augmentations/reflectedlight.rst
    augmentations/scribbles.rst
    augmentations/shadowcast.rst
-   augmentations/quasi_crystal.rst
    augmentations/subtlenoise.rst
    augmentations/voronoi.rst
    augmentations/watermark.rst
