@@ -16,6 +16,8 @@ from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.geometric import Geometric
 from augraphy.augmentations.glitcheffect import GlitchEffect
 from augraphy.augmentations.inkbleed import InkBleed
+from augraphy.augmentations.inkcolorswap import InkColorSwap
+from augraphy.augmentations.inkmottling import InkMottling
 from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
 from augraphy.augmentations.letterpress import Letterpress
@@ -55,6 +57,8 @@ __all__ = [
     "Geometric",
     "GlitchEffect",
     "InkBleed",
+    "InkColorSwap",
+    "InkMottling",
     "InkShifter",
     "Jpeg",
     "Letterpress",

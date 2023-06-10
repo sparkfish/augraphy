@@ -50,7 +50,6 @@ The number of glitch effect is set to any random number between 8 and 16 (8,16).
 The glitch size is set to random value in between 5 and 50 pixels (5, 50).
 The glitch offset is set of random value in between 5 and 10 pixels (5, 10).
 
-
 Code example:
 
 ::
