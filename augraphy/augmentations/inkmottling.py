@@ -94,14 +94,6 @@ class InkMottling(Augmentation):
             image_blend = cv2.addWeighted(image, (1 - ink_mottling_alpha), image_random, ink_mottling_alpha, 0)
             image[image_mask > 128] = image_blend[image_mask > 128]
 
-            from matplotlib import pyplot as plt
-
-            plt.figure()
-            plt.imshow(image_mask)
-
-            plt.figure()
-            plt.imshow(image_blend)
-
             # return image follows the input image color channel
             if is_gray:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
