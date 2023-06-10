@@ -23,6 +23,8 @@ List of Augmentations
    augmentations/geometric.rst
    augmentations/glitcheffect.rst
    augmentations/inkbleed.rst
+   augmentations/inkcolorswap.rst
+   augmentations/inkmottling.rst
    augmentations/inkshifter.rst
    augmentations/jpeg.rst
    augmentations/letterpress.rst
