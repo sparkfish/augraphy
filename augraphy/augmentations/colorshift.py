@@ -24,7 +24,7 @@ class ColorShift(Augmentation):
     :param color_shift_brightness_range: Pair of floats determining the brightness value of the shifted color channel.
             The optimal brightness range is 0.9 to 1.1.
     :type color_shift_brightness_range: tuple, optional
-    :param color_shift_gaussian_kernel_range : Pair of floats determining the brightness value of the shifted color channel.
+    :param color_shift_gaussian_kernel_range : Pair of ints determining the Gaussian kernel value in blurring the shifted image.
     :type color_shift_gaussian_kernel_range : tuple, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
