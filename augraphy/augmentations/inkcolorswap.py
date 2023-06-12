@@ -12,6 +12,7 @@ class InkColorSwap(Augmentation):
     :param ink_swap_color: The swapping color (in BGR) of the effect.
     :type ink_swap_color: tuple, optional
     :param ink_swap_sequence_number_range: Pair of ints determing the consecutive swapping number in the detected contours.
+            Use "-1" to swap color for all detected contours.
     :type ink_swap_sequence_number_range: tuple, optional
     :param ink_swap_min_width_range: Pair of ints/floats determining the minimum width of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
@@ -177,13 +178,15 @@ class InkColorSwap(Augmentation):
                         cv2.drawContours(image_mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
 
                     # reduce count for contour, and change color when count <= 0
-                    ink_swap_sequence_number -= 1
-                    if ink_swap_sequence_number <= 0:
+
+                    if ink_swap_sequence_number == 0:
                         ink_swap_sequence_number = random.randint(
                             self.ink_swap_sequence_number_range[0],
                             self.ink_swap_sequence_number_range[1],
                         )
                         color_mode = 1 - color_mode
+                    elif ink_swap_sequence_number != -1:
+                        ink_swap_sequence_number -= 1
 
             if self.ink_swap_color == "random":
                 ink_swap_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
