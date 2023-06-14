@@ -210,14 +210,15 @@ class BadPhotoCopy(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
-        image_shape_length = len(image.shape)
+        # convert and make sure image is color image
+        if len(image.shape) > 2:
+            is_gray = 0
+        else:
+            is_gray = 1
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         # get image dimensions
-        if image_shape_length > 2:
-            ysize, xsize, dim = image.shape
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            ysize, xsize = image.shape
+        ysize, xsize = image.shape[:2]
 
         # check if provided mask is numpy array
         if isinstance(self.mask, np.ndarray):
@@ -255,7 +256,7 @@ class BadPhotoCopy(Augmentation):
         # creates random small dot of noises
         mask += random.randint(self.noise_value[0], self.noise_value[1])
         mask[mask > 255] = 255
-        mask = cv2.resize(mask, (image.shape[1], image.shape[0])).astype("uint8")
+        mask = cv2.resize(mask, (xsize, ysize)).astype("uint8")
 
         # apply blur to mask of noise
         if self.blur_noise == -1:
@@ -290,7 +291,10 @@ class BadPhotoCopy(Augmentation):
         gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
         blurred = cv2.GaussianBlur(noise_img, gaussian_kernel, 0)
         noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
-        result = cv2.multiply(noise_img, image, scale=1 / 255)
+
+        result = image.copy()
+        for i in range(3):
+            result[:, :, i] = cv2.multiply(noise_img, result[:, :, i], scale=1 / 255)
 
         # merge sobel mask and noise mask to image
         if self.edge_effect == -1:
@@ -299,8 +303,10 @@ class BadPhotoCopy(Augmentation):
             edge_effect = self.edge_effect
         if edge_effect:
 
+            # get gray image for sobel purpose
+            image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             # get edge mask
-            image_sobel = sobel(image)
+            image_sobel = sobel(image_gray)
             image_sobel = cv2.GaussianBlur(image_sobel, (3, 3), 0)
             image_sobel[:, :][image_sobel[:, :] % 255 != 0] = 255
             image_sobel = cv2.dilate(image_sobel, (15, 15), iterations=5)
@@ -318,21 +324,24 @@ class BadPhotoCopy(Augmentation):
             image_copy = image.copy()
 
             # apply edge
-            result_new = result.astype("int") + image_sobel.astype("int")
+            result_new = result.copy().astype("int")
+            for i in range(3):
+                result_new[:, :, i] = result[:, :, i] + image_sobel.astype("int")
             image_original[image_original > result_new] = 0
             result_new[result_new > 255] = 0
             result_new[result_new >= image_copy] = 0
             result = image_original + result_new
+            # convert back to uint8
+            result = result.astype("uint8")
 
-        # convert back to original image shape
-        if image_shape_length > 2:
-            result = cv2.cvtColor(result.astype("uint8"), cv2.COLOR_GRAY2BGR)
+        # return image follows the input image color channel
+        if is_gray:
+            result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
 
-        return result.astype("uint8")
+        return result
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            result = image.copy()
             result = self.apply_augmentation(image)
             return result

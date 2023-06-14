@@ -67,9 +67,13 @@ class DirtyRollers(Augmentation):
         :type meta_mask: numpy.array (numpy.uint8)
         """
         mask = self.apply_scanline_metamask_v2(mask, meta_mask)
-        new_image = np.add(img, np.multiply(img, (1 - (mask / 100))))
-        new_image[new_image > 255] = 255
-        return new_image
+
+        for i in range(3):
+            img_channel = img[:, :, i].astype("int")
+            new_image = np.add(img_channel, np.multiply(img_channel, (1 - (mask / 100))))
+            new_image[new_image > 255] = 255
+            img[:, :, i] = new_image
+        return img
 
     def apply_scanline_metamask_v2(self, img, mask):
         """Function to apply scanline meta mask to scanline mask of dark background.
@@ -92,9 +96,13 @@ class DirtyRollers(Augmentation):
         :type meta_mask: numpy.array (numpy.uint8)
         """
         mask = self.apply_scanline_metamask_v1(mask, meta_mask)
-        new_image = np.subtract(img, np.multiply(img, (1 - (mask / 100))))
-        new_image[new_image < 0] = 0
-        return new_image
+
+        for i in range(3):
+            img_channel = img[:, :, i].astype("int")
+            new_image = np.subtract(img_channel, np.multiply(img_channel, (1 - (mask / 100))))
+            new_image[new_image < 0] = 0
+            img[:, :, i] = new_image.astype("uint8")
+        return img
 
     def apply_scanline_metamask_v1(self, img, mask):
         """Function to apply scanline meta mask to scanline mask of white background.
@@ -180,6 +188,15 @@ class DirtyRollers(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
+            image = image.copy()
+
+            # convert and make sure image is color image
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
             line_width = random.randint(
                 self.line_width_range[0],
                 self.line_width_range[1],
@@ -189,9 +206,6 @@ class DirtyRollers(Augmentation):
             if rotate:
                 image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-            if len(image.shape) > 2:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
             mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
 
             meta_mask = self.create_scanline_mask(
@@ -199,10 +213,14 @@ class DirtyRollers(Augmentation):
                 image.shape[0],
                 line_width * random.randint(10, 25),
             )
-            image = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+            image_output = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
 
             if rotate:
-                image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                image_output = cv2.rotate(image_output, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            return image
+            # return image follows the input image color channel
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+
+            return image_output
