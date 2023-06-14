@@ -69,15 +69,16 @@ class InkBleed(Augmentation):
             noise_mask = noise_mask.astype("uint8")
             noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
 
-            # apply ege image based on severity
+            # apply edge image based on severity
             if len(image.shape) > 2:
                 random_array = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
             else:
                 random_array = np.random.random((image.shape[0], image.shape[1]))
 
+            output = noise_mask
             severity = np.random.uniform(self.severity[0], self.severity[1])
             indices = np.logical_or(sobelized_dilated != 255, random_array > severity)
-            output = noise_mask.copy()
+
             output[indices] = image[indices]
 
             return output

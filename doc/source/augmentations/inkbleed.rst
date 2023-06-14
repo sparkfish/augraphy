@@ -1,5 +1,5 @@
 ********
-Inkbleed
+InkBleed
 ********
 
 .. autoclass:: augraphy.augmentations.inkbleed.InkBleed
@@ -10,7 +10,7 @@ Inkbleed
 --------
 Overview
 --------
-The Ink Bleed augmentation relies on Sobel edge detection to create a mask of all edges, then applies random noise to those edges. When followed by a blur, this creates a fuzzy edge that emulates an ink bleed effect.
+The InkBleed augmentation relies on Sobel edge detection to create a mask of all edges, then applies random noise to those edges. When followed by a blur, this creates a fuzzy edge that emulates an ink bleed effect.
 
 Initially, a clean image with single line of text is created.
 
