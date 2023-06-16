@@ -34,7 +34,7 @@ class ColorShift(Augmentation):
         self,
         color_shift_offset_x_range=(3, 5),
         color_shift_offset_y_range=(3, 5),
-        color_shift_iterations=(1, 2),
+        color_shift_iterations=(2, 3),
         color_shift_brightness_range=(0.9, 1.1),
         color_shift_gaussian_kernel_range=(3, 3),
         p=1,
@@ -50,12 +50,16 @@ class ColorShift(Augmentation):
     def __repr__(self):
         return f"ColorShift(color_shift_offset_x_range={self.color_shift_offset_x_range}, color_shift_offset_y_range={self.color_shift_offset_y_range}, color_shift_iterations={self.color_shift_iterations}, color_shift_brightness_range={self.color_shift_brightness_range}, color_shift_gaussian_kernel_range={self.color_shift_gaussian_kernel_range}, p={self.p})"
 
-    def apply_color_shift(self, image):
+    def apply_color_shift(self, image, kernel_value):
         """Main function to apply color shift process.
 
         :param image: The input image.
         :type image: numpy array
+        :param kernel_value: The Gaussian kernel value for the blurring effect.
+        :type kernel_value: int
         """
+
+        image_output = image.copy()
 
         ysize, xsize = image.shape[:2]
 
@@ -124,20 +128,16 @@ class ColorShift(Augmentation):
             image_single_color_ratio[image_single_color_ratio < 0] = 0
             image_single_color_ratio = image_single_color_ratio.astype("uint8")
 
-            # blur the shhifted image
-            kernel_value = random.randint(
-                self.color_shift_gaussian_kernel_range[0],
-                self.color_shift_gaussian_kernel_range[1],
-            )
-            # kernel must be odd
-            if not (kernel_value % 2):
-                kernel_value += 1
+            # perform blur in each image channel
             image_single_color_ratio = cv2.GaussianBlur(image_single_color_ratio, (kernel_value, kernel_value), 0)
 
             # reassign the shifted color channel back to the image
-            image[:, :, i] = image_single_color_ratio
+            image_output[:, :, i] = image_single_color_ratio
 
-        return image
+            # blend input single channel image with the shifted single channel image
+            image_output[:, :, i] = cv2.addWeighted(image[:, :, i], 0.7, image_output[:, :, i], 0.3, 0)
+
+        return image_output
 
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
@@ -151,10 +151,22 @@ class ColorShift(Augmentation):
                 is_gray = 1
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_GRAY2BGR)
 
-            # apply color shift based on the generated iterations
+            # generate random color shift iterations
             color_shift_iterations = random.randint(self.color_shift_iterations[0], self.color_shift_iterations[1])
+
+            # kernel for Gaussian blur
+            kernel_value = random.randint(
+                self.color_shift_gaussian_kernel_range[0],
+                self.color_shift_gaussian_kernel_range[1],
+            )
+            # kernel must be odd
+            if not (kernel_value % 2):
+                kernel_value += 1
+
             for i in range(color_shift_iterations):
-                image_output = self.apply_color_shift(image_output)
+                image_output = self.apply_color_shift(image_output, kernel_value)
+                # increase kernel value in each iteration to create a betetr effect
+                kernel_value += 2
 
             # return image follows the input image color channel
             if is_gray:

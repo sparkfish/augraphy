@@ -42,10 +42,9 @@ To initialize a custom augmentation pipeline and augment an image::
     ink_phase = [
 
         InkBleed(
-            intensity_range=(0.1, 0.2),
-            color_range=(0, 16),
-            kernel_size=random.choice([(7, 7), (5, 5), (3, 3)]),
-            severity=(0.4, 0.6),
+            intensity_range=(0.5, 0.6),
+            kernel_size=random.choice([(5, 5), (3, 3)]),
+            severity=(0.2, 0.4),
             p=0.33,
         ),
         OneOf(
@@ -178,12 +177,6 @@ To initialize a custom augmentation pipeline and augment an image::
             half_kernel_size=random.choice([(1, 1), (2, 2)]),
             angle=(0, 360),
             sigma=(1, 3),
-            p=0.33,
-        ),
-        BookBinding(
-            radius_range=(1, 100),
-            curve_range=(100, 200),
-            mirror_range=(0.3, 0.5),
             p=0.33,
         ),
     ]
