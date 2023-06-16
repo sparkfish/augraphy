@@ -22,7 +22,6 @@ def default_augraphy_pipeline():
         ),
         InkBleed(
             intensity_range=(0.1, 0.2),
-            color_range=(0, 16),
             kernel_size=random.choice([(7, 7), (5, 5), (3, 3)]),
             severity=(0.4, 0.6),
             p=0.33,
@@ -303,7 +302,6 @@ def pipeline_archetype1():
         ),
         InkBleed(
             intensity_range=(0.1, 0.2),
-            color_range=(0, 5),
             kernel_size=(3, 3),
             severity=(0.2, 0.2),
         ),
@@ -430,7 +428,6 @@ def pipeline_archetype2():
         ),
         InkBleed(
             intensity_range=(0.9, 0.9),
-            color_range=(0, 0),
             kernel_size=(3, 3),
             severity=(0.1, 0.2),
         ),
@@ -578,7 +575,6 @@ def pipeline_archetype3():
     ink_phase = [
         InkBleed(
             intensity_range=(0.9, 0.9),
-            color_range=(0, 0),
             kernel_size=(7, 7),
             severity=(0.3, 0.3),
         ),
@@ -677,7 +673,6 @@ def pipeline_archetype4():
         ),
         InkBleed(
             intensity_range=(0.5, 0.5),
-            color_range=(0, 0),
             kernel_size=(3, 3),
             severity=(0.5, 0.5),
         ),
@@ -760,7 +755,6 @@ def pipeline_archetype5():
         ),
         InkBleed(
             intensity_range=(0.3, 0.4),
-            color_range=(0, 0),
             kernel_size=(3, 3),
             severity=(1.0, 1.0),
         ),
@@ -890,7 +884,6 @@ def pipeline_archetype6():
         Dithering(dither="ordered", order=(4, 4)),
         InkBleed(
             intensity_range=(0.1, 0.2),
-            color_range=(0, 0),
             kernel_size=(3, 3),
             severity=(0.2, 0.2),
         ),
@@ -924,7 +917,6 @@ def pipeline_archetype7():
     ink_phase = [
         InkBleed(
             intensity_range=(0.6, 0.6),
-            color_range=(0, 0),
             kernel_size=(3, 3),
             severity=(0.8, 0.8),
         ),
@@ -1169,6 +1161,108 @@ def pipeline_archetype10():
             monochrome=1,
             monochrome_method="threshold_otsu",
             halftone=0,
+        ),
+    ]
+
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
+
+    return pipeline
+
+
+def pipeline_archetype11():
+
+    ink_phase = [
+        LinesDegradation(
+            line_roi=(0.0, 0.0, 1.0, 1.0),
+            line_gradient_range=(32, 255),
+            line_gradient_direction=(0, 2),
+            line_split_probability=(0.2, 0.4),
+            line_replacement_value=(5, 10),
+            line_min_length=(30, 40),
+            line_long_to_short_ratio=(5, 7),
+            line_replacement_probability=(0.4, 0.5),
+            line_replacement_thickness=(1, 3),
+            p=0.5,
+        ),
+        InkBleed(
+            intensity_range=(0.1, 0.4),
+            kernel_size=(7, 7),
+            severity=(0.4, 0.6),
+            p=0.5,
+        ),
+        LowInkRandomLines(
+            count_range=(3, 12),
+            use_consistent_lines=False,
+            noise_probability=0.16,
+            p=0.5,
+        ),
+    ]
+    paper_phase = [
+        PatternGenerator(
+            imgx=random.randint(256, 512),
+            imgy=random.randint(256, 512),
+            n_rotation_range=(5, 15),
+            p=0.5,
+        ),
+        ColorPaper(
+            hue_range=(0, 255),
+            saturation_range=(10, 40),
+            p=0.5,
+        ),
+        NoiseTexturize(
+            sigma_range=(3, 10),
+            turbulence_range=(2, 5),
+            p=0.5,
+        ),
+        BrightnessTexturize(
+            texturize_range=(0.9, 0.99),
+            deviation=0.03,
+            p=0.5,
+        ),
+    ]
+
+    post_phase = [
+        ColorShift(
+            color_shift_offset_x_range=(1, 2),
+            color_shift_offset_y_range=(1, 2),
+            color_shift_iterations=(1, 2),
+            color_shift_brightness_range=(0.9, 1.1),
+            color_shift_gaussian_kernel_range=(1, 1),
+            p=0.5,
+        ),
+        SubtleNoise(
+            subtle_range=10,
+            p=0.5,
+        ),
+        Jpeg(
+            quality_range=(25, 95),
+            p=0.5,
+        ),
+        ShadowCast(
+            shadow_side="random",
+            shadow_vertices_range=(1, 20),
+            shadow_width_range=(0.3, 0.8),
+            shadow_height_range=(0.3, 0.8),
+            shadow_color=(64, 64, 64),
+            shadow_opacity_range=(0.2, 0.9),
+            shadow_iterations_range=(1, 2),
+            shadow_blur_kernel_range=(101, 301),
+            p=1,
+        ),
+        InkMottling(
+            ink_mottling_alpha_range=(0.1, 0.2),
+            ink_mottling_noise_scale_range=(1, 2),
+            ink_mottling_gaussian_kernel_range=(3, 5),
+            p=1,
+        ),
+        BleedThrough(
+            intensity_range=(0.1, 0.2),
+            color_range=(32, 224),
+            ksize=(17, 17),
+            sigmaX=0,
+            alpha=random.uniform(0.05, 0.1),
+            offsets=(10, 20),
+            p=0.5,
         ),
     ]
 

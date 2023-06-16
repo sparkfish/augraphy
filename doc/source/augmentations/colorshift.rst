@@ -46,7 +46,7 @@ Clean image:
 Example 1
 ---------
 In this example, a ColorShift augmentation instance is initialized and the shifting offset in both horizontal and vertical direction is set to random value in between 3 and 5 (3,5).
-The number of color shift iterations is set randomly to 1 or 2 times (1,2).
+The number of color shift iterations is set randomly to 2 or 3 times (2,3).
 The brightness range of the shifted color channel is set to any random value between 0.9 and 1.1 (0.9, 1.1).
 The Gaussian kernel value in blurring the shifted color channel is set to 3 (3,3).
 
@@ -60,7 +60,7 @@ Code example:
 
     colorshift = ColorShift(color_shift_offset_x_range = (3,5),
                             color_shift_offset_y_range = (3,5),
-                            color_shift_iterations = (1,2),
+                            color_shift_iterations = (2,3),
                             color_shift_brightness_range = (0.9,1.1),
                             color_shift_gaussian_kernel_range = (3,3),
                             )

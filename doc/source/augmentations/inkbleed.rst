@@ -45,18 +45,17 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a InkBleed augmentation instance is initialized and the range of intensity is set to low value (0.1, 0.2).
-The kernel size is set to 7x7 (7,7) to get moderate spreadness.
-The severity of the ink bleed effect is set to moderate value and randomly in between 0.3 and 0.4 (0.3, 0.4).
+In this example, a InkBleed augmentation instance is initialized and the range of intensity is set to a range of moderate value (0.4, 0.7).
+The kernel size is set to 5x5 (5,5) to get a moderate spreadness of the effect.
+The severity of the ink bleed effect is set to a random low value in between 0.2 and 0.4 (0.2, 0.4).
 
 Code example:
 
 ::
 
-    inkbleed = InkBleed(intensity_range=(0.1, 0.2),
-                        color_range=(0, 224),
-                        kernel_size=(7, 7),
-                        severity=(0.3, 0.4)
+    inkbleed = InkBleed(intensity_range=(0.4, 0.7),
+                        kernel_size=(5, 5),
+                        severity=(0.2, 0.4)
                         )
 
     img_inkbleed = inkbleed(image)
