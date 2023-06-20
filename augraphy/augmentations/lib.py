@@ -18,6 +18,66 @@ from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
 
 
+# Adapted from this link:
+# # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
+def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):
+    """Generate noises through normal distribution.
+
+    :param xsize: The width of the generated noise.
+    :type xsize: int
+    :param ysize: The height of the generated noise.
+    :type ysize: int
+    :param ratio: The size of generated noise pattern.
+    :type ratio: int
+    :param sigma: The bounds of noise fluctuations.
+    :type sigma: float
+    """
+
+    new_ysize = int(ysize / ratio)
+    new_xsize = int(xsize / ratio)
+    result = np.random.normal(0, sigma, (new_xsize, new_ysize, channel))
+    if ratio != 1:
+        result = cv2.resize(result, dsize=(xsize, ysize), interpolation=cv2.INTER_LINEAR)
+    return result.reshape((ysize, xsize, channel))
+
+
+def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
+    """Generate random texture through multiple iterations of noise addition.
+
+    :param xsize: The width of the generated noise.
+    :type xsize: int
+    :param ysize: The height of the generated noise.
+    :type ysize: int
+    :param channel: The number of channel in the generated noise.
+    :type channel: int
+    :param value: The initial value of the generated noise.
+    :type value: int
+    :param sigma: The bounds of noise fluctuations.
+    :type sigma: float
+    :param turbulence: The value to define how quickly big patterns will be replaced with the small ones.
+    :type turbulence: int
+
+    """
+    image_output = np.full((ysize, xsize, channel), fill_value=value, dtype="float")
+    ratio = min(xsize, ysize)
+    while ratio != 1:
+        image_output += generate_noise(xsize, ysize, channel, ratio, sigma=sigma)
+        ratio = (ratio // turbulence) or 1
+    image_output = np.clip(image_output, 0, 255)
+
+    # get single channel image
+    if channel == 1:
+        image_output = image_output[:, :, 0]
+
+    new_min = 32
+    new_max = 255
+    image_output = ((image_output - np.min(image_output)) / (np.max(image_output) - np.min(image_output))) * (
+        new_max - new_min
+    ) + new_min
+
+    return image_output.astype("uint8")
+
+
 def rotate_image(mat, angle, white_background=1):
     """Rotates an image (angle in degrees) and expands image to avoid
     cropping.
