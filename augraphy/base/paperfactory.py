@@ -7,8 +7,10 @@ import numpy as np
 
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.lib import generate_average_intensity
+from augraphy.augmentations.lib import generate_texture
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class PaperFactory(Augmentation):
@@ -17,6 +19,10 @@ class PaperFactory(Augmentation):
 
     :param texture_path: Directory location to pull paper textures from.
     :type texture_path: string, optional
+    :param blend_texture: Flag to blend multiple textures.
+    :type blend_texture: int, optional
+    :param blend_method: The method to blend multiple textures.
+    :type blend_method: string, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -24,11 +30,15 @@ class PaperFactory(Augmentation):
     def __init__(
         self,
         texture_path="./paper_textures",
+        blend_texture=1,
+        blend_method="random",
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.texture_path = texture_path
+        self.blend_texture = blend_texture
+        self.blend_method = blend_method
         self.texture_file_names = []
         self.texture_file_name = None
         self.paper_textures = list()
@@ -49,57 +59,136 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(texture_path={self.texture_path}, p={self.p})"
+        return f"PaperFactory(texture_path={self.texture_path},blend_texture={self.blend_texture}, blend_method={self.blend_method}, p={self.p})"
+
+    def retrieve_texture(self, image):
+        shape = image.shape
+        random_index = random.randint(0, len(self.paper_textures) - 1)
+        texture = self.paper_textures[random_index]
+        texture = np.rot90(texture, random.randint(1, 4))
+        self.texture_file_name = self.texture_file_names[random_index]
+        # reset file names and textures
+        """
+        self.texture_file_names = []
+        self.paper_textures = []
+        """
+
+        # check for edge
+        texture = self.check_paper_edges(texture)
+
+        # If the texture we chose is larger than the paper,
+        # get random location that fit into paper size
+        if (texture.shape[0] > shape[0]) and (texture.shape[1] > shape[1]):
+            difference_y = texture.shape[0] - shape[0]
+            difference_x = texture.shape[1] - shape[1]
+            start_y = random.randint(0, difference_y)
+            start_x = random.randint(0, difference_x)
+            texture = texture[start_y : start_y + shape[0], start_x : start_x + shape[1]]
+
+        # If the texture we chose is smaller in either dimension than the paper,
+        # use the resize logic
+        else:
+            texture = self.resize(texture, shape)
+
+        return texture
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
 
+            # get texture from paper
             if self.paper_textures:
-                shape = image.shape
-                random_index = random.randint(0, len(self.paper_textures) - 1)
-                texture = self.paper_textures[random_index]
-                self.texture_file_name = self.texture_file_names[random_index]
-                # reset file names and textures
-                self.texture_file_names = []
-                self.paper_textures = []
-
-                # check for edge
-                texture = self.check_paper_edges(texture)
-
-                # If the texture we chose is larger than the paper,
-                # get random location that fit into paper size
-                if (texture.shape[0] > shape[0]) and (texture.shape[1] > shape[1]):
-                    difference_y = texture.shape[0] - shape[0]
-                    difference_x = texture.shape[1] - shape[1]
-                    start_y = random.randint(0, difference_y)
-                    start_x = random.randint(0, difference_x)
-                    texture = texture[start_y : start_y + shape[0], start_x : start_x + shape[1]]
-
-                # If the texture we chose is smaller in either dimension than the paper,
-                # use the resize logic
-                else:
-                    texture = self.resize(texture, shape)
-
-                # texture_intensity
-                texture_intensity = generate_average_intensity(texture)
-                # brighten dark texture based on target intensity, max intensity = 255 (brightest)
-                target_intensity = 200
-                if texture_intensity < target_intensity:
-                    brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
-                    brighten_min = 1 + (brighten_ratio / 2)
-                    brighten_max = 1 + brighten_ratio
-                    brightness = Brightness(brightness_range=(brighten_min, brighten_max), min_brightness=1)
-                    texture = brightness(texture)
-                return texture
-
+                # get image texture
+                texture = self.retrieve_texture(image)
+            # generate random mask as texture
             else:
-                # future development
-                """
-                if verbose:
-                    print("No paper image in the paper directory!")
-                """
-                pass
+                ysize, xsize = image.shape[:2]
+                sigma = random.uniform(3, 5)
+                turbulence = random.randint(3, 9)
+                texture = generate_texture(ysize, xsize, channel=1, value=255, sigma=sigma, turbulence=turbulence)
+
+                if len(image.shape) > 2:
+                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+
+            # blend multiple textures
+            if self.blend_texture:
+                if len(texture.shape) < 3:
+                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+
+                # get another image as texture
+                if len(self.paper_textures) > 0:
+                    new_texture = self.retrieve_texture(image)
+                    if len(new_texture.shape) < 3:
+                        new_texture = cv2.cvtColor(new_texture, cv2.COLOR_GRAY2BGR)
+
+                # generate noise as texture if no texture is provided
+                else:
+                    ysize, xsize = texture.shape[:2]
+                    sigma = random.uniform(3, 5)
+                    turbulence = random.randint(3, 9)
+                    new_texture = generate_texture(
+                        ysize,
+                        xsize,
+                        channel=1,
+                        value=255,
+                        sigma=sigma,
+                        turbulence=turbulence,
+                    )
+                    new_texture = cv2.cvtColor(new_texture, cv2.COLOR_GRAY2BGR)
+
+                # resize for size consistency between both textures
+                new_texture = cv2.resize(
+                    new_texture,
+                    (texture.shape[1], texture.shape[0]),
+                    interpolation=cv2.INTER_AREA,
+                )
+
+                if self.blend_method == "random":
+                    blend_method = random.choice(
+                        [
+                            "ink_to_paper",
+                            "min",
+                            "max",
+                            "mix",
+                            "normal",
+                            "lighten",
+                            "darken",
+                            "screen",
+                            "dodge",
+                            "multiply",
+                            "divide",
+                            "grain_merge",
+                            "overlay",
+                            "FFT",
+                        ],
+                    )
+                else:
+                    blend_method = self.blend_method
+
+                # Create overlay object and blend textures
+                ob = OverlayBuilder(
+                    blend_method,
+                    new_texture,
+                    texture,
+                    1,
+                    (1, 1),
+                    "center",
+                    0,
+                )
+
+                texture = ob.build_overlay()
+
+            # texture_intensity
+            texture_intensity = generate_average_intensity(texture)
+            # brighten dark texture based on target intensity, max intensity = 255 (brightest)
+            target_intensity = 200
+            if texture_intensity < target_intensity:
+                brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
+                brighten_min = 1 + (brighten_ratio / 2)
+                brighten_max = 1 + brighten_ratio
+                brightness = Brightness(brightness_range=(brighten_min, brighten_max), min_brightness=1)
+                texture = brightness(texture)
+            return texture
 
     def check_paper_edges(self, texture):
         """Crop image section with better texture.

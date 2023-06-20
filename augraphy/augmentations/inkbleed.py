@@ -46,6 +46,13 @@ class InkBleed(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
 
+            # convert and make sure image is color image
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
             image_output = image.copy()
 
             # apply sobel filter and dilate image
@@ -71,5 +78,9 @@ class InkBleed(Augmentation):
             image_output = cv2.GaussianBlur(image_output, (3, 3), 0)
             intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
             image_output = cv2.addWeighted(image_output, intensity, image, 1 - intensity, 0)
+
+            # return image follows the input image color channel
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
 
             return image_output
