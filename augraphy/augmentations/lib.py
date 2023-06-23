@@ -1,5 +1,7 @@
 """This module contains functions generally useful for building augmentations."""
+import os
 import random
+from glob import glob
 
 import cv2
 import numpy as np
@@ -16,6 +18,31 @@ from skimage.filters import threshold_sauvola
 from skimage.filters import threshold_triangle
 from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
+
+
+def load_image_from_cache():
+    """Load image from augraphy cache folder."""
+
+    # path to foreground cache folder
+    cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
+    cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
+
+    # at least 2 images, because 1 image will be current image
+    if len(cache_image_paths) > 1:
+
+        modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
+        newest_index = np.argmax(modified_time)
+        image_index = random.randint(0, len(cache_image_paths) - 1)
+
+        # prevent same image
+        while image_index == newest_index:
+            image_index = random.randint(0, len(cache_image_paths) - 1)
+        # get random image
+        image = cv2.imread(cache_image_paths[image_index])
+
+        return image
+    else:
+        return None
 
 
 # Adapted from this link:
