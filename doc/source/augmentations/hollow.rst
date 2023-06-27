@@ -10,7 +10,7 @@ Hollow
 --------
 Overview
 --------
-The Hollow augmentation creates hollow effect by replacing detected contours with edges. 
+The Hollow augmentation creates hollow effect by replacing detected contours with edges.
 The detected contours are removed by using median filter operation.
 
 Initially, a clean image with single line of text is created.
