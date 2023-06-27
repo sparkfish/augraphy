@@ -15,6 +15,7 @@ from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
 from augraphy.augmentations.geometric import Geometric
 from augraphy.augmentations.glitcheffect import GlitchEffect
+from augraphy.augmentations.hollow import Hollow
 from augraphy.augmentations.inkbleed import InkBleed
 from augraphy.augmentations.inkcolorswap import InkColorSwap
 from augraphy.augmentations.inkmottling import InkMottling
@@ -56,6 +57,7 @@ __all__ = [
     "Gamma",
     "Geometric",
     "GlitchEffect",
+    "Hollow",
     "InkBleed",
     "InkColorSwap",
     "InkMottling",
