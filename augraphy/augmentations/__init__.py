@@ -29,6 +29,7 @@ from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.lowlightnoise import LowLightNoise
 from augraphy.augmentations.markup import Markup
 from augraphy.augmentations.noisetexturize import NoiseTexturize
+from augraphy.augmentations.noisylines import NoisyLines
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.augmentations.quasicrystal import PatternGenerator
 from augraphy.augmentations.reflectedlight import ReflectedLight
@@ -71,6 +72,7 @@ __all__ = [
     "LowLightNoise",
     "Markup",
     "NoiseTexturize",
+    "NoisyLines",
     "PageBorder",
     "PatternGenerator",
     "ReflectedLight",
