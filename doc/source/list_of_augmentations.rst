@@ -22,6 +22,7 @@ List of Augmentations
    augmentations/gamma.rst
    augmentations/geometric.rst
    augmentations/glitcheffect.rst
+   augmentations/hollow.rst
    augmentations/inkbleed.rst
    augmentations/inkcolorswap.rst
    augmentations/inkmottling.rst
@@ -35,6 +36,7 @@ List of Augmentations
    augmentations/lowlightnoise
    augmentations/markup.rst
    augmentations/noisetexturize.rst
+   augmentations/noisylines.rst
    augmentations/pageborder.rst
    augmentations/quasi_crystal.rst
    augmentations/reflectedlight.rst
