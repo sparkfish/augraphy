@@ -51,7 +51,7 @@ The lines color is set to black (0,0,0) and the thickness of the lines is set to
 The random noise intensity is set randomly in between 1 to 10 percent (0.01, 0.1).
 The space interval in each line is set randomly in between 0 and 100 (0,100).
 The Gaussian kernel value in blurring the lines is set to 3 (3,3).
-The method to overlay lines into the image is set to the default method ("ink_to_paper"). 
+The method to overlay lines into the image is set to the default method ("ink_to_paper").
 
 Code example:
 
