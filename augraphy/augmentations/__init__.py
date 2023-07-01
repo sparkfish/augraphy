@@ -36,6 +36,7 @@ from augraphy.augmentations.reflectedlight import ReflectedLight
 from augraphy.augmentations.rescale import Rescale
 from augraphy.augmentations.scribbles import Scribbles
 from augraphy.augmentations.shadowcast import ShadowCast
+from augraphy.augmentations.squish import Squish
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.voronoi import VoronoiTessellation
 from augraphy.augmentations.watermark import WaterMark
@@ -79,6 +80,7 @@ __all__ = [
     "Rescale",
     "Scribbles",
     "ShadowCast",
+    "Squish",
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",

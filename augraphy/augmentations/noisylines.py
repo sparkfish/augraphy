@@ -14,6 +14,11 @@ class NoisyLines(Augmentation):
         Use 0 for horizontal lines, 1 for vertical lines, 2 for both directions.
         Use "random" to generate random direction.
     :type noisy_lines_direction: int or string, optional
+    :param noisy_lines_location: List of ints determining the location of lines.
+        If direction of lines is horizontal, the value determines the row coordinate of the lines.
+        If direction of lines is vertical, the value determines the column coordinate of the lines.
+        If both directions are selected, the value determines both rw and column coordinate of the lines.
+    :type noisy_lines_location: list, optional
     :param noisy_lines_number_range: Tuple of ints determining the number of lines.
     :type noisy_lines_number_range: tuple, optional
     :param noisy_lines_color: The color of the lines in BGR.
@@ -35,6 +40,7 @@ class NoisyLines(Augmentation):
     def __init__(
         self,
         noisy_lines_direction="random",
+        noisy_lines_location="random",
         noisy_lines_number_range=(5, 20),
         noisy_lines_color=(0, 0, 0),
         noisy_lines_thickness_range=(1, 2),
@@ -46,8 +52,9 @@ class NoisyLines(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.noisy_lines_number_range = noisy_lines_number_range
         self.noisy_lines_direction = noisy_lines_direction
+        self.noisy_lines_location = noisy_lines_location
+        self.noisy_lines_number_range = noisy_lines_number_range
         self.noisy_lines_color = noisy_lines_color
         self.noisy_lines_thickness_range = noisy_lines_thickness_range
         self.noisy_lines_random_noise_intensity_range = noisy_lines_random_noise_intensity_range
@@ -57,7 +64,7 @@ class NoisyLines(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoisyLines(noisy_lines_number_range={self.noisy_lines_number_range}, noisy_lines_direction={self.noisy_lines_direction}, noisy_lines_color={self.noisy_lines_color}, noisy_lines_thickness_range={self.noisy_lines_thickness_range}, noisy_lines_random_noise_intensity_range={self.noisy_lines_random_noise_intensity_range}, noisy_lines_length_interval_range={self.noisy_lines_length_interval_range}, noisy_lines_gaussian_kernel_value_range={self.noisy_lines_gaussian_kernel_value_range}, noisy_lines_overlay_method={self.noisy_lines_overlay_method}, p={self.p})"
+        return f"NoisyLines(noisy_lines_direction={self.noisy_lines_direction}, noisy_lines_location={self.noisy_lines_location}, noisy_lines_number_range={self.noisy_lines_number_range}, noisy_lines_color={self.noisy_lines_color}, noisy_lines_thickness_range={self.noisy_lines_thickness_range}, noisy_lines_random_noise_intensity_range={self.noisy_lines_random_noise_intensity_range}, noisy_lines_length_interval_range={self.noisy_lines_length_interval_range}, noisy_lines_gaussian_kernel_value_range={self.noisy_lines_gaussian_kernel_value_range}, noisy_lines_overlay_method={self.noisy_lines_overlay_method}, p={self.p})"
 
     def draw_noisy_lines(self, image):
         """Core function to draw noisy lines in the input image
@@ -75,8 +82,13 @@ class NoisyLines(Augmentation):
         noisy_lines_number = random.randint(self.noisy_lines_number_range[0], self.noisy_lines_number_range[1])
 
         # draw lines
-        y_coordinates = random.sample(range(0, ysize - 1), noisy_lines_number)
+        if self.noisy_lines_location == "random":
+            y_coordinates = random.sample(range(0, ysize - 1), noisy_lines_number)
+        else:
+            y_coordinates = self.noisy_lines_location
+
         y_coordinates.sort()
+
         for y_coordinate in y_coordinates:
 
             noisy_lines_thickness = random.randint(
@@ -158,19 +170,19 @@ class NoisyLines(Augmentation):
             else:
                 noisy_lines_direction = self.noisy_lines_direction
 
-            # horizontall lines
+            # horizontal lines
             if noisy_lines_direction == 0:
                 image_output = self.draw_noisy_lines(image)
             # vertical lines
             elif noisy_lines_direction == 1:
                 # use copy to solve the problem mentioned here:
                 # https://stackoverflow.com/questions/16461560/layout-of-the-output-array-img-is-incompatible-with-cvmat-stepndims-1-el
-                image_rotated = np.rot90(image, 1).copy()
-                image_output = np.rot90(self.draw_noisy_lines(image_rotated), 3).copy()
+                image_rotated = np.rot90(image, 3).copy()
+                image_output = np.rot90(self.draw_noisy_lines(image_rotated), 1).copy()
             # horizontal and vertical lines
             else:
-                image_output = np.rot90(self.draw_noisy_lines(image), 1).copy()
-                image_output = np.rot90(self.draw_noisy_lines(image_output), 3).copy()
+                image_output = np.rot90(self.draw_noisy_lines(image), 3).copy()
+                image_output = np.rot90(self.draw_noisy_lines(image_output), 1).copy()
 
             # return image follows the input image color channel
             if is_gray:
