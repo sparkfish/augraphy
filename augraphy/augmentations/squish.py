@@ -3,8 +3,8 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.base.augmentation import Augmentation
 from augraphy.augmentations.noisylines import NoisyLines
+from augraphy.base.augmentation import Augmentation
 
 
 class Squish(Augmentation):
@@ -33,23 +33,22 @@ class Squish(Augmentation):
 
     def __init__(
         self,
-        squish_direction = "random",
-        squish_location = "random",
-        squish_number_range = (5,10),
-        squish_distance_range = (5,7),
-        squish_line = "random",
-        squish_line_thickness_range = (1,1), 
+        squish_direction="random",
+        squish_location="random",
+        squish_number_range=(5, 10),
+        squish_distance_range=(5, 7),
+        squish_line="random",
+        squish_line_thickness_range=(1, 1),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
-        self.squish_direction = squish_direction 
+        self.squish_direction = squish_direction
         self.squish_location = squish_location
         self.squish_number_range = squish_number_range
         self.squish_distance_range = squish_distance_range
         self.squish_line = squish_line
         self.squish_line_thickness_range = squish_line_thickness_range
-        
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
@@ -67,40 +66,42 @@ class Squish(Augmentation):
         # generate random squish number
         squish_number = random.randint(self.squish_number_range[0], self.squish_number_range[1])
 
-        # generate 
+        # generate
         if self.squish_location == "random":
             squish_ys = random.sample(range(0, ysize - 1), squish_number)
         else:
             squish_ys = self.squish_location
         # reverse sort to squish from bottom so that squish location won't be affected after multiple squish iterations
-        squish_ys.sort(reverse=True)  
+        squish_ys.sort(reverse=True)
 
         squish_distance_total = 0
         for y in squish_ys:
-    
+
             # apply squish effect based on the distance
             squish_distance = random.randint(self.squish_distance_range[0], self.squish_distance_range[1])
-            image[y:-squish_distance,:] = image[y+squish_distance:,:]
-            
+            image[y:-squish_distance, :] = image[y + squish_distance :, :]
+
             # generate flag for squish line
             if self.squish_line == "random":
-                squish_line = random.choice([0,1])
+                squish_line = random.choice([0, 1])
             else:
                 squish_line = self.squish_line
-            
+
             # add squish line
             if squish_line:
-                noisy_lines = NoisyLines(noisy_lines_direction=0,
-                                         noisy_lines_location = [y],
-                                         noisy_lines_number_range=(1, 1),
-                                         noisy_lines_color=(0, 0, 0),
-                                         noisy_lines_thickness_range=self.squish_line_thickness_range,
-                                         noisy_lines_random_noise_intensity_range=(0.01, 0.1),
-                                         noisy_lines_length_interval_range=(0, 0),
-                                         noisy_lines_gaussian_kernel_value_range=(1, 1),
-                                         noisy_lines_overlay_method="ink_to_paper") 
+                noisy_lines = NoisyLines(
+                    noisy_lines_direction=0,
+                    noisy_lines_location=[y],
+                    noisy_lines_number_range=(1, 1),
+                    noisy_lines_color=(0, 0, 0),
+                    noisy_lines_thickness_range=self.squish_line_thickness_range,
+                    noisy_lines_random_noise_intensity_range=(0.01, 0.1),
+                    noisy_lines_length_interval_range=(0, 0),
+                    noisy_lines_gaussian_kernel_value_range=(1, 1),
+                    noisy_lines_overlay_method="ink_to_paper",
+                )
                 image = noisy_lines(image)
-            
+
             # add total squish distance so that we can remove it later
             squish_distance_total += squish_distance
         image = image[:-squish_distance_total, :]
@@ -130,11 +131,11 @@ class Squish(Augmentation):
                 image_output = self.apply_squish(image)
             # vertical squish
             elif squish_direction == 1:
-                image_output = np.rot90(self.apply_squish(np.rot90(image,3)), 1)
+                image_output = np.rot90(self.apply_squish(np.rot90(image, 3)), 1)
             # horizontal and vertical squish
             else:
                 image_output = self.apply_squish(image)
-                image_output = np.rot90(self.apply_squish(np.rot90(image_output,3)), 1)
+                image_output = np.rot90(self.apply_squish(np.rot90(image_output, 3)), 1)
 
             # return image follows the input image color channel
             if is_gray:
