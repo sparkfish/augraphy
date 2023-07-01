@@ -42,6 +42,7 @@ List of Augmentations
    augmentations/reflectedlight.rst
    augmentations/scribbles.rst
    augmentations/shadowcast.rst
+   augmentations/squish.rst
    augmentations/subtlenoise.rst
    augmentations/voronoi.rst
    augmentations/watermark.rst
