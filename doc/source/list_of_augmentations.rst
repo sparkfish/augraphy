@@ -41,6 +41,7 @@ List of Augmentations
    augmentations/quasi_crystal.rst
    augmentations/reflectedlight.rst
    augmentations/scribbles.rst
+   augmentations/sectionshift.rst
    augmentations/shadowcast.rst
    augmentations/squish.rst
    augmentations/subtlenoise.rst

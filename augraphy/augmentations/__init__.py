@@ -35,6 +35,7 @@ from augraphy.augmentations.quasicrystal import PatternGenerator
 from augraphy.augmentations.reflectedlight import ReflectedLight
 from augraphy.augmentations.rescale import Rescale
 from augraphy.augmentations.scribbles import Scribbles
+from augraphy.augmentations.sectionshift import SectionShift
 from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.augmentations.squish import Squish
 from augraphy.augmentations.subtlenoise import SubtleNoise
@@ -79,6 +80,7 @@ __all__ = [
     "ReflectedLight",
     "Rescale",
     "Scribbles",
+    "SectionShift",
     "ShadowCast",
     "Squish",
     "SubtleNoise",

@@ -13,9 +13,9 @@ class Geometric(Augmentation):
     :param scale: Pair of floats determining new scale of image.
     :type scale: tuple, optional
     :param translation: Pair of values determining x and y translation value.
-            The translation value will be in percentage of the image size if the value is float and in between 0.0 - 1.0:
-            x (int) = image width  * x (float and 0.0 - 1.0);
-            y (int) = image height * y (float and 0.0 - 1.0)
+            The translation value will be in percentage of the image size if the value is float and in between -1.0 - 1.0:
+            x (int) = image width  * x (float and -1.0 - 1.0);
+            y (int) = image height * y (float and -1.0 - 1.0)
     :type translation: tuple, optional
     :param fliplr: Flag to flip image in left right direction.
     :type fliplr: int, optional
