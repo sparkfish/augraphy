@@ -318,7 +318,7 @@ class NoiseGenerator:
                 n_samples_array = n_samples_array[:samples_index]
 
                 # varying y
-                ccenter_y = [ccenter_y[1], ccenter_y[1] + n_step_y]
+                ccenter_y = (ccenter_y[1], ccenter_y[1] + n_step_y)
                 ccenter_x = (0, 0)
 
                 check_break = 0
@@ -362,10 +362,7 @@ class NoiseGenerator:
                 # space between next noise patch
                 add_space = random.randint(5, 15)
 
-                ccenter_y = [ccenter_y[1] + add_space, ccenter_y[1] + add_space]
-
-            # make sure it is a tuple
-            ccenter_y = tuple(ccenter_y)
+                ccenter_y = (ccenter_y[1] + add_space, ccenter_y[1] + add_space)
 
             # generate mask
             img_mask = self.generate_mask(
