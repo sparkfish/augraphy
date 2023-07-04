@@ -364,6 +364,9 @@ class NoiseGenerator:
 
                 ccenter_y = [ccenter_y[1] + add_space, ccenter_y[1] + add_space]
 
+            # make sure it is a tuple
+            ccenter_y = tuple(ccenter_y)
+
             # generate mask
             img_mask = self.generate_mask(
                 noise_background,
