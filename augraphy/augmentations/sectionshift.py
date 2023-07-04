@@ -11,7 +11,7 @@ class SectionShift(Augmentation):
 
     :param section_shift_number_range: Tuple of ints determing the number of section shift operation.
     :type section_shift_number_range: tuple, optional
-    :param section_shift_locations: A nested list contains list of shifting boxes. 
+    :param section_shift_locations: A nested list contains list of shifting boxes.
         Each box should be in format of [x0, y0, xn, yn].
         Use "random" for random location.
     :type section_shift_locations: list, optional
@@ -33,11 +33,11 @@ class SectionShift(Augmentation):
 
     def __init__(
         self,
-        section_shift_number_range = (3,5),
-        section_shift_locations = "random",
-        section_shift_x_range = (-10,10),
-        section_shift_y_range = (-10,10),
-        section_shift_fill_value = -1,        
+        section_shift_number_range=(3, 5),
+        section_shift_locations="random",
+        section_shift_x_range=(-10, 10),
+        section_shift_y_range=(-10, 10),
+        section_shift_fill_value=-1,
         p=1,
     ):
         """Constructor method"""
@@ -66,33 +66,32 @@ class SectionShift(Augmentation):
         """
 
         ysize, xsize = image.shape[:2]
-        x0,y0,xn,yn = shift_box
+        x0, y0, xn, yn = shift_box
 
         # make sure doesn't exceed image boundary
-        x0 = min(xsize-section_shift_x-1, x0)
-        y0 = min(ysize-section_shift_y-1, y0)
-        if x0 + section_shift_x<0:
+        x0 = min(xsize - section_shift_x - 1, x0)
+        y0 = min(ysize - section_shift_y - 1, y0)
+        if x0 + section_shift_x < 0:
             x0 = x0 - section_shift_x
-        if y0 + section_shift_y<0:
+        if y0 + section_shift_y < 0:
             y0 = y0 - section_shift_y
-        if xn + section_shift_x>xsize:
+        if xn + section_shift_x > xsize:
             xn = xsize - section_shift_x
-        if yn + section_shift_y>ysize:
+        if yn + section_shift_y > ysize:
             yn = ysize - section_shift_y
-            
+
         # the section of shifted image
         image_section = image[y0:yn, x0:xn].copy()
-    
+
         # fill the shifted area with value
         if self.section_shift_fill_value != -1:
             if self.section_shift_fill_value == "random":
-                image[y0:yn, x0:xn] = (random.randint(0,255), random.randint(0,255),random.randint(0,255))
+                image[y0:yn, x0:xn] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
             else:
                 image[y0:yn, x0:xn] = self.section_shift_fill_value
-    
+
         # shift the section of image
-        image[y0+section_shift_y:yn+section_shift_y, x0+section_shift_x:xn+section_shift_x] = image_section
-        
+        image[y0 + section_shift_y : yn + section_shift_y, x0 + section_shift_x : xn + section_shift_x] = image_section
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
@@ -107,44 +106,61 @@ class SectionShift(Augmentation):
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             ysize, xsize = image.shape[:2]
-            
+
             # generate number of shifting operation
             if self.section_shift_locations == "random":
-                section_shift_number = random.randint(self.section_shift_number_range[0], self.section_shift_number_range[1])
+                section_shift_number = random.randint(
+                    self.section_shift_number_range[0],
+                    self.section_shift_number_range[1],
+                )
             else:
                 section_shift_number = len(self.section_shift_locations)
-            
+
             for i in range(section_shift_number):
-                
+
                 # check input to scale it with image width
-                if isinstance(self.section_shift_x_range[1], float) and self.section_shift_x_range[1] <= 1 and self.section_shift_x_range[1] >= -1:
-                    section_shift_x = random.randint(int(self.section_shift_x_range[0] * xsize), int(self.section_shift_x_range[1] * xsize))
+                if (
+                    isinstance(self.section_shift_x_range[1], float)
+                    and self.section_shift_x_range[1] <= 1
+                    and self.section_shift_x_range[1] >= -1
+                ):
+                    section_shift_x = random.randint(
+                        int(self.section_shift_x_range[0] * xsize),
+                        int(self.section_shift_x_range[1] * xsize),
+                    )
                 else:
                     section_shift_x = random.randint(self.section_shift_x_range[0], self.section_shift_x_range[1])
-                    
+
                 # check input to scale it with image height
-                if isinstance(self.section_shift_y_range[1], float) and self.section_shift_y_range[1] <= 1 and self.section_shift_y_range[1] >= -1:
-                    section_shift_y = random.randint(int(self.section_shift_y_range[0] * ysize), int(self.section_shift_y_range[1] * ysize))
-                else: 
+                if (
+                    isinstance(self.section_shift_y_range[1], float)
+                    and self.section_shift_y_range[1] <= 1
+                    and self.section_shift_y_range[1] >= -1
+                ):
+                    section_shift_y = random.randint(
+                        int(self.section_shift_y_range[0] * ysize),
+                        int(self.section_shift_y_range[1] * ysize),
+                    )
+                else:
                     section_shift_y = random.randint(self.section_shift_y_range[0], self.section_shift_y_range[1])
-                
-                if self.section_shift_locations == "random":    
+
+                if self.section_shift_locations == "random":
                     # for random section, generate random section width and height
-                    section_shift_width_size = random.randint(int(xsize/20), int(xsize/5))
-                    section_shift_height_size = random.randint(int(ysize/20), int(ysize/5))
- 
+                    section_shift_width_size = random.randint(int(xsize / 20), int(xsize / 5))
+                    section_shift_height_size = random.randint(int(ysize / 20), int(ysize / 5))
+
                     # generate random box
-                    start_x = random.randint(0, xsize-section_shift_x-section_shift_width_size-1)
-                    start_y = random.randint(0, ysize-section_shift_y-section_shift_height_size-1)       
+                    start_x = random.randint(0, xsize - section_shift_x - section_shift_width_size - 1)
+                    start_y = random.randint(0, ysize - section_shift_y - section_shift_height_size - 1)
                     end_x = start_x + section_shift_width_size
-                    end_y = start_y + section_shift_height_size 
+                    end_y = start_y + section_shift_height_size
                     shift_box = [start_x, start_y, end_x, end_y]
                 else:
                     shift_box = self.section_shift_locations[i]
-                     
+
                 # apply section shift
                 self.apply_shift(image, shift_box, section_shift_x, section_shift_y)
-                
+
             # return image follows the input image color channel
             if is_gray:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
