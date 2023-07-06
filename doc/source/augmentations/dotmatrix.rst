@@ -10,7 +10,7 @@ DotMatrix
 --------
 Overview
 --------
-The DotMatrix augmentation Create a dot matrix image by filling image with dots of different shapes.
+The DotMatrix augmentation Create a dot matrix image by filling image with dots of mean color in different shapes.
 
 Initially, a clean image with single line of text is created.
 
