@@ -109,11 +109,11 @@ class DotMatrix(Augmentation):
                 # initialize dot image
                 image_dot = np.zeros((dot_matrix_dot_height, dot_matrix_dot_width, 3), dtype="uint8")
                 # draw shape (index starts from 1 to leave 1 space for black pixel)
-                y0 = 1
-                yn = dot_matrix_dot_height - 2
-                x0 = 1
+                y0 = 0
+                yn = dot_matrix_dot_height - 1
+                x0 = 0
                 xmid = int(np.floor(dot_matrix_dot_width / 2))
-                xn = dot_matrix_dot_width - 2
+                xn = dot_matrix_dot_width - 1
                 triangle_points = np.array([(x0, yn), (xmid, y0), (xn, yn)])
                 cv2.drawContours(image_dot, [triangle_points], 0, (255, 255, 255), -1)
                 # mirror left right for consistent shape
@@ -126,12 +126,12 @@ class DotMatrix(Augmentation):
                 # initialize dot image
                 image_dot = np.zeros((dot_matrix_dot_height, dot_matrix_dot_width, 3), dtype="uint8")
                 # draw shape
-                y0 = 1
+                y0 = 0
                 ymid = int(np.floor(dot_matrix_dot_height / 2))
-                yn = dot_matrix_dot_height - 2
-                x0 = 1
+                yn = dot_matrix_dot_height - 1
+                x0 = 0
                 xmid = int(np.floor(dot_matrix_dot_width / 2))
-                xn = dot_matrix_dot_width - 2
+                xn = dot_matrix_dot_width - 1
                 triangle_points = np.array([(x0, ymid), (xmid, y0), (xn, ymid)])
                 cv2.drawContours(image_dot, [triangle_points], 0, (255, 255, 255), -1)
                 # mirror left right for consistent shape

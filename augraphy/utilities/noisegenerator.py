@@ -355,8 +355,7 @@ class NoiseGenerator:
                     if check_break:
                         break
                     elif ccenter_x[1] > xsize:
-                        ccenter_x[0] = xsize - 1
-                        ccenter_x[1] = xsize - 1
+                        ccenter_x = (xsize - 1, xsize - 1)
                         check_break = 1
 
                 # space between next noise patch
