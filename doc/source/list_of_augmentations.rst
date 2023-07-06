@@ -17,6 +17,7 @@ List of Augmentations
    augmentations/dirtydrum.rst
    augmentations/dirtyrollers.rst
    augmentations/dithering.rst
+   augmentations/dotmatrix.rst
    augmentations/faxify.rst
    augmentations/folding.rst
    augmentations/gamma.rst
