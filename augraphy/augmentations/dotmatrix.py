@@ -205,7 +205,8 @@ class DotMatrix(Augmentation):
                     image_dot_color = ((image_dot / 255) * dot_color).astype("uint8")
                     # apply dot to image
                     image_dot_matrix[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width] = image_dot_color[
-                        :remainder_y, :
+                        :remainder_y,
+                        :,
                     ]
 
             # remaining last row
@@ -222,7 +223,8 @@ class DotMatrix(Augmentation):
                     image_dot_color = ((image_dot / 255) * dot_color).astype("uint8")
                     # apply dot to image
                     image_dot_matrix[
-                        cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x
+                        cy : cy + dot_matrix_dot_height,
+                        start_x : start_x + remainder_x,
                     ] = image_dot_color[:, :remainder_x]
 
             # last dot (bottom right)
@@ -245,7 +247,8 @@ class DotMatrix(Augmentation):
                 # multiply to mask of shape
                 image_dot_color = ((image_dot / 255) * dot_color).astype("uint8")
                 image_dot_matrix[start_y : start_y + length_y, start_x : start_x + length_x] = image_dot_color[
-                    :length_y, :length_x
+                    :length_y,
+                    :length_x,
                 ]
 
             # return image follows the input image color channel
