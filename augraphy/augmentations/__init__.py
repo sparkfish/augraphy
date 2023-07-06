@@ -10,6 +10,7 @@ from augraphy.augmentations.delaunay import DelaunayTessellation
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
 from augraphy.augmentations.dithering import Dithering
+from augraphy.augmentations.dotmatrix import DotMatrix
 from augraphy.augmentations.faxify import Faxify
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
@@ -55,6 +56,7 @@ __all__ = [
     "DirtyDrum",
     "DirtyRollers",
     "Dithering",
+    "DotMatrix",
     "Faxify",
     "Folding",
     "Gamma",

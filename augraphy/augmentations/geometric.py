@@ -59,7 +59,7 @@ class Geometric(Augmentation):
         padding=[0, 0, 0, 0],
         padding_type="fill",
         padding_value=(255, 255, 255),
-        randomize=1,
+        randomize=0,
         p=1,
     ):
         """Constructor method"""

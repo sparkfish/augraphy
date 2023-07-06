@@ -324,7 +324,7 @@ class NoiseGenerator:
                 check_break = 0
                 while True:
                     # varying x
-                    ccenter_x = [ccenter_x[0], ccenter_x[1] + n_step_x]
+                    ccenter_x = (ccenter_x[0], ccenter_x[1] + n_step_x)
 
                     # generate coordinates for clusters of blobs
                     cgenerated_points_x, cgenerated_points_y = self.generate_points(
@@ -346,17 +346,16 @@ class NoiseGenerator:
 
                     # space between next noise patch
                     add_space = random.randint(10, 20)
-                    ccenter_x = [
+                    ccenter_x = (
                         ccenter_x[0] + n_step_x + add_space,
                         ccenter_x[1] + n_step_x + add_space,
-                    ]
+                    )
 
                     # to break out from inner loop
                     if check_break:
                         break
                     elif ccenter_x[1] > xsize:
-                        ccenter_x[0] = xsize - 1
-                        ccenter_x[1] = xsize - 1
+                        ccenter_x = (xsize - 1, xsize - 1)
                         check_break = 1
 
                 # space between next noise patch
