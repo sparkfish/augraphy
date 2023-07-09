@@ -10,7 +10,7 @@ DotMatrix
 --------
 Overview
 --------
-The DotMatrix augmentation Create a dot matrix image by filling image with dots of mean color in different shapes.
+The DotMatrix augmentation creates dot matrix effect by drawing dots of mean color in the detected contours.
 
 Initially, a clean image with single line of text is created.
 
@@ -46,20 +46,31 @@ Clean image:
 Example 1
 ---------
 In this example, a DotMatrix augmentation instance is initialized and the shape of dot matrix effect is set to circle ("circle").
-The width and height of each dot in dot matrix effect is set to 7 pixels (7,7).
-The Gaussian kernel value to blur each dot of dot matrix effect is set to 5 (5,5).
-There is no rotation in each dot of the dot matrix effect (0,0).
+The width and height of each dot in dot matrix effect is set to 5 pixels (5,5).
+The min and max width of the contours to apply the effect are 1 (1,1) and 50 (50,50) respectiely.
+The min and max height of the contours to apply the effect are 1 (1,1) and 50 (50,50) respectiely.
+The min and max area of the contours to apply the effect are 10 (10,10) and 800 (800,800) respectiely.
+The median kernel value in removing the existing contours is set to 29 (29,29).
+No Gaussian blurring is applied to the dot matrix effect (1,1).
+There is no rotation in each dot of the dot matrix effect too (0,0).
 
 Code example:
 
 ::
 
-    dotmatrix = DotMatrix(dot_matrix_shape = "circle",
-                          dot_matrix_dot_width_range = (7, 7),
-                          dot_matrix_dot_height_range = (7, 7),
-                          dot_matrix_gaussian_kernel_value_range = (5,5),
-                          dot_matrix_rotate_value_range = (0,0),
-                          )
+    dotmatrix = DotMatrix(dot_matrix_shape="circle",
+          	      	  dot_matrix_dot_width_range=(5, 5),
+                	  dot_matrix_dot_height_range=(5, 5),
+                	  dot_matrix_min_width_range=(1, 1),
+                	  dot_matrix_max_width_range=(50, 50),
+                	  dot_matrix_min_height_range=(1, 1),
+                	  dot_matrix_max_height_range=(50, 50),
+                	  dot_matrix_min_area_range=(10, 10),
+                	  dot_matrix_max_area_range=(800, 800),
+                	  dot_matrix_median_kernel_value_range = (29,29),
+                	  dot_matrix_gaussian_kernel_value_range=(1, 1),
+                	  dot_matrix_rotate_value_range=(0, 0)
+			  )
 
 
     img_dotmatrix = dotmatrix(image)
