@@ -229,7 +229,9 @@ class Hollow(Augmentation):
             # median kernel value must be odd
             if not median_kernel_value % 2:
                 median_kernel_value += 1
-            image_median = cv2.medianBlur(image, median_kernel_value)
+
+            # median kernel max value is 255
+            image_median = cv2.medianBlur(image, min(255, median_kernel_value))
 
             # get background by removing the detected contours
             image_output = image.copy()
