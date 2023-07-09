@@ -115,7 +115,7 @@ class DotMatrix(Augmentation):
             if median_kernel_value > 255:
                 scale = 255 / median_kernel_value
                 image_resize = cv2.resize(image, (int(xsize * scale), int(ysize * scale)), 0)
-                image_median = cv2.medianBlur(image_resize, median_kernel_value)
+                image_median = cv2.medianBlur(image_resize, 255)
             else:
                 image_median = cv2.medianBlur(image, median_kernel_value)
             if median_kernel_value > 255:
@@ -147,6 +147,19 @@ class DotMatrix(Augmentation):
 
                 # merge contours in each channel
                 contours.extend(contours_single)
+
+            # convert back to uint8
+            image_binary[image_binary > 255] = 255
+            image_binary = image_binary.astype("uint8")
+
+            # find contours of merged binary
+            contours_single, _ = cv2.findContours(
+                image_binary,
+                cv2.RETR_LIST,
+                cv2.CHAIN_APPROX_SIMPLE,
+            )
+            # merge contours of binary image
+            contours.extend(contours_single)
 
             # width
             if self.dot_matrix_min_width_range[0] <= 1.0 and isinstance(self.dot_matrix_min_width_range[0], float):
@@ -229,25 +242,6 @@ class DotMatrix(Augmentation):
                     and area > min_area
                 ):
                     cv2.drawContours(image_mask, [contour], -1, (255, 255, 255), thickness=cv2.FILLED)
-
-            # convert back to uint8
-            image_binary[image_binary > 255] = 255
-            image_binary = image_binary.astype("uint8")
-
-            #            from matplotlib import pyplot as plt
-            #            plt.figure()
-            #            plt.imshow(image_mask)
-            #            plt.title("mask")
-            #
-            #            from matplotlib import pyplot as plt
-            #            plt.figure()
-            #            plt.imshow(image_binary)
-            #            plt.title("binary")
-            #
-            #            from matplotlib import pyplot as plt
-            #            plt.figure()
-            #            plt.imshow(image_median)
-            #            plt.title("median")
 
             # generate shape
             if self.dot_matrix_shape == "random":
