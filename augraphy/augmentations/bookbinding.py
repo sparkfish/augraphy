@@ -177,6 +177,8 @@ class BookBinding(Augmentation):
         curve_frequency = (1, 3)
         curve_height = (1, 3)
         curve_length_one_side = (10, 30)
+        rotate_angle_in_order = 1
+        use_cache_images = 1
 
         # from PageBorder, min value is 1
         self.backdrop_color = (
@@ -194,7 +196,9 @@ class BookBinding(Augmentation):
             page_border_width_height=(int(added_border_height / 2), -added_border_height),
             page_border_color=(0, 0, 0),
             page_border_background_color=self.backdrop_color,
+            page_border_use_cache_images=use_cache_images,
             page_numbers=random.randint(page_number, page_number),
+            page_rotate_angle_in_order=rotate_angle_in_order,
             page_rotation_angle_range=(page_rotation, page_rotation),
             curve_frequency=curve_frequency,
             curve_height=curve_height,
@@ -221,7 +225,9 @@ class BookBinding(Augmentation):
             page_border_width_height=(int(-added_border_height / 2), -added_border_height),
             page_border_color=(0, 0, 0),
             page_border_background_color=self.backdrop_color,
+            page_border_use_cache_images=use_cache_images,
             page_numbers=random.randint(page_number, page_number),
+            page_rotate_angle_in_order=rotate_angle_in_order,
             page_rotation_angle_range=(page_rotation, page_rotation),
             curve_frequency=curve_frequency,
             curve_height=curve_height,
@@ -286,7 +292,8 @@ class BookBinding(Augmentation):
             image_output = np.flipud(image_output)
             image_mask = np.flipud(image_mask)
 
-        # add shadow effect
+        # add shadow effect (temporary disabled, will be updated later)
+        """
         image_darken = image_output.astype("float") * 0.7
         offset = random.randint(int(image.shape[0] / 40), int(image.shape[0] / 30))
         image_darken[image_mask > 0] = image_output[image_mask > 0]
@@ -296,6 +303,7 @@ class BookBinding(Augmentation):
             image_darken[offset:, :] = image_darken[:-offset, :]
         image_darken = cv2.GaussianBlur(image_darken.astype("uint8"), (151, 151), cv2.BORDER_DEFAULT)
         image_output[image_mask > 0] = image_darken[image_mask > 0]
+        """
 
         return image_output
 
@@ -304,7 +312,7 @@ class BookBinding(Augmentation):
             image = image.copy()
 
             # load left side of image from cache
-            image_left = load_image_from_cache()
+            image_left = load_image_from_cache(random_image=1)
             if image_left is not None:
 
                 # resize foreground

@@ -8,6 +8,7 @@ import numpy as np
 from numba import config
 from numba import jit
 from numpy.linalg import norm
+from PIL import Image
 from skimage.filters import threshold_li
 from skimage.filters import threshold_local
 from skimage.filters import threshold_mean
@@ -20,23 +21,25 @@ from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
 
 
-def load_image_from_cache():
-    """Load image from augraphy cache folder."""
+def load_image_from_cache(random_image=0):
+    """Load image from augraphy cache folder.
+
+    :param random_image: Flag to load random image from cache folder.
+        If it is not set, it loads the latest modified image.
+    :type random_image: int
+    """
 
     # path to foreground cache folder
     cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
     cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
 
-    # at least 2 images, because 1 image will be current image
-    if len(cache_image_paths) > 1:
-
-        modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
-        newest_index = np.argmax(modified_time)
-        image_index = random.randint(0, len(cache_image_paths) - 1)
-
-        # prevent same image
-        while image_index == newest_index:
+    # at least 1 image
+    if len(cache_image_paths) > 0:
+        if random_image:
             image_index = random.randint(0, len(cache_image_paths) - 1)
+        else:
+            modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
+            image_index = np.argmax(modified_time)
         # get random image
         image = cv2.imread(cache_image_paths[image_index])
 
@@ -139,6 +142,17 @@ def rotate_image(mat, angle, white_background=1):
         rotated_mat = cv2.bitwise_not(rotated_mat)
 
     return rotated_mat
+
+
+def rotate_image_PIL(image, angle, background_value=(0, 0, 0), expand=0):
+    """Rotates an image (angle in degrees) by converting them to PIL image first."""
+
+    image_PIL = Image.fromarray(image)
+    rotated_image_PIL = image_PIL.rotate(angle, expand=expand, fillcolor=background_value)
+
+    rotated_image = np.array(rotated_image_PIL)
+
+    return rotated_image
 
 
 # Generate average intensity value

@@ -5,7 +5,8 @@ import numpy as np
 from numba import config
 from numba import jit
 
-from augraphy.augmentations.lib import rotate_image
+from augraphy.augmentations.lib import load_image_from_cache
+from augraphy.augmentations.lib import rotate_image_PIL
 from augraphy.augmentations.lib import warp_fold_left_side
 from augraphy.augmentations.lib import warp_fold_right_side
 from augraphy.base.augmentation import Augmentation
@@ -27,8 +28,12 @@ class PageBorder(Augmentation):
     :type page_border_color: tuple, optional
     :param page_border_background_color: The color (BGR) of border background.
     :type page_border_background_color: tuple, optional
+    :param page_border_use_cache_images: Flag to enable the usage of cache images in creating page border effect.
+    :type page_border_use_cache_images: int, optional
     :param page_numbers: An integer determining the number of pages in the border.
     :type page_numbers: int, optional
+    :param page_rotation_angle_in_order: Flag to enable an ordered or random angle rotation.
+    :type page_rotation_angle_in_order: int , optional
     :param page_rotation_angle_range: Pair of ints determining the angle of rotation in the border effect.
     :type page_rotation_angle_range: tuple , optional
     :param curve_frequency: Pair of ints determining number of curvy section in the generated page borders.
@@ -50,9 +55,11 @@ class PageBorder(Augmentation):
         page_border_width_height="random",
         page_border_color=(0, 0, 0),
         page_border_background_color=(0, 0, 0),
+        page_border_use_cache_images=0,
         page_numbers="random",
+        page_rotate_angle_in_order=1,
         page_rotation_angle_range=(-3, 3),
-        curve_frequency=(2, 8),
+        curve_frequency=(0, 1),
         curve_height=(2, 4),
         curve_length_one_side=(50, 100),
         same_page_border=1,
@@ -65,7 +72,9 @@ class PageBorder(Augmentation):
         self.page_border_width_height = page_border_width_height
         self.page_border_color = page_border_color
         self.page_border_background_color = page_border_background_color
+        self.page_border_use_cache_images = page_border_use_cache_images
         self.page_numbers = page_numbers
+        self.page_rotate_angle_in_order = page_rotate_angle_in_order
         self.page_rotation_angle_range = page_rotation_angle_range
         self.curve_frequency = curve_frequency
         self.curve_height = curve_height
@@ -75,7 +84,7 @@ class PageBorder(Augmentation):
         config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"PageBorder(page_border_width_height={self.page_border_width_height}, page_border_color={self.page_border_color}, page_border_background_color={self.page_border_background_color}, page_numbers={self.page_numbers}, page_rotation_angle_range={self.page_rotation_angle_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, same_page_border={self.same_page_border}, numba_jit={self.numba_jit}, p={self.p})"
+        return f"PageBorder(page_border_width_height={self.page_border_width_height}, page_border_color={self.page_border_color}, page_border_background_color={self.page_border_background_color}, page_border_use_cache_images={self.page_border_use_cache_images}, page_numbers={self.page_numbers}, page_rotate_angle_in_order={self.page_rotate_angle_in_order}, page_rotation_angle_range={self.page_rotation_angle_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, same_page_border={self.same_page_border}, numba_jit={self.numba_jit}, p={self.p})"
 
     def random_folding(self, image):
         """Create random folding effect at the image border.
@@ -136,34 +145,81 @@ class PageBorder(Augmentation):
 
         return image_curve_right
 
-    @staticmethod
-    @jit(nopython=True, cache=True)
-    def set_invalid_value(border_image_single):
-        """Change the filled value from rotation into -1 value.
+    def center_overlay(self, image_background, image_foreground, image_mask_background, image_mask_foreground):
+        """Overlays foreground image into background image in the center.
 
-        :param border_image_single: The input image.
-        :type border_image_single: numpy array
-
+        :param image_background: The background image.
+        :type image_background: numpy array
+        :param image_foreground: The foreground image.
+        :type image_foreground: numpy array
+        :param image_mask_background: The mask of background image.
+        :type image_mask_background: numpy array
+        :param image_mask_foreground: The mask of foreground image.
+        :type image_mask_foreground: numpy array
         """
-        bysize, bxsize = border_image_single.shape[:2]
 
-        # check from top left
-        for cx in range(bxsize):
-            check = 0
-            for cy in range(bysize):
-                if np.all(border_image_single[cy, cx] == 0):
-                    border_image_single[cy, cx] = -1
-                    check = 1
-                else:
-                    if cy - 1 >= 0:
-                        border_image_single[cy - 1, cx] = 1
+        ysize, xsize = image_foreground.shape[:2]
+        bysize, bxsize = image_background.shape[:2]
 
-                    break
+        # y
+        ycenter = int(ysize / 2)
+        bycenter = int(bysize / 2)
+        dy_top = abs(ycenter - bycenter)
+        dy_bottom = abs(abs(ysize - ycenter) - abs(bysize - bycenter))
+        # x
+        xcenter = int(xsize / 2)
+        bxcenter = int(bxsize / 2)
+        dy_left = abs(xcenter - bxcenter)
+        dy_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
 
-            if not check:
-                break
+        # condition where foreground image is larger
+        if ysize > bysize:
+            # (top, bottom), (left, right)
+            image_background = np.pad(
+                image_background,
+                pad_width=((dy_top, dy_bottom), (0, 0), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+            image_mask_background = np.pad(
+                image_mask_background,
+                pad_width=((dy_top, dy_bottom), (0, 0), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
 
-        return border_image_single
+        if xsize > bxsize:
+            # (top, bottom), (left, right)
+            image_background = np.pad(
+                image_background,
+                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+            image_mask_background = np.pad(
+                image_mask_background,
+                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+
+        indices = image_mask_foreground > 0
+
+        # overlay image
+        if bysize > ysize and bxsize > xsize:
+            image_background[dy_top:-dy_bottom, dy_left:-dy_right][indices] = image_foreground[indices]
+            image_mask_background[dy_top:-dy_bottom, dy_left:-dy_right] += image_mask_foreground
+        elif bysize > ysize:
+            image_background[dy_top:-dy_bottom, :][indices] = image_foreground[indices]
+            image_mask_background[dy_top:-dy_bottom, :] += image_mask_foreground
+        elif bxsize > xsize:
+            image_background[:, dy_left:-dy_right][indices] = image_foreground[indices]
+            image_mask_background[:, dy_left:-dy_right] += image_mask_foreground
+        else:
+            image_background[indices] = image_foreground[indices]
+            image_mask_background += image_mask_foreground
+
+        return image_background, image_mask_background
 
     def create_page_borders(
         self,
@@ -181,7 +237,11 @@ class PageBorder(Augmentation):
         :type border_height: int
         """
 
-        border_image = image.copy()
+        border_width = abs(page_border_width)
+        border_height = abs(page_border_height)
+
+        # temporary, in case we need random input
+        page_border_background_color = self.page_border_background_color
 
         # generate page number
         if self.page_numbers == "random":
@@ -194,63 +254,81 @@ class PageBorder(Augmentation):
         # +1 to have an extra top layer page
         page_numbers += 1
 
-        # default, extend top left
-        if page_border_width < 0 and page_border_height < 0:
-            pass
-        # extend bottom left
-        elif page_border_width < 0 and page_border_height > 0:
-            # rotate counter clockwise 3 times to align bottomleft to topleft （topleft is reference)
-            border_image = np.rot90(border_image, 3)
-        # extend bottom right
-        elif page_border_width > 0 and page_border_height > 0:
-            # rotate counter clockwise twice to align bottomright to topleft （topleft is reference)
-            border_image = np.rot90(border_image, 2)
-        # extend top right
-        elif page_border_width > 0 and page_border_height < 0:
-            # rotate counter clockwise once to align topright to topleft （topleft is reference)
-            border_image = np.rot90(border_image, 1)
-        # extend top, default
-        elif page_border_width == 0 and page_border_height < 0:
-            pass
-        # bottom only
-        elif page_border_width == 0 and page_border_height > 0:
-            # rotate counter clockwise twice to align bottom to top （top is reference)
-            border_image = np.rot90(border_image, 2)
-        # extend left, default
-        elif page_border_width < 0 and page_border_height == 0:
-            pass
-        # right only
-        elif page_border_width > 0 and page_border_height == 0:
-            # rotate counter clockwise twice to align right to left （left is reference)
-            border_image = np.rot90(border_image, 2)
+        ysize, xsize = image.shape[:2]
 
-        image_rotated = border_image.copy()
-        border_width = abs(page_border_width)
-        border_height = abs(page_border_height)
+        # load border images
+        border_images = []
+        if self.page_border_use_cache_images:
+            for i in range(page_numbers - 1):
+                image_cache = load_image_from_cache(random_image=1)
+                if image_cache is None:
+                    image_cache = image.copy()
+                else:
+                    image_cache = cv2.resize(
+                        image_cache,
+                        (xsize, ysize),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                border_images.append(image_cache)
+            # last image on the surface must be the input image
+            border_images.append(image.copy())
+        else:
+            for i in range(page_numbers):
+                border_images.append(image.copy())
 
-        # min color value is 1, to prevent a same black background on the rotated image
-        page_border_background_color = list(self.page_border_background_color)
-        for i in range(3):
-            page_border_background_color[i] = max(page_border_background_color[i], 1)
+        for i, border_image in enumerate(border_images):
+            # default, extend top left
+            if page_border_width < 0 and page_border_height < 0:
+                pass
+            # extend bottom left
+            elif page_border_width < 0 and page_border_height > 0:
+                # rotate counter clockwise 3 times to align bottomleft to topleft （topleft is reference)
+                border_image = np.rot90(border_image, 3)
+            # extend bottom right
+            elif page_border_width > 0 and page_border_height > 0:
+                # rotate counter clockwise twice to align bottomright to topleft （topleft is reference)
+                border_image = np.rot90(border_image, 2)
+            # extend top right
+            elif page_border_width > 0 and page_border_height < 0:
+                # rotate counter clockwise once to align topright to topleft （topleft is reference)
+                border_image = np.rot90(border_image, 1)
+            # extend top, default
+            elif page_border_width == 0 and page_border_height < 0:
+                pass
+            # bottom only
+            elif page_border_width == 0 and page_border_height > 0:
+                # rotate counter clockwise twice to align bottom to top （top is reference)
+                border_image = np.rot90(border_image, 2)
+            # extend left, default
+            elif page_border_width < 0 and page_border_height == 0:
+                pass
+            # right only
+            elif page_border_width > 0 and page_border_height == 0:
+                # rotate counter clockwise twice to align right to left （left is reference)
+                border_image = np.rot90(border_image, 2)
 
-        # for same page border, page border grows internally
+            #            rysize, rxsize = border_image.shape[:2]
+
+            # for same page border, page border grows internally
+            if self.same_page_border:
+                if border_width == 0:
+                    border_image = border_image[border_height:, :]
+                elif border_height == 0:
+                    border_image = border_image[:, border_width:]
+                else:
+                    border_image = border_image[border_height:, border_width:]
+
+            border_images[i] = border_image
+
+        # create background image
         if self.same_page_border:
-            if border_width == 0:
-                border_image = border_image[border_height:, :]
-            elif border_height == 0:
-                border_image = border_image[:, border_width:]
-            else:
-                border_image = border_image[border_height:, border_width:]
-
-            border_image_merged = np.full_like(image_rotated, fill_value=page_border_background_color, dtype="uint8")
+            border_image_merged = np.full_like(border_images[0], fill_value=page_border_background_color, dtype="uint8")
         else:
             border_image_merged = np.full(
-                (image_rotated.shape[0] + border_height, image_rotated.shape[1] + border_width, 3),
+                (border_images[0].shape[0] + border_height, border_images[1].shape[1] + border_width, 3),
                 fill_value=page_border_background_color,
                 dtype="uint8",
             )
-
-        border_image_single = border_image.copy()
 
         # interpolate shifting x and y
         if border_width == 0:
@@ -270,13 +348,15 @@ class PageBorder(Augmentation):
         rotated_angle = random.randint(self.page_rotation_angle_range[0], self.page_rotation_angle_range[1])
         rotated_angle_step = rotated_angle / (total_shifts)
 
+        image_mask_background = np.full_like(border_image_merged, fill_value=0, dtype="uint8")
+
         for i in reversed(range(total_shifts)):
 
             shifted_value_y = int(shifted_value_ys[i])
             shifted_value_x = int(shifted_value_xs[i])
 
             # create a copy of image
-            border_image_fold = border_image.copy()
+            border_image_fold = border_images[total_shifts - 1 - i].copy()
 
             # draw borders line on possible folding edges before folding process
             if page_border_height != 0:
@@ -284,87 +364,91 @@ class PageBorder(Augmentation):
             if page_border_width != 0:
                 border_image_fold[:, 0] = self.page_border_color
 
-            # apply curve effect to borders
-            curve_frequency = random.randint(self.curve_frequency[0], self.curve_frequency[1])
-            for _ in range(curve_frequency):
-                border_image_fold = self.random_folding(border_image_fold)
-                border_image_fold = np.rot90(self.random_folding(np.rot90(border_image_fold, 3)), 1)
-
-            # draw the rest of borders line
-            border_image_fold[-1, :] = self.page_border_color
-            border_image_fold[:, -1] = self.page_border_color
+            # apply curve effect to borders (last image shouldn't apply folding)
+            if i != 0:
+                curve_frequency = random.randint(self.curve_frequency[0], self.curve_frequency[1])
+                for _ in range(curve_frequency):
+                    border_image_fold = self.random_folding(border_image_fold)
+                    border_image_fold = np.rot90(self.random_folding(np.rot90(border_image_fold, 3)))
 
             border_image_single = border_image_fold.copy()
+            # draw the rest of borders line
+            border_image_single[-1, :] = self.page_border_color
+            border_image_single[0, :] = self.page_border_color
+            border_image_single[:, 0] = self.page_border_color
+            border_image_single[:, -1] = self.page_border_color
+            image_mask_rotate_single = np.full_like(border_image_single, fill_value=1, dtype="uint8")
 
-            # rotation
-            rotated_angle -= rotated_angle_step
-            if rotated_angle != 0:
-                ysize, xsize = border_image_single.shape[:2]
+            # pad image based on shift values
+            extend_bottom = border_height - shifted_value_y
+            extend_right = border_width - shifted_value_x
+            border_image_single = np.pad(
+                border_image_single,
+                pad_width=((shifted_value_y, extend_bottom), (shifted_value_x, extend_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+            image_mask_rotate_single = np.pad(
+                image_mask_rotate_single,
+                pad_width=((shifted_value_y, extend_bottom), (shifted_value_x, extend_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
 
-                # rotate borders
-                border_image_single_rotated = rotate_image(border_image_single, rotated_angle, 0)
-                nysize, nxsize = border_image_single_rotated.shape[:2]
-                border_image_single = border_image_single_rotated[:ysize, nxsize - xsize :]
-
-                # set image as int to assign negative value, so that we can identify the filled area during rotation
-                border_image_single = border_image_single.astype("int")
-
-                # check from topleft
-                border_image_single = self.set_invalid_value(border_image_single)
-                # check from bottomleft
-                border_image_single = self.set_invalid_value(np.flipud(border_image_single))
-                border_image_single = np.flipud(border_image_single)
-
-                # check from topright
-                border_image_single = self.set_invalid_value(np.fliplr(border_image_single))
-                # check from bottomrightt
-                border_image_single = self.set_invalid_value(np.flipud(border_image_single))
-                border_image_single = np.flipud(border_image_single)
-                border_image_single = np.fliplr(border_image_single)
-
-            # fill only non negative area
-            indices = border_image_single != -1
-            # for bottom page, where it didn't shift any value
-            if shifted_value_y - border_height == 0 and shifted_value_x - border_width == 0:
-                border_image_merged[border_height:, border_width:][indices] = border_image_single[indices]
-            # for condition where border width is 0
-            elif shifted_value_x - border_width == 0:
-                border_image_merged[shifted_value_y : -border_height + shifted_value_y, :][
-                    indices
-                ] = border_image_single[indices]
-            # for condition where border height is 0
-            elif shifted_value_y - border_height == 0:
-                border_image_merged[:, shifted_value_x : -border_width + shifted_value_x][
-                    indices
-                ] = border_image_single[indices]
-            # for condition where border width and height are not 0
+            # rotate page
+            if self.page_rotate_angle_in_order:
+                # rotation
+                rotated_angle -= rotated_angle_step
             else:
-                border_image_merged[
-                    shifted_value_y : -border_height + shifted_value_y,
-                    shifted_value_x : -border_width + shifted_value_x,
-                ][indices] = border_image_single[indices]
+                # no rotation on final image
+                if i == 0:
+                    rotated_angle = 0
+                else:
+                    rotated_angle = random.randint(self.page_rotation_angle_range[0], self.page_rotation_angle_range[1])
+            if rotated_angle != 0:
+                image_mask_rotate_single = rotate_image_PIL(image_mask_rotate_single, rotated_angle, expand=1)
+                border_image_single = rotate_image_PIL(border_image_single, rotated_angle, expand=1)
+
+            border_image_merged, image_mask_background = self.center_overlay(
+                border_image_merged,
+                border_image_single,
+                image_mask_background,
+                image_mask_rotate_single,
+            )
+
+        # update background value based on mask
+        image_mask_background[image_mask_background > 0] = 255
+        image_mask_background_gray = cv2.cvtColor(image_mask_background, cv2.COLOR_BGR2GRAY)
+        indices = image_mask_background_gray == 0
+        border_image_merged[indices] = page_border_background_color
 
         border_image_merged = cv2.GaussianBlur(border_image_merged, (3, 3), 0)
 
         # merge each pages into a main page
         if self.same_page_border:
-            if border_width == 0:
-                border_image_merged[border_height:, :] = image_rotated[border_height:, :]
-            elif border_height == 0:
-                border_image_merged[:, border_width:] = image_rotated[:, border_width:]
-            else:
-                border_image_merged[border_height:, border_width:] = image_rotated[border_height:, border_width:]
-                border_image_merged[border_height, border_width:] = self.page_border_color
-                border_image_merged[border_height:, border_width] = self.page_border_color
-        else:
-            if border_width == 0:
-                border_image_merged[border_height:, :] = image_rotated
-            elif border_height == 0:
-                border_image_merged[:, border_width:] = image_rotated
-            else:
-                border_image_merged[border_height:, border_width:] = image_rotated
-                border_image_merged[border_height, border_width:] = self.page_border_color
-                border_image_merged[border_height:, border_width] = self.page_border_color
+
+            ysize, xsize = image.shape[:2]
+            bysize, bxsize = border_image_merged.shape[:2]
+
+            if bysize > ysize or bxsize > xsize:
+
+                # y
+                ycenter = int(ysize / 2)
+                bycenter = int(bysize / 2)
+                dy_top = abs(ycenter - bycenter)
+                dy_bottom = abs(abs(ysize - ycenter) - abs(bysize - bycenter))
+                # x
+                xcenter = int(xsize / 2)
+                bxcenter = int(bxsize / 2)
+                dy_left = abs(xcenter - bxcenter)
+                dy_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
+
+                if bysize > ysize and bxsize > xsize:
+                    border_image_merged = border_image_merged[dy_top:-dy_bottom, dy_left:-dy_right]
+                elif bysize > ysize:
+                    border_image_merged = border_image_merged[dy_top:-dy_bottom, :]
+                elif bxsize > xsize:
+                    border_image_merged = border_image_merged[:, dy_left:-dy_right]
 
         # rotate back to original position
         # default, extend top left
