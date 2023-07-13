@@ -276,6 +276,7 @@ class PageBorder(Augmentation):
             for i in range(page_numbers):
                 border_images.append(image.copy())
 
+        yxsize = []
         for i, border_image in enumerate(border_images):
             # default, extend top left
             if page_border_width < 0 and page_border_height < 0:
@@ -307,10 +308,14 @@ class PageBorder(Augmentation):
                 # rotate counter clockwise twice to align right to left （left is reference)
                 border_image = np.rot90(border_image, 2)
 
-            #            rysize, rxsize = border_image.shape[:2]
+            # get size before the pruning for same page border
 
             # for same page border, page border grows internally
             if self.same_page_border:
+                if not yxsize:
+                    rysize, rxsize = border_image.shape[:2]
+                    yxsize.extend([rysize, rxsize])
+
                 if border_width == 0:
                     border_image = border_image[border_height:, :]
                 elif border_height == 0:
@@ -427,7 +432,7 @@ class PageBorder(Augmentation):
         # merge each pages into a main page
         if self.same_page_border:
 
-            ysize, xsize = image.shape[:2]
+            ysize, xsize = yxsize
             bysize, bxsize = border_image_merged.shape[:2]
 
             if bysize > ysize or bxsize > xsize:
