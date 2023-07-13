@@ -151,7 +151,7 @@ class BleedThrough(Augmentation):
         """
 
         # load image from cache
-        image_bleedthrough_foreground = load_image_from_cache()
+        image_bleedthrough_foreground = load_image_from_cache(random_image=1)
         if image_bleedthrough_foreground is not None:
 
             # resize foreground
