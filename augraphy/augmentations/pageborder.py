@@ -30,6 +30,8 @@ class PageBorder(Augmentation):
     :type page_border_background_color: tuple, optional
     :param page_border_use_cache_images: Flag to enable the usage of cache images in creating page border effect.
     :type page_border_use_cache_images: int, optional
+    :param page_border_trim_sides： Tuple of 4 (left, top, right, bottom) determining which sides of the image to be trimmed.
+    :type page_border_trim_sides: int, optional
     :param page_numbers: An integer determining the number of pages in the border.
     :type page_numbers: int, optional
     :param page_rotation_angle_in_order: Flag to enable an ordered or random angle rotation.
@@ -56,6 +58,7 @@ class PageBorder(Augmentation):
         page_border_color=(0, 0, 0),
         page_border_background_color=(0, 0, 0),
         page_border_use_cache_images=0,
+        page_border_trim_sides=(0, 0, 0, 0),
         page_numbers="random",
         page_rotate_angle_in_order=1,
         page_rotation_angle_range=(-3, 3),
@@ -73,6 +76,7 @@ class PageBorder(Augmentation):
         self.page_border_color = page_border_color
         self.page_border_background_color = page_border_background_color
         self.page_border_use_cache_images = page_border_use_cache_images
+        self.page_border_trim_sides = page_border_trim_sides
         self.page_numbers = page_numbers
         self.page_rotate_angle_in_order = page_rotate_angle_in_order
         self.page_rotation_angle_range = page_rotation_angle_range
@@ -84,7 +88,7 @@ class PageBorder(Augmentation):
         config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"PageBorder(page_border_width_height={self.page_border_width_height}, page_border_color={self.page_border_color}, page_border_background_color={self.page_border_background_color}, page_border_use_cache_images={self.page_border_use_cache_images}, page_numbers={self.page_numbers}, page_rotate_angle_in_order={self.page_rotate_angle_in_order}, page_rotation_angle_range={self.page_rotation_angle_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, same_page_border={self.same_page_border}, numba_jit={self.numba_jit}, p={self.p})"
+        return f"PageBorder(page_border_width_height={self.page_border_width_height}, page_border_color={self.page_border_color}, page_border_background_color={self.page_border_background_color}, page_border_use_cache_images={self.page_border_use_cache_images},  page_border_trim_sides={self.page_border_trim_sides}, page_numbers={self.page_numbers}, page_rotate_angle_in_order={self.page_rotate_angle_in_order}, page_rotation_angle_range={self.page_rotation_angle_range}, curve_frequency={self.curve_frequency}, curve_height={self.curve_height}, curve_length_one_side={self.curve_length_one_side}, same_page_border={self.same_page_border}, numba_jit={self.numba_jit}, p={self.p})"
 
     def random_folding(self, image):
         """Create random folding effect at the image border.
@@ -280,42 +284,71 @@ class PageBorder(Augmentation):
         for i, border_image in enumerate(border_images):
             # default, extend top left
             if page_border_width < 0 and page_border_height < 0:
-                pass
+                page_border_trim_sides = self.page_border_trim_sides
             # extend bottom left
             elif page_border_width < 0 and page_border_height > 0:
                 # rotate counter clockwise 3 times to align bottomleft to topleft （topleft is reference)
                 border_image = np.rot90(border_image, 3)
+                page_border_trim_sides = (
+                    self.page_border_trim_sides[3],
+                    self.page_border_trim_sides[0],
+                    self.page_border_trim_sides[1],
+                    self.page_border_trim_sides[2],
+                )
             # extend bottom right
             elif page_border_width > 0 and page_border_height > 0:
                 # rotate counter clockwise twice to align bottomright to topleft （topleft is reference)
                 border_image = np.rot90(border_image, 2)
+                page_border_trim_sides = (
+                    self.page_border_trim_sides[2],
+                    self.page_border_trim_sides[3],
+                    self.page_border_trim_sides[0],
+                    self.page_border_trim_sides[1],
+                )
             # extend top right
             elif page_border_width > 0 and page_border_height < 0:
                 # rotate counter clockwise once to align topright to topleft （topleft is reference)
                 border_image = np.rot90(border_image, 1)
+                page_border_trim_sides = (
+                    self.page_border_trim_sides[1],
+                    self.page_border_trim_sides[2],
+                    self.page_border_trim_sides[3],
+                    self.page_border_trim_sides[0],
+                )
             # extend top, default
             elif page_border_width == 0 and page_border_height < 0:
-                pass
+                page_border_trim_sides = self.page_border_trim_sides
             # bottom only
             elif page_border_width == 0 and page_border_height > 0:
                 # rotate counter clockwise twice to align bottom to top （top is reference)
                 border_image = np.rot90(border_image, 2)
+                page_border_trim_sides = (
+                    self.page_border_trim_sides[2],
+                    self.page_border_trim_sides[3],
+                    self.page_border_trim_sides[0],
+                    self.page_border_trim_sides[1],
+                )
             # extend left, default
             elif page_border_width < 0 and page_border_height == 0:
-                pass
+                page_border_trim_sides = self.page_border_trim_sides
             # right only
             elif page_border_width > 0 and page_border_height == 0:
                 # rotate counter clockwise twice to align right to left （left is reference)
                 border_image = np.rot90(border_image, 2)
+                page_border_trim_sides = (
+                    self.page_border_trim_sides[2],
+                    self.page_border_trim_sides[3],
+                    self.page_border_trim_sides[0],
+                    self.page_border_trim_sides[1],
+                )
 
             # get size before the pruning for same page border
+            if not yxsize:
+                rysize, rxsize = border_image.shape[:2]
+                yxsize.extend([rysize, rxsize])
 
             # for same page border, page border grows internally
             if self.same_page_border:
-                if not yxsize:
-                    rysize, rxsize = border_image.shape[:2]
-                    yxsize.extend([rysize, rxsize])
-
                 if border_width == 0:
                     border_image = border_image[border_height:, :]
                 elif border_height == 0:
@@ -430,7 +463,7 @@ class PageBorder(Augmentation):
         border_image_merged = cv2.GaussianBlur(border_image_merged, (3, 3), 0)
 
         # merge each pages into a main page
-        if self.same_page_border:
+        if self.same_page_border or sum(page_border_trim_sides) > 0:
 
             ysize, xsize = yxsize
             bysize, bxsize = border_image_merged.shape[:2]
@@ -445,15 +478,66 @@ class PageBorder(Augmentation):
                 # x
                 xcenter = int(xsize / 2)
                 bxcenter = int(bxsize / 2)
-                dy_left = abs(xcenter - bxcenter)
-                dy_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
+                dx_left = abs(xcenter - bxcenter)
+                dx_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
+
+                if sum(page_border_trim_sides) > 0:
+                    half_border_width = int(np.ceil(border_width / 2))
+                    half_border_height = int(np.ceil(border_height / 2))
+                    dy_top += half_border_height
+                    dy_bottom -= half_border_height
+                    dx_left += half_border_width
+                    dx_right -= half_border_width
 
                 if bysize > ysize and bxsize > xsize:
-                    border_image_merged = border_image_merged[dy_top:-dy_bottom, dy_left:-dy_right]
+                    if self.same_page_border:
+                        border_image_merged = border_image_merged[dy_top:-dy_bottom, dx_left:-dx_right]
+                    else:
+                        if page_border_trim_sides[0]:
+                            start_x = dx_left
+                        else:
+                            start_x = 0
+                        if page_border_trim_sides[1]:
+                            start_y = dy_top
+                        else:
+                            start_y = 0
+                        if page_border_trim_sides[2]:
+                            end_x = -dx_right
+                        else:
+                            end_x = bxsize
+                        if page_border_trim_sides[3]:
+                            end_y = -dy_bottom
+                        else:
+                            end_y = bysize
+                        border_image_merged = border_image_merged[start_y:end_y, start_x:end_x]
+
                 elif bysize > ysize:
-                    border_image_merged = border_image_merged[dy_top:-dy_bottom, :]
+                    if self.same_page_border:
+                        border_image_merged = border_image_merged[dy_top:-dy_bottom, :]
+                    else:
+                        if page_border_trim_sides[1]:
+                            start_y = dy_top
+                        else:
+                            start_y = 0
+                        if page_border_trim_sides[3]:
+                            end_y = -dy_bottom
+                        else:
+                            end_y = bysize
+                        border_image_merged = border_image_merged[start_y:end_y, :]
+
                 elif bxsize > xsize:
-                    border_image_merged = border_image_merged[:, dy_left:-dy_right]
+                    if self.same_page_border:
+                        border_image_merged = border_image_merged[:, dx_left:-dx_right]
+                    else:
+                        if page_border_trim_sides[0]:
+                            start_x = dx_left
+                        else:
+                            start_x = 0
+                        if page_border_trim_sides[2]:
+                            end_x = -dx_right
+                        else:
+                            end_x = bxsize
+                        border_image_merged = border_image_merged[:, start_x:end_x]
 
         # rotate back to original position
         # default, extend top left

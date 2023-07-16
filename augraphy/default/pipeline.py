@@ -259,8 +259,8 @@ def default_augraphy_pipeline():
             p=0.33,
         ),
         BookBinding(
-            radius_range=(1, 100),
-            curve_range=(100, 200),
+            shadow_radius_range=(1, 100),
+            curve_range_right=(100, 200),
             mirror_range=(0.3, 0.5),
             p=0.33,
         ),

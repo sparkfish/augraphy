@@ -47,6 +47,7 @@ Example 1
 ---------
 In this example, a PageBorder augmentation instance is initialized and the page borders effect width and height is set to 30 (right) and -40 (top) pixels (30,-40).
 The page border color is set to black (0,0,0) and the background color is set to white (255,255,255).
+No trimming is done to any side of the added page border effect (0, 0, 0, 0).
 The border effect is set to not using any cache images (page_border_use_cache_images=0) and the number of pages is set to 10 (10).
 The rotation angle will be randomized (page_rotate_angle_in_order=0) and the rotation range is between 1 to 5 degree (1,5).
 The curvy frequency in the borders is set to random value between 0 and 1 (0,1), each with height of 1 to 2 pixels (1,2).
@@ -61,6 +62,7 @@ Code example:
                              page_border_color=(0, 0, 0),
 			     page_border_background_color=(255, 255, 255),
                              page_border_use_cache_images = 0,
+                             page_border_trim_sides = (0, 0, 0, 0),
                              page_numbers = 10,
                              page_rotate_angle_in_order = 0,
                              page_rotation_angle_range = (1, 5),
