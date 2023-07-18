@@ -38,6 +38,8 @@ class BookBinding(Augmentation):
     :type curling_direction: int, optional
     :param backdrop_color: The backdrop color (BGR) of the book binding effect.
     :type backdrop_color: tuple, optional
+    :param enable_shadow: Flag to enable shadow on top of the book binding effect.
+    :type enable_shadow: int, optional
     :param use_cache_images: Flag to enable the usage of cache images in creating book binding effect.
     :type use_cache_images: int, optional
     :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
@@ -59,6 +61,7 @@ class BookBinding(Augmentation):
         binding_pages=(5, 10),
         curling_direction=-1,
         backdrop_color=(0, 0, 0),
+        enable_shadow=1,
         use_cache_images=1,
         numba_jit=1,
         p=1,
@@ -74,12 +77,13 @@ class BookBinding(Augmentation):
         self.binding_pages = binding_pages
         self.curling_direction = curling_direction
         self.backdrop_color = backdrop_color
+        self.enable_shadow = enable_shadow
         self.use_cache_images = use_cache_images
         self.numba_jit = numba_jit
         config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"BookBinding(shadow_radius_range={self.shadow_radius_range}, curve_range_right={self.curve_range_right}, curve_range_left={self.curve_range_left}, curve_ratio_right={self.curve_ratio_right}, curve_ratio_left={self.curve_ratio_left}, mirror_range={self.mirror_range}, binding_align={self.binding_align}, binding_pages={self.binding_pages}, curling_direction={self.curling_direction}, backdrop_color={self.backdrop_color}, use_cache_images={self.use_cache_images}, numba_jit={self.numba_jit}, p={self.p})"
+        return f"BookBinding(shadow_radius_range={self.shadow_radius_range}, curve_range_right={self.curve_range_right}, curve_range_left={self.curve_range_left}, curve_ratio_right={self.curve_ratio_right}, curve_ratio_left={self.curve_ratio_left}, mirror_range={self.mirror_range}, binding_align={self.binding_align}, binding_pages={self.binding_pages}, curling_direction={self.curling_direction}, backdrop_color={self.backdrop_color}, enable_shadow={self.enable_shadow}, use_cache_images={self.use_cache_images}, numba_jit={self.numba_jit}, p={self.p})"
 
     def add_book_shadow(self, img, radius, angle=30):
         """Add shadow effect in the input image.
@@ -124,13 +128,15 @@ class BookBinding(Augmentation):
 
         return img_output.astype("uint8")
 
-    def curve_page(self, img, curve_value):
+    def curve_page(self, img, curve_value, backdrop_color):
         """Generate curvy effect in the input image.
 
         :param img: The image to apply the function.
         :type img: numpy.array (numpy.uint8)
         :param curve_value: Pixel number of the page text should be curved.
         :type curve_value: int
+        :param backdrop_color: The color of the filled background.
+        :type backdrop_color: tuple
 
         """
         rows = img.shape[0]
@@ -143,7 +149,7 @@ class BookBinding(Augmentation):
             channels = img.shape[2]
             img_output = np.full(
                 (rows + curve_value, cols, channels),
-                fill_value=self.backdrop_color,
+                fill_value=backdrop_color,
                 dtype=img.dtype,
             )
 
@@ -181,6 +187,63 @@ class BookBinding(Augmentation):
 
         return img_output
 
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def check_backdrop_color(image_output, image_mask, backdrop_color):
+        """Function to compute mask of background
+
+        :param image_output: The image with BookBinding effect.
+        :type image_output: numpy.array (numpy.uint8)
+        :param image_mask: The mask of background.
+        :type image_mask: numpy.array (numpy.uint8)
+        :param backdrop_color: The backdrop color in BGR format.
+        :type backdrop_color: tuple
+        """
+
+        for x in range(image_mask.shape[1]):
+            # check top down
+            for y in range(image_mask.shape[0]):
+                image_mask[y, x] = backdrop_color
+                color_eval = (
+                    image_output[y, x][0] == backdrop_color[0]
+                    and image_output[y, x][1] == backdrop_color[1]
+                    and image_output[y, x][2] == backdrop_color[2]
+                )
+                if not color_eval:
+                    break
+            # # check bottom up : reverse loop
+            for y in range(image_mask.shape[0] - 1, -1, -1):
+                image_mask[y, x] = backdrop_color
+                color_eval = (
+                    image_output[y, x][0] == backdrop_color[0]
+                    and image_output[y, x][1] == backdrop_color[1]
+                    and image_output[y, x][2] == backdrop_color[2]
+                )
+                if not color_eval:
+                    break
+
+        for y in range(image_mask.shape[0]):
+            # check left right
+            for x in range(image_mask.shape[1]):
+                image_mask[y, x] = backdrop_color
+                color_eval = (
+                    image_output[y, x][0] == backdrop_color[0]
+                    and image_output[y, x][1] == backdrop_color[1]
+                    and image_output[y, x][2] == backdrop_color[2]
+                )
+                if not color_eval:
+                    break
+            # # check right left : reverse loop
+            for x in range(image_mask.shape[1] - 1, -1, -1):
+                image_mask[y, x] = backdrop_color
+                color_eval = (
+                    image_output[y, x][0] == backdrop_color[0]
+                    and image_output[y, x][1] == backdrop_color[1]
+                    and image_output[y, x][2] == backdrop_color[2]
+                )
+                if not color_eval:
+                    break
+
     def curve_transform(self, image, curve_ratio_range, image_direction):
         """Bend image further in horizontal direction using perspective transform.
 
@@ -200,12 +263,12 @@ class BookBinding(Augmentation):
         if image_direction == "left":
             source_points = np.float32([[0, 0], [xsize, 0], [xsize, ysize], [0, ysize]])
             target_points = np.float32(
-                [[xsize * curve_ratio, 0], [xsize, 0], [xsize, ysize], [xsize * curve_ratio, ysize]],
+                [[int(xsize * curve_ratio), 0], [xsize, 0], [xsize, ysize], [int(xsize * curve_ratio), ysize]],
             )
         else:
             source_points = np.float32([[0, 0], [xsize, 0], [xsize, ysize], [0, ysize]])
             target_points = np.float32(
-                [[0, 0], [xsize * (1 - curve_ratio), 0], [xsize * (1 - curve_ratio), ysize], [0, ysize]],
+                [[0, 0], [int(xsize * (1 - curve_ratio)), 0], [int(xsize * (1 - curve_ratio)), ysize], [0, ysize]],
             )
 
         # perspective transform to further bend image in x direction only
@@ -227,6 +290,13 @@ class BookBinding(Augmentation):
         :param image_left: The left image of the book binding effect.
         :type image_left: numpy.array (numpy.uint8)
         """
+
+        # min value is 1, to differentiate between background
+        backdrop_color = (
+            max(1, self.backdrop_color[0]),
+            max(1, self.backdrop_color[1]),
+            max(1, self.backdrop_color[2]),
+        )
 
         if self.curling_direction == -1 or self.curling_direction == "random":
             curve_down = random.choice([0, 1])
@@ -265,7 +335,7 @@ class BookBinding(Augmentation):
         page_border = PageBorder(
             page_border_width_height=width_height,
             page_border_color=(0, 0, 0),
-            page_border_background_color=self.backdrop_color,
+            page_border_background_color=backdrop_color,
             page_border_use_cache_images=use_cache_images,
             page_border_trim_sides=trim_sides,
             page_numbers=random.randint(page_number, page_number),
@@ -288,7 +358,7 @@ class BookBinding(Augmentation):
         page_border = PageBorder(
             page_border_width_height=width_height,
             page_border_color=(0, 0, 0),
-            page_border_background_color=self.backdrop_color,
+            page_border_background_color=backdrop_color,
             page_border_use_cache_images=use_cache_images,
             page_border_trim_sides=trim_sides,
             page_numbers=random.randint(page_number, page_number),
@@ -322,9 +392,9 @@ class BookBinding(Augmentation):
                 constant_values=0,
             )
             if pad_value_top:
-                image_added_border_right[:pad_value_top, :] = self.backdrop_color
+                image_added_border_right[:pad_value_top, :] = backdrop_color
             else:
-                image_added_border_right[-pad_value_bottom:, :] = self.backdrop_color
+                image_added_border_right[-pad_value_bottom:, :] = backdrop_color
         elif image_added_border_right.shape[0] > image_added_border_left.shape[0]:
             image_added_border_left = np.pad(
                 image_added_border_left,
@@ -333,15 +403,15 @@ class BookBinding(Augmentation):
                 constant_values=0,
             )
             if pad_value_top:
-                image_added_border_left[:pad_value_top, :] = self.backdrop_color
+                image_added_border_left[:pad_value_top, :] = backdrop_color
             else:
-                image_added_border_left[-pad_value_bottom:, :] = self.backdrop_color
+                image_added_border_left[-pad_value_bottom:, :] = backdrop_color
 
         # apply curvy effect
-        image_right = self.curve_page(image_added_border_right, curve_value_right)
+        image_right = self.curve_page(image_added_border_right, curve_value_right, backdrop_color)
         if not curve_down:
             image_right = np.flipud(image_right)
-        image_left = np.fliplr(self.curve_page(np.fliplr(image_added_border_left), curve_value_left))
+        image_left = np.fliplr(self.curve_page(np.fliplr(image_added_border_left), curve_value_left, backdrop_color))
         if not curve_down:
             image_left = np.flipud(image_left)
 
@@ -360,15 +430,15 @@ class BookBinding(Augmentation):
                     mode="constant",
                     constant_values=0,
                 )
-                image_right[:pad_value_top, :] = self.backdrop_color
+                image_right[:pad_value_top, :] = backdrop_color
             elif image_right.shape[0] > image_left.shape[0]:
                 image_left = np.pad(
                     image_left,
-                    pad_width=((pad_value_top, pad_value_bottom), (0, 0), (0, 0)),
+                    pad_width=((pad_value_top, 0), (0, 0), (0, 0)),
                     mode="constant",
                     constant_values=0,
                 )
-                image_left[:pad_value_top, :] = self.backdrop_color
+                image_left[:pad_value_top, :] = backdrop_color
 
         # further bend left image by using perspective transform
         ysize, xsize = image_left.shape[:2]
@@ -384,7 +454,7 @@ class BookBinding(Augmentation):
         # create new image with original size + mirror size
         image_output = np.full(
             (max(ysize, cysize), xsize + cxsize, image.shape[2]),
-            fill_value=self.backdrop_color,
+            fill_value=backdrop_color,
             dtype="uint8",
         )
 
@@ -392,44 +462,38 @@ class BookBinding(Augmentation):
         image_output[:ysize, :xsize] = image_left
         image_output[:cysize, xsize:] = image_right
 
-        # add shadow effect (temporary disabled, will be updated later)
-        """
-        # get mask for shadow effect
-        if len(image.shape) > 2:
-            backdrop_color = self.backdrop_color
-        else:
-            backdrop_color = np.mean(self.backdrop_color)
-        image_mask = np.zeros_like(image_output, dtype="uint8")
-        if not curve_down:
-            image_output = np.flipud(image_output)
+        # add shadow effect
+        if self.enable_shadow:
+            # get mask for shadow effect
+            image_mask = np.zeros_like(image_output, dtype="uint8")
 
+            self.check_backdrop_color(image_output, image_mask, backdrop_color)
 
-        for x in range(image_mask.shape[1]):
-            for y in range(image_mask.shape[0]):
-                if len(image.shape) > 2:
-                    color_eval = all(image_output[y, x] == backdrop_color)
-                else:
-                    color_eval = image_output[y, x] == backdrop_color
-                if color_eval:
-                    image_mask[y, x] = 1
-                else:
-                    break
+            mysize, mxsize = image_mask.shape[:2]
+            # extended value
+            ext = 100
+            emysize, emxsize = (
+                mysize + (ext * 2),
+                mxsize + (ext * 2),
+            )
+            image_mask_extend = np.full((emysize, emxsize, 3), fill_value=backdrop_color, dtype="uint8")
+            image_mask_extend[ext:-ext, ext:-ext] = image_mask
 
-        if not curve_down:
-            image_output = np.flipud(image_output)
-            image_mask = np.flipud(image_mask)
+            image_shadow = cv2.resize(
+                image_mask_extend,
+                (max(50, int(emxsize / 10)), max(50, int(emysize / 10))),
+                interpolation=cv2.INTER_AREA,
+            )
+            image_shadow = cv2.GaussianBlur(image_shadow, (255, 255), cv2.BORDER_DEFAULT)
+            image_shadow = cv2.resize(image_shadow, (emxsize, emysize), interpolation=cv2.INTER_LINEAR)
+            image_shadow = image_shadow[ext:-ext, ext:-ext]
+            image_output[image_mask > 0] = image_shadow[image_mask > 0]
 
-
-        image_darken = image_output.astype("float") * 0.7
-        offset = random.randint(int(image.shape[0] / 40), int(image.shape[0] / 30))
-        image_darken[image_mask > 0] = image_output[image_mask > 0]
-        if curve_down:
-            image_darken[:-offset, :] = image_darken[offset:, :]
-        else:
-            image_darken[offset:, :] = image_darken[:-offset, :]
-        image_darken = cv2.GaussianBlur(image_darken.astype("uint8"), (151, 151), cv2.BORDER_DEFAULT)
-        image_output[image_mask > 0] = image_darken[image_mask > 0]
-        """
+        # replace with input backdrop_color
+        for i in range(3):
+            if backdrop_color[i] != self.backdrop_color[i]:
+                indices = np.logical_and(image_output[:, :, i] == backdrop_color[i], image_mask[:, :, i] > 0)
+                image_output[:, :, i][indices] = self.backdrop_color[i]
 
         return image_output
 
