@@ -156,7 +156,29 @@ class SectionShift(Augmentation):
                     end_y = start_y + section_shift_height_size
                     shift_box = [start_x, start_y, end_x, end_y]
                 else:
-                    shift_box = self.section_shift_locations[i]
+                    shift_box = list(self.section_shift_locations[i])
+
+                # check if shifting location beyind image boundary
+                # check x0
+                if shift_box[0] + section_shift_width_size < 0:
+                    shift_box[0] = shift_box[0] - section_shift_width_size
+                elif shift_box[0] + section_shift_width_size > xsize:
+                    shift_box[0] = xsize - abs(section_shift_width_size) - 1
+                # check y0
+                if shift_box[1] + section_shift_height_size < 0:
+                    shift_box[1] = shift_box[1] - section_shift_height_size
+                elif shift_box[1] + section_shift_height_size > ysize:
+                    shift_box[1] = ysize - abs(section_shift_height_size) - 1
+                # check xn
+                if shift_box[2] + section_shift_width_size < 0:
+                    shift_box[2] = shift_box[2] - section_shift_width_size
+                elif shift_box[2] + section_shift_width_size > xsize:
+                    shift_box[2] = xsize - abs(section_shift_width_size) - 1
+                # check yn
+                if shift_box[3] + section_shift_height_size < 0:
+                    shift_box[3] = shift_box[3] - section_shift_height_size
+                elif shift_box[3] + section_shift_height_size > ysize:
+                    shift_box[3] = ysize - abs(section_shift_height_size) - 1
 
                 # apply section shift
                 self.apply_shift(image, shift_box, section_shift_x, section_shift_y)
