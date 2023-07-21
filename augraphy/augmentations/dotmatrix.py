@@ -385,10 +385,11 @@ class DotMatrix(Augmentation):
                             image[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width],
                             axis=(0, 1),
                         )
+
                         # indices of shape
                         indices = np.logical_or(
-                            np.logical_or(image_dot[:, :, 0], image_dot[:, :, 1]),
-                            image_dot[:, :, 2],
+                            np.logical_or(image_dot[:remainder_y, :, 0], image_dot[:remainder_y, :, 1]),
+                            image_dot[:remainder_y, :, 2],
                         )
                         # multiply to mask of shape
                         image_dot_color = ((image_dot_color[:remainder_y, :] / 255) * dot_color).astype("uint8")
@@ -411,8 +412,8 @@ class DotMatrix(Augmentation):
                         )
                         # indices of shape
                         indices = np.logical_or(
-                            np.logical_or(image_dot[:, :, 0], image_dot[:, :, 1]),
-                            image_dot[:, :, 2],
+                            np.logical_or(image_dot[:, :remainder_x, 0], image_dot[:, :remainder_x, 1]),
+                            image_dot[:, :remainder_x, 2],
                         )
                         # multiply to mask of shape
                         image_dot_color = ((image_dot[:, :remainder_x] / 255) * dot_color).astype("uint8")
@@ -440,7 +441,10 @@ class DotMatrix(Augmentation):
                     # mean of current dot color
                     dot_color = np.mean(image[start_y : start_y + length_y, start_x : start_x + length_x], axis=(0, 1))
                     # indices of shape
-                    indices = np.logical_or(np.logical_or(image_dot[:, :, 0], image_dot[:, :, 1]), image_dot[:, :, 2])
+                    indices = np.logical_or(
+                        np.logical_or(image_dot[:length_y, :length_x, 0], image_dot[:length_y, :length_x, 1]),
+                        image_dot[:length_y, :length_x, 2],
+                    )
                     # multiply to mask of shape
                     image_dot_color = ((image_dot[:length_y, :length_x] / 255) * dot_color).astype("uint8")
                     # apply dot to image

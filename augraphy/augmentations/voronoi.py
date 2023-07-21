@@ -150,11 +150,15 @@ class VoronoiTessellation(Augmentation):
             (nx, ny, ng),
             (perlin_x, perlin_y),
         )
-        image = Image.fromarray(img_array)
-        image.save("images/Voronoi_example.png", "PNG", dpi=(300, 300))
-        # reads it in a format so that it can be applied as a background pattern to the original image
-        mesh = cv2.imread("images/Voronoi_example.png")
-        os.remove("images/Voronoi_example.png")
+        # try if it is able to save and read image properly, might facing permission issue
+        try:
+            image = Image.fromarray(img_array)
+            image.save(os.getcwd() + "/Voronoi_example.png", "PNG", dpi=(300, 300))
+            # reads it in a format so that it can be applied as a background pattern to the original image
+            mesh = cv2.imread(os.getcwd() + "/Voronoi_example.png")
+            os.remove(os.getcwd() + "/Voronoi_example.png")
+        except Exception:
+            mesh = img_array
         return mesh
 
     # Applies the Augmentation to input data.
@@ -202,10 +206,10 @@ class VoronoiTessellation(Augmentation):
             self.num_cells = random.randint(self.num_cells_range[0], self.num_cells_range[1])
             voronoi_mesh = self.apply_augmentation()
             voronoi_mesh = cv2.resize(voronoi_mesh, (self.ws, self.ws), interpolation=(cv2.INTER_LINEAR))
-            if len(image.shape) < 3:
+            if len(image.shape) < 3 and len(voronoi_mesh.shape) > 2:
                 voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
-            elif len(image.shape) == 3 and image.shape[2] == 1:
-                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) > 2 and len(voronoi_mesh.shape) < 3:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_GRAY2BGR)
             sw = PatternMaker()
             # to ensure the voronoi tessellation covers the whole image,
             # original image is padded and voronoi_mesh passes through it like a sliding window

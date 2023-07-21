@@ -95,7 +95,36 @@ class InkShifter(Augmentation):
         d0, d1 = shape[0] // res[0], shape[1] // res[1]
         angles = 2 * np.pi * np.random.rand(res[0] + 1, res[1] + 1)
         grad = np.dstack((np.cos(angles), np.sin(angles)))
+        gysize, gxsize = grad.shape[:2]
         grid = np.mgrid[: res[0] : res[0] / shape[0], : res[1] : res[1] / shape[1]].transpose(1, 2, 0) % 1
+
+        # grid y size is larger after the ceil rounding, prune it
+        if grid.shape[0] > (gysize - 1) * d0:
+            difference = int(abs(grid.shape[0] - (gysize - 1) * d0))
+            grid = grid[:-difference, :]
+        # grid y size is smaller after the ceil rounding, pad it
+        elif grid.shape[0] < (gysize - 1) * d0:
+            difference = int(abs(grid.shape[0] - (gysize - 1) * d0))
+            grid = np.pad(
+                grid,
+                # (top, bottom), (left, right)
+                pad_width=((0, difference), (0, 0), (0, 0)),
+                mode="edge",
+            )
+        # grid x size is larger after the ceil rounding, prune it
+        if grid.shape[1] > (gxsize - 1) * d1:
+            difference = int(abs(grid.shape[1] - (gxsize - 1) * d1))
+            grid = grid[:, :-difference]
+        # grid x size is smaller after the ceil rounding, pad it
+        elif grid.shape[1] < (gxsize - 1) * d1:
+            difference = int(abs(grid.shape[1] - (gxsize - 1) * d1))
+            grid = np.pad(
+                grid,
+                # (top, bottom), (left, right)
+                pad_width=((0, 0), (0, difference), (0, 0)),
+                mode="edge",
+            )
+
         n00 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1])) * grad[:-1, :-1].repeat(d0, 0).repeat(d1, 1), 2)
         n10 = np.sum(np.dstack((grid[:, :, 0] - 1, grid[:, :, 1])) * grad[1:, :-1].repeat(d0, 0).repeat(d1, 1), 2)
         n01 = np.sum(np.dstack((grid[:, :, 0], grid[:, :, 1] - 1)) * grad[:-1, 1:].repeat(d0, 0).repeat(d1, 1), 2)
