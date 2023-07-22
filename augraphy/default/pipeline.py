@@ -177,10 +177,12 @@ def default_augraphy_pipeline():
         Folding(
             fold_x=None,
             fold_deviation=(0, 0),
-            fold_count=random.randint(1, 6),
-            fold_noise=random.uniform(0, 0.2),
+            fold_count=random.randint(5, 10),
+            fold_noise=random.uniform(0, 0.01),
+            fold_angle_range=(-360, 360),
             gradient_width=(0.1, 0.2),
             gradient_height=(0.01, 0.02),
+            backdrop_color=(0, 0, 0),
             p=0.33,
         ),
         Markup(

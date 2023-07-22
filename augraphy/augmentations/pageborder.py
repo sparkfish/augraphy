@@ -7,8 +7,7 @@ from numba import jit
 
 from augraphy.augmentations.lib import load_image_from_cache
 from augraphy.augmentations.lib import rotate_image_PIL
-from augraphy.augmentations.lib import warp_fold_left_side
-from augraphy.augmentations.lib import warp_fold_right_side
+from augraphy.augmentations.lib import warp_fold
 from augraphy.base.augmentation import Augmentation
 
 
@@ -31,6 +30,7 @@ class PageBorder(Augmentation):
     :param page_border_use_cache_images: Flag to enable the usage of cache images in creating page border effect.
     :type page_border_use_cache_images: int, optional
     :param page_border_trim_sides： Tuple of 4 (left, top, right, bottom) determining which sides of the image to be trimmed.
+            This is valid only if same_page_border is false.
     :type page_border_trim_sides: int, optional
     :param page_numbers: An integer determining the number of pages in the border.
     :type page_numbers: int, optional
@@ -126,22 +126,26 @@ class PageBorder(Augmentation):
         curve_noise = 0
 
         # warp image to produce curvy effect
-        image_curve_left = warp_fold_left_side(
+        image_curve_left = warp_fold(
             image,
             ysize,
             curve_noise,
             curve_x,
             curve_width_one_side,
             curve_y_shift,
+            side="left",
+            backdrop_color=self.page_border_background_color,
         )
 
-        image_curve_right = warp_fold_right_side(
+        image_curve_right = warp_fold(
             image_curve_left,
             ysize,
             curve_noise,
             curve_x,
             curve_width_one_side,
             curve_y_shift,
+            side="right",
+            backdrop_color=self.page_border_background_color,
         )
 
         image_color = np.full_like(image_curve_right, fill_value=self.page_border_color, dtype="uint8")
@@ -481,7 +485,7 @@ class PageBorder(Augmentation):
                 dx_left = abs(xcenter - bxcenter)
                 dx_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
 
-                if sum(page_border_trim_sides) > 0:
+                if not self.same_page_border and sum(page_border_trim_sides) > 0:
                     half_border_width = int(np.ceil(border_width / 2))
                     half_border_height = int(np.ceil(border_height / 2))
                     dy_top += half_border_height
