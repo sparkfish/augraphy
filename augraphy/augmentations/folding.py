@@ -2,8 +2,8 @@ import random
 
 import numpy as np
 
-from augraphy.augmentations.lib import warp_fold_left_side
-from augraphy.augmentations.lib import warp_fold_right_side
+from augraphy.augmentations.lib import rotate_image_PIL
+from augraphy.augmentations.lib import warp_fold
 from augraphy.base.augmentation import Augmentation
 
 
@@ -17,15 +17,19 @@ class Folding(Augmentation):
     :param fold count: Number of applied foldings
     :type fold_count: int, optional
     :param fold_noise: Level of noise added to folding area. Range from
-                        value of 0 to 1.
+        value of 0 to 1.
     :type fold_noise: float, optional
+    :param fold_angle_range: Tuple of ints determining the angle to rotate the image
+        before applying a varying angle folding effect.
+    :type fold_angle_range: tuple, optional
     :param gradient_width: Tuple (min, max) Measure of the space affected
-                            by fold prior to being warped (in units of
-                            percentage of width of page)
+        by fold prior to being warped (in units of percentage of width of page).
     :type gradient_width: tuple, optional
     :param gradient_height: Tuple (min, max) Measure of depth of fold (unit
-                            measured as percentage page height)
+        measured as percentage page height)
     :type gradient_height: tuple, optional
+    :param backdrop_color: The backdrop color (BGR) of the folding effect.
+    :type backdrop_color: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -36,8 +40,10 @@ class Folding(Augmentation):
         fold_deviation=(0, 0),
         fold_count=2,
         fold_noise=0.1,
+        fold_angle_range=(0, 0),
         gradient_width=(0.1, 0.2),
         gradient_height=(0.01, 0.02),
+        backdrop_color=(0, 0, 0),
         p=1,
     ):
         super().__init__(p=p)
@@ -45,12 +51,14 @@ class Folding(Augmentation):
         self.fold_deviation = fold_deviation
         self.fold_count = fold_count
         self.fold_noise = fold_noise
+        self.fold_angle_range = fold_angle_range
         self.gradient_width = gradient_width
         self.gradient_height = gradient_height
+        self.backdrop_color = backdrop_color
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"Folding(fold_x={self.fold_x}, fold_deviation={self.fold_deviation}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height},p={self.p})"
+        return f"Folding(fold_x={self.fold_x}, fold_deviation={self.fold_deviation}, fold_count={self.fold_count}, fold_noise={self.fold_noise}, fold_angle_range={self.fold_angle_range}, gradient_width={self.gradient_width}, gradient_height={self.gradient_height}, backdrop_color={self.backdrop_color}, p={self.p})"
 
     def apply_folding(
         self,
@@ -114,21 +122,25 @@ class Folding(Augmentation):
         )  # y distortion in folding (support positive y value for now)
 
         if (fold_width_one_side != 0) and (fold_y_shift != 0):
-            img_fold_l = warp_fold_left_side(
+            img_fold_l = warp_fold(
                 img,
                 ysize,
                 fold_noise,
                 fold_x,
                 fold_width_one_side,
                 fold_y_shift,
+                side="left",
+                backdrop_color=self.backdrop_color,
             )
-            img_fold_r = warp_fold_right_side(
+            img_fold_r = warp_fold(
                 img_fold_l,
                 ysize,
                 fold_noise,
                 fold_x,
                 fold_width_one_side,
                 fold_y_shift,
+                side="right",
+                backdrop_color=self.backdrop_color,
             )
             return img_fold_r
         else:
@@ -145,24 +157,47 @@ class Folding(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = image.copy()
 
             # get image dimension
-            if len(image.shape) > 2:
-                ysize, xsize, _ = image.shape
-            else:
-                ysize, xsize = image.shape
+            ysize, xsize = image.shape[:2]
 
             # apply folding multiple times
             image_fold = image.copy()
             for _ in range(self.fold_count):
+                # random fold angle
+                fold_angle = random.randint(self.fold_angle_range[0], self.fold_angle_range[1])
+                # rotate image before the folding
+                image_fold = rotate_image_PIL(
+                    image_fold,
+                    angle=fold_angle,
+                    background_value=self.backdrop_color,
+                    expand=1,
+                )
                 image_fold = self.apply_folding(
                     image_fold,
-                    ysize,
-                    xsize,
+                    image_fold.shape[0],
+                    image_fold.shape[1],
                     self.gradient_width,
                     self.gradient_height,
                     self.fold_noise,
                 )
+                # rotate back the image
+                image_fold = rotate_image_PIL(
+                    image_fold,
+                    angle=-fold_angle,
+                    background_value=self.backdrop_color,
+                    expand=1,
+                )
+                # get the image without the padding area, we will get extra padding area after the rotation
+                rysize, rxsize = image_fold.shape[:2]
+                if fold_angle != 0:
+                    # center of x and y
+                    cx = int(rxsize / 2)
+                    cy = int(rysize / 2)
+                    start_x = cx - int(xsize / 2)
+                    start_y = cy - int(ysize / 2)
+                    end_x = start_x + xsize
+                    end_y = start_y + ysize
+                    image_fold = image_fold[start_y:end_y, start_x:end_x]
 
             return image_fold
