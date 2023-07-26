@@ -136,7 +136,7 @@ class BindingsAndFasteners(Augmentation):
                 template_size_y = random.randint(self.height_range[0], self.height_range[1])
 
             # create random location to merge 2 circles
-            min_value = min(10, int(template_size / 2))
+            min_value = min(10, int(min(template_size_x, template_size_y) / 2))
             random_x = random.randint(min_value, template_size_x - min_value)
             random_y = random.randint(min_value, template_size_y - min_value)
 
@@ -729,7 +729,7 @@ class BindingsAndFasteners(Augmentation):
             "clips",
             "triangle_clips",
         ):
-            effect_type = random.choice(("punch_holes", "binding_holes", "clips", "triangle clips"))
+            effect_type = random.choice(("punch_holes", "binding_holes", "clips", "triangle_clips"))
         else:
             effect_type = self.effect_type
         ntimes = random.randint(self.ntimes[0], self.ntimes[1])

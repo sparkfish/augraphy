@@ -345,6 +345,8 @@ class PageBorder(Augmentation):
                     self.page_border_trim_sides[0],
                     self.page_border_trim_sides[1],
                 )
+            else:
+                page_border_trim_sides = self.page_border_trim_sides
 
             # get size before the pruning for same page border
             if not yxsize:
@@ -505,11 +507,11 @@ class PageBorder(Augmentation):
                             start_y = dy_top
                         else:
                             start_y = 0
-                        if page_border_trim_sides[2]:
+                        if page_border_trim_sides[2] and dx_right != 0:
                             end_x = -dx_right
                         else:
                             end_x = bxsize
-                        if page_border_trim_sides[3]:
+                        if page_border_trim_sides[3] and dy_bottom != 0:
                             end_y = -dy_bottom
                         else:
                             end_y = bysize
