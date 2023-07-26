@@ -826,7 +826,7 @@ class OverlayBuilder:
             half_height = int((yend - ystart) / 2)
             foreground_half_width = int(fg_width / 2)
             foreground_half_height = int(fg_height / 2)
-            if foreground_half_width > half_width:
+            if half_width != 0 and foreground_half_width > half_width:
                 half_difference = foreground_half_width - half_width
                 # remove right part
                 if self.edge == "left":
@@ -837,7 +837,7 @@ class OverlayBuilder:
                 # shift evenly
                 else:
                     new_foreground = new_foreground[:, half_difference:-half_difference]
-            if foreground_half_height > half_height:
+            if half_height != 0 and foreground_half_height > half_height:
                 half_difference = foreground_half_height - half_height
                 # remove top part
                 if self.edge == "bottom":
