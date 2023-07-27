@@ -33,8 +33,6 @@ from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.meshgenerator import Noise
 from augraphy.utilities.slidingwindow import PatternMaker
 
-# from scipy.spatial import Delaunay
-
 warnings.filterwarnings("ignore")
 
 
@@ -51,8 +49,6 @@ class DelaunayTessellation(Augmentation):
     The Delaunay Condition states that the circumcircle of each triangle in the triangulation must contain no other points in its interior.
     The class inherits methods and properties from the Augmentation base class.
 
-
-
     :param n_points_range: Range for the number of triangulating points from 500 to 800. Randomly selected.
     :type n_points_range: tuple (int), optional
     :param n_horizontal_points_range: Range for the number of points in the horizontal edge, from 500 to 800. The value is randomly selected.
@@ -60,10 +56,16 @@ class DelaunayTessellation(Augmentation):
     :param n_vertical_points_range: Range for the number of points in the vertical edge, from 500 to 800. The value is randomly selected.
     :type n_vertical_points_range: tuple (int), optional
     :param noise_type: If "random", integration of Perlin Noise in the pipeline is randomly selected.
-                       If noise_type is "perlin", perlin noise is added to the background pattern,
-                       otherwise no Perlin Noise is added.
-     Perlin Noise is added to the image to create a smoother, more organic looking tessellation.
+        If noise_type is "perlin", perlin noise is added to the background pattern,
+        otherwise no Perlin Noise is added.
+        Perlin Noise is added to the image to create a smoother, more organic looking tessellation.
     :type noise_type: string, optional
+    :param color_list: A single list contains a collection of colors (in BGR) where the color of the effect will be randomly selected from it.
+        Use "default" for default color or "random" for random colors.
+    :type color_list: list, optional
+    :param color_list_alternate: A single list contains a collection of colors (in BGR) where the alternate color of the effect will be randomly selected from it.
+        Use "default" for default color or "random" for random colors.
+    :type color_list_alternate: list, optional
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float, optional
 
@@ -75,6 +77,8 @@ class DelaunayTessellation(Augmentation):
         n_horizontal_points_range=(500, 800),
         n_vertical_points_range=(500, 800),
         noise_type="random",
+        color_list="default",
+        color_list_alternate="default",
         p=1,
     ):
         super().__init__(p=p)
@@ -82,9 +86,11 @@ class DelaunayTessellation(Augmentation):
         self.n_horizontal_points_range = n_horizontal_points_range  # no. of horizontal edge points
         self.n_vertical_points_range = n_vertical_points_range  # no. of edge vertical points
         self.noise_type = noise_type  # apply perlin or not
+        self.color_list = color_list
+        self.color_list_alternate = color_list_alternate
 
     def __repr__(self):
-        return f"Delaunay Tessellation range of random points on geometric plane = {self.n_points_range}, range of horizontal edge points = {self.n_horizontal_points_range}, range of vertical edge points = {self.n_vertical_points_range}, noise_type = {self.noise_type}"
+        return f"Delaunay Tessellation range of random points on geometric plane = {self.n_points_range}, range of horizontal edge points = {self.n_horizontal_points_range}, range of vertical edge points = {self.n_vertical_points_range}, noise_type = {self.noise_type}, color_list = {self.color_list}, color_list_alternate = {self.color_list_alternate}"
 
     def _edge_points(self, image):
         """
@@ -137,6 +143,43 @@ class DelaunayTessellation(Augmentation):
 
         triangles = subdiv.getTriangleList()
         triangles = triangles.astype(np.int32)
+
+        if self.color_list == "default":
+            colors = [
+                (250, 235, 215),
+                (240, 240, 230),
+                (253, 245, 230),
+                (255, 245, 238),
+                (255, 248, 220),
+                (248, 248, 255),
+                (255, 240, 245),
+                (245, 255, 250),
+                (255, 250, 250),
+                (240, 248, 255),
+                (240, 255, 255),
+                (240, 255, 240),
+                (255, 245, 238),
+                (243, 229, 171),
+                (250, 250, 210),
+            ]
+        elif self.color_list == "random":
+            colors = [[random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)] for _ in range(15)]
+        else:
+            colors = self.color_list
+
+        if self.color_list_alternate == "default":
+            alt_colors = [
+                (255, 255, 240),
+                (255, 250, 205),
+                (238, 232, 170),
+                (255, 255, 224),
+                (255, 239, 213),
+            ]
+        elif self.color_list_alternate == "random":
+            alt_colors = [[random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)] for _ in range(5)]
+        else:
+            alt_colors = self.color_list_alternate
+
         # adding perlin noise
         if self.perlin:
             obj_noise = Noise()
@@ -163,30 +206,7 @@ class DelaunayTessellation(Augmentation):
                 0,
             )  # creating a white texture from the perlin noise mesh
             img = ndimage.gaussian_filter(img, sigma=(3, 3, 0), order=0)  # applying gaussian filter
-            colors = [
-                (250, 235, 215),
-                (240, 240, 230),
-                (253, 245, 230),
-                (255, 245, 238),
-                (255, 248, 220),
-                (248, 248, 255),
-                (255, 240, 245),
-                (245, 255, 250),
-                (255, 250, 250),
-                (240, 248, 255),
-                (240, 255, 255),
-                (240, 255, 240),
-                (255, 245, 238),
-                (243, 229, 171),
-                (250, 250, 210),
-            ]
-            alt_colors = [
-                (255, 255, 240),
-                (255, 250, 205),
-                (238, 232, 170),
-                (255, 255, 224),
-                (255, 239, 213),
-            ]
+
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             # Draw the Delaunay triangulation on the empty numpy array
 
@@ -213,30 +233,7 @@ class DelaunayTessellation(Augmentation):
                 pt1 = (t[0], t[1])
                 pt2 = (t[2], t[3])
                 pt3 = (t[4], t[5])
-                colors = [
-                    (250, 235, 215),
-                    (240, 240, 230),
-                    (253, 245, 230),
-                    (255, 245, 238),
-                    (255, 248, 220),
-                    (248, 248, 255),
-                    (255, 240, 245),
-                    (245, 255, 250),
-                    (255, 250, 250),
-                    (240, 248, 255),
-                    (240, 255, 255),
-                    (240, 255, 240),
-                    (255, 245, 238),
-                    (243, 229, 171),
-                    (250, 250, 210),
-                ]
-                alt_colors = [
-                    (255, 255, 240),
-                    (255, 250, 205),
-                    (238, 232, 170),
-                    (255, 255, 224),
-                    (255, 239, 213),
-                ]
+
                 if (
                     pt1[0]
                     and pt2[0]
