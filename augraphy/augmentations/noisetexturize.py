@@ -7,7 +7,7 @@ from augraphy.base.augmentation import Augmentation
 
 
 class NoiseTexturize(Augmentation):
-    """Creates a random noise based texture pattern to emulate paper textures.
+    """Creates a random noise pattern to emulate paper textures.
     Consequently applies noise patterns to the original image from big to small.
 
     :param sigma_range: Defines bounds of noise fluctuations.
