@@ -211,7 +211,7 @@ class BadPhotoCopy(Augmentation):
         # get image dimensions
         ysize, xsize = image.shape[:2]
 
-        if self.noise_side == "random" or self.noise.side not in ["left", "top", "right", "bottom"]:
+        if self.noise_side == "random" or self.noise_side not in ["left", "top", "right", "bottom"]:
             noise_side = random.choice(["left", "top", "right", "bottom"])
         else:
             noise_side = self.noise_side
