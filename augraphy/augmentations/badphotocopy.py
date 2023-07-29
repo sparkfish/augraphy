@@ -100,34 +100,26 @@ class BadPhotoCopy(Augmentation):
 
     @staticmethod
     @jit(nopython=True, cache=True)
-    def fill_wave_mask(img_wave, smooth_points, mask_ysize, mask_y_one_twelve_size):
+    def fill_wave_mask(img_wave, smooth_points):
         """Fill wavy pattern mask with value.
 
         :param img_wave: The image of wavy pattern mask.
         :type img_wave: numpy.array
         :param smooth_points: Coordinates of wavy pattern.
         :type smooth_points: numpy.array
-        :param mask_ysize: Height of mask.
-        :type mask_ysize: int
-        :param mask_y_one_twelve_size: One twelve of mask height.
-        :type mask_y_one_twelve_size: int
         """
 
         # fill mask by draw wavy line across image
         for (x_point, y_point) in smooth_points:
-            img_wave[:y_point, x_point] = 1
-            # additional noise, to smooth the edges between wavy mask
-            for y in range(int(y_point), int(mask_ysize - mask_y_one_twelve_size), 1):
-                if random.random() > 0.5:
-                    img_wave[y, int(x_point)] = 1
-                    if random.random() > 0.85:
-                        break
+            img_wave[:y_point, x_point] = 255
 
-    def apply_wave(self, mask):
+    def apply_wave(self, mask, noise_side):
         """applies wavy pattern mask to input mask.
 
         :param mask: The image to apply the function.
         :type mask: numpy.array (numpy.uint8)
+        :param noise_side: The side of the image to apply the wave effect.
+        :type noise_side: string
         """
 
         # rescale mask from 0 to 255
@@ -159,49 +151,48 @@ class BadPhotoCopy(Augmentation):
         smooth_points = smooth(points, 12).astype("int")
         smooth_points = np.unique(smooth_points, axis=0)
 
-        self.fill_wave_mask(img_wave, smooth_points, mask_ysize, mask_y_one_twelve_size)
+        # fill wave mask
+        self.fill_wave_mask(img_wave, smooth_points)
+
+        # smoothen edge of the wave mask
+        blur_intensity = random.randint(2, 3)
+        gaussian_kernel_value = random.randint(151, 301)
+        # kernel must be odd
+        if not gaussian_kernel_value % 2:
+            gaussian_kernel_value += 1
+        ysize_small = max(100, int(mask_ysize / blur_intensity))
+        xsize_small = max(100, int(mask_xsize / blur_intensity))
+        img_wave = cv2.resize(img_wave, (xsize_small, ysize_small), interpolation=cv2.INTER_LINEAR)
+        img_wave = cv2.GaussianBlur(img_wave, (gaussian_kernel_value, gaussian_kernel_value), 0)
+        img_wave = cv2.resize(img_wave, (mask_xsize, mask_ysize), interpolation=cv2.INTER_LINEAR)
 
         # top (noise concentrated at top edge)
-        if self.noise_side == "top":
-            mask = img_wave * mask
+        if noise_side == "top":
+            mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
         # right (noise concentrated at right edge)
-        elif self.noise_side == "right":
+        elif noise_side == "right":
             img_wave = np.rot90(img_wave, 3)
             img_wave = cv2.resize(
                 img_wave,
                 (mask_xsize, mask_ysize),
                 interpolation=cv2.INTER_AREA,
             )
-            mask = img_wave * mask
+            mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
         # bottom (noise concentrated at bottom edge)
-        elif self.noise_side == "bottom":
+        elif noise_side == "bottom":
             img_wave = np.flipud(img_wave)
-            mask = img_wave * mask
+            mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
         # left (noise concentrated at left edge)
-        elif self.noise_side == "left":
+        elif noise_side == "left":
             img_wave = np.rot90(img_wave, 1)
             img_wave = cv2.resize(
                 img_wave,
                 (mask_xsize, mask_ysize),
                 interpolation=cv2.INTER_AREA,
             )
-            mask = img_wave * mask
-        else:
-            img_wave = np.rot90(img_wave, random.randint(0, 3))
-            img_wave = cv2.resize(
-                img_wave,
-                (mask_xsize, mask_ysize),
-                interpolation=cv2.INTER_AREA,
-            )
-            mask = img_wave * mask
+            mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
 
-        # reset 0 area to white (white is background)
-        mask[img_wave == 0] = 255
-
-        # blur  the mask
-        mask = cv2.GaussianBlur(mask, (5, 5), cv2.BORDER_DEFAULT)
-
-        return mask
+        return mask.astype("uint8")
 
     def apply_augmentation(self, image):
         """applies augmentation to the input image.
@@ -220,6 +211,11 @@ class BadPhotoCopy(Augmentation):
         # get image dimensions
         ysize, xsize = image.shape[:2]
 
+        if self.noise_side == "random" or self.noise_side not in ["left", "top", "right", "bottom"]:
+            noise_side = random.choice(["left", "top", "right", "bottom"])
+        else:
+            noise_side = self.noise_side
+
         # check if provided mask is numpy array
         if isinstance(self.mask, np.ndarray):
             mask = self.mask
@@ -231,7 +227,7 @@ class BadPhotoCopy(Augmentation):
         else:
             noise_generator = NoiseGenerator(
                 noise_type=self.noise_type,
-                noise_side=self.noise_side,
+                noise_side=noise_side,
             )
             mask = noise_generator.generate_noise(
                 noise_value=self.noise_value,
@@ -240,10 +236,6 @@ class BadPhotoCopy(Augmentation):
                 noise_sparsity=self.noise_sparsity,
                 noise_concentration=self.noise_concentration,
             )
-
-            # randomly rotate mask
-            if self.noise_side == "random":
-                mask = np.rot90(mask, random.randint(0, 3))
 
         # new size after rotation
         mask_ysize, mask_xsize = mask.shape[:2]
@@ -272,14 +264,7 @@ class BadPhotoCopy(Augmentation):
         else:
             wave_pattern = self.wave_pattern
         if wave_pattern:
-            mask = self.apply_wave(mask)
-
-        # random flip mask vertically or horizontally
-        if self.noise_side == "random":
-            if random.choice([True, False]):
-                mask = cv2.flip(mask, 0)
-            if random.choice([True, False]):
-                mask = cv2.flip(mask, 1)
+            mask = self.apply_wave(mask, noise_side)
 
         # add dotted noise effect to mask (unsmoothen)
         if not blur_noise:
