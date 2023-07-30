@@ -59,35 +59,49 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 
 |    Augmentation    |Images per second|Memory usage (MB)|
 |--------------------|----------------:|----------------:|
-|BadPhotoCopy        |             0.31|           138.25|
-|BindingsAndFasteners|            26.11|            20.81|
-|BleedThrough        |             0.27|           684.69|
-|BookBinding         |             0.06|           683.50|
-|Brightness          |             3.31|           147.99|
-|BrightnessTexturize |             1.25|           181.74|
-|ColorPaper          |             3.14|           105.66|
-|DirtyDrum           |             0.55|           481.19|
-|DirtyRollers        |             1.51|           173.45|
-|Dithering           |             2.27|           126.82|
-|Faxify              |             0.96|           142.97|
-|Folding             |             5.73|            67.75|
-|Gamma               |            25.39|            25.36|
-|Geometric           |             5.24|            40.85|
-|InkBleed            |             0.67|           294.73|
-|Jpeg                |             3.59|            25.86|
-|Letterpress         |             0.23|           158.60|
-|LightingGradient    |             0.34|           638.31|
-|LowInkPeriodicLines |             2.94|            12.74|
-|LowInkRandomLines   |            71.05|            12.74|
-|Markup              |             0.71|           533.16|
-|NoiseTexturize      |             0.53|           249.36|
-|PageBorder          |             0.52|           465.19|
-|Scribbles           |             1.15|           138.13|
-|SubtleNoise         |             1.03|           202.87|
-|WaterMark           |             1.19|           373.41|
-|VoronoiTessellation |             0.47|            15.90|
-|DelaunayTessellation|             0.76|            36.33|
-|Quasi Crystals      |             0.25|              7.5|
+|BadPhotoCopy        |             0.38|           178.20|
+|BindingsAndFasteners|            29.34|            21.43|
+|BleedThrough        |             0.39|           684.69|
+|BookBinding         |             0.08|           611.74|
+|Brightness          |             5.93|           147.99|
+|BrightnessTexturize |             2.12|           181.74|
+|ColorPaper          |             5.12|           105.66|
+|ColorShift          |             0.87|           114.26|
+|DelaunayTessellation|             0.14|            60.00|
+|DirtyDrum           |             0.82|           482.63|
+|DirtyRollers        |             1.58|           249.52|
+|Dithering           |             3.96|           126.82|
+|DotMatrix           |             0.22|            80.53|
+|Faxify              |             2.02|           126.75|
+|Folding             |             2.85|            63.27|
+|Gamma               |            34.27|            25.36|
+|Geometric           |           189.37|            12.68|
+|GlitchEffect        |             1.48|           126.94|
+|Hollow              |             0.21|           343.17|
+|InkBleed            |             3.93|           177.51|
+|InkColorSwap        |             5.22|            51.99|
+|InkMottling         |             7.78|            55.99|
+|InkShifter          |             0.17|           426.89|
+|Jpeg                |             6.32|            25.85|
+|Letterpress         |             0.45|           158.10|
+|LightingGradient    |             0.44|           638.31|
+|LinesDegradation    |             1.69|           175.38|
+|LowInkPeriodicLines |             6.47|            12.74|
+|LowInkRandomLines   |           114.02|            12.74|
+|LowLightNoise       |             0.30|           481.95|
+|Markup              |             2.97|           154.12|
+|NoiseTexturize      |             0.73|           249.36|
+|NoisyLines          |             0.86|           446.76|
+|PageBorder          |             0.32|           201.22|
+|PatternGenerator    |             1.68|            51.52|
+|ReflectedLight      |             0.08|           109.97|
+|Scribbles           |             1.00|            97.13|
+|SectionShift        |           129.82|            12.96|
+|ShadowCast          |             0.95|            50.79|
+|Squish              |             0.26|           465.31|
+|SubtleNoise         |             1.68|           202.87|
+|VoronoiTessellation |             0.08|            57.48|
+|WaterMark           |             2.70|           352.34|
 
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
