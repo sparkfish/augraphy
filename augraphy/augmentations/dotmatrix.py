@@ -158,7 +158,9 @@ class DotMatrix(Augmentation):
                     for i in range(3):
                         dot_color_patch = ((image_dot / 255.0) * dot_color[i])[:, :, i]
                         dot_matrix_patch = image_dot_matrix[
-                            cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width, i
+                            cy : cy + dot_matrix_dot_height,
+                            cx : cx + dot_matrix_dot_width,
+                            i,
                         ]
                         for y in range(dot_color_patch.shape[0]):
                             for x in range(dot_color_patch.shape[1]):
@@ -188,7 +190,9 @@ class DotMatrix(Augmentation):
                     for i in range(3):
                         dot_color_patch = ((image_dot[:remainder_y, :] / 255.0) * dot_color[i])[:, :, i]
                         dot_matrix_patch = image_dot_matrix[
-                            start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width, i
+                            start_y : start_y + remainder_y,
+                            cx : cx + dot_matrix_dot_width,
+                            i,
                         ]
                         for y in range(dot_color_patch.shape[0]):
                             for x in range(dot_color_patch.shape[1]):
@@ -218,7 +222,9 @@ class DotMatrix(Augmentation):
                     for i in range(3):
                         dot_color_patch = ((image_dot[:, :remainder_x] / 255.0) * dot_color[i])[:, :, i]
                         dot_matrix_patch = image_dot_matrix[
-                            cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x
+                            cy : cy + dot_matrix_dot_height,
+                            start_x : start_x + remainder_x,
+                            i,
                         ]
                         for y in range(dot_color_patch.shape[0]):
                             for x in range(dot_color_patch.shape[1]):
@@ -256,7 +262,11 @@ class DotMatrix(Augmentation):
                 # map dot to image
                 for i in range(3):
                     dot_color_patch = ((image_dot[:length_y, :length_x] / 255.0) * dot_color[i])[:, :, i]
-                    dot_matrix_patch = image_dot_matrix[start_y : start_y + length_y, start_x : start_x + length_x]
+                    dot_matrix_patch = image_dot_matrix[
+                        start_y : start_y + length_y,
+                        start_x : start_x + length_x,
+                        i,
+                    ]
                     for y in range(dot_color_patch.shape[0]):
                         for x in range(dot_color_patch.shape[1]):
                             if indices[y, x]:
