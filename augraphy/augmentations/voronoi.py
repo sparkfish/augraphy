@@ -28,7 +28,6 @@ References:
 *********************************
 
 """
-import math
 import os
 import random
 import warnings
@@ -81,7 +80,7 @@ class VoronoiTessellation(Augmentation):
         seed=19829813472,
         num_cells_range=(500, 1000),
         noise_type="random",
-        background_value=(200, 256),
+        background_value=(200, 255),
         p=1,
     ):
         super().__init__(p=p)
@@ -103,9 +102,9 @@ class VoronoiTessellation(Augmentation):
         img_array = np.zeros((width, height), dtype=np.uint8)
         for y in nb.prange(width):
             for x in nb.prange(height):
-                dmin = math.hypot(height, width)
+                dmin = np.hypot(height, width)
                 for i in nb.prange(num_cells):
-                    d = math.hypot(
+                    d = np.hypot(
                         (pixel_data[0][i] - x + perlin_noise_2d[0][x][y]),
                         (pixel_data[1][i] - y + perlin_noise_2d[1][x][y]),
                     )
