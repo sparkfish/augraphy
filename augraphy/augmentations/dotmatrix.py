@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 from PIL import Image
 
 from augraphy.base.augmentation import Augmentation
@@ -52,6 +54,8 @@ class DotMatrix(Augmentation):
     :type dot_matrix_gaussian_kernel_value_range: tuple, optional
     :param dot_matrix_rotate_value_range: Tuple of ints determining the angle of rotation of the dot matrix effect.
     :type dot_matrix_rotate_value_range: tuple, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
@@ -70,6 +74,7 @@ class DotMatrix(Augmentation):
         dot_matrix_median_kernel_value_range=(128, 255),
         dot_matrix_gaussian_kernel_value_range=(1, 3),
         dot_matrix_rotate_value_range=(0, 360),
+        numba_jit=1,
         p=1,
     ):
         """Constructor method"""
@@ -86,9 +91,176 @@ class DotMatrix(Augmentation):
         self.dot_matrix_median_kernel_value_range = dot_matrix_median_kernel_value_range
         self.dot_matrix_gaussian_kernel_value_range = dot_matrix_gaussian_kernel_value_range
         self.dot_matrix_rotate_value_range = dot_matrix_rotate_value_range
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"DotMatrix(dot_matrix_shape={self.dot_matrix_shape}, dot_matrix_dot_width_range={self.dot_matrix_dot_width_range}, dot_matrix_dot_height_range={self.dot_matrix_dot_height_range}, dot_matrix_min_width_range={self.dot_matrix_min_width_range}, dot_matrix_max_width_range={self.dot_matrix_max_width_range}, dot_matrix_min_height_range={self.dot_matrix_min_height_range}, dot_matrix_max_height_range={self.dot_matrix_max_height_range},  dot_matrix_min_area_range={self.dot_matrix_min_area_range}, dot_matrix_max_area_range={self.dot_matrix_max_area_range}, dot_matrix_median_kernel_value_range={self.dot_matrix_median_kernel_value_range}, dot_matrix_gaussian_kernel_value_range={self.dot_matrix_gaussian_kernel_value_range}, dot_matrix_rotate_value_range={self.dot_matrix_rotate_value_range}, p={self.p})"
+        return f"DotMatrix(dot_matrix_shape={self.dot_matrix_shape}, dot_matrix_dot_width_range={self.dot_matrix_dot_width_range}, dot_matrix_dot_height_range={self.dot_matrix_dot_height_range}, dot_matrix_min_width_range={self.dot_matrix_min_width_range}, dot_matrix_max_width_range={self.dot_matrix_max_width_range}, dot_matrix_min_height_range={self.dot_matrix_min_height_range}, dot_matrix_max_height_range={self.dot_matrix_max_height_range},  dot_matrix_min_area_range={self.dot_matrix_min_area_range}, dot_matrix_max_area_range={self.dot_matrix_max_area_range}, dot_matrix_median_kernel_value_range={self.dot_matrix_median_kernel_value_range}, dot_matrix_gaussian_kernel_value_range={self.dot_matrix_gaussian_kernel_value_range}, dot_matrix_rotate_value_range={self.dot_matrix_rotate_value_range}, numba_jit={self.numba_jit}, p={self.p})"
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def fill_dot(
+        image,
+        image_dot_matrix,
+        image_dot,
+        image_mask,
+        dot_matrix_dot_width,
+        dot_matrix_dot_height,
+        n_dot_x,
+        n_dot_y,
+        remainder_x,
+        remainder_y,
+    ):
+        """The core function to fill output image with each dot image.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param image_dot_matrix: The output image.
+        :type image_dot_matrix: numpy array
+        :param image_dot: The image where it contains single dot of various shape.
+        :type image_dot: numpy array
+        :param image_mask: The mask to indicate the location to apply image dot into the output image.
+        :type image_mask: numpy array
+        :param dot_matrix_dot_width: Width of single dot.
+        :type dot_matrix_dot_width: int
+        :param dot_matrix_dot_height: Height of single dot.
+        :type dot_matrix_dot_height: int
+        :param n_dot_x: The number of dots in horizontal direction.
+        :type n_dot_x: int
+        :param n_dot_y: The number of dots in vertical direction.
+        :type n_dot_y: int
+        :param remainder_x: The remaining horizontal pixels after all dots are applied.
+        :type remainder_x: int
+        :param remainder_y: The remaining vertical pixels after all dots are applied.
+        :type remainder_y: int
+        """
+
+        # fill in image_dot
+        for y in range(n_dot_y):
+            cy = y * dot_matrix_dot_height
+            for x in range(n_dot_x):
+                cx = x * dot_matrix_dot_width
+                # non empty contour area
+                if np.sum(image_mask[cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width]) > 0:
+                    # mean of current dot color
+                    image_patch = image[cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width]
+                    dot_color = np.array(
+                        [np.mean(image_patch[:, :, 0]), np.mean(image_patch[:, :, 1]), np.mean(image_patch[:, :, 2])],
+                    )
+
+                    # indices of shape mapping
+                    indices = np.logical_or(
+                        np.logical_or(image_dot[:, :, 0], image_dot[:, :, 1]),
+                        image_dot[:, :, 2],
+                    )
+
+                    # map dot to image
+                    for i in range(3):
+                        dot_color_patch = ((image_dot / 255.0) * dot_color[i])[:, :, i]
+                        dot_matrix_patch = image_dot_matrix[
+                            cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width, i
+                        ]
+                        for y in range(dot_color_patch.shape[0]):
+                            for x in range(dot_color_patch.shape[1]):
+                                if indices[y, x]:
+                                    dot_matrix_patch[y, x] = np.uint8(dot_color_patch[y, x])
+
+        # remaining last column
+        if remainder_y > 0:
+            for x in range(n_dot_x):
+                cx = x * dot_matrix_dot_width
+                start_y = n_dot_y * dot_matrix_dot_height
+                # non empty contour area
+                if np.sum(image_mask[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width]) > 0:
+                    # mean of current dot color
+                    image_patch = image[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width]
+                    dot_color = np.array(
+                        [np.mean(image_patch[:, :, 0]), np.mean(image_patch[:, :, 1]), np.mean(image_patch[:, :, 2])],
+                    )
+
+                    # indices of shape mapping
+                    indices = np.logical_or(
+                        np.logical_or(image_dot[:remainder_y, :, 0], image_dot[:remainder_y, :, 1]),
+                        image_dot[:remainder_y, :, 2],
+                    )
+
+                    # map dot to image
+                    for i in range(3):
+                        dot_color_patch = ((image_dot[:remainder_y, :] / 255.0) * dot_color[i])[:, :, i]
+                        dot_matrix_patch = image_dot_matrix[
+                            start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width, i
+                        ]
+                        for y in range(dot_color_patch.shape[0]):
+                            for x in range(dot_color_patch.shape[1]):
+                                if indices[y, x]:
+                                    dot_matrix_patch[y, x] = np.uint8(dot_color_patch[y, x])
+
+        # remaining last row
+        if remainder_x > 0:
+            for y in range(n_dot_y):
+                cy = y * dot_matrix_dot_height
+                start_x = n_dot_x * dot_matrix_dot_width
+                # non empty contour area
+                if np.sum(image_mask[cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x]) > 0:
+                    # mean of current dot color
+                    image_patch = image[cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x]
+                    dot_color = np.array(
+                        [np.mean(image_patch[:, :, 0]), np.mean(image_patch[:, :, 1]), np.mean(image_patch[:, :, 2])],
+                    )
+
+                    # indices of shape mapping
+                    indices = np.logical_or(
+                        np.logical_or(image_dot[:, :remainder_x, 0], image_dot[:, :remainder_x, 1]),
+                        image_dot[:, :remainder_x, 2],
+                    )
+
+                    # map dot to image
+                    for i in range(3):
+                        dot_color_patch = ((image_dot[:, :remainder_x] / 255.0) * dot_color[i])[:, :, i]
+                        dot_matrix_patch = image_dot_matrix[
+                            cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x
+                        ]
+                        for y in range(dot_color_patch.shape[0]):
+                            for x in range(dot_color_patch.shape[1]):
+                                if indices[y, x]:
+                                    dot_matrix_patch[y, x] = np.uint8(dot_color_patch[y, x])
+
+        # last dot (bottom right)
+        if remainder_x and remainder_y > 0:
+
+            if remainder_x > 0:
+                length_x = remainder_x
+            else:
+                length_x = dot_matrix_dot_width
+            if remainder_y > 0:
+                length_y = remainder_y
+            else:
+                length_y = dot_matrix_dot_height
+
+            start_x = n_dot_x * dot_matrix_dot_width
+            start_y = n_dot_y * dot_matrix_dot_height
+            # non empty contour area
+            if np.sum(image_mask[start_y : start_y + length_y, start_x : start_x + length_x]) > 0:
+                # mean of current dot color
+                image_patch = image[start_y : start_y + length_y, start_x : start_x + length_x]
+                dot_color = np.array(
+                    [np.mean(image_patch[:, :, 0]), np.mean(image_patch[:, :, 1]), np.mean(image_patch[:, :, 2])],
+                )
+
+                # indices of shape mapping
+                indices = np.logical_or(
+                    np.logical_or(image_dot[:length_y, :length_x, 0], image_dot[:length_y, :length_x, 1]),
+                    image_dot[:length_y, :length_x, 2],
+                )
+
+                # map dot to image
+                for i in range(3):
+                    dot_color_patch = ((image_dot[:length_y, :length_x] / 255.0) * dot_color[i])[:, :, i]
+                    dot_matrix_patch = image_dot_matrix[start_y : start_y + length_y, start_x : start_x + length_x]
+                    for y in range(dot_color_patch.shape[0]):
+                        for x in range(dot_color_patch.shape[1]):
+                            if indices[y, x]:
+                                dot_matrix_patch[y, x] = np.uint8(dot_color_patch[y, x])
 
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
@@ -347,110 +519,23 @@ class DotMatrix(Augmentation):
 
             # change contours area to median image
             image_dot_matrix = image.copy()
-            image_dot_matrix[image_mask > 0] = image_median[image_mask > 0]
 
-            # fill in image_dot
-            for y in range(n_dot_y):
-                cy = y * dot_matrix_dot_height
-                for x in range(n_dot_x):
-                    cx = x * dot_matrix_dot_width
-                    # non empty contour area
-                    if np.sum(image_mask[cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width]) > 0:
-                        # mean of current dot color
-                        dot_color = np.mean(
-                            image[cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width],
-                            axis=(0, 1),
-                        )
-                        # indices of shape
-                        indices = np.logical_or(
-                            np.logical_or(image_dot[:, :, 0], image_dot[:, :, 1]),
-                            image_dot[:, :, 2],
-                        )
-                        # multiply to mask of shape
-                        image_dot_color = ((image_dot / 255) * dot_color).astype("uint8")
-                        # apply dot to image
-                        image_dot_matrix[cy : cy + dot_matrix_dot_height, cx : cx + dot_matrix_dot_width][
-                            indices
-                        ] = image_dot_color[indices]
+            for i in range(3):
+                image_dot_matrix[:, :, i][image_mask > 0] = image_median[:, :, i][image_mask > 0]
 
-            # remaining last column
-            if remainder_y > 0:
-                for x in range(n_dot_x):
-                    cx = x * dot_matrix_dot_width
-                    start_y = n_dot_y * dot_matrix_dot_height
-                    # non empty contour area
-                    if np.sum(image_mask[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width]) > 0:
-                        # mean of current dot color
-                        dot_color = np.mean(
-                            image[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width],
-                            axis=(0, 1),
-                        )
-
-                        # indices of shape
-                        indices = np.logical_or(
-                            np.logical_or(image_dot[:remainder_y, :, 0], image_dot[:remainder_y, :, 1]),
-                            image_dot[:remainder_y, :, 2],
-                        )
-                        # multiply to mask of shape
-                        image_dot_color = ((image_dot_color[:remainder_y, :] / 255) * dot_color).astype("uint8")
-                        # apply dot to image
-                        image_dot_matrix[start_y : start_y + remainder_y, cx : cx + dot_matrix_dot_width][
-                            indices
-                        ] = image_dot_color[indices]
-
-            # remaining last row
-            if remainder_x > 0:
-                for y in range(n_dot_y):
-                    cy = y * dot_matrix_dot_height
-                    start_x = n_dot_x * dot_matrix_dot_width
-                    # non empty contour area
-                    if np.sum(image_mask[cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x]) > 0:
-                        # mean of current dot color
-                        dot_color = np.mean(
-                            image[cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x],
-                            axis=(0, 1),
-                        )
-                        # indices of shape
-                        indices = np.logical_or(
-                            np.logical_or(image_dot[:, :remainder_x, 0], image_dot[:, :remainder_x, 1]),
-                            image_dot[:, :remainder_x, 2],
-                        )
-                        # multiply to mask of shape
-                        image_dot_color = ((image_dot[:, :remainder_x] / 255) * dot_color).astype("uint8")
-                        # apply dot to image
-                        image_dot_matrix[cy : cy + dot_matrix_dot_height, start_x : start_x + remainder_x][
-                            indices
-                        ] = image_dot_color[indices]
-
-            # last dot (bottom right)
-            if remainder_x and remainder_y > 0:
-
-                if remainder_x > 0:
-                    length_x = remainder_x
-                else:
-                    length_x = dot_matrix_dot_width
-                if remainder_y > 0:
-                    length_y = remainder_y
-                else:
-                    length_y = dot_matrix_dot_height
-
-                start_x = n_dot_x * dot_matrix_dot_width
-                start_y = n_dot_y * dot_matrix_dot_height
-                # non empty contour area
-                if np.sum(image_mask[start_y : start_y + length_y, start_x : start_x + length_x]) > 0:
-                    # mean of current dot color
-                    dot_color = np.mean(image[start_y : start_y + length_y, start_x : start_x + length_x], axis=(0, 1))
-                    # indices of shape
-                    indices = np.logical_or(
-                        np.logical_or(image_dot[:length_y, :length_x, 0], image_dot[:length_y, :length_x, 1]),
-                        image_dot[:length_y, :length_x, 2],
-                    )
-                    # multiply to mask of shape
-                    image_dot_color = ((image_dot[:length_y, :length_x] / 255) * dot_color).astype("uint8")
-                    # apply dot to image
-                    image_dot_matrix[start_y : start_y + length_y, start_x : start_x + length_x][
-                        indices
-                    ] = image_dot_color[indices]
+            # fill output image with dots
+            self.fill_dot(
+                image,
+                image_dot_matrix,
+                image_dot.astype("float"),
+                image_mask,
+                dot_matrix_dot_width,
+                dot_matrix_dot_height,
+                n_dot_x,
+                n_dot_y,
+                remainder_x,
+                remainder_y,
+            )
 
             # apply Gaussian Blur on dot image
             dot_matrix_gaussian_kernel_value = random.randint(
