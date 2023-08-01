@@ -85,6 +85,8 @@ def default_augraphy_pipeline():
                         NoiseTexturize(
                             sigma_range=(3, 10),
                             turbulence_range=(2, 5),
+                            texture_width_range=(300, 500),
+                            texture_height_range=(300, 500),
                         ),
                         BrightnessTexturize(
                             texturize_range=(0.9, 0.99),
@@ -101,6 +103,8 @@ def default_augraphy_pipeline():
                         NoiseTexturize(
                             sigma_range=(3, 10),
                             turbulence_range=(2, 5),
+                            texture_width_range=(300, 500),
+                            texture_height_range=(300, 500),
                         ),
                     ],
                 ),

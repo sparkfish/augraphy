@@ -16,6 +16,12 @@ class NoiseTexturize(Augmentation):
         replaced with the small ones. The lower value -
         the more iterations will be performed during texture generation.
     :type turbulence_range: tuple, optional
+    :param texture_width_range: Tuple of ints determining the width of the texture image.
+        If the value is higher, the texture will be more refined.
+    :type texture_width_range: tuple, optional
+    :param texture_height_range: Tuple of ints determining the height of the texture.
+        If the value is higher, the texture will be more refined.
+    :type texture_height_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
 
@@ -25,16 +31,20 @@ class NoiseTexturize(Augmentation):
         self,
         sigma_range=(3, 10),
         turbulence_range=(2, 5),
+        texture_width_range=(100, 500),
+        texture_height_range=(100, 500),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.sigma_range = sigma_range
         self.turbulence_range = turbulence_range
+        self.texture_width_range = texture_width_range
+        self.texture_height_range = texture_height_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, p={self.p})"
+        return f"NoiseTexturize(sigma_range={self.sigma_range}, turbulence_range={self.turbulence_range}, texture_width_range={self.texture_width_range}, texture_height_range={self.texture_height_range}, p={self.p})"
 
     def noise(self, width, height, channel, ratio, sigma):
         """The function generates an image, filled with gaussian nose. If ratio
@@ -54,19 +64,20 @@ class NoiseTexturize(Augmentation):
         :param sigma: Defines bounds of noise fluctuations.
         :type sigma: int
         """
-        mean = 0
+
         # assert width % ratio == 0, "Can't scale image with of size {} and ratio {}".format(width, ratio)
         # assert height % ratio == 0, "Can't scale image with of size {} and ratio {}".format(height, ratio)
 
-        result = (random.gauss(mean, sigma), random.gauss(mean, sigma))
+        ysize = random.randint(self.texture_height_range[0], self.texture_height_range[1])
+        xsize = random.randint(self.texture_width_range[0], self.texture_width_range[1])
+
+        result = np.random.normal(0, sigma, size=(ysize, xsize))
 
         result = cv2.resize(
             result,
             dsize=(width, height),
             interpolation=cv2.INTER_LINEAR,
         )
-
-        # for multiple channels input, convert result to multiple channels
         if channel:
             result = np.stack([result, result, result], axis=2)
 
