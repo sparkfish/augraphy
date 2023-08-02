@@ -400,7 +400,7 @@ class PageBorder(Augmentation):
             shifted_value_x = int(shifted_value_xs[i])
 
             # create a copy of image
-            border_image_fold = border_images[total_shifts - 1 - i].copy()
+            border_image_fold = border_images[total_shifts - 1 - i]
 
             # draw borders line on possible folding edges before folding process
             if page_border_height != 0:
@@ -412,10 +412,16 @@ class PageBorder(Augmentation):
             if i != 0:
                 curve_frequency = random.randint(self.curve_frequency[0], self.curve_frequency[1])
                 for _ in range(curve_frequency):
-                    border_image_fold = self.random_folding(border_image_fold)
-                    border_image_fold = np.rot90(self.random_folding(np.rot90(border_image_fold, 3)))
+                    # top curve
+                    sx, sy, ex, ey = 0, 0, border_image_fold.shape[1], self.curve_height[1] * 2
+                    border_image_fold[sy:ey, sx:ex] = self.random_folding(border_image_fold[sy:ey, sx:ex])
+                    # left curve
+                    sx, sy, ex, ey = 0, 0, self.curve_height[1] * 2, border_image_fold.shape[0]
+                    border_image_fold[sy:ey, sx:ex] = np.rot90(
+                        self.random_folding(np.rot90(border_image_fold[sy:ey, sx:ex], 3)),
+                    )
 
-            border_image_single = border_image_fold.copy()
+            border_image_single = border_image_fold
             # draw the rest of borders line
             border_image_single[-1, :] = self.page_border_color
             border_image_single[0, :] = self.page_border_color

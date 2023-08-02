@@ -71,40 +71,49 @@ class Squish(Augmentation):
             squish_ys = random.sample(range(0, ysize - 1), squish_number)
         else:
             squish_ys = self.squish_location
+
         # reverse sort to squish from bottom so that squish location won't be affected after multiple squish iterations
         squish_ys.sort(reverse=True)
-
         squish_distance_total = 0
-        for y in squish_ys:
+        squish_distances = []
 
+        for y in squish_ys:
             # apply squish effect based on the distance
             squish_distance = random.randint(self.squish_distance_range[0], self.squish_distance_range[1])
             image[y:-squish_distance, :] = image[y + squish_distance :, :]
-
-            # generate flag for squish line
-            if self.squish_line == "random":
-                squish_line = random.choice([0, 1])
-            else:
-                squish_line = self.squish_line
-
-            # add squish line
-            if squish_line:
-                noisy_lines = NoisyLines(
-                    noisy_lines_direction=0,
-                    noisy_lines_location=[y],
-                    noisy_lines_number_range=(1, 1),
-                    noisy_lines_color=(0, 0, 0),
-                    noisy_lines_thickness_range=self.squish_line_thickness_range,
-                    noisy_lines_random_noise_intensity_range=(0.01, 0.1),
-                    noisy_lines_length_interval_range=(0, 0),
-                    noisy_lines_gaussian_kernel_value_range=(1, 1),
-                    noisy_lines_overlay_method="ink_to_paper",
-                )
-                image = noisy_lines(image)
-
+            squish_distances.append(squish_distance)
             # add total squish distance so that we can remove it later
             squish_distance_total += squish_distance
         image = image[:-squish_distance_total, :]
+
+        # generate flag for squish line
+        if self.squish_line == "random":
+            squish_line = 1
+        else:
+            squish_line = self.squish_line
+        # generate lines
+        if squish_line:
+            squish_lines_y = []
+            # reduce y location when there's multiple squishes
+            for i, squish_y in enumerate(squish_ys, start=1):
+                squish_line_y = squish_y - sum(squish_distances[i:])
+                if self.squish_line == "random":
+                    if random.choice([0, 1]) > 0:
+                        squish_lines_y.append(squish_line_y)
+                else:
+                    squish_lines_y.append(squish_line_y)
+            noisy_lines = NoisyLines(
+                noisy_lines_direction=0,
+                noisy_lines_location=squish_lines_y,
+                noisy_lines_number_range=(1, 1),
+                noisy_lines_color=(0, 0, 0),
+                noisy_lines_thickness_range=self.squish_line_thickness_range,
+                noisy_lines_random_noise_intensity_range=(0.01, 0.1),
+                noisy_lines_length_interval_range=(0, 0),
+                noisy_lines_gaussian_kernel_value_range=(1, 1),
+                noisy_lines_overlay_method="ink_to_paper",
+            )
+            image = noisy_lines(image)
 
         return image
 
