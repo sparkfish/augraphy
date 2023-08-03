@@ -29,6 +29,7 @@ import warnings
 import cv2
 import numba as nb
 import numpy as np
+from numba import config
 from numba import jit
 
 from augraphy.base.augmentation import Augmentation
@@ -57,6 +58,10 @@ class PatternGenerator(Augmentation):
     :type color: tuple (int), optional
     :param alpha_range: Tuple of floats determining the alpha value of the patterns.
     :type alpha_range: tuple (float), optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
+        :param p: The probability this Augmentation will be applied.
+    :type p: float, optional
     """
 
     def __init__(
@@ -66,6 +71,7 @@ class PatternGenerator(Augmentation):
         n_rotation_range=(10, 15),
         color="random",
         alpha_range=(0.25, 0.5),
+        numba_jit=1,
         p=1.0,
     ):
         """Constructor method"""
@@ -75,25 +81,27 @@ class PatternGenerator(Augmentation):
         self.n_rotation_range = n_rotation_range  # number of rotation to be applied to the pattern
         self.color = color
         self.alpha_range = alpha_range
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
         # return f"QuasiPattern Distortion: width = {self.imgx} , height = {self.imgy}, n_rotation = {self.n_rotation}, color = {self.color}, alpha_range = {self.alpha_range}"
-        return f"QuasiPattern Distortion:  n_rotation_range = {self.n_rotation_range}"
+        return f"QuasiPattern Distortion(imgx={self.imgx}, imgy={self.imgy}, n_rotation_range = {self.n_rotation_range}, color={self.color}, alpha_range={self.alpha_range}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
-    @jit(nopython=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def apply_augmentation(ndim, pattern_image, frequency, phase, n_rotation):
         # Applies the Augmentation to input data.
         width, height = ndim
         # apply transformation, each pixel is transformed to cosine function
         for ky in range(height):
             y = np.float32(ky) / (height - 1) * 4 * math.pi - 2 * math.pi  # normalized coordinates of y-coordinate
-            for kx in range(width):
+            for kx in nb.prange(width):
                 x = (
                     np.float32(kx) / (width - 1) * 4 * math.pi - 2 * math.pi
                 )  # normalized coordinates of the x-coordinate
                 z = 0.0  # z value will determine the intensity of the color, initially set to zero
-                for i in range(n_rotation):
+                for i in nb.prange(n_rotation):
                     r = math.hypot(x, y)  # distance between the point to the origin
                     a = (
                         math.atan2(y, x) + i * math.pi * 2.0 / n_rotation
