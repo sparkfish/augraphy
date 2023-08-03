@@ -99,7 +99,7 @@ class BadPhotoCopy(Augmentation):
         return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def fill_wave_mask(img_wave, smooth_points):
         """Fill wavy pattern mask with value.
 

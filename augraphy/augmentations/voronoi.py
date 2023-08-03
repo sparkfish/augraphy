@@ -35,6 +35,7 @@ import warnings
 import cv2
 import numba as nb
 import numpy as np
+from numba import config
 from numba import jit
 from PIL import Image
 
@@ -68,6 +69,8 @@ class VoronoiTessellation(Augmentation):
     :type noise_type: string, optional
     :param background_value: Range for background color assigned to each point
     :type background_value: tuple (int)
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float
 
@@ -81,6 +84,7 @@ class VoronoiTessellation(Augmentation):
         num_cells_range=(500, 1000),
         noise_type="random",
         background_value=(200, 255),
+        numba_jit=1,
         p=1,
     ):
         super().__init__(p=p)
@@ -89,12 +93,14 @@ class VoronoiTessellation(Augmentation):
         self.num_cells_range = num_cells_range
         self.noise_type = noise_type
         self.background_value = background_value
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"Voronoi Tessellation: amplification_factor_range = {self.mult_range} , seed = {self.seed}, range of random points = {self.num_cells_range}, noise_type={self.noise_type}, background_value = {self.background_value}"
+        return f"Voronoi Tessellation(amplification_factor_range = {self.mult_range} , seed = {self.seed}, range of random points = {self.num_cells_range}, noise_type={self.noise_type}, background_value = {self.background_value}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def generate_voronoi(width, height, num_cells, nsize, pixel_data, perlin_noise_2d):
         """
         Generates Voronoi Tessellation

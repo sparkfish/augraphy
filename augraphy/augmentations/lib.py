@@ -4,6 +4,7 @@ import random
 from glob import glob
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import config
 from numba import jit
@@ -171,18 +172,16 @@ def generate_average_intensity(image):
 
 
 # Generate noise to edges of folding
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, parallel=True)
 def add_folding_noise(img, side, p=0.1):
     # side = flag to put more noise at certain side
-    #   0  = left side
-    #   1  = right side
+    #   1  = left side
+    #   0  = right side
 
     # get image dimension
     ysize, xsize = img.shape[:2]
-
-    for y in range(ysize):
-        for x in range(xsize):
-
+    for y in nb.prange(ysize):
+        for x in nb.prange(xsize):
             if side:  # more noise on right side
                 p_score = (((x) / xsize) ** 3) * p  # non linear score with power
             else:  # more noise on left side
@@ -240,6 +239,7 @@ def warp_fold(
         cxe = fold_x + fold_width_one_side
         cys = 0
         cye = ysize
+
     else:
         # after distortion
         dtop_left = [xs, ys + (fold_y_shift)]
@@ -304,7 +304,11 @@ def warp_fold(
             img_warped[:, :, i][img_mask_warped[:, :, i] < 255] = backdrop_color[i]
 
     if fold_noise != 0:
-        img_warped = add_folding_noise(img_warped, 1, fold_noise / 2)
+        if side == "left":
+            noise_side = 1
+        else:
+            noise_side = 0
+        img_warped = add_folding_noise(img_warped, noise_side, fold_noise / 2)
 
     if cdim > 2:
         img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
@@ -339,7 +343,7 @@ def chaikin(points):
     return path
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, parallel=True)
 def smooth(points, iterations):
     """
     Smooth points using chaikin method.
@@ -352,14 +356,14 @@ def smooth(points, iterations):
     """
 
     percent = 0.25
-    for i in range(iterations):
+    # iterations can't be parallelized due to we need the prior points
+    for _ in range(iterations):
         current_ysize = points.shape[0]
         path = np.zeros((current_ysize * 2, 2), dtype="float")
         # first and last point are the same
         path[0] = points[0]
         path[-1] = points[-1]
-        n = 1
-        for i in range(current_ysize - 1):
+        for i in nb.prange(current_ysize - 1):
             p0 = points[i]
             p1 = points[i + 1]
             # distance between x values of two subsequent points
@@ -371,11 +375,11 @@ def smooth(points, iterations):
             new_px1, new_py1 = p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent)
 
             # 2 new points per current single point
+            n = ((i + 1) * 2) - 1
             path[n][0] = new_px0
             path[n][1] = new_py0
             path[n + 1][0] = new_px1
             path[n + 1][1] = new_py1
-            n += 2
 
         # update points for next iteration
         points = path
