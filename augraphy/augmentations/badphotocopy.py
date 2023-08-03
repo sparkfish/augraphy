@@ -1,6 +1,7 @@
 import random
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import config
 from numba import jit
@@ -110,7 +111,9 @@ class BadPhotoCopy(Augmentation):
         """
 
         # fill mask by draw wavy line across image
-        for (x_point, y_point) in smooth_points:
+        n = len(smooth_points)
+        for i in nb.prange(n):
+            x_point, y_point = smooth_points[i]
             img_wave[:y_point, x_point] = 255
 
     def apply_wave(self, mask, noise_side):
