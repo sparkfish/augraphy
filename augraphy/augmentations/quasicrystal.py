@@ -86,7 +86,7 @@ class PatternGenerator(Augmentation):
 
     def __repr__(self):
         # return f"QuasiPattern Distortion: width = {self.imgx} , height = {self.imgy}, n_rotation = {self.n_rotation}, color = {self.color}, alpha_range = {self.alpha_range}"
-        return f"QuasiPattern Distortion(imgx={self.imgx}, imgy={self.imgy}, n_rotation_range = {self.n_rotation_range}, numba_jit={self.numba_jit}, p={self.p})"
+        return f"QuasiPattern Distortion(imgx={self.imgx}, imgy={self.imgy}, n_rotation_range = {self.n_rotation_range}, color={self.color}, alpha_range={self.alpha_range}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
     @jit(nopython=True, cache=True, parallel=True)
