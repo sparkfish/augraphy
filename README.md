@@ -59,49 +59,49 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 
 |    Augmentation    |Images per second|Memory usage (MB)|
 |--------------------|----------------:|----------------:|
-|BadPhotoCopy        |             0.38|           178.20|
-|BindingsAndFasteners|            29.34|            21.43|
-|BleedThrough        |             0.39|           684.69|
-|BookBinding         |             0.08|           611.74|
-|Brightness          |             5.93|           147.99|
-|BrightnessTexturize |             2.12|           181.74|
-|ColorPaper          |             5.12|           105.66|
-|ColorShift          |             0.87|           114.26|
+|BadPhotoCopy        |             0.37|           178.20|
+|BindingsAndFasteners|            31.40|            21.43|
+|BleedThrough        |             0.43|           684.69|
+|BookBinding         |             0.11|           611.74|
+|Brightness          |             5.75|           147.99|
+|BrightnessTexturize |             2.16|           181.74|
+|ColorPaper          |             5.07|           105.66|
+|ColorShift          |             0.88|           114.26|
 |DelaunayTessellation|             0.14|            60.00|
-|DirtyDrum           |             0.82|           482.63|
-|DirtyRollers        |             1.58|           249.52|
-|Dithering           |             3.96|           126.82|
-|DotMatrix           |             0.22|            80.53|
-|Faxify              |             2.02|           126.75|
-|Folding             |             2.85|            63.27|
-|Gamma               |            34.27|            25.36|
-|Geometric           |           189.37|            12.68|
-|GlitchEffect        |             1.48|           126.94|
+|DirtyDrum           |             0.96|           482.63|
+|DirtyRollers        |             1.63|           249.52|
+|Dithering           |             3.82|           126.82|
+|DotMatrix           |             0.64|            80.77|
+|Faxify              |             2.12|           126.74|
+|Folding             |             2.62|            63.28|
+|Gamma               |            34.39|            25.36|
+|Geometric           |           183.89|            12.68|
+|GlitchEffect        |             1.49|           126.94|
 |Hollow              |             0.21|           343.17|
-|InkBleed            |             3.93|           177.51|
-|InkColorSwap        |             5.22|            51.99|
-|InkMottling         |             7.78|            55.99|
-|InkShifter          |             0.17|           426.89|
-|Jpeg                |             6.32|            25.85|
-|Letterpress         |             0.45|           158.10|
-|LightingGradient    |             0.44|           638.31|
-|LinesDegradation    |             1.69|           175.38|
-|LowInkPeriodicLines |             6.47|            12.74|
-|LowInkRandomLines   |           114.02|            12.74|
-|LowLightNoise       |             0.30|           481.95|
-|Markup              |             2.97|           154.12|
-|NoiseTexturize      |             0.73|           249.36|
-|NoisyLines          |             0.86|           446.76|
-|PageBorder          |             0.32|           201.22|
-|PatternGenerator    |             1.68|            51.52|
-|ReflectedLight      |             0.08|           109.97|
-|Scribbles           |             1.00|            97.13|
-|SectionShift        |           129.82|            12.96|
-|ShadowCast          |             0.95|            50.79|
-|Squish              |             0.26|           465.31|
-|SubtleNoise         |             1.68|           202.87|
-|VoronoiTessellation |             0.08|            57.48|
-|WaterMark           |             2.70|           352.34|
+|InkBleed            |             4.00|           177.51|
+|InkColorSwap        |             5.10|            51.99|
+|InkMottling         |             7.60|            55.99|
+|InkShifter          |             0.20|           426.89|
+|Jpeg                |             6.38|            25.85|
+|Letterpress         |             0.46|           158.10|
+|LightingGradient    |             0.47|           638.31|
+|LinesDegradation    |             1.51|           175.38|
+|LowInkPeriodicLines |             6.19|            12.74|
+|LowInkRandomLines   |           144.08|            12.74|
+|LowLightNoise       |             0.32|           481.95|
+|Markup              |             2.54|           154.12|
+|NoiseTexturize      |             0.96|           249.36|
+|NoisyLines          |             1.04|           446.89|
+|PageBorder          |             0.56|           191.84|
+|PatternGenerator    |             1.00|            51.53|
+|ReflectedLight      |             0.08|           109.92|
+|Scribbles           |             0.93|            99.10|
+|SectionShift        |           154.45|            12.95|
+|ShadowCast          |             0.86|            50.80|
+|Squish              |             0.99|           443.70|
+|SubtleNoise         |             1.82|           202.87|
+|VoronoiTessellation |             0.09|            58.18|
+|WaterMark           |             2.55|           390.55|
 
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.

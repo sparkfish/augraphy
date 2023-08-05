@@ -214,7 +214,7 @@ class BadPhotoCopy(Augmentation):
         # get image dimensions
         ysize, xsize = image.shape[:2]
 
-        if self.noise_side == "random" or self.noise_side not in ["left", "top", "right", "bottom"]:
+        if self.noise_side == "random":
             noise_side = random.choice(["left", "top", "right", "bottom"])
         else:
             noise_side = self.noise_side
@@ -238,19 +238,16 @@ class BadPhotoCopy(Augmentation):
                 noise_size=self.noise_size,
                 noise_sparsity=self.noise_sparsity,
                 noise_concentration=self.noise_concentration,
+                xsize=xsize,
+                ysize=ysize,
             )
-
-        # new size after rotation
-        mask_ysize, mask_xsize = mask.shape[:2]
 
         # rescale to 0 -255
         mask = ((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255
         if self.noise_value[0] > self.noise_value[1]:
             self.noise_value[0] = self.noise_value[1]
 
-        # creates random small dot of noises
-        mask += random.randint(self.noise_value[0], self.noise_value[1])
-        mask[mask > 255] = 255
+        # resize back to original size
         mask = cv2.resize(mask, (xsize, ysize)).astype("uint8")
 
         # apply blur to mask of noise

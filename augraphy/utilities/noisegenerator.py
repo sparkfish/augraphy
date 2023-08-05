@@ -13,6 +13,7 @@ class NoiseGenerator:
         2 = noise with regular pattern
         3 = noise at all borders of image
         4 = sparse and little noise
+        5 = gaussian noise
     :type noise_type: int, optional
     :param noise_side: Location of generated noise. Choose from:
         "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
@@ -270,152 +271,301 @@ class NoiseGenerator:
         :type ysize: int
         """
 
-        # get max of y or x size
-        max_size = max(xsize, ysize)
+        if noise_type not in [1, 2, 3, 4]:
 
-        # generate number of clusters and number of samples in each cluster
-        n_samples_array = self.generate_clusters_and_samples(
-            noise_type,
-            noise_concentration,
-            max_size,
-        )
+            if noise_type == 5:
 
-        # For sparsity of the noises (distance to centroid of cluster)
-        std, center_x, center_y = self.generate_sparsity_std(
-            noise_type,
-            noise_side,
-            noise_sparsity,
-            xsize,
-            ysize,
-            max_size,
-        )
+                img_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
 
-        if noise_type == 2:
+                iterations = random.randint(3, 8)
+                for _ in range(iterations):
+                    # random parameters for gaussian noise
+                    mean = random.randint(0, 255)
+                    sigma = random.randint(0, 255)
+                    ratio = random.randint(5, 10)
 
-            # reduce sparsity
-            std = int(std / 5)
+                    # generate random gaussian noise
+                    img_gaussian = np.random.normal(mean, sigma, (int(xsize / ratio), int(ysize / ratio)))
+                    img_gaussian = cv2.resize(img_gaussian, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
 
-            # size of noise depends on noise sparsity
-            random_sparsity = np.random.uniform(noise_sparsity[0], noise_sparsity[1])
-            end_y = max((random_sparsity) * ysize, int(ysize / 10))
+                    # add gaussian noise
+                    img_mask += img_gaussian
 
-            # randomize noise pattern
-            n_step_x = int(xsize / random.randint(10, 14))
-            n_step_y = int(ysize / random.randint(16, 20))
+                # change image to uint8 after the summation
+                img_mask = img_mask.astype("uint8")
 
-            # initialize points array
-            generated_points_x = np.array([[-1]], dtype="int")
-            generated_points_y = np.array([[-1]], dtype="int")
+            elif noise_type == 6:
+                # future development: More noise type
+                pass
 
-            # initial noise location
-            ccenter_y = (0, 0)
-            ccenter_x = (0, 0)
+            # threshold to increase or decrease the noise concentration
+            noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
 
-            while ccenter_y[1] < end_y:
+            # mask of background
+            img_background = np.random.randint(
+                noise_background[0],
+                noise_background[1] + 1,
+                size=(ysize, xsize),
+                dtype="uint8",
+            )
+            indices_background = img_mask > noise_threshold
 
-                # reduce sample to generate gradient in noise
-                samples_index = np.ceil(len(n_samples_array) / 2).astype("int")
-                n_samples_array = n_samples_array[:samples_index]
+            # temporary assignment
+            min_value = np.min(img_mask)
+            img_mask[indices_background] = min_value
 
-                # varying y
-                ccenter_y = (ccenter_y[1], ccenter_y[1] + n_step_y)
+            # scale value to provided input range
+            current_min = np.min(img_mask)
+            current_max = np.max(img_mask)
+            img_mask = (
+                ((img_mask.astype("float") - current_min) / (current_max - current_min))
+                * (noise_value[1] - noise_value[0])
+                + noise_value[0]
+            ).astype("uint8")
+
+            # update background value
+            img_mask[indices_background] = img_background[indices_background]
+
+            # generate sparsity
+            sparsity = random.uniform(noise_sparsity[0], noise_sparsity[1])
+
+            # reduce noise area based on sparsity value
+            img_sparsity_value = np.arange(-0.3, 1, 1 / int(ysize * sparsity), dtype="float")
+            length = len(img_sparsity_value)
+            img_sparsity_value = img_sparsity_value.reshape(length, 1).repeat(xsize, 1)
+            img_sparsity_value[img_sparsity_value < 0] = 0
+            img_sparsity_value = cv2.resize(
+                img_sparsity_value,
+                (xsize, int(ysize * sparsity)),
+                interpolation=cv2.INTER_LINEAR,
+            )
+            img_sparsity_value *= 255
+            img_sparsity_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
+
+            # map noise image back to mask based on noise side
+            if noise_side == "top":
+                img_sparsity_mask[: int(ysize * sparsity), :] = img_sparsity_value
+            elif noise_side == "left":
+                img_sparsity_value = cv2.resize(
+                    np.rot90(img_sparsity_value, 1),
+                    (int(xsize * sparsity), ysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_mask[:, : int(xsize * sparsity)] = img_sparsity_value
+            elif noise_side == "right":
+                img_sparsity_value = cv2.resize(
+                    np.rot90(img_sparsity_value, 3),
+                    (int(xsize * sparsity), ysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_mask[:, -int(xsize * sparsity) :] = img_sparsity_value
+            elif noise_side == "bottom":
+                img_sparsity_value = np.flipud(img_sparsity_value)
+                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+            elif noise_side == "top_left":
+                cysize, cxsize = img_sparsity_value.shape[:2]
+                img_sparsity_value_rot = cv2.resize(
+                    np.rot90(img_sparsity_value, 3),
+                    (cxsize, cysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                )
+                img_sparsity_value = 255 - (img_sparsity_value * 255)
+                img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
+            elif noise_side == "top_right":
+                cysize, cxsize = img_sparsity_value.shape[:2]
+                img_sparsity_value_rot = cv2.resize(
+                    np.rot90(img_sparsity_value, 1),
+                    (cxsize, cysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                )
+                img_sparsity_value = 255 - (img_sparsity_value * 255)
+                img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
+            elif noise_side == "bottom_left":
+                cysize, cxsize = img_sparsity_value.shape[:2]
+                img_sparsity_value_rot = cv2.resize(
+                    np.rot90(img_sparsity_value, 3),
+                    (cxsize, cysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                )
+                img_sparsity_value = 255 - (img_sparsity_value * 255)
+                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+            elif noise_side == "bottom_right":
+                cysize, cxsize = img_sparsity_value.shape[:2]
+                img_sparsity_value_rot = cv2.resize(
+                    np.rot90(img_sparsity_value, 1),
+                    (cxsize, cysize),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                )
+                img_sparsity_value = 255 - (img_sparsity_value * 255)
+                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+
+            # multiply noise with sparsity mask
+            img_mask = 255 - cv2.multiply(255 - img_mask, 255 - img_sparsity_mask.astype("uint8"), scale=1 / 255)
+
+        # noise type 1, 2, 3, 4 - generate noise with scikit-learn's make_blobs
+        else:
+            # get max of y or x size
+            max_size = max(xsize, ysize)
+
+            # generate number of clusters and number of samples in each cluster
+            n_samples_array = self.generate_clusters_and_samples(
+                noise_type,
+                noise_concentration,
+                max_size,
+            )
+
+            # For sparsity of the noises (distance to centroid of cluster)
+            std, center_x, center_y = self.generate_sparsity_std(
+                noise_type,
+                noise_side,
+                noise_sparsity,
+                xsize,
+                ysize,
+                max_size,
+            )
+
+            if noise_type == 2:
+
+                # reduce sparsity
+                std = int(std / 5)
+
+                # size of noise depends on noise sparsity
+                random_sparsity = np.random.uniform(noise_sparsity[0], noise_sparsity[1])
+                end_y = max((random_sparsity) * ysize, int(ysize / 10))
+
+                # randomize noise pattern
+                n_step_x = int(xsize / random.randint(10, 14))
+                n_step_y = int(ysize / random.randint(16, 20))
+
+                # initialize points array
+                generated_points_x = np.array([[-1]], dtype="int")
+                generated_points_y = np.array([[-1]], dtype="int")
+
+                # initial noise location
+                ccenter_y = (0, 0)
                 ccenter_x = (0, 0)
 
-                check_break = 0
-                while True:
-                    # varying x
-                    ccenter_x = (ccenter_x[0], ccenter_x[1] + n_step_x)
+                while ccenter_y[1] < end_y:
 
-                    # generate coordinates for clusters of blobs
-                    cgenerated_points_x, cgenerated_points_y = self.generate_points(
-                        n_samples_array,
-                        int(std / 5),
-                        ccenter_x,
-                        ccenter_y,
-                        xsize,
-                        ysize,
-                    )
+                    # reduce sample to generate gradient in noise
+                    samples_index = np.ceil(len(n_samples_array) / 2).astype("int")
+                    n_samples_array = n_samples_array[:samples_index]
 
-                    # combine coordinates
-                    generated_points_x = np.concatenate(
-                        [generated_points_x, cgenerated_points_x],
-                    )
-                    generated_points_y = np.concatenate(
-                        [generated_points_y, cgenerated_points_y],
-                    )
+                    # varying y
+                    ccenter_y = (ccenter_y[1], ccenter_y[1] + n_step_y)
+                    ccenter_x = (0, 0)
+
+                    check_break = 0
+                    while True:
+                        # varying x
+                        ccenter_x = (ccenter_x[0], ccenter_x[1] + n_step_x)
+
+                        # generate coordinates for clusters of blobs
+                        cgenerated_points_x, cgenerated_points_y = self.generate_points(
+                            n_samples_array,
+                            int(std / 5),
+                            ccenter_x,
+                            ccenter_y,
+                            xsize,
+                            ysize,
+                        )
+
+                        # combine coordinates
+                        generated_points_x = np.concatenate(
+                            [generated_points_x, cgenerated_points_x],
+                        )
+                        generated_points_y = np.concatenate(
+                            [generated_points_y, cgenerated_points_y],
+                        )
+
+                        # space between next noise patch
+                        add_space = random.randint(10, 20)
+                        ccenter_x = (
+                            ccenter_x[0] + n_step_x + add_space,
+                            ccenter_x[1] + n_step_x + add_space,
+                        )
+
+                        # to break out from inner loop
+                        if check_break:
+                            break
+                        elif ccenter_x[1] > xsize:
+                            ccenter_x = (xsize - 1, xsize - 1)
+                            check_break = 1
 
                     # space between next noise patch
-                    add_space = random.randint(10, 20)
-                    ccenter_x = (
-                        ccenter_x[0] + n_step_x + add_space,
-                        ccenter_x[1] + n_step_x + add_space,
-                    )
+                    add_space = random.randint(5, 15)
 
-                    # to break out from inner loop
-                    if check_break:
-                        break
-                    elif ccenter_x[1] > xsize:
-                        ccenter_x = (xsize - 1, xsize - 1)
-                        check_break = 1
+                    ccenter_y = (ccenter_y[1] + add_space, ccenter_y[1] + add_space)
 
-                # space between next noise patch
-                add_space = random.randint(5, 15)
+                # generate mask
+                img_mask = self.generate_mask(
+                    noise_background,
+                    noise_value,
+                    generated_points_x,
+                    generated_points_y,
+                    xsize,
+                    ysize,
+                )
 
-                ccenter_y = (ccenter_y[1] + add_space, ccenter_y[1] + add_space)
+                # rotate mask according to noise_side
+                if noise_side == "top" or noise_side == "top_left" or noise_side == "top_right":
+                    img_mask = img_mask
+                elif noise_side == "bottom" or noise_side == "bottom_left" or noise_side == "bottom_right":
+                    img_mask = np.flipud(img_mask)
+                elif noise_side == "left":
+                    img_mask = np.rot90(img_mask, 1)
+                elif noise_side == "right":
+                    img_mask = np.rot90(img_mask, 3)
+                else:
+                    img_mask = np.rot90(img_mask, random.randint(0, 3))
 
-            # generate mask
-            img_mask = self.generate_mask(
-                noise_background,
-                noise_value,
-                generated_points_x,
-                generated_points_y,
-                xsize,
-                ysize,
-            )
-
-            # rotate mask according to noise_side
-            if noise_side == "top" or noise_side == "top_left" or noise_side == "top_right":
-                img_mask = img_mask
-            elif noise_side == "bottom" or noise_side == "bottom_left" or noise_side == "bottom_right":
-                img_mask = np.flipud(img_mask)
-            elif noise_side == "left":
-                img_mask = np.rot90(img_mask, 1)
-            elif noise_side == "right":
-                img_mask = np.rot90(img_mask, 3)
             else:
-                img_mask = np.rot90(img_mask, random.randint(0, 3))
-
-        else:
-            # generate coordinates for clusters of blobs
-            generated_points_x, generated_points_y = self.generate_points(
-                n_samples_array,
-                std,
-                center_x,
-                center_y,
-                xsize,
-                ysize,
-            )
-
-            # generate mask
-            img_mask = self.generate_mask(
-                noise_background,
-                noise_value,
-                generated_points_x,
-                generated_points_y,
-                xsize,
-                ysize,
-            )
-
-            # rotate and merge mask into 4 sides
-            if noise_type == 3:
-                img_mask = np.minimum(
-                    img_mask,
-                    cv2.resize(np.rot90(img_mask), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                # generate coordinates for clusters of blobs
+                generated_points_x, generated_points_y = self.generate_points(
+                    n_samples_array,
+                    std,
+                    center_x,
+                    center_y,
+                    xsize,
+                    ysize,
                 )
-                img_mask = np.minimum(
-                    img_mask,
-                    cv2.resize(np.rot90(img_mask, k=2), (xsize, ysize), interpolation=cv2.INTER_AREA),
+
+                # generate mask
+                img_mask = self.generate_mask(
+                    noise_background,
+                    noise_value,
+                    generated_points_x,
+                    generated_points_y,
+                    xsize,
+                    ysize,
                 )
+
+                # rotate and merge mask into 4 sides
+                if noise_type == 3:
+                    img_mask = np.minimum(
+                        img_mask,
+                        cv2.resize(np.rot90(img_mask), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                    )
+                    img_mask = np.minimum(
+                        img_mask,
+                        cv2.resize(np.rot90(img_mask, k=2), (xsize, ysize), interpolation=cv2.INTER_AREA),
+                    )
 
         return img_mask
 
@@ -457,11 +607,11 @@ class NoiseGenerator:
         background_value = random.randint(noise_background[0], noise_background[1])
 
         # initialize blank noise mask
-        img_mask = np.full((xsize, ysize), fill_value=background_value).astype("int")
+        img_mask = np.full((ysize, xsize), fill_value=background_value, dtype="int")
 
         # any invalid noise type will reset noise type to 0
-        if self.noise_type not in [1, 2, 3, 4]:
-            noise_type = random.randint(1, 4)
+        if self.noise_type not in [1, 2, 3, 4, 5]:
+            noise_type = random.randint(1, 5)
         else:
             noise_type = self.noise_type
 
