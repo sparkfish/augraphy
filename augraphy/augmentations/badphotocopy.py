@@ -18,6 +18,12 @@ class BadPhotoCopy(Augmentation):
     :param mask: Mask of noise to generate badphotocopy effect.
     :type mask: uint8, optional
     :param noise_type: Types of noises to generate different mask patterns. Use -1 to select randomly.
+        1 = default, even spread of noise
+        2 = noise with regular pattern
+        3 = noise at all borders of image
+        4 = sparse and little noise
+        5 = gaussian noise
+        6 = perlin noise
     :type noise_type: int, optional
     :param noise_side: Location of noise.
     :type noise_side: string, optional
@@ -231,6 +237,7 @@ class BadPhotoCopy(Augmentation):
             noise_generator = NoiseGenerator(
                 noise_type=self.noise_type,
                 noise_side=noise_side,
+                numba_jit=self.numba_jit,
             )
             mask = noise_generator.generate_noise(
                 noise_value=self.noise_value,

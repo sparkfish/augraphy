@@ -2,6 +2,8 @@ import random
 
 import cv2
 import numpy as np
+from numba import config
+from numba import jit
 from sklearn.datasets import make_blobs
 
 
@@ -14,15 +16,19 @@ class NoiseGenerator:
         3 = noise at all borders of image
         4 = sparse and little noise
         5 = gaussian noise
+        6 = perlin noise
     :type noise_type: int, optional
     :param noise_side: Location of generated noise. Choose from:
         "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
     :type noise_side: string, optional
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     """
 
-    def __init__(self, noise_type=1, noise_side=None):
+    def __init__(self, noise_type=1, noise_side=None, numba_jit=1):
         self.noise_type = noise_type
         self.noise_side = noise_side
+        self.numba_jit = numba_jit
         self.sides = [
             "left",
             "right",
@@ -33,6 +39,110 @@ class NoiseGenerator:
             "bottom_left",
             "bottom_right",
         ]
+        config.DISABLE_JIT = bool(1 - numba_jit)
+
+    def compute_perlin(self, x, y, permutation_table):
+        """Calculates Perlin noise values for each point on the grid using linear interpolation and gradient selection.
+
+        :param x: Grid x coordinates of the Perlin noise values.
+        :type x: numpy array
+        :param y: Grid y coordinates of the Perlin noise values.
+        :type y: numpy array
+        :param permutation_table: Permutation table to shuffe and select the gradient vectors during the Perlin noise generation process.
+        :type permutation_table: numpy array
+        """
+
+        xi, yi = x.astype(int), y.astype(int)
+        xg, yg = x - xi, y - yi
+        xf, yf = self.compute_fade(xg), self.compute_fade(yg)
+
+        p00 = permutation_table[permutation_table[xi] + yi]
+        p01 = permutation_table[permutation_table[xi] + yi + 1]
+        p10 = permutation_table[permutation_table[xi + 1] + yi]
+        p11 = permutation_table[permutation_table[xi + 1] + yi + 1]
+
+        n00 = self.compute_gradient(p00, xg, yg)
+        n01 = self.compute_gradient(p01, xg, yg - 1)
+        n10 = self.compute_gradient(p10, xg - 1, yg)
+        n11 = self.compute_gradient(p11, xg - 1, yg - 1)
+
+        x1 = self.compute_lerp(n00, n10, xf)
+        x2 = self.compute_lerp(n01, n11, xf)
+        return self.compute_lerp(x1, x2, yf)
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def compute_lerp(a, b, x):
+        """Performs linear interpolation between two values based on a interpolation parameter.
+
+        :param a: Starting value of the linear interpolation process.
+        :type a: numpy array
+        :param b: End value of the linear interpolation process.
+        :type b: numpy array
+        :param x: The weight of the interpolation process.
+        :type x: numpy array
+        """
+
+        return a + x * (b - a)
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def compute_fade(f):
+        """Computes fade values for interpolation purpose.
+
+        :param f: Input fractional value for interpolation purpose.
+        :type f: numpy array
+        """
+
+        return 6 * f**5 - 15 * f**4 + 10 * f**3
+
+    @staticmethod
+    @jit(nopython=True, cache=True)
+    def compute_gradient(c, x, y):
+        """Computes the gradient vector calculates the dot product.
+
+        :param c: Input array that determines the selection of the gradient vector.
+        :type c: numpy array
+        :param x: The x coordinates of the points on the grid
+        :type x: numpy array
+        :param y: The y coordinates of the points on the grid
+        :type y: numpy array
+        """
+
+        vectors = np.array([[0, 1], [0, -1], [1, 0], [-1, 0]])
+        rows, cols = c.shape
+
+        result = np.empty_like(x)
+
+        for i in range(rows):
+            for j in range(cols):
+                c_remainder = c[i, j] % 4
+                gradient_co = vectors[c_remainder]
+                result[i, j] = gradient_co[0] * x[i, j] + gradient_co[1] * y[i, j]
+
+        return result
+
+    def generate_perlin_noise(self, width, height, points=(5, 20)):
+        """Generates Perlin noise for a grid of specified width and height.
+
+        :param width: Width of the generated 2d perlin noise grid.
+        :type width: int
+        :param height: Height of the generated 2d perlin noise grid.
+        :type height: int
+        :param points: Number of points in each x and y direction within the grid.
+        :type points: int
+        """
+
+        lin_array_x = np.linspace(0, np.random.randint(points[0], points[1]), width, endpoint=False)
+        lin_array_y = np.linspace(0, np.random.randint(points[0], points[1]), height, endpoint=False)
+        x, y = np.meshgrid(lin_array_x, lin_array_y)
+
+        permutation_table = np.arange(256, dtype=int)
+        np.random.shuffle(permutation_table)
+        permutation_table = np.stack([permutation_table, permutation_table]).flatten()
+
+        img_perlin = self.compute_perlin(x, y, permutation_table)
+        return img_perlin
 
     def generate_clusters_and_samples(self, noise_type, noise_concentration, max_size):
         """Generate number of noise clusters and number of samples in each noise cluster.
@@ -273,8 +383,8 @@ class NoiseGenerator:
 
         if noise_type not in [1, 2, 3, 4]:
 
+            # gaussian noise
             if noise_type == 5:
-
                 img_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
 
                 iterations = random.randint(3, 8)
@@ -294,9 +404,12 @@ class NoiseGenerator:
                 # change image to uint8 after the summation
                 img_mask = img_mask.astype("uint8")
 
+            # perlin noise
             elif noise_type == 6:
-                # future development: More noise type
-                pass
+
+                img_mask = self.generate_perlin_noise(xsize, ysize)
+                img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
+                img_mask = (img_mask * 255).astype("uint8")
 
             # threshold to increase or decrease the noise concentration
             noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
@@ -610,8 +723,8 @@ class NoiseGenerator:
         img_mask = np.full((ysize, xsize), fill_value=background_value, dtype="int")
 
         # any invalid noise type will reset noise type to 0
-        if self.noise_type not in [1, 2, 3, 4, 5]:
-            noise_type = random.randint(1, 5)
+        if self.noise_type not in [1, 2, 3, 4, 5, 6]:
+            noise_type = random.randint(1, 6)
         else:
             noise_type = self.noise_type
 
