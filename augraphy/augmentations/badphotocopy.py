@@ -24,6 +24,7 @@ class BadPhotoCopy(Augmentation):
         4 = sparse and little noise
         5 = gaussian noise
         6 = perlin noise
+        7 = worley noise
     :type noise_type: int, optional
     :param noise_side: Location of noise.
     :type noise_side: string, optional
