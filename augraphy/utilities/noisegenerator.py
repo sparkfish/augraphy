@@ -1,6 +1,7 @@
 import random
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import config
 from numba import jit
@@ -17,6 +18,7 @@ class NoiseGenerator:
         4 = sparse and little noise
         5 = gaussian noise
         6 = perlin noise
+        7 = worley noise
     :type noise_type: int, optional
     :param noise_side: Location of generated noise. Choose from:
         "left", "right", "top", "bottom","top_left", "top_right", "bottom_left", "bottom_right".
@@ -42,7 +44,7 @@ class NoiseGenerator:
         config.DISABLE_JIT = bool(1 - numba_jit)
 
     def compute_perlin(self, x, y, permutation_table):
-        """Calculates Perlin noise values for each point on the grid using linear interpolation and gradient selection.
+        """Calculates Perlin noise values for each point on the 2D array using linear interpolation and gradient selection.
 
         :param x: Grid x coordinates of the Perlin noise values.
         :type x: numpy array
@@ -97,15 +99,15 @@ class NoiseGenerator:
         return 6 * f**5 - 15 * f**4 + 10 * f**3
 
     @staticmethod
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def compute_gradient(c, x, y):
         """Computes the gradient vector calculates the dot product.
 
         :param c: Input array that determines the selection of the gradient vector.
         :type c: numpy array
-        :param x: The x coordinates of the points on the grid
+        :param x: The x coordinates of the points on the 2D array.
         :type x: numpy array
-        :param y: The y coordinates of the points on the grid
+        :param y: The y coordinates of the points on the 2D array.
         :type y: numpy array
         """
 
@@ -114,8 +116,8 @@ class NoiseGenerator:
 
         result = np.empty_like(x)
 
-        for i in range(rows):
-            for j in range(cols):
+        for i in nb.prange(rows):
+            for j in nb.prange(cols):
                 c_remainder = c[i, j] % 4
                 gradient_co = vectors[c_remainder]
                 result[i, j] = gradient_co[0] * x[i, j] + gradient_co[1] * y[i, j]
@@ -123,14 +125,14 @@ class NoiseGenerator:
         return result
 
     def generate_perlin_noise(self, width, height, points=(5, 20)):
-        """Generates Perlin noise for a grid of specified width and height.
+        """Generates Perlin noise for a 2D array of specified width and height.
 
-        :param width: Width of the generated 2d perlin noise grid.
+        :param width: Width of the generated 2d perlin noise array.
         :type width: int
-        :param height: Height of the generated 2d perlin noise grid.
+        :param height: Height of the generated 2d perlin noise array.
         :type height: int
-        :param points: Number of points in each x and y direction within the grid.
-        :type points: int
+        :param points: Tuple of ints determining number of points in each x and y direction within the array.
+        :type points: tuple
         """
 
         lin_array_x = np.linspace(0, np.random.randint(points[0], points[1]), width, endpoint=False)
@@ -141,8 +143,35 @@ class NoiseGenerator:
         np.random.shuffle(permutation_table)
         permutation_table = np.stack([permutation_table, permutation_table]).flatten()
 
-        img_perlin = self.compute_perlin(x, y, permutation_table)
-        return img_perlin
+        image_perlin = self.compute_perlin(x, y, permutation_table)
+        return image_perlin
+
+    @staticmethod
+    @jit(nopython=True, cache=True, parallel=True)
+    def generate_worley_noise(width, height, npoints, option):
+        """Generates Worley noise, also known as cellular noise or Voronoi noise.
+            Worley noise creates a pattern of irregularly shaped cells,
+            where each cell is centered around a randomly placed point.
+
+        :param width: Width of the generated 2d worley noise array.
+        :type width: int
+        :param height: Height of the generated 2d worley noise array.
+        :type height: int
+        :param npoints: Number of randomly placed points that will define the Voronoi cells.
+        :param npoints: int
+        :param option: An option to choose which distance value to calculate within each cell.
+            0 is the closest point, 1 is the second closest point and so on.
+        :param option: int
+        """
+
+        points = [(random.randint(0, width), random.randint(0, height)) for _ in range(npoints)]
+        image_worley = np.zeros((height, width), dtype=np.float64)
+
+        for y in nb.prange(height):
+            for x in nb.prange(width):
+                distances = [np.sqrt((p[0] - x) ** 2 + (p[1] - y) ** 2) for p in points]
+                image_worley[y, x] = sorted(distances)[option]
+        return image_worley
 
     def generate_clusters_and_samples(self, noise_type, noise_concentration, max_size):
         """Generate number of noise clusters and number of samples in each noise cluster.
@@ -406,13 +435,31 @@ class NoiseGenerator:
 
             # perlin noise
             elif noise_type == 6:
+                points = (int(noise_concentration[0] * 20), int(noise_concentration[1] * 20) + 1)
+                # scale down size to increase processing speed
+                img_mask = self.generate_perlin_noise(int(xsize / 2), int(ysize / 2), points)
+                # scale up to original size
+                img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
+                # scale from 0 -255
+                img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
+                img_mask = (img_mask * 255).astype("uint8")
 
-                img_mask = self.generate_perlin_noise(xsize, ysize)
+            # worley noise
+            elif noise_type == 7:
+                npoints = random.uniform(noise_concentration[0], noise_concentration[1]) * 500
+                # scale down size to increase processing speed
+                img_mask = self.generate_worley_noise(int(xsize / 2), int(ysize / 2), npoints=npoints, option=0)
+                # scale up to original size
+                img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
+                # scale from 0 -255
                 img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
                 img_mask = (img_mask * 255).astype("uint8")
 
             # threshold to increase or decrease the noise concentration
-            noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
+            if noise_type == 5:
+                noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
+            else:
+                noise_threshold = 255
 
             # mask of background
             img_background = np.random.randint(
@@ -723,8 +770,8 @@ class NoiseGenerator:
         img_mask = np.full((ysize, xsize), fill_value=background_value, dtype="int")
 
         # any invalid noise type will reset noise type to 0
-        if self.noise_type not in [1, 2, 3, 4, 5, 6]:
-            noise_type = random.randint(1, 6)
+        if self.noise_type not in [1, 2, 3, 4, 5, 6, 7]:
+            noise_type = random.randint(1, 7)
         else:
             noise_type = self.noise_type
 
