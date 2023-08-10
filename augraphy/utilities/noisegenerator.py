@@ -412,11 +412,14 @@ class NoiseGenerator:
 
         if noise_type not in [1, 2, 3, 4]:
 
+            # generate sparsity
+            sparsity = random.uniform(noise_sparsity[0], noise_sparsity[1])
+
             # gaussian noise
             if noise_type == 5:
                 img_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
 
-                iterations = random.randint(3, 8)
+                iterations = random.randint(2, 3)
                 for _ in range(iterations):
                     # random parameters for gaussian noise
                     mean = random.randint(0, 255)
@@ -455,6 +458,172 @@ class NoiseGenerator:
                 img_mask = (img_mask - np.min(img_mask)) / (np.max(img_mask) - np.min(img_mask))
                 img_mask = (img_mask * 255).astype("uint8")
 
+            #  sklearn.datasets' make_blobs noise
+            elif noise_type == 8:
+                # get max of y or x size
+                max_size = max(xsize, ysize)
+
+                n_clusters = (
+                    int((noise_concentration[0]) * max_size),
+                    int((noise_concentration[1]) * max_size),
+                )
+                n_samples = (
+                    int((noise_concentration[0]) * max_size),
+                    int((noise_concentration[1]) * max_size),
+                )
+
+                # prevent 0 cluster or 0 sample
+                n_clusters = (max(1, n_clusters[0]), max(1, n_clusters[1]))
+                n_samples = (max(10, n_samples[0]), max(10, n_samples[1]))
+
+                # generate array of samples
+                n_samples_array = [
+                    random.randint(n_samples[0], n_samples[1])
+                    for _ in range(random.randint(n_clusters[0], n_clusters[1]))
+                ]
+
+                # generate std for clusters
+                std_range = (
+                    int((noise_sparsity[0]) * (max_size)),
+                    int((noise_sparsity[1]) * (max_size)),
+                )
+                std = max(50, int(random.randint(std_range[0], std_range[1]) / 5))
+
+                center_x = (-std, xsize + std)
+                center_y = (-std, ysize + std)
+
+                # generate coordinates for clusters of blobs
+                generated_points_x, generated_points_y = self.generate_points(
+                    n_samples_array,
+                    std,
+                    center_x,
+                    center_y,
+                    xsize,
+                    ysize,
+                )
+
+                # generate mask
+                img_mask = self.generate_mask(
+                    noise_background,
+                    noise_value,
+                    generated_points_x,
+                    generated_points_y,
+                    xsize,
+                    ysize,
+                )
+
+            # noise with consistent square pattern
+            elif noise_type == 9:
+
+                end_y = int(ysize * sparsity)
+                end_x = xsize
+
+                # get max of y or x size
+                max_size = max(xsize, end_y)
+
+                std_range = (
+                    int((noise_sparsity[0]) * (max_size / 5)),
+                    int((noise_sparsity[1]) * (max_size / 5)),
+                )
+                std = int(random.randint(std_range[0], std_range[1]) / 25)
+
+                center_x = (-std, xsize + std)
+                center_y = (-std, end_y + std)
+
+                # generate number of clusters and number of samples in each cluster
+                n_clusters = (
+                    int((noise_concentration[0]) * max_size),
+                    int((noise_concentration[1]) * max_size),
+                )
+                n_samples = (
+                    int((noise_concentration[0]) * max_size),
+                    int((noise_concentration[1]) * max_size),
+                )
+
+                # prevent 0 cluster or 0 sample
+                n_clusters = (max(1, n_clusters[0]), max(1, n_clusters[1]))
+                n_samples = (max(10, n_samples[0]), max(10, n_samples[1]))
+
+                # generate array of samples
+                n_samples_array = [
+                    random.randint(n_samples[0], n_samples[1])
+                    for _ in range(random.randint(n_clusters[0], n_clusters[1]))
+                ]
+
+                n_step_x = int(xsize / random.randint(3, 6))
+                n_step_y = int(end_y / random.randint(8, 16))
+
+                # initialize points array
+                generated_points_x = np.array([[-1]], dtype="int")
+                generated_points_y = np.array([[-1]], dtype="int")
+
+                # initial noise location
+                ccenter_y = (0, 0)
+                ccenter_x = (0, 0)
+
+                # reduction ratio to determine the density of noise
+                samples_index = int(len(n_samples_array) * 0.05)
+
+                while ccenter_y[0] < end_y:
+
+                    n_samples_array = n_samples_array[:samples_index]
+                    samples_index = max(1, int(samples_index * 0.8))
+
+                    # varying y
+                    ccenter_y = (ccenter_y[1], ccenter_y[1] + n_step_y)
+                    ccenter_x = (0, 0)
+
+                    while ccenter_x[0] < end_x:
+                        # varying x
+                        ccenter_x = (ccenter_x[0], ccenter_x[1] + n_step_x)
+
+                        # generate coordinates for clusters of blobs
+                        cgenerated_points_x, cgenerated_points_y = self.generate_points(
+                            n_samples_array,
+                            std,
+                            ccenter_x,
+                            ccenter_y,
+                            xsize,
+                            ysize,
+                        )
+
+                        # combine coordinates
+                        generated_points_x = np.concatenate(
+                            [generated_points_x, cgenerated_points_x],
+                        )
+                        generated_points_y = np.concatenate(
+                            [generated_points_y, cgenerated_points_y],
+                        )
+
+                        # space between next noise patch
+                        add_space = random.randint(5, 10)
+                        ccenter_x = (
+                            ccenter_x[0] + n_step_x + add_space,
+                            ccenter_x[1] + n_step_x + add_space,
+                        )
+
+                    # space between next noise patch
+                    add_space = random.randint(5, 15)
+                    ccenter_y = (ccenter_y[1] + add_space, ccenter_y[1] + add_space)
+
+                # generate mask
+                img_mask = self.generate_mask(
+                    noise_background,
+                    noise_value,
+                    generated_points_x,
+                    generated_points_y,
+                    xsize,
+                    ysize,
+                )
+
+                if noise_side == "left":
+                    img_mask = np.rot90(img_mask, 1)
+                elif noise_side == "bottom" or noise_side == "bottom_left" or noise_side == "bottom_right":
+                    img_mask = np.rot90(img_mask, 2)
+                elif noise_side == "right":
+                    img_mask = np.rot90(img_mask, 3)
+                img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
+
             # threshold to increase or decrease the noise concentration
             if noise_type == 5:
                 noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
@@ -468,7 +637,7 @@ class NoiseGenerator:
                 size=(ysize, xsize),
                 dtype="uint8",
             )
-            indices_background = img_mask > noise_threshold
+            indices_background = img_mask >= noise_threshold
 
             # temporary assignment
             min_value = np.min(img_mask)
@@ -485,9 +654,6 @@ class NoiseGenerator:
 
             # update background value
             img_mask[indices_background] = img_background[indices_background]
-
-            # generate sparsity
-            sparsity = random.uniform(noise_sparsity[0], noise_sparsity[1])
 
             # reduce noise area based on sparsity value
             img_sparsity_value = np.arange(-0.3, 1, 1 / int(ysize * sparsity), dtype="float")
@@ -770,8 +936,8 @@ class NoiseGenerator:
         img_mask = np.full((ysize, xsize), fill_value=background_value, dtype="int")
 
         # any invalid noise type will reset noise type to 0
-        if self.noise_type not in [1, 2, 3, 4, 5, 6, 7]:
-            noise_type = random.randint(1, 7)
+        if self.noise_type not in [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            noise_type = random.randint(1, 9)
         else:
             noise_type = self.noise_type
 
