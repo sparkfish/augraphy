@@ -201,6 +201,9 @@ class BadPhotoCopy(Augmentation):
                 interpolation=cv2.INTER_AREA,
             )
             mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
+        # temporary, will be updated later for new noise side
+        else:
+            mask = 255 - cv2.multiply(img_wave, 255 - mask, scale=1 / 255)
 
         return mask.astype("uint8")
 
@@ -222,7 +225,7 @@ class BadPhotoCopy(Augmentation):
         ysize, xsize = image.shape[:2]
 
         if self.noise_side == "random":
-            noise_side = random.choice(["left", "top", "right", "bottom"])
+            noise_side = random.choice(["left", "top", "right", "bottom", "none", "all"])
         else:
             noise_side = self.noise_side
 
@@ -252,8 +255,6 @@ class BadPhotoCopy(Augmentation):
 
         # rescale to 0 -255
         mask = ((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255
-        if self.noise_value[0] > self.noise_value[1]:
-            self.noise_value[0] = self.noise_value[1]
 
         # resize back to original size
         mask = cv2.resize(mask, (xsize, ysize)).astype("uint8")
@@ -280,11 +281,7 @@ class BadPhotoCopy(Augmentation):
             mask[mask > noise_mask] = 255
         noise_img = mask
 
-        # add blur
-        gaussian_kernel = (random.choice([3, 5, 7]), random.choice([3, 5, 7]))
-        blurred = cv2.GaussianBlur(noise_img, gaussian_kernel, 0)
-        noise_img = cv2.multiply(noise_img, blurred, scale=1 / 255)
-
+        # blend noise into image
         result = image.copy()
         for i in range(3):
             result[:, :, i] = cv2.multiply(noise_img, result[:, :, i], scale=1 / 255)
