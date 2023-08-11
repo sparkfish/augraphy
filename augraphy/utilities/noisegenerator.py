@@ -32,6 +32,8 @@ class NoiseGenerator:
         self.noise_side = noise_side
         self.numba_jit = numba_jit
         self.sides = [
+            "none",
+            "all",
             "left",
             "right",
             "top",
@@ -148,7 +150,7 @@ class NoiseGenerator:
 
     @staticmethod
     @jit(nopython=True, cache=True, parallel=True)
-    def generate_worley_noise(width, height, npoints, option):
+    def generate_worley_noise(width, height, npoints, option, noise_background):
         """Generates Worley noise, also known as cellular noise or Voronoi noise.
             Worley noise creates a pattern of irregularly shaped cells,
             where each cell is centered around a randomly placed point.
@@ -162,10 +164,12 @@ class NoiseGenerator:
         :param option: An option to choose which distance value to calculate within each cell.
             0 is the closest point, 1 is the second closest point and so on.
         :param option: int
+        :param noise_background: Background value of mask.
+        :type noise_background: int
         """
 
         points = [(random.randint(0, width), random.randint(0, height)) for _ in range(npoints)]
-        image_worley = np.zeros((height, width), dtype=np.float64)
+        image_worley = np.full((height, width), fill_value=noise_background, dtype=np.float64)
 
         for y in nb.prange(height):
             for x in nb.prange(width):
@@ -436,11 +440,32 @@ class NoiseGenerator:
                 # change image to uint8 after the summation
                 img_mask = img_mask.astype("uint8")
 
+                # threshold to increase or decrease the noise concentration
+                noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
+
+                # mask of background
+                img_background = np.random.randint(
+                    noise_background[0],
+                    noise_background[1] + 1,
+                    size=(ysize, xsize),
+                    dtype="uint8",
+                )
+                indices_background = img_mask >= noise_threshold
+
+                # temporary assignment
+                min_value = np.min(img_mask)
+                img_mask[indices_background] = min_value
+
+                # update background value
+                img_mask[indices_background] = img_background[indices_background]
+
             # perlin noise
             elif noise_type == 6:
-                points = (int(noise_concentration[0] * 20), int(noise_concentration[1] * 20) + 1)
+
+                points0 = int((noise_concentration[0] * 10) + (noise_sparsity[0] * 10))
+                points1 = int((noise_concentration[1] * 10) + (noise_sparsity[1] * 10) + 1)
                 # scale down size to increase processing speed
-                img_mask = self.generate_perlin_noise(int(xsize / 2), int(ysize / 2), points)
+                img_mask = self.generate_perlin_noise(int(xsize / 2), int(ysize / 2), (points0, points1))
                 # scale up to original size
                 img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
                 # scale from 0 -255
@@ -449,9 +474,18 @@ class NoiseGenerator:
 
             # worley noise
             elif noise_type == 7:
-                npoints = random.uniform(noise_concentration[0], noise_concentration[1]) * 500
+
+                npoints = random.uniform(noise_concentration[0], noise_concentration[1]) * 250
+                npoints += random.uniform(noise_sparsity[0], noise_sparsity[1]) * 250
+
                 # scale down size to increase processing speed
-                img_mask = self.generate_worley_noise(int(xsize / 2), int(ysize / 2), npoints=npoints, option=0)
+                img_mask = self.generate_worley_noise(
+                    int(xsize / 2),
+                    int(ysize / 2),
+                    npoints=npoints,
+                    option=0,
+                    noise_background=random.randint(noise_background[0], noise_background[1]),
+                )
                 # scale up to original size
                 img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
                 # scale from 0 -255
@@ -515,7 +549,12 @@ class NoiseGenerator:
             # noise with consistent square pattern
             elif noise_type == 9:
 
-                end_y = int(ysize * sparsity)
+                # create even spread of noise across whole page
+                if noise_side == "none":
+                    end_y = ysize
+                # noise spread depends on sparsity
+                else:
+                    end_y = int(ysize * sparsity)
                 end_x = xsize
 
                 # get max of y or x size
@@ -566,8 +605,15 @@ class NoiseGenerator:
 
                 while ccenter_y[0] < end_y:
 
-                    n_samples_array = n_samples_array[:samples_index]
-                    samples_index = max(1, int(samples_index * 0.8))
+                    # create even spread of noise
+                    if noise_side == "none":
+                        new_samples_index = max(1, int(samples_index * random.uniform(0.5, 1.0)))
+                        n_samples_array = n_samples_array[:new_samples_index]
+
+                    # reduce samples to create noise gradient
+                    else:
+                        n_samples_array = n_samples_array[:samples_index]
+                        samples_index = max(1, int(samples_index * 0.8))
 
                     # varying y
                     ccenter_y = (ccenter_y[1], ccenter_y[1] + n_step_y)
@@ -622,26 +668,144 @@ class NoiseGenerator:
                     img_mask = np.rot90(img_mask, 2)
                 elif noise_side == "right":
                     img_mask = np.rot90(img_mask, 3)
+                elif noise_side == "all":
+                    img_mask = np.minimum(
+                        img_mask,
+                        cv2.resize(np.rot90(img_mask, 1), (xsize, ysize), interpolation=cv2.INTER_LINEAR),
+                    )
+                    img_mask = np.minimum(
+                        img_mask,
+                        cv2.resize(np.rot90(img_mask, 2), (xsize, ysize), interpolation=cv2.INTER_LINEAR),
+                    )
+                    img_mask = np.minimum(
+                        img_mask,
+                        cv2.resize(np.rot90(img_mask, 3), (xsize, ysize), interpolation=cv2.INTER_LINEAR),
+                    )
+
                 img_mask = cv2.resize(img_mask, (xsize, ysize), interpolation=cv2.INTER_LINEAR)
 
-            # threshold to increase or decrease the noise concentration
-            if noise_type == 5:
-                noise_threshold = int(random.uniform(noise_concentration[0], noise_concentration[1]) * 255)
-            else:
-                noise_threshold = 255
+            # reduce noise area based on sparsity value
+            if noise_side != "none":
 
-            # mask of background
-            img_background = np.random.randint(
-                noise_background[0],
-                noise_background[1] + 1,
-                size=(ysize, xsize),
-                dtype="uint8",
-            )
-            indices_background = img_mask >= noise_threshold
+                img_sparsity_value = np.arange(-0.3, 1, 1 / int(ysize * sparsity), dtype="float")
+                length = len(img_sparsity_value)
+                img_sparsity_value = img_sparsity_value.reshape(length, 1).repeat(xsize, 1)
+                img_sparsity_value[img_sparsity_value < 0] = 0
+                img_sparsity_value = cv2.resize(
+                    img_sparsity_value,
+                    (xsize, int(ysize * sparsity)),
+                    interpolation=cv2.INTER_LINEAR,
+                )
+                img_sparsity_value *= 255
+                img_sparsity_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
 
-            # temporary assignment
-            min_value = np.min(img_mask)
-            img_mask[indices_background] = min_value
+                # map noise image back to mask based on noise side
+                if noise_side == "all":
+                    # get each side
+                    img_sparsity_value_left = cv2.resize(
+                        np.rot90(img_sparsity_value, 1),
+                        (int(xsize * sparsity), ysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value_right = cv2.resize(
+                        np.rot90(img_sparsity_value, 3),
+                        (int(xsize * sparsity), ysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value_bottom = np.flipud(img_sparsity_value)
+
+                    # get all 4 borders of top, left, right, bottom
+                    img_sparsity_mask[: int(ysize * sparsity), :] = np.minimum(
+                        img_sparsity_mask[: int(ysize * sparsity), :],
+                        img_sparsity_value,
+                    )
+                    img_sparsity_mask[:, : int(xsize * sparsity)] = np.minimum(
+                        img_sparsity_mask[:, : int(xsize * sparsity)],
+                        img_sparsity_value_left,
+                    )
+                    img_sparsity_mask[:, -int(xsize * sparsity) :] = np.minimum(
+                        img_sparsity_mask[:, -int(xsize * sparsity) :],
+                        img_sparsity_value_right,
+                    )
+                    img_sparsity_mask[-int(ysize * sparsity) :, :] = np.minimum(
+                        img_sparsity_mask[-int(ysize * sparsity) :, :],
+                        img_sparsity_value_bottom,
+                    )
+
+                elif noise_side == "top":
+                    img_sparsity_mask[: int(ysize * sparsity), :] = img_sparsity_value
+                elif noise_side == "left":
+                    img_sparsity_value = cv2.resize(
+                        np.rot90(img_sparsity_value, 1),
+                        (int(xsize * sparsity), ysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_mask[:, : int(xsize * sparsity)] = img_sparsity_value
+                elif noise_side == "right":
+                    img_sparsity_value = cv2.resize(
+                        np.rot90(img_sparsity_value, 3),
+                        (int(xsize * sparsity), ysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_mask[:, -int(xsize * sparsity) :] = img_sparsity_value
+                elif noise_side == "bottom":
+                    img_sparsity_value = np.flipud(img_sparsity_value)
+                    img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+                elif noise_side == "top_left":
+                    cysize, cxsize = img_sparsity_value.shape[:2]
+                    img_sparsity_value_rot = cv2.resize(
+                        np.rot90(img_sparsity_value, 3),
+                        (cxsize, cysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                    img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                        np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                    )
+                    img_sparsity_value = 255 - (img_sparsity_value * 255)
+                    img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
+                elif noise_side == "top_right":
+                    cysize, cxsize = img_sparsity_value.shape[:2]
+                    img_sparsity_value_rot = cv2.resize(
+                        np.rot90(img_sparsity_value, 1),
+                        (cxsize, cysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                    img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                        np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                    )
+                    img_sparsity_value = 255 - (img_sparsity_value * 255)
+                    img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
+                elif noise_side == "bottom_left":
+                    cysize, cxsize = img_sparsity_value.shape[:2]
+                    img_sparsity_value_rot = cv2.resize(
+                        np.rot90(img_sparsity_value, 3),
+                        (cxsize, cysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                    img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                        np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                    )
+                    img_sparsity_value = 255 - (img_sparsity_value * 255)
+                    img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+                elif noise_side == "bottom_right":
+                    cysize, cxsize = img_sparsity_value.shape[:2]
+                    img_sparsity_value_rot = cv2.resize(
+                        np.rot90(img_sparsity_value, 1),
+                        (cxsize, cysize),
+                        interpolation=cv2.INTER_LINEAR,
+                    )
+                    img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
+                    img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
+                        np.max(img_sparsity_value) - np.min(img_sparsity_value)
+                    )
+                    img_sparsity_value = 255 - (img_sparsity_value * 255)
+                    img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
+
+                # multiply noise with sparsity mask
+                img_mask = 255 - cv2.multiply(255 - img_mask, 255 - img_sparsity_mask.astype("uint8"), scale=1 / 255)
 
             # scale value to provided input range
             current_min = np.min(img_mask)
@@ -651,98 +815,6 @@ class NoiseGenerator:
                 * (noise_value[1] - noise_value[0])
                 + noise_value[0]
             ).astype("uint8")
-
-            # update background value
-            img_mask[indices_background] = img_background[indices_background]
-
-            # reduce noise area based on sparsity value
-            img_sparsity_value = np.arange(-0.3, 1, 1 / int(ysize * sparsity), dtype="float")
-            length = len(img_sparsity_value)
-            img_sparsity_value = img_sparsity_value.reshape(length, 1).repeat(xsize, 1)
-            img_sparsity_value[img_sparsity_value < 0] = 0
-            img_sparsity_value = cv2.resize(
-                img_sparsity_value,
-                (xsize, int(ysize * sparsity)),
-                interpolation=cv2.INTER_LINEAR,
-            )
-            img_sparsity_value *= 255
-            img_sparsity_mask = np.full((ysize, xsize), fill_value=255, dtype="float")
-
-            # map noise image back to mask based on noise side
-            if noise_side == "top":
-                img_sparsity_mask[: int(ysize * sparsity), :] = img_sparsity_value
-            elif noise_side == "left":
-                img_sparsity_value = cv2.resize(
-                    np.rot90(img_sparsity_value, 1),
-                    (int(xsize * sparsity), ysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_mask[:, : int(xsize * sparsity)] = img_sparsity_value
-            elif noise_side == "right":
-                img_sparsity_value = cv2.resize(
-                    np.rot90(img_sparsity_value, 3),
-                    (int(xsize * sparsity), ysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_mask[:, -int(xsize * sparsity) :] = img_sparsity_value
-            elif noise_side == "bottom":
-                img_sparsity_value = np.flipud(img_sparsity_value)
-                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
-            elif noise_side == "top_left":
-                cysize, cxsize = img_sparsity_value.shape[:2]
-                img_sparsity_value_rot = cv2.resize(
-                    np.rot90(img_sparsity_value, 3),
-                    (cxsize, cysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
-                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
-                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
-                )
-                img_sparsity_value = 255 - (img_sparsity_value * 255)
-                img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
-            elif noise_side == "top_right":
-                cysize, cxsize = img_sparsity_value.shape[:2]
-                img_sparsity_value_rot = cv2.resize(
-                    np.rot90(img_sparsity_value, 1),
-                    (cxsize, cysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
-                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
-                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
-                )
-                img_sparsity_value = 255 - (img_sparsity_value * 255)
-                img_sparsity_mask[: int(ysize * sparsity), :] = np.flipud(img_sparsity_value)
-            elif noise_side == "bottom_left":
-                cysize, cxsize = img_sparsity_value.shape[:2]
-                img_sparsity_value_rot = cv2.resize(
-                    np.rot90(img_sparsity_value, 3),
-                    (cxsize, cysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
-                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
-                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
-                )
-                img_sparsity_value = 255 - (img_sparsity_value * 255)
-                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
-            elif noise_side == "bottom_right":
-                cysize, cxsize = img_sparsity_value.shape[:2]
-                img_sparsity_value_rot = cv2.resize(
-                    np.rot90(img_sparsity_value, 1),
-                    (cxsize, cysize),
-                    interpolation=cv2.INTER_LINEAR,
-                )
-                img_sparsity_value = img_sparsity_value * img_sparsity_value_rot
-                img_sparsity_value = (img_sparsity_value - np.min(img_sparsity_value)) / (
-                    np.max(img_sparsity_value) - np.min(img_sparsity_value)
-                )
-                img_sparsity_value = 255 - (img_sparsity_value * 255)
-                img_sparsity_mask[-int(ysize * sparsity) :, :] = img_sparsity_value
-
-            # multiply noise with sparsity mask
-            img_mask = 255 - cv2.multiply(255 - img_mask, 255 - img_sparsity_mask.astype("uint8"), scale=1 / 255)
 
         # noise type 1, 2, 3, 4 - generate noise with scikit-learn's make_blobs
         else:
