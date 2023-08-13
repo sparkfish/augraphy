@@ -18,15 +18,14 @@ class BadPhotoCopy(Augmentation):
     :param mask: Mask of noise to generate badphotocopy effect.
     :type mask: uint8, optional
     :param noise_type: Types of noises to generate different mask patterns. Use -1 to select randomly.
-        1 = default, even spread of noise
-        2 = noise with regular pattern
-        3 = noise at all borders of image
-        4 = sparse and little noise
-        5 = gaussian noise
-        6 = perlin noise
-        7 = worley noise
+        1 = sklearn.datasets' make_blobs noise
+        2 = gaussian noise
+        3 = perlin noise
+        4 = worley noise
+        5 = rectangular pattern noise
     :type noise_type: int, optional
-    :param noise_side: Location of noise.
+    :param noise_side: Location of noise. Select from:
+        "random", "left", "top", "right", "bottom", "top_left", "top_right", "bottom_left", "bottom_right", "none", "all".
     :type noise_side: string, optional
     :param noise_iteration: Pair of ints to determine number of iterations to apply noise in the mask.
     :type noise_iteration: tuple, optional
@@ -225,7 +224,20 @@ class BadPhotoCopy(Augmentation):
         ysize, xsize = image.shape[:2]
 
         if self.noise_side == "random":
-            noise_side = random.choice(["left", "top", "right", "bottom", "none", "all"])
+            noise_side = random.choice(
+                [
+                    "left",
+                    "top",
+                    "right",
+                    "bottom",
+                    "top_left",
+                    "top_right",
+                    "bottom_left",
+                    "bottom_right",
+                    "none",
+                    "all",
+                ],
+            )
         else:
             noise_side = self.noise_side
 
@@ -253,9 +265,6 @@ class BadPhotoCopy(Augmentation):
                 ysize=ysize,
             )
 
-        # rescale to 0 -255
-        mask = ((mask - np.min(mask)) / (np.max(mask) - np.min(mask))) * 255
-
         # resize back to original size
         mask = cv2.resize(mask, (xsize, ysize)).astype("uint8")
 
@@ -277,7 +286,7 @@ class BadPhotoCopy(Augmentation):
 
         # add dotted noise effect to mask (unsmoothen)
         if not blur_noise:
-            noise_mask = np.random.random((ysize, xsize)) * 225
+            noise_mask = np.random.randint(0, 255, (ysize, xsize))
             mask[mask > noise_mask] = 255
         noise_img = mask
 
