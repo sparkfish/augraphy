@@ -489,11 +489,11 @@ class BookBinding(Augmentation):
             image_shadow = image_shadow[ext:-ext, ext:-ext]
             image_output[image_mask > 0] = image_shadow[image_mask > 0]
 
-        # replace with input backdrop_color
-        for i in range(3):
-            if backdrop_color[i] != self.backdrop_color[i]:
-                indices = np.logical_and(image_output[:, :, i] == backdrop_color[i], image_mask[:, :, i] > 0)
-                image_output[:, :, i][indices] = self.backdrop_color[i]
+            # replace with input backdrop_color
+            for i in range(3):
+                if backdrop_color[i] != self.backdrop_color[i]:
+                    indices = np.logical_and(image_output[:, :, i] == backdrop_color[i], image_mask[:, :, i] > 0)
+                    image_output[:, :, i][indices] = self.backdrop_color[i]
 
         return image_output
 
