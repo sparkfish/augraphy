@@ -27,6 +27,7 @@ Functions for internal usage only
    helper_and_utilities/internal_augmentationresult.rst
    helper_and_utilities/internal_figsharedownloader.rst
    helper_and_utilities/internal_imageoverlay.rst
+   helper_and_utilities/internal_inkgenerator.rst
    helper_and_utilities/internal_noisegenerator.rst
    helper_and_utilities/internal_overlaybuilder.rst
    helper_and_utilities/internal_meshgenerator.rst

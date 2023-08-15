@@ -26,10 +26,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=setuptools.find_packages(),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "matplotlib >= 3.4.3",
-        "numba >= 0.54.1",
+        "numba >= 0.57.0",
         "numpy >= 1.20.1",
         "opencv-python >= 4.5.1.48",
         "Pillow >= 8.0.0",

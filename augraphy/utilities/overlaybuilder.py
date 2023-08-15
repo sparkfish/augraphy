@@ -83,6 +83,7 @@ class OverlayBuilder:
             "grain_extract",
             "grain_merge",
             "overlay",
+            "FFT",
         ]:
             self.overlay_types = "mix"
 
@@ -274,6 +275,91 @@ class OverlayBuilder:
         ratio = comp_alpha / new_alpha
 
         return ratio
+
+    def fft_blend_single_channel(self, image1, image2, random_mask):
+        """Blend images using random mask and fft transform.
+
+        :param image1: The background image.
+        :type image1: numpy array
+        :param image2: The foreground image.
+        :type image2: numpy array
+        :param random_mask: Mask with random value for FFT blending method.
+        :type random_mask: numpy array
+        """
+
+        # apply Fast Fourier Transform (FFT) to the images
+        image1_fft = np.fft.fft2(image1)
+        image2_fft = np.fft.fft2(image2)
+
+        # merge fft based on random_mask
+        combined_fft = (image1_fft * random_mask) + (image2_fft * random_mask)
+
+        # apply Inverse Fast Fourier Transform (IFFT) to the combined spectrum
+        image_merged = np.fft.ifft2(combined_fft).real
+
+        # scale between 0 - 255
+        image_merged = (image_merged - np.min(image_merged)) * (255.0 / (np.max(image_merged) - np.min(image_merged)))
+
+        # convert the image to uint8 data type
+        image_merged = image_merged.astype(np.uint8)
+
+        return image_merged
+
+    def fft_blend(
+        self,
+        overlay_background,
+        image1,
+        image2,
+        xstart,
+        xend,
+        ystart,
+        yend,
+    ):
+        """Blend images using saturation and value channel of images in hsv channel.
+
+        :param overlay_background: Background image.
+        :type overlay_background: numpy array
+        :param image1: A patch of background image.
+        :type image1: numpy array
+        :param image2: Foreground_image.
+        :type image2: numpy array
+        :param xstart: x start point of the image patch.
+        :type xstart: int
+        :param xend: x end point of the image patch.
+        :type xend: int
+        :param ystart: y start point of the image patch.
+        :type ystart: int
+        :param yend: y end point of the image patch.
+        :type yend: int
+        """
+
+        if len(image1.shape) < 3:
+            is_gray = 1
+            image1 = cv2.cvtColor(image1, cv2.COLOR_GRAY2BGR)
+        else:
+            is_gray = 0
+
+        if len(image2.shape) < 3:
+            image2 = cv2.cvtColor(image2, cv2.COLOR_GRAY2BGR)
+
+        ysize, xsize = image1.shape[:2]
+        random_mask = np.random.randint(0, 2, size=(ysize, xsize)).astype("float")
+
+        # convert into hsv channel
+        image_hsv1 = cv2.cvtColor(image1, cv2.COLOR_BGR2HSV)
+        image_hsv2 = cv2.cvtColor(image2, cv2.COLOR_BGR2HSV)
+
+        # merge saturation and value channel
+        image_hsv1[:, :, 1] = self.fft_blend_single_channel(image_hsv1[:, :, 1], image_hsv2[:, :, 1], random_mask)
+        image_hsv1[:, :, 2] = self.fft_blend_single_channel(image_hsv1[:, :, 2], image_hsv2[:, :, 2], random_mask)
+
+        # convert back to bgr
+        image_blended = cv2.cvtColor(image_hsv1, cv2.COLOR_HSV2BGR)
+
+        if is_gray:
+            image_blended = cv2.cvtColor(image_blended, cv2.COLOR_BGR2GRAY)
+
+        overlay_background[ystart:yend, xstart:xend] = image_blended
 
     def ink_to_paper_blend(
         self,
@@ -740,7 +826,7 @@ class OverlayBuilder:
             half_height = int((yend - ystart) / 2)
             foreground_half_width = int(fg_width / 2)
             foreground_half_height = int(fg_height / 2)
-            if foreground_half_width > half_width:
+            if half_width != 0 and foreground_half_width > half_width:
                 half_difference = foreground_half_width - half_width
                 # remove right part
                 if self.edge == "left":
@@ -751,7 +837,7 @@ class OverlayBuilder:
                 # shift evenly
                 else:
                     new_foreground = new_foreground[:, half_difference:-half_difference]
-            if foreground_half_height > half_height:
+            if half_height != 0 and foreground_half_height > half_height:
                 half_difference = foreground_half_height - half_height
                 # remove top part
                 if self.edge == "bottom":
@@ -824,6 +910,17 @@ class OverlayBuilder:
                     ystart,
                     yend,
                     self.alpha,
+                )
+
+            elif self.overlay_types == "FFT":
+                self.fft_blend(
+                    overlay_background,
+                    base,
+                    new_foreground,
+                    xstart,
+                    xend,
+                    ystart,
+                    yend,
                 )
 
             # overlay types:

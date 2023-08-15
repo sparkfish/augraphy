@@ -44,11 +44,10 @@ from augraphy import *
 
 pipeline = default_augraphy_pipeline()
 
-img = cv2.imread("image.png")
+image = cv2.imread("image.png")
 
-data = pipeline.augment(img)
+augmented = pipeline(img)
 
-augmented = data["output"]
 ```
 
 # Documentation
@@ -59,35 +58,49 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 
 |    Augmentation    |Images per second|Memory usage (MB)|
 |--------------------|----------------:|----------------:|
-|BadPhotoCopy        |             0.31|           138.25|
-|BindingsAndFasteners|            26.11|            20.81|
-|BleedThrough        |             0.27|           684.69|
-|BookBinding         |             0.06|           683.50|
-|Brightness          |             3.31|           147.99|
-|BrightnessTexturize |             1.25|           181.74|
-|ColorPaper          |             3.14|           105.66|
-|DirtyDrum           |             0.55|           481.19|
-|DirtyRollers        |             1.51|           173.45|
-|Dithering           |             2.27|           126.82|
-|Faxify              |             0.96|           142.97|
-|Folding             |             5.73|            67.75|
-|Gamma               |            25.39|            25.36|
-|Geometric           |             5.24|            40.85|
-|InkBleed            |             0.67|           294.73|
-|Jpeg                |             3.59|            25.86|
-|Letterpress         |             0.23|           158.60|
-|LightingGradient    |             0.34|           638.31|
-|LowInkPeriodicLines |             2.94|            12.74|
-|LowInkRandomLines   |            71.05|            12.74|
-|Markup              |             0.71|           533.16|
-|NoiseTexturize      |             0.53|           249.36|
-|PageBorder          |             0.52|           465.19|
-|Scribbles           |             1.15|           138.13|
-|SubtleNoise         |             1.03|           202.87|
-|WaterMark           |             1.19|           373.41|
-|VoronoiTessellation |             0.47|            15.90|
-|DelaunayTessellation|             0.76|            36.33|
-|Quasi Crystals      |             0.25|              7.5|
+|BadPhotoCopy        |             0.37|           178.20|
+|BindingsAndFasteners|            31.40|            21.43|
+|BleedThrough        |             0.43|           684.69|
+|BookBinding         |             0.11|           611.74|
+|Brightness          |             5.75|           147.99|
+|BrightnessTexturize |             2.16|           181.74|
+|ColorPaper          |             5.07|           105.66|
+|ColorShift          |             0.88|           114.26|
+|DelaunayTessellation|             0.14|            60.00|
+|DirtyDrum           |             0.96|           482.63|
+|DirtyRollers        |             1.63|           249.52|
+|Dithering           |             3.82|           126.82|
+|DotMatrix           |             0.64|            80.77|
+|Faxify              |             2.12|           126.74|
+|Folding             |             2.62|            63.28|
+|Gamma               |            34.39|            25.36|
+|Geometric           |           183.89|            12.68|
+|GlitchEffect        |             1.49|           126.94|
+|Hollow              |             0.21|           343.17|
+|InkBleed            |             4.00|           177.51|
+|InkColorSwap        |             5.10|            51.99|
+|InkMottling         |             7.60|            55.99|
+|InkShifter          |             0.20|           426.89|
+|Jpeg                |             6.38|            25.85|
+|Letterpress         |             0.46|           158.10|
+|LightingGradient    |             0.47|           638.31|
+|LinesDegradation    |             1.51|           175.38|
+|LowInkPeriodicLines |             6.19|            12.74|
+|LowInkRandomLines   |           144.08|            12.74|
+|LowLightNoise       |             0.32|           481.95|
+|Markup              |             2.54|           154.12|
+|NoiseTexturize      |             0.96|           249.36|
+|NoisyLines          |             1.04|           446.89|
+|PageBorder          |             0.56|           191.84|
+|PatternGenerator    |             1.00|            51.53|
+|ReflectedLight      |             0.08|           109.92|
+|Scribbles           |             0.93|            99.10|
+|SectionShift        |           154.45|            12.95|
+|ShadowCast          |             0.86|            50.80|
+|Squish              |             0.99|           443.70|
+|SubtleNoise         |             1.82|           202.87|
+|VoronoiTessellation |             0.09|            58.18|
+|WaterMark           |             2.55|           390.55|
 
 # Alternative Augmentation Libraries
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
@@ -104,7 +117,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.2.3}
+    version = {8.2.4}
 }
 ```
 

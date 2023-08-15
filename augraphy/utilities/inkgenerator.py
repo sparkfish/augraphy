@@ -8,6 +8,7 @@ from PIL import ImageFont
 from skimage.morphology import thin
 from sklearn.datasets import make_blobs
 
+from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import binary_threshold
 from augraphy.augmentations.lib import rotate_image
@@ -36,10 +37,14 @@ class InkGenerator:
     :type ink_background_color: tuple
     :param ink_color: Tuple of ints (BGR) determining the color of ink.
     :type ink_color: tuple
+    :param ink_min_brightness: Flag to enable min brightness in the generated ink.
+    :type ink_min_brightness: int
+    :param ink_min_brightness_value_range: Pair of ints determining the range for min brightness value in the generated ink.
+    :type ink_min_brightness_value_range: tuple
     :param ink_draw_size_range: Pair of floats determining the range for
            the size of the ink drawing.
     :type ink_draw_size_range: tuple
-    :param ink_thickness_range: Pair of floats determining the range for the thickness of the created ink.
+    :param ink_thickness_range: Pair of floats determining the range for the thickness of the generated ink.
     :type scribbles_thickness_range: tuple
     :param ink_brightness_change: A list of value change for the brightness of the ink.
            If more than one value is provided, the final value will be randomly selected.
@@ -71,6 +76,8 @@ class InkGenerator:
         ink_background_size,
         ink_background_color,
         ink_color,
+        ink_min_brightness,
+        ink_min_brightness_value_range,
         ink_draw_size_range,
         ink_thickness_range,
         ink_brightness_change,
@@ -90,6 +97,8 @@ class InkGenerator:
         self.ink_background_size = ink_background_size
         self.ink_background_color = ink_background_color
         self.ink_color = ink_color
+        self.ink_min_brightness = ink_min_brightness
+        self.ink_min_brightness_value_range = ink_min_brightness_value_range
         self.ink_draw_size_range = ink_draw_size_range
         self.ink_thickness_range = ink_thickness_range
         self.ink_brightness_change = ink_brightness_change
@@ -100,6 +109,30 @@ class InkGenerator:
         self.ink_text_rotate_range = ink_text_rotate_range
         self.ink_lines_coordinates = ink_lines_coordinates
         self.ink_lines_stroke_count_range = ink_lines_stroke_count_range
+
+    def apply_brightness(self, image):
+        """Brighten image based on the minimum brightness value by using Brightness augmentation.
+
+        :param image: The image to be brighten.
+        :type image: numpy.array (numpy.uint8)
+        """
+
+        # get location of intensity < min intensity
+        min_intensity = random.randint(self.ink_min_brightness_value_range[0], self.ink_min_brightness_value_range[1])
+        image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        y_location, x_location = np.where(image_hsv[:, :, 2] < min_intensity)
+
+        # if there's location where intensity < min intensity, apply brightness
+        if len(y_location) > 0:
+            image_min_intensity = min(image_hsv[:, :, 2][y_location, x_location])
+            if image_min_intensity > 0 and image_min_intensity < min_intensity:
+                brighten_ratio = abs(image_min_intensity - min_intensity) / image_min_intensity
+                brighten_min = 1 + brighten_ratio
+                brighten_max = 1 + brighten_ratio + 0.5
+                brightness = Brightness(brightness_range=(brighten_min, brighten_max))
+                image = brightness(image)
+
+        return image
 
     def apply_pencil_effect(self, ink_image, ink_background):
         """Apply foreground image with pencil effect to background image.
@@ -311,7 +344,7 @@ class InkGenerator:
         # effect with single or multiple lines
         image_edges_lines = self.generate_edges(gray_image, repeat=0, randomize=1)
 
-        n_clusters = (200 + kernel_size * 5, 250 + kernel_size * 5)
+        n_clusters = (200 + kernel_size * 10, 250 + kernel_size * 10)
         n_samples = (200 + kernel_size * 5, 250 + kernel_size * 5)
         std_range = (3 + np.ceil(kernel_size / 5), 7 + np.ceil(kernel_size / 5))
         image_noise_center = self.generate_noise_clusters(gray_image, n_clusters, n_samples, std_range)
@@ -319,7 +352,7 @@ class InkGenerator:
 
         # white line as noise
         if self.ink_draw_method == "lines":
-            indices = np.logical_and(image_edges_lines > 0, image_noise_border > 0)
+            indices = np.logical_and(image_edges_lines > 0, (image_noise_border + image_noise_center) > 0)
             ink_image[indices] = 255
 
         # effect at center line
@@ -364,7 +397,7 @@ class InkGenerator:
             lines_background = np.full((max_height, max_width, 3), fill_value=255, dtype="uint8")
 
             # each stroke count
-            ink_lines_stroke_count_range = random.randint(
+            ink_lines_stroke_count = random.randint(
                 self.ink_lines_stroke_count_range[0],
                 self.ink_lines_stroke_count_range[1],
             )
@@ -374,39 +407,58 @@ class InkGenerator:
                 size = random.randint(max(self.ink_draw_size_range[0], 30), max(40, self.ink_draw_size_range[1]))
                 xsize = ysize = min([size, max_height, max_width])
             else:
-                xpoints = self.ink_lines_coordinates[0][:, 0]
-                ypoints = self.ink_lines_coordinates[0][:, 1]
-                xpoint_min = min(xpoints)
-                ypoint_min = min(ypoints)
-                xsize = np.max(xpoints) - xpoint_min
-                ysize = np.max(ypoints) - ypoint_min
+                # if coordinates are provided, all lines will be drew at one time
+                ink_lines_stroke_count = 1
+
+                xpoint_min = max_width
+                ypoint_min = max_height
+                xpoint_max = 0
+                ypoint_max = 0
+                for points in self.ink_lines_coordinates:
+                    xpoints = points[:, 0]
+                    ypoints = points[:, 1]
+                    xpoint_min = min(xpoint_min, min(xpoints))
+                    ypoint_min = min(ypoint_min, min(ypoints))
+                    xpoint_max = max(xpoint_max, max(xpoints))
+                    ypoint_max = max(ypoint_max, max(ypoints))
+
+                # add offset, to prevent cut off of thicken drawing at the edges of image
+                offset = 50
+                xsize = xpoint_max - xpoint_min + (offset * 2)
+                ysize = ypoint_max - ypoint_min + (offset * 2)
 
                 # reset coordinates so that it starts at min coordinates
-                xypoints = []
-                for xpoint, ypoint in zip(xpoints, ypoints):
-                    xypoints.append([xpoint - xpoint_min, ypoint - ypoint_min])
-                ink_lines_coordinates = [np.array(xypoints)]
+                ink_lines_coordinates = []
+                for points in self.ink_lines_coordinates:
+                    points_new = []
+                    xpoints = points[:, 0]
+                    ypoints = points[:, 1]
+                    for xpoint, ypoint in zip(xpoints, ypoints):
+                        points_new.append([xpoint - xpoint_min + offset, ypoint - ypoint_min + offset])
+                    ink_lines_coordinates.append(np.array(points_new))
 
                 # fixed ink location if lines coordinates are provided
                 self.ink_location = (xpoint_min, ypoint_min)
 
             if self.ink_location == "random":
                 # random paste location
-                xstart = random.randint(0, max_width - xsize - 1)
-                ystart = random.randint(0, max_height - ysize - 1)
+                xstart = random.randint(0, max(1, max_width - xsize - 1))
+                ystart = random.randint(0, max(1, max_height - ysize - 1))
             else:
                 xstart, ystart = self.ink_location
+                xstart = max(0, xstart - offset)
+                ystart = max(0, ystart - offset)
                 if xstart < 0:
                     xstart = 0
                 elif xstart + xsize >= max_width:
-                    xstart = xsize - max_width - 1
+                    xsize = max_width - xstart
                 if ystart < 0:
                     ystart = 0
                 elif ystart + ysize >= max_height:
-                    ystart = ysize - max_height - 1
+                    ysize = max_height - ystart
 
             # create each stroke of lines
-            for i in range(ink_lines_stroke_count_range):
+            for i in range(ink_lines_stroke_count):
 
                 # generate lines thickness
                 ink_thickness = random.randint(
@@ -500,6 +552,10 @@ class InkGenerator:
             for i in range(3):
                 combined_background[:, :, i][thin_mask == 0] = 255
 
+        # brighten image to reach minimum brightness (optional)
+        if self.ink_min_brightness:
+            combined_background = self.apply_brightness(combined_background)
+
         # merge image with lines with ink background
         image_output = cv2.multiply(combined_background, ink_background, scale=1 / 255)
 
@@ -513,6 +569,10 @@ class InkGenerator:
         :param background_image: The background image.
         :type background_image: numpy.array (numpy.uint8)
         """
+        # make sure both images are in a same size
+        bysize, bxsize = background_image.shape[:2]
+        if foreground_image.shape[0] != bysize or foreground_image.shape[1] != bxsize:
+            foreground_image = cv2.resize(foreground_image, (bxsize, bysize), interpolation=cv2.INTER_AREA)
 
         # pencil
         if self.ink_type == "pencil":
@@ -597,12 +657,15 @@ class InkGenerator:
 
             coordinates = cv2.findNonZero(255 - binary_image)
             x, y, xsize, ysize = cv2.boundingRect(coordinates)
+            # minimum size
+            xsize = max(5, xsize)
+            ysize = max(5, ysize)
             texts_image = texts_image[y : y + ysize, x : x + xsize]
 
             if self.ink_location == "random":
                 # random paste location
-                xstart = random.randint(0, max_width - xsize - 1)
-                ystart = random.randint(0, max_height - ysize - 1)
+                xstart = random.randint(0, max(0, max_width - xsize - 1))
+                ystart = random.randint(0, max(0, max_height - ysize - 1))
             else:
                 xstart, ystart = self.ink_location
                 if xstart < 0:
@@ -646,40 +709,14 @@ class InkGenerator:
             for i in range(3):
                 combined_background[:, :, i][thin_mask == 0] = 255
 
+        # brighten image to reach minimum brightness (optional)
+        if self.ink_min_brightness:
+            combined_background = self.apply_brightness(combined_background)
+
         # merge image with texts with ink background
         image_output = cv2.multiply(combined_background, ink_background, scale=1 / 255)
 
         return image_output
-
-        # adapted from here:
-
-    # http://opencvpython.blogspot.com/2012/05/skeletonization-using-opencv-python.html
-    def skeletonize_ink_image(self, ink_image):
-        """Skeletonize input image.
-
-        :param ink_image: Image for the skeletonization effect.
-        :type ink_image: numpy.array (numpy.uint8)
-        """
-        iterations = self.ink_skeletonize_iterations
-
-        ink_image = 255 - ink_image
-        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-        skeletonized_image = np.zeros(ink_image.shape, dtype="uint8")
-        size = np.size(ink_image)
-
-        while iterations > 0:
-            iterations -= 1
-            eroded_image = cv2.erode(ink_image, kernel)
-            dilated_image = cv2.dilate(eroded_image, kernel)
-            subtracted_image = cv2.subtract(ink_image, dilated_image)
-            skeletonized_image = cv2.bitwise_or(skeletonized_image, subtracted_image)
-            scribbles_image = eroded_image.copy()
-            zeros = size - cv2.countNonZero(scribbles_image.flatten())
-            if zeros == size or iterations == 0:
-                skeletonized_image = 255 - skeletonized_image
-                break
-
-        return skeletonized_image
 
     def generate_ink(
         self,
@@ -691,6 +728,8 @@ class InkGenerator:
         ink_background_size=None,
         ink_background_color=None,
         ink_color=None,
+        ink_min_brightness=None,
+        ink_min_brightness_value_range=None,
         ink_draw_size_range=None,
         ink_thickness_range=None,
         ink_brightness_change=None,
@@ -723,6 +762,10 @@ class InkGenerator:
         :type ink_background_color: tuple, optional
         :param ink_color: Tuple of ints (BGR) determining the color of ink.
         :type ink_color: tuple, optional
+            :param ink_min_brightness: Flag to enable min brightness in the generated ink.
+        :type ink_min_brightness: int, optional
+        :param ink_min_brightness_value_range: Pair of ints determining the range for min brightness value in the generated ink.
+        :type ink_min_brightness_value_range: tuple, optional
         :param ink_draw_size_range: Pair of floats determining the range for
                the size of the ink drawing.
         :type ink_draw_size_range: tuple, optional
@@ -766,6 +809,10 @@ class InkGenerator:
             self.ink_background_color = ink_background_color
         if ink_color is not None:
             self.ink_color = ink_color
+        if ink_min_brightness is not None:
+            self.ink_min_brightness = ink_min_brightness
+        if ink_min_brightness_value_range is not None:
+            self.ink_min_brightness_value_range = ink_min_brightness_value_range
         if ink_draw_size_range is not None:
             self.ink_draw_size_range = ink_draw_size_range
         if ink_thickness_range is not None:

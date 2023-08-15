@@ -1,11 +1,15 @@
 """This module contains functions generally useful for building augmentations."""
+import os
 import random
+from glob import glob
 
 import cv2
+import numba as nb
 import numpy as np
 from numba import config
 from numba import jit
 from numpy.linalg import norm
+from PIL import Image
 from skimage.filters import threshold_li
 from skimage.filters import threshold_local
 from skimage.filters import threshold_mean
@@ -16,6 +20,93 @@ from skimage.filters import threshold_sauvola
 from skimage.filters import threshold_triangle
 from skimage.filters import threshold_yen
 from sklearn.datasets import make_blobs
+
+
+def load_image_from_cache(random_image=0):
+    """Load image from augraphy cache folder.
+
+    :param random_image: Flag to load random image from cache folder.
+        If it is not set, it loads the latest modified image.
+    :type random_image: int
+    """
+
+    # path to foreground cache folder
+    cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
+    cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
+
+    # at least 1 image
+    if len(cache_image_paths) > 0:
+        if random_image:
+            image_index = random.randint(0, len(cache_image_paths) - 1)
+        else:
+            modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
+            image_index = np.argmax(modified_time)
+        # get random image
+        image = cv2.imread(cache_image_paths[image_index])
+
+        return image
+    else:
+        return None
+
+
+# Adapted from this link:
+# # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
+def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):
+    """Generate noises through normal distribution.
+
+    :param xsize: The width of the generated noise.
+    :type xsize: int
+    :param ysize: The height of the generated noise.
+    :type ysize: int
+    :param ratio: The size of generated noise pattern.
+    :type ratio: int
+    :param sigma: The bounds of noise fluctuations.
+    :type sigma: float
+    """
+
+    new_ysize = int(ysize / ratio)
+    new_xsize = int(xsize / ratio)
+    result = np.random.normal(0, sigma, (new_xsize, new_ysize, channel))
+    if ratio != 1:
+        result = cv2.resize(result, dsize=(xsize, ysize), interpolation=cv2.INTER_LINEAR)
+    return result.reshape((ysize, xsize, channel))
+
+
+def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
+    """Generate random texture through multiple iterations of noise addition.
+
+    :param xsize: The width of the generated noise.
+    :type xsize: int
+    :param ysize: The height of the generated noise.
+    :type ysize: int
+    :param channel: The number of channel in the generated noise.
+    :type channel: int
+    :param value: The initial value of the generated noise.
+    :type value: int
+    :param sigma: The bounds of noise fluctuations.
+    :type sigma: float
+    :param turbulence: The value to define how quickly big patterns will be replaced with the small ones.
+    :type turbulence: int
+
+    """
+    image_output = np.full((ysize, xsize, channel), fill_value=value, dtype="float")
+    ratio = min(xsize, ysize)
+    while ratio != 1:
+        image_output += generate_noise(xsize, ysize, channel, ratio, sigma=sigma)
+        ratio = (ratio // turbulence) or 1
+    image_output = np.clip(image_output, 0, 255)
+
+    # get single channel image
+    if channel == 1:
+        image_output = image_output[:, :, 0]
+
+    new_min = 32
+    new_max = 255
+    image_output = ((image_output - np.min(image_output)) / (np.max(image_output) - np.min(image_output))) * (
+        new_max - new_min
+    ) + new_min
+
+    return image_output.astype("uint8")
 
 
 def rotate_image(mat, angle, white_background=1):
@@ -54,6 +145,20 @@ def rotate_image(mat, angle, white_background=1):
     return rotated_mat
 
 
+def rotate_image_PIL(image, angle, background_value=(0, 0, 0), expand=0):
+    """Rotates an image (angle in degrees) by converting them to PIL image first."""
+
+    # for single channel
+    if len(image.shape) < 3 and isinstance(background_value, tuple):
+        background_value = int(np.mean(background_value))
+    image_PIL = Image.fromarray(image)
+    rotated_image_PIL = image_PIL.rotate(angle, expand=expand, fillcolor=background_value)
+
+    rotated_image = np.array(rotated_image_PIL)
+
+    return rotated_image
+
+
 # Generate average intensity value
 def generate_average_intensity(image):
     # Adapted from this discussion
@@ -67,18 +172,16 @@ def generate_average_intensity(image):
 
 
 # Generate noise to edges of folding
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, parallel=True)
 def add_folding_noise(img, side, p=0.1):
     # side = flag to put more noise at certain side
-    #   0  = left side
-    #   1  = right side
+    #   1  = left side
+    #   0  = right side
 
     # get image dimension
     ysize, xsize = img.shape[:2]
-
-    for y in range(ysize):
-        for x in range(xsize):
-
+    for y in nb.prange(ysize):
+        for x in nb.prange(xsize):
             if side:  # more noise on right side
                 p_score = (((x) / xsize) ** 3) * p  # non linear score with power
             else:  # more noise on left side
@@ -100,15 +203,16 @@ def four_point_transform(image, pts, dst, xs, ys):
 
 
 # Transform left side of folding area
-def warp_fold_left_side(
+def warp_fold(
     img,
     ysize,
     fold_noise,
     fold_x,
     fold_width_one_side,
     fold_y_shift,
+    side,
+    backdrop_color,
 ):
-
     img_fuse = img.copy()
 
     # 4 vectices of folding area
@@ -123,17 +227,31 @@ def warp_fold_left_side(
     bottom_left = [xs, ye]
     bottom_right = [xe, ye]
 
-    # after distortion
-    dtop_left = [xs, ys]
-    dtop_right = [xe, ys + fold_y_shift]
-    dbottom_left = [xs, ye]
-    dbottom_right = [xe, ye + fold_y_shift]
+    if side == "left":
+        # after distortion
+        dtop_left = [xs, ys]
+        dtop_right = [xe, ys + fold_y_shift]
+        dbottom_left = [xs, ye]
+        dbottom_right = [xe, ye + fold_y_shift]
 
-    # image cropping points
-    cxs = fold_x
-    cxe = fold_x + fold_width_one_side
-    cys = 0
-    cye = ysize
+        # image cropping points
+        cxs = fold_x
+        cxe = fold_x + fold_width_one_side
+        cys = 0
+        cye = ysize
+
+    else:
+        # after distortion
+        dtop_left = [xs, ys + (fold_y_shift)]
+        dtop_right = [xe, ys]
+        dbottom_left = [xs, ye + (fold_y_shift)]
+        dbottom_right = [xe, ye]
+
+        # image cropping points
+        cxs = fold_x + fold_width_one_side
+        cxe = fold_x + (fold_width_one_side * 2)
+        cys = 0
+        cye = ysize
 
     # points of folding area
     source_pts = np.array(
@@ -155,89 +273,42 @@ def warp_fold_left_side(
         cysize, cxsize = img_crop.shape
         cdim = 2
 
+    # darken the folded area
+    darken_ratio = random.uniform(0.99, 1.0)
+
     # warp folding area
     img_warped = four_point_transform(
-        img_crop,
+        img_crop * darken_ratio,
         source_pts,
         destination_pts,
         cxsize,
         cysize + fold_y_shift,
-    )
-    img_warped = add_folding_noise(img_warped, 1, fold_noise / 2)
+    ).astype("uint8")
 
-    if cdim > 2:
-        img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
-    else:
-        img_fuse[cys:cye, cxs:cxe] = img_warped[:-fold_y_shift, :]
-
-    return img_fuse
-
-
-# Transform right side of folding area
-def warp_fold_right_side(
-    img,
-    ysize,
-    fold_noise,
-    fold_x,
-    fold_width_one_side,
-    fold_y_shift,
-):
-
-    img_fuse = img.copy()
-
-    # 4 vectices of folding area
-    xs = 0  # xleft
-    xe = fold_width_one_side  # xright
-    ys = 0  # ytop
-    ye = ysize  # ybottom
-
-    # before distortion
-    top_left = [xs, ys]
-    top_right = [xe, ys]
-    bottom_left = [xs, ye]
-    bottom_right = [xe, ye]
-
-    # after distortion
-    dtop_left = [xs, ys + (fold_y_shift)]
-    dtop_right = [xe, ys]
-    dbottom_left = [xs, ye + (fold_y_shift)]
-    dbottom_right = [xe, ye]
-
-    # image cropping points
-    cxs = fold_x + fold_width_one_side
-    cxe = fold_x + (fold_width_one_side * 2)
-    cys = 0
-    cye = ysize
-
-    # points of folding area
-    source_pts = np.array(
-        [top_left, bottom_left, bottom_right, top_right],
-        dtype=np.float32,
-    )
-    destination_pts = np.array(
-        [dtop_left, dbottom_left, dbottom_right, dtop_right],
-        dtype=np.float32,
-    )
-
-    # crop section of folding area
-    img_crop = img[cys:cye, cxs:cxe]
-
-    # get image dimension of cropped image
-    if len(img_crop.shape) > 2:
-        cysize, cxsize, cdim = img_crop.shape
-    else:
-        cysize, cxsize = img_crop.shape
-        cdim = 2
-
-    # warp folding area
-    img_warped = four_point_transform(
-        img_crop,
+    # mask of warping
+    img_mask = np.full_like(img_crop, fill_value=255, dtype="uint8")
+    img_mask_warped = four_point_transform(
+        img_mask,
         source_pts,
         destination_pts,
         cxsize,
         cysize + fold_y_shift,
-    )
-    img_warped = add_folding_noise(img_warped, 0, fold_noise / 2)
+    ).astype("uint8")
+
+    # update color
+    if cdim < 3:
+        backdrop_color = np.mean(backdrop_color)
+        img_warped[img_mask_warped < 255] = backdrop_color
+    else:
+        for i in range(3):
+            img_warped[:, :, i][img_mask_warped[:, :, i] < 255] = backdrop_color[i]
+
+    if fold_noise != 0:
+        if side == "left":
+            noise_side = 1
+        else:
+            noise_side = 0
+        img_warped = add_folding_noise(img_warped, noise_side, fold_noise / 2)
 
     if cdim > 2:
         img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
@@ -272,7 +343,7 @@ def chaikin(points):
     return path
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True, parallel=True)
 def smooth(points, iterations):
     """
     Smooth points using chaikin method.
@@ -285,14 +356,14 @@ def smooth(points, iterations):
     """
 
     percent = 0.25
-    for i in range(iterations):
+    # iterations can't be parallelized due to we need the prior points
+    for _ in range(iterations):
         current_ysize = points.shape[0]
         path = np.zeros((current_ysize * 2, 2), dtype="float")
         # first and last point are the same
         path[0] = points[0]
         path[-1] = points[-1]
-        n = 1
-        for i in range(current_ysize - 1):
+        for i in nb.prange(current_ysize - 1):
             p0 = points[i]
             p1 = points[i + 1]
             # distance between x values of two subsequent points
@@ -304,11 +375,11 @@ def smooth(points, iterations):
             new_px1, new_py1 = p0[0] + dx * (1 - percent), p0[1] + dy * (1 - percent)
 
             # 2 new points per current single point
+            n = ((i + 1) * 2) - 1
             path[n][0] = new_px0
             path[n][1] = new_py0
             path[n + 1][0] = new_px1
             path[n + 1][1] = new_py1
-            n += 2
 
         # update points for next iteration
         points = path

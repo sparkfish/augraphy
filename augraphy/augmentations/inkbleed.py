@@ -14,12 +14,9 @@ class InkBleed(Augmentation):
     random noise to those edges. When followed by a blur, this creates a
     fuzzy edge that emulates an ink bleed effect.
 
-    :param intensity_range: Pair of floats determining the range from which
-           noise intensity is sampled.
-    :type intensity: tuple, optional
-    :param color_range: Pair of ints determining the range from which color
-           noise is sampled.
-    :type color_range: tuple, optional
+    :param intensity_range: Pair of floats determining the intensity of the
+           ink bleeding effect.
+    :type intensity: tuple, optionall
     :param kernel_size: Kernel size to determine area of inkbleed effect.
     :type kernel_size: tuple, optional
     :param severity: Severity to determine concentration of inkbleed effect.
@@ -30,54 +27,60 @@ class InkBleed(Augmentation):
 
     def __init__(
         self,
-        intensity_range=(0.1, 0.2),
-        color_range=(0, 224),
+        intensity_range=(0.4, 0.7),
         kernel_size=(5, 5),
-        severity=(0.4, 0.6),
+        severity=(0.3, 0.4),
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.intensity_range = intensity_range
-        self.color_range = color_range
         self.kernel_size = kernel_size
         self.severity = severity
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"InkBleed(intensity_range={self.intensity_range}, color_range={self.color_range}, kernel_size={self.kernel_size}, severity={self.severity}, p={self.p})"
+        return f"InkBleed(intensity_range={self.intensity_range}, kernel_size={self.kernel_size}, severity={self.severity}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
 
-            image = image.copy()
+            # convert and make sure image is color image
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+            image_output = image.copy()
 
             # apply sobel filter and dilate image
             sobelized = sobel(image)
             kernel = np.ones(self.kernel_size, dtype="uint8")
             sobelized_dilated = cv2.dilate(sobelized, kernel, iterations=1)
 
-            # add noise
-            noise_mask = add_noise(
-                image,
-                intensity_range=(self.intensity_range[0], self.intensity_range[1]),
-                color_range=(self.color_range[0], self.color_range[1]),
-                noise_condition=1,
-                image2=sobelized_dilated,
-            )
-            noise_mask = noise_mask.astype("uint8")
-            noise_mask = cv2.GaussianBlur(noise_mask, (3, 3), 0)
+            # create grayscale fromn the dilated edge image
+            sobelized_dilated_gray = cv2.cvtColor(sobelized_dilated, cv2.COLOR_BGR2GRAY)
 
-            # apply ege image based on severity
-            if len(image.shape) > 2:
-                random_array = np.random.random((image.shape[0], image.shape[1], image.shape[2]))
-            else:
-                random_array = np.random.random((image.shape[0], image.shape[1]))
+            # dilation on the darker ink area, which is erosion here
+            dilated = cv2.erode(image, kernel, iterations=1)
 
-            severity = np.random.uniform(self.severity[0], self.severity[1])
-            indices = np.logical_or(sobelized_dilated != 255, random_array > severity)
-            output = noise_mask.copy()
-            output[indices] = image[indices]
+            # create a random mask
+            image_random = np.random.randint(0, 255, size=image.shape[:2]).astype("uint8")
 
-            return output
+            # based on the provided severity value, update image edges randomly into the dilated edge image
+            severity = random.uniform(self.severity[0], self.severity[1]) * 255
+            indices = np.logical_and(image_random < severity, sobelized_dilated_gray > 0)
+            image_output[indices] = dilated[indices]
+
+            # blur image and blend output based on input intensity
+            image_output = cv2.GaussianBlur(image_output, (3, 3), 0)
+            intensity = random.uniform(self.intensity_range[0], self.intensity_range[1])
+            image_output = cv2.addWeighted(image_output, intensity, image, 1 - intensity, 0)
+
+            # return image follows the input image color channel
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+
+            return image_output

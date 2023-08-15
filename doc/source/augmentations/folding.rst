@@ -45,18 +45,21 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a Folding augmentation instance is initialized and the folding count is set to 4 (4).
-Noise at folding area is set to low value (0.1).
-Each folding gradient width is set to low value (0.1, 0.2) and folding gradient height is to very low value (0.01, 0.02).
+In this example, a Folding augmentation instance is initialized and the folding count is set to 10 (fold_count=10).
+There will be no noise at the folding area (fold_noise=0.0) and the angle of folding is set to random value in between -360 to 360 degree (-360, 360).
+Each folding gradient width is set to low value (0.2, 0.2) and folding gradient height is to very low value (0.02, 0.02).
+The backdrop color on the folding effect is set to black color (0, 0, 0).
 
 Code example:
 
 ::
 
-    folding = Folding(fold_count=4,
-                      fold_noise=0.1,
+    folding = Folding(fold_count=10,
+                      fold_noise=0.0,
+                      fold_angle_range = (-360,360),
                       gradient_width=(0.1, 0.2),
-                      gradient_height=(0.01, 0.1)
+                      gradient_height=(0.01, 0.1),
+                      backdrop_color = (0,0,0),
                       )
 
     img_folded= folding(image)
