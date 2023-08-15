@@ -25,10 +25,10 @@ An example of simple augmentation pipeline with just single augmentation in each
     import cv2
     import numpy as np
 
-    ink_phase   = [WaterMark(p=1)]
-    paper_phase = [ColorPaper(p=1)]
-    post_phase  = [Scribbles(p=1)]
-    pipeline    = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    ink_phase   = [InkShifter]
+    paper_phase = [VoronoiTessellation(p=1)]
+    post_phase  = [GlitchEffect]
+    pipeline    = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     image = np.full((1200, 1200,3), 250, dtype="uint8")
     cv2.putText(
@@ -41,7 +41,7 @@ An example of simple augmentation pipeline with just single augmentation in each
         3,
     )
 
-    augmented_image = pipeline.augment(image)["output"]
+    augmented_image = pipeline(image)
 
     cv2.imshow("input image", image)
     cv2.imshow("augmented",augmented_image)
@@ -71,14 +71,13 @@ The current default augmentation pipeline is a complex pipeline with multiple au
     ink_phase = [
         Dithering(
             dither=random.choice(["ordered", "floyd-steinberg"]),
-            order=random.randint(3, 5),
+            order=(3, 5),
             p=0.33,
         ),
         InkBleed(
-            intensity_range=(0.1, 0.2),
-            color_range=(0, 16),
-            kernel_size=random.choice([(7, 7), (5, 5), (3, 3)]),
-            severity=(0.4, 0.6),
+            intensity_range=(0.5, 0.6),
+            kernel_size=random.choice([(5, 5), (3, 3)]),
+            severity=(0.3, 0.4),
             p=0.33,
         ),
         BleedThrough(
@@ -174,16 +173,14 @@ The current default augmentation pipeline is a complex pipeline with multiple au
         OneOf(
             [
                 PageBorder(
-                    side="random",
-                    border_background_value=(230, 255),
-                    flip_border=random.choice([0, 1]),
-                    width_range=(5, 30),
-                    pages=None,
-                    noise_intensity_range=(0.3, 0.8),
+                    page_border_width_height="random",
+                    page_border_color=(0, 0, 0),
+                    page_border_background_color=(0, 0, 0),
+                    page_numbers="random",
+		    page_rotation_angle_range=(0, 0),
                     curve_frequency=(2, 8),
                     curve_height=(2, 4),
                     curve_length_one_side=(50, 100),
-                    value=(32, 150),
                     same_page_border=random.choice([0, 1]),
                 ),
                 DirtyRollers(
@@ -250,11 +247,17 @@ The current default augmentation pipeline is a complex pipeline with multiple au
             p=0.33,
         ),
         Scribbles(
-            size_range=(100, 800),
-            count_range=(1, 6),
-            stroke_count_range=(1, 2),
-            thickness_range=(2, 6),
-            brightness_change=random.randint(64, 224),
+            scribbles_type="lines",
+            scribbles_ink="random",
+            scribbles_location="random",
+            scribbles_size_range=(400, 600),
+            scribbles_count_range=(1, 6),
+            scribbles_thickness_range=(1, 3),
+            scribbles_brightness_change=[32, 64, 128],
+            scribbles_skeletonize=0,
+            scribbles_skeletonize_iterations=(2, 3),
+            scribbles_color="random",
+            scribbles_lines_stroke_count_range=(1, 2),
             p=0.33,
         ),
         BadPhotoCopy(
@@ -287,15 +290,6 @@ The current default augmentation pipeline is a complex pipeline with multiple au
             use_figshare_library=0,
             p=0.33,
         ),
-        Geometric(
-            scale=(0.75, 1.25),
-            translation=(-10, 10),
-            fliplr=random.choice([True, False]),
-            flipud=random.choice([True, False]),
-            crop=(),
-            rotate_range=(-5, 5),
-            p=0.33,
-        ),
         Faxify(
             scale_range=(0.3, 0.6),
             monochrome=random.choice([0, 1]),
@@ -308,15 +302,9 @@ The current default augmentation pipeline is a complex pipeline with multiple au
             sigma=(1, 3),
             p=0.33,
         ),
-        BookBinding(
-            radius_range=(1, 100),
-            curve_range=(100, 200),
-            mirror_range=(0.3, 0.5),
-            p=0.33,
-        ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     cv2.imshow("input image", image)
     cv2.imshow("augmented",augmented_image)

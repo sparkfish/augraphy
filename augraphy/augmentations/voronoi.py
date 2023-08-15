@@ -28,7 +28,6 @@ References:
 *********************************
 
 """
-import math
 import os
 import random
 import warnings
@@ -36,6 +35,7 @@ import warnings
 import cv2
 import numba as nb
 import numpy as np
+from numba import config
 from numba import jit
 from PIL import Image
 
@@ -69,6 +69,8 @@ class VoronoiTessellation(Augmentation):
     :type noise_type: string, optional
     :param background_value: Range for background color assigned to each point
     :type background_value: tuple (int)
+    :param numba_jit: The flag to enable numba jit to speed up the processing in the augmentation.
+    :type numba_jit: int, optional
     :param p: The probability of applying the augmentation to an input image. Default value is 1.0
     :type p: float
 
@@ -81,7 +83,8 @@ class VoronoiTessellation(Augmentation):
         seed=19829813472,
         num_cells_range=(500, 1000),
         noise_type="random",
-        background_value=(200, 256),
+        background_value=(200, 255),
+        numba_jit=1,
         p=1,
     ):
         super().__init__(p=p)
@@ -90,12 +93,14 @@ class VoronoiTessellation(Augmentation):
         self.num_cells_range = num_cells_range
         self.noise_type = noise_type
         self.background_value = background_value
+        self.numba_jit = numba_jit
+        config.DISABLE_JIT = bool(1 - numba_jit)
 
     def __repr__(self):
-        return f"Voronoi Tessellation: amplification_factor_range = {self.mult_range} , seed = {self.seed}, range of random points = {self.num_cells_range}, noise_type={self.noise_type}, background_value = {self.background_value}"
+        return f"Voronoi Tessellation(amplification_factor_range = {self.mult_range} , seed = {self.seed}, range of random points = {self.num_cells_range}, noise_type={self.noise_type}, background_value = {self.background_value}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def generate_voronoi(width, height, num_cells, nsize, pixel_data, perlin_noise_2d):
         """
         Generates Voronoi Tessellation
@@ -103,9 +108,9 @@ class VoronoiTessellation(Augmentation):
         img_array = np.zeros((width, height), dtype=np.uint8)
         for y in nb.prange(width):
             for x in nb.prange(height):
-                dmin = math.hypot(height, width)
+                dmin = np.hypot(height, width)
                 for i in nb.prange(num_cells):
-                    d = math.hypot(
+                    d = np.hypot(
                         (pixel_data[0][i] - x + perlin_noise_2d[0][x][y]),
                         (pixel_data[1][i] - y + perlin_noise_2d[1][x][y]),
                     )
@@ -150,11 +155,15 @@ class VoronoiTessellation(Augmentation):
             (nx, ny, ng),
             (perlin_x, perlin_y),
         )
-        image = Image.fromarray(img_array)
-        image.save("images/Voronoi_example.png", "PNG", dpi=(300, 300))
-        # reads it in a format so that it can be applied as a background pattern to the original image
-        mesh = cv2.imread("images/Voronoi_example.png")
-        os.remove("images/Voronoi_example.png")
+        # try if it is able to save and read image properly, might facing permission issue
+        try:
+            image = Image.fromarray(img_array)
+            image.save(os.getcwd() + "/Voronoi_example.png", "PNG", dpi=(300, 300))
+            # reads it in a format so that it can be applied as a background pattern to the original image
+            mesh = cv2.imread(os.getcwd() + "/Voronoi_example.png")
+            os.remove(os.getcwd() + "/Voronoi_example.png")
+        except Exception:
+            mesh = img_array
         return mesh
 
     # Applies the Augmentation to input data.
@@ -202,10 +211,10 @@ class VoronoiTessellation(Augmentation):
             self.num_cells = random.randint(self.num_cells_range[0], self.num_cells_range[1])
             voronoi_mesh = self.apply_augmentation()
             voronoi_mesh = cv2.resize(voronoi_mesh, (self.ws, self.ws), interpolation=(cv2.INTER_LINEAR))
-            if len(image.shape) < 3:
+            if len(image.shape) < 3 and len(voronoi_mesh.shape) > 2:
                 voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
-            elif len(image.shape) == 3 and image.shape[2] == 1:
-                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_RGB2GRAY)
+            elif len(image.shape) > 2 and len(voronoi_mesh.shape) < 3:
+                voronoi_mesh = cv2.cvtColor(voronoi_mesh, cv2.COLOR_GRAY2BGR)
             sw = PatternMaker()
             # to ensure the voronoi tessellation covers the whole image,
             # original image is padded and voronoi_mesh passes through it like a sliding window

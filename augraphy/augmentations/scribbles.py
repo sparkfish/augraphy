@@ -229,6 +229,8 @@ class Scribbles(Augmentation):
                 ink_background_size=None,
                 ink_background_color=None,
                 ink_color=scribbles_color,
+                ink_min_brightness=0,
+                ink_min_brightness_value_range=(0, 0),
                 ink_draw_size_range=self.scribbles_size_range,
                 ink_thickness_range=self.scribbles_thickness_range,
                 ink_brightness_change=self.scribbles_brightness_change,

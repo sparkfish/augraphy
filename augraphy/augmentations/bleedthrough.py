@@ -7,6 +7,7 @@ import numpy as np
 
 from augraphy.augmentations.lib import add_noise
 from augraphy.augmentations.lib import generate_average_intensity
+from augraphy.augmentations.lib import load_image_from_cache
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 
@@ -149,34 +150,16 @@ class BleedThrough(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
-        # path to foreground cache folder
-        cache_folder_path = os.path.join(os.getcwd() + "/augraphy_cache/")
-        cache_image_paths = glob(cache_folder_path + "*.png", recursive=True)
+        # load image from cache
+        image_bleedthrough_foreground = load_image_from_cache(random_image=1)
+        if image_bleedthrough_foreground is not None:
 
-        # at least 2 images, because 1 image will be current image
-        if len(cache_image_paths) > 1:
-
-            modified_time = [os.path.getmtime(image_path) for image_path in cache_image_paths]
-            newest_index = np.argmax(modified_time)
-            image_index = random.randint(0, len(cache_image_paths) - 1)
-
-            # prevent same image
-            while image_index == newest_index:
-                image_index = random.randint(0, len(cache_image_paths) - 1)
-            # get random image
-            image_bleedthrough_foreground = cv2.imread(cache_image_paths[image_index])
-
-            if image_bleedthrough_foreground is not None:
-
-                # resize foreground
-                image_bleedthrough_foreground = cv2.resize(
-                    image_bleedthrough_foreground,
-                    (image.shape[1], image.shape[0]),
-                    interpolation=cv2.INTER_AREA,
-                )
-            else:
-                image_bleedthrough_foreground = image
-
+            # resize foreground
+            image_bleedthrough_foreground = cv2.resize(
+                image_bleedthrough_foreground,
+                (image.shape[1], image.shape[0]),
+                interpolation=cv2.INTER_AREA,
+            )
         else:
             image_bleedthrough_foreground = image
 

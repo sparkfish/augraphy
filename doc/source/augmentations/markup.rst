@@ -39,14 +39,15 @@ Code example:
 
 Clean image:
 
-.. figure:: augmentations/input_markup.png
+.. figure:: augmentations/input.png
 
 ---------
 Example 1
 ---------
-In this example, a Markup augmentation instance is initialized and it is set to apply strikethrough effect ("strikethrough")
+In this example, a Markup augmentation instance is initialized and it is set to apply strikethrough effect ("strikethrough").
+The markup ink is set to use "pencil".
 Number of strikethrough lines is set to random value in between 5 and 7 (5, 7).
-The length is set to moderate ratio (0.5, 1) and the thickness is set in range of 5 to 7 pixels (5, 7).
+The length is set to moderate ratio (0.5, 1) and the thickness is set in range of 1 to 2 pixels (1, 2).
 The color is set to red in BGR channel (0, 0, 255) and number of lines repetition is set to 4.
 
 Code example:
@@ -57,9 +58,11 @@ Code example:
                                   markup_length_range=(0.5, 1),
                                   markup_thickness_range=(1, 2),
                                   markup_type="strikethrough",
+				  markup_ink = "pencil",
                                   markup_color=(0, 0, 255),
                                   repetitions=4,
-                                  single_word_mode=True)
+                                  large_word_mode=1,
+                                  single_word_mode=False)
 
     img_markup_strikethrough = markup_strikethrough(image)
     cv2.imshow("markup_strikethrough", img_markup_strikethrough)
@@ -72,9 +75,10 @@ Augmented image:
 ---------
 Example 2
 ---------
-In this example, a Markup augmentation instance is initialized and it is set to apply highlight effect ("highlight")
+In this example, a Markup augmentation instance is initialized and it is set to apply highlight effect ("highlight").
+The markup ink is set to use a "highlighter".
 Number of highlighted lines is set to 1 (1,1).
-The length is set to moderate ratio (0.5, 1) and the thickness is set in range of 5 to 7 pixels (5, 7).
+The length is set to moderate ratio (0.5, 1) and the thickness is set to 5 pixels (5, 5).
 The color is set to green in BGR channel (0, 255, 0) and number of hightlight repetition is set to 1.
 
 Code example:
@@ -83,10 +87,12 @@ Code example:
 
     markup_highlight = Markup(num_lines_range=(1, 1),
                               markup_length_range=(0.5, 1),
-                              markup_thickness_range=(1, 2),
+                              markup_thickness_range=(5, 5),
                               markup_type="highlight",
+                              markup_ink="highlighter",
                               markup_color=(0, 255, 0),
                               repetitions=1,
+			      large_word_mode=1,
                               single_word_mode=False)
 
     img_markup_highlight = markup_highlight(image)
@@ -100,9 +106,10 @@ Augmented image:
 ---------
 Example 3
 ---------
-In this example, a Markup augmentation instance is initialized and it is set to apply underline effect ("underline")
+In this example, a Markup augmentation instance is initialized and it is set to apply underline effect ("underline").
+The markup ink is set to use "marker".
 Number of underline lines is set to 1 (1,1).
-The length is set to moderate ratio (0.5, 1) and the thickness is set in range of 5 to 7 pixels (5, 7).
+The length is set to moderate ratio (0.5, 1) and the thickness is set to 2 pixels (2, 2).
 The color is set to blue in BGR channel (255, 0, 0) and number of hightlight repetition is set to 1.
 
 Code example:
@@ -111,10 +118,12 @@ Code example:
 
     markup_underline = Markup(num_lines_range=(1, 1),
                               markup_length_range=(0.5, 1),
-                              markup_thickness_range=(1, 2),
+                              markup_thickness_range=(2, 2),
                               markup_type="underline",
+		              markup_ink="marker",
                               markup_color=(255, 0, 0),
                               repetitions=1,
+			      large_word_mode=1,
                               single_word_mode=False)
 
     img_markup_underline = markup_underline(image)

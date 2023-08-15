@@ -44,7 +44,7 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a VoronoiTessellation instance with  with  Noise type is set to "random", if the perlin is selected (randomly) from the algorithm, a background pattern is created
+In this example, a VoronoiTessellation instance with  Noise type is set to "random", if the perlin is selected (randomly) from the algorithm, a background pattern is created
 and the patch is passed through the original image like a Sliding Window. The pattern background value for each randomly selected point is set to bright value (250, 256).
 The number of random points generated is set in between 500 and 800. Amplification factor for Perlin Noise is set in between 50 and 80 and the seed is set to 19829813472.
 

@@ -12,7 +12,7 @@ class ColorPaper(Augmentation):
     :type hue_range: tuple, optional
     :param saturation_range: Pair of ints determining the range from which
            saturation value is sampled.
-    :type saturation_range: tuple, optional
+    :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
 

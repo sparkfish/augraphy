@@ -1,5 +1,6 @@
 import random
 
+import numba as nb
 import numpy as np
 from numba import config
 from numba import jit
@@ -87,7 +88,7 @@ class Dithering(Augmentation):
                 image[y + 1, x + 1] += quant_error * (1 / 16)
 
     @staticmethod
-    @jit(nopython=True, cache=True)
+    @jit(nopython=True, cache=True, parallel=True)
     def apply_Ordered(image, ysize, xsize, order, ordered_matrix):
         """Run ordered dithering algorithm to the input image.
 
@@ -103,8 +104,8 @@ class Dithering(Augmentation):
         :type ordered_matrix: list
         """
 
-        for y in range(ysize):
-            for x in range(xsize):
+        for y in nb.prange(ysize):
+            for x in nb.prange(xsize):
                 oy = y % order
                 ox = x % order
                 if image[y, x] > ordered_matrix[oy, ox]:

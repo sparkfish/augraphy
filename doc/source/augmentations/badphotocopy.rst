@@ -10,12 +10,13 @@ BadPhotoCopy
 --------
 Overview
 --------
-There are 4 main types of noise in BadPhotoCopy augmentation:
+There are 5 main types of noise in BadPhotoCopy augmentation:
 
-Noise type 1 creates even spread of noises.
-Noise type 2 creases noises with regular patterns
-Noise type 3 creates noises in all borders of image.
-Noise type 4 creates sparse and little noises.
+Noise type 1 creates sklearn.datasets' make_blobs noise.
+Noise type 2 creases Gaussian noise.
+Noise type 3 creates Perlin noise.
+Noise type 4 creates Worley noise.
+Noise type 5 creates rectangular pattern noise.
 
 Initially, a clean image with single line of text is created.
 
@@ -50,7 +51,7 @@ Clean image:
 ---------
 Example 1
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 1 and the noise is set at the left edge of the image. Noise concentation is set to low intensity (0.2, 0.3) and noise sparsity is set to a low value (0.15, 0.15). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flag to blur noise is set to random (-1).
+In this example, a BadPhotoCopy augmentation instance is initialized with sklearn.datasets' make_blobs noise (noise_type=1) and the noise is set at the left side of the image. Noise concentation is set to low intensity (0.2, 0.3) and noise sparsity is set to a low value (0.15, 0.15). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flag to blur noise is set to random (-1).
 
 Code example:
 
@@ -76,7 +77,7 @@ Augmented image:
 ---------
 Example 2
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 2 and the noise is set at the right edge of the image. Noise concentation is set to low intensity (0.5, 0.5) and noise sparsity is set to a medium value (0.2, 0.3). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 2 to 3. Flags to blur noise and edge effect in noise are enabled.
+In this example, a BadPhotoCopy augmentation instance is initialized with Gaissian noise (noise_type=2) and the noise is set at the right side of the image. Noise concentation is set to low intensity (0.2, 0.2) and noise sparsity is set to a medium value (0.4, 0.5). Augmentation is set to run with single iteration (1, 1) and the noise size is set to 1. Flags to blur noise and edge effect in noise are enabled.
 
 Code example:
 
@@ -84,10 +85,10 @@ Code example:
 
     BadPhotoCopy_type_2 = BadPhotoCopy(noise_type=2,
                                        noise_side="right",
-                                       noise_iteration=(2,3),
-                                       noise_size=(2,3),
+                                       noise_iteration=(1,1),
+                                       noise_size=(1,1),
                                        noise_sparsity=(0.4,0.5),
-                                       noise_concentration=(0.1,0.2),
+                                       noise_concentration=(0.2,0.2),
                                        blur_noise=1,
                                        blur_noise_kernel=(5, 5),
                                        wave_pattern=0,
@@ -102,15 +103,18 @@ Augmented image:
 ---------
 Example 3
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 3. Noise concentation is set to medium intensity (0.5, 0.5) and noise sparsity is set to a low value(0.2, 0.3). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 1 to 3. Flag to blur noise is enabled and flag for edge effet is set to random (-1).
+In this example, a BadPhotoCopy augmentation instance is initialized with Perlin noise(noise_type=3). Noise is apply evenly to the whole image by setting noise side = "none". Noise value is set to random value in between 128 and 255 (128, 255).
+Noise concentation is set to medium intensity (0.5, 0.5) and noise sparsity is set to a low value(0.2, 0.3). Augmentation is set to run with single iteration (1, 1) and noise size is randomly set from 1 to 3 (1, 3). Flag to blur noise is enabled and flag for edge effet is set to random (-1).
 
 Code example:
 
 ::
 
     BadPhotoCopy_type_3 = BadPhotoCopy(noise_type=3,
-                                       noise_iteration=(2,3),
+                                       noise_side="none",
+                                       noise_iteration=(1,1),
                                        noise_size=(1,3),
+                                       noise_value=(128, 255),
                                        noise_sparsity=(0.2,0.3),
                                        noise_concentration=(0.5,0.5),
                                        blur_noise=1,
@@ -127,15 +131,19 @@ Augmented image:
 ---------
 Example 4
 ---------
-In this example, a BadPhotoCopy augmentation instance is initialized with noise type of 3. Noise concentation is set to medium intensity (0.5, 0.5) and noise sparsity is set to a low value(0.2, 0.3). Augmentation is set to run with 2 to 3 iterations and each time the noise size is randomly set from 1 to 3. Flag to blur noise is enabled and flag for edge effet is set to random (-1).
+In this example, a BadPhotoCopy augmentation instance is initialized with Worley noise (noise_type=4).
+Noise is apply evenly to the whole image by setting noise side = "none". Noise value is set to random value in between 32 and 255 (32, 255).
+Noise concentation is set to high intensity (0.99, 0.99) and noise sparsity is set to a moderate value(0.5, 0.5). Augmentation is set to run with single iteration (1,1) and the noise size is randomly set from 1 to 3. Flag to blur noise is enabled and flag for edge effet is set to random (-1).
 
 Code example:
 
 ::
 
     BadPhotoCopy_type_4 = BadPhotoCopy(noise_type=4,
-                                       noise_iteration=(2,3),
+                                       noise_side="none",
+                                       noise_iteration=(1,1),
                                        noise_size=(1,3),
+                                       noise_value=(32, 255),
                                        noise_sparsity=(0.5,0.5),
                                        noise_concentration=(0.99,0.99),
                                        blur_noise=0,
@@ -147,3 +155,31 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/badphotocopy/type4.png
+
+---------
+Example 5
+---------
+In this example, a BadPhotoCopy augmentation instance is initialized with rectangular pattern noise (noise_type=5).
+Noise is apply to all borders of the image by setting noise side = "all". Noise value is set to random value in between 32 and 128 (32, 128).
+Noise concentation is set to medium intensity (0.5, 0.5) and noise sparsity is set to a low value(0.3, 0.3). Augmentation is set to run with single iteration (1,1) and the noise size is randomly set from 1 to 3. Flag to blur noise is enabled and flag for edge effet is set to random (-1).
+
+Code example:
+
+::
+
+    BadPhotoCopy_type_5 = BadPhotoCopy(noise_type=5,
+                                       noise_side="all",
+                                       noise_iteration=(1,1),
+                                       noise_size=(1,3),
+                                       noise_value=(32, 128),
+                                       noise_sparsity=(0.3,0.3),
+                                       noise_concentration=(0.5,0.5),
+                                       blur_noise=0,
+                                       wave_pattern=0,
+                                       edge_effect=0)
+    img_BadPhotoCopy_type_5 = BadPhotoCopy_type_5(image)
+    cv2.imshow("type5",img_BadPhotoCopy_type_5)
+
+Augmented image:
+
+.. figure:: augmentations/badphotocopy/type5.png

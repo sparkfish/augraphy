@@ -46,6 +46,7 @@ class BrightnessTexturize(Augmentation):
                     cv2.COLOR_GRAY2BGR,
                 )
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+
             # compute random value
             value = random.uniform(self.low, self.high)
             # convert to float
@@ -64,8 +65,10 @@ class BrightnessTexturize(Augmentation):
 
             # convert back to uint8, apply bitwise not and convert to hsv again
             hsv = np.array(hsv, dtype=np.uint8)
-            hsv = cv2.bitwise_not(hsv)
-            hsv = np.array(hsv, dtype=np.float64)
+
+            # non hue and saturation channel to prevent color change
+            hsv[:, :, 2] = cv2.bitwise_not(hsv[:, :, 2])
+            hsv = hsv.astype("float64")
 
             # add noise using deviation again
             low_value = value - (value * self.deviation)
@@ -80,7 +83,8 @@ class BrightnessTexturize(Augmentation):
 
             # convert back to uint8, apply bitwise not
             hsv = np.array(hsv, dtype=np.uint8)
-            hsv = cv2.bitwise_not(hsv)
+            # non hue and saturation channel to prevent color change
+            hsv[:, :, 2] = cv2.bitwise_not(hsv[:, :, 2])
 
             image_output = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
