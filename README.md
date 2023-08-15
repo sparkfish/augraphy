@@ -44,11 +44,10 @@ from augraphy import *
 
 pipeline = default_augraphy_pipeline()
 
-img = cv2.imread("image.png")
+image = cv2.imread("image.png")
 
-data = pipeline.augment(img)
+augmented = pipeline(img)
 
-augmented = data["output"]
 ```
 
 # Documentation
@@ -118,7 +117,7 @@ BibTeX:
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
     url = {https://github.com/sparkfish/augraphy},
-    version = {8.2.3}
+    version = {8.2.4}
 }
 ```
 

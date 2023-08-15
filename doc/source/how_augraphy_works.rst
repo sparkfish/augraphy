@@ -41,7 +41,7 @@ An example of simple augmentation pipeline with just single augmentation in each
         3,
     )
 
-    augmented_image = pipeline.augment(image)["output"]
+    augmented_image = pipeline(image)
 
     cv2.imshow("input image", image)
     cv2.imshow("augmented",augmented_image)
@@ -300,12 +300,6 @@ The current default augmentation pipeline is a complex pipeline with multiple au
             half_kernel_size=random.choice([(1, 1), (2, 2)]),
             angle=(0, 360),
             sigma=(1, 3),
-            p=0.33,
-        ),
-        BookBinding(
-            radius_range=(1, 100),
-            curve_range=(100, 200),
-            mirror_range=(0.3, 0.5),
             p=0.33,
         ),
     ]

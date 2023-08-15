@@ -14,9 +14,9 @@ To use the default pipeline which contains all available augmentations and sensi
 
     pipeline = default_augraphy_pipeline()
 
-    img = cv2.imread("image.png")
+    image = cv2.imread("image.png")
 
-    data = pipeline.augment(img)
+    data = pipeline(image)
 
     augmented = data["output"]
 
@@ -49,13 +49,13 @@ To initialize a custom augmentation pipeline and augment an image::
         ),
         OneOf(
             [
-                Letterpress(
-                    n_samples=(100, 400),
-                    n_clusters=(200, 400),
-                    std_range=(500, 3000),
-                    value_range=(150, 224),
-                    value_threshold_range=(96, 128),
-                    blur=1,
+                InkShifter(
+                    text_shift_scale_range=(18, 27),
+                    text_shift_factor_range=(1, 4),
+                    text_fade_range=(0, 2),
+                    blur_kernel_size=(5, 5),
+                    blur_sigma=0,
+                    noise_type="random",
                 ),
                 BleedThrough(
                     intensity_range=(0.1, 0.3),
@@ -66,25 +66,43 @@ To initialize a custom augmentation pipeline and augment an image::
                     offsets=(10, 20),
                 ),
             ],
+            p=1.0,
         ),
     ]
 
     paper_phase = [
-        PaperFactory(p=0.33),
+
         ColorPaper(
             hue_range=(0, 255),
             saturation_range=(10, 40),
             p=0.33,
         ),
-        WaterMark(
-            watermark_word="random",
-            watermark_font_size=(10, 15),
-            watermark_font_thickness=(20, 25),
-            watermark_rotation=(0, 360),
-            watermark_location="random",
-            watermark_color="random",
-            watermark_method="darken",
-            p=0.33,
+		OneOf(
+            [
+                DelaunayTessellation(
+                    n_points_range=(500, 800),
+                    n_horizontal_points_range=(500, 800),
+                    n_vertical_points_range=(500, 800),
+                    noise_type="random",
+                    color_list="default",
+                    color_list_alternate="default",
+                ),
+                PatternGenerator(
+                    imgx=random.randint(256, 512),
+                    imgy=random.randint(256, 512),
+                    n_rotation_range=(10, 15),
+                    color="random",
+                    alpha_range=(0.25, 0.5),
+                ),
+                VoronoiTessellation(
+                    mult_range=(50, 80),
+                    seed=19829813472,
+                    num_cells_range=(500, 1000),
+                    noise_type="random",
+                    background_value=(200, 255),
+                ),
+            ],
+            p=1.0,
         ),
         AugmentationSequence(
             [
@@ -101,21 +119,24 @@ To initialize a custom augmentation pipeline and augment an image::
     ]
 
     post_phase = [
-
-        DirtyRollers(
-            line_width_range=(2, 32),
-            scanline_type=0,
-            p=0.33,
-        ),
-        DirtyDrum(
-            line_width_range=(1, 6),
-            line_concentration=random.uniform(0.05, 0.15),
-            direction=random.randint(0, 2),
-            noise_intensity=random.uniform(0.6, 0.95),
-            noise_value=(64, 224),
-            ksize=random.choice([(3, 3), (5, 5), (7, 7)]),
-            sigmaX=0,
-            p=0.33,
+        OneOf(
+            [
+                DirtyDrum(
+                    line_width_range=(1, 6),
+                    line_concentration=random.uniform(0.05, 0.15),
+                    direction=random.randint(0, 2),
+                    noise_intensity=random.uniform(0.6, 0.95),
+                    noise_value=(64, 224),
+                    ksize=random.choice([(3, 3), (5, 5), (7, 7)]),
+                    sigmaX=0,
+                    p=0.2,
+                ),
+                DirtyRollers(
+                    line_width_range=(2, 32),
+                    scanline_type=0,
+                ),
+            ],
+            p=1.0,
         ),
         SubtleNoise(
             subtle_range=random.randint(5, 10),
@@ -125,32 +146,50 @@ To initialize a custom augmentation pipeline and augment an image::
             quality_range=(25, 95),
             p=0.33,
         ),
-        Folding(
-            fold_x=None,
-            fold_deviation=(0, 0),
-            fold_count=random.randint(1, 6),
-            fold_noise=random.uniform(0, 0.2),
-            gradient_width=(0.1, 0.2),
-            gradient_height=(0.01, 0.02),
-            p=0.33,
+
+        OneOf(
+            [
+                Markup(
+                    num_lines_range=(2, 7),
+                    markup_length_range=(0.5, 1),
+                    markup_thickness_range=(1, 2),
+                    markup_type=random.choice(["strikethrough", "crossed", "highlight", "underline"]),
+                    markup_color="random",
+                    single_word_mode=False,
+                    repetitions=1,
+                ),
+                Scribbles(
+                    scribbles_type="random",
+                    scribbles_location="random",
+                    scribbles_size_range=(250, 600),
+                    scribbles_count_range=(1, 6),
+                    scribbles_thickness_range=(1, 3),
+                    scribbles_brightness_change=[32, 64, 128],
+                    scribbles_text="random",
+                    scribbles_text_font="random",
+                    scribbles_text_rotate_range=(0, 360),
+                    scribbles_lines_stroke_count_range=(1, 6),
+                ),
+            ],
+            p=1.0,
         ),
-        Markup(
-            num_lines_range=(2, 7),
-            markup_length_range=(0.5, 1),
-            markup_thickness_range=(1, 2),
-            markup_type=random.choice(["strikethrough", "crossed", "highlight", "underline"]),
-            markup_color="random",
-            single_word_mode=False,
-            repetitions=1,
-            p=0.33,
-        ),
-        Scribbles(
-            size_range=(100, 800),
-            count_range=(1, 6),
-            stroke_count_range=(1, 2),
-            thickness_range=(2, 6),
-            brightness_change=random.randint(64, 224),
-            p=0.33,
+		OneOf(
+            [
+                GlitchEffect(
+                    glitch_direction="random",
+                    glitch_number_range=(8, 16),
+                    glitch_size_range=(5, 50),
+                    glitch_offset_range=(10, 50),
+                ),
+                ColorShift(
+                    color_shift_offset_x_range=(3, 5),
+                    color_shift_offset_y_range=(3, 5),
+                    color_shift_iterations=(2, 3),
+                    color_shift_brightness_range=(0.9, 1.1),
+                    color_shift_gaussian_kernel_range=(3, 3),
+                ),
+            ],
+            p=1.0,
         ),
         BadPhotoCopy(
             mask=None,
@@ -167,7 +206,8 @@ To initialize a custom augmentation pipeline and augment an image::
             edge_effect=random.choice([True, False]),
             p=0.33,
         ),
-        Faxify(
+
+		Faxify(
             scale_range=(0.3, 0.6),
             monochrome=random.choice([0, 1]),
             monochrome_method="random",
@@ -181,13 +221,11 @@ To initialize a custom augmentation pipeline and augment an image::
         ),
     ]
 
-    pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase)
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
-    img = cv2.imread("image.png")
+    image = cv2.imread("image.png")
 
-    data = pipeline.augment(img)
-
-    augmented = data["output"]
+    image_augmented = pipeline(image)
 
 
 Input image:

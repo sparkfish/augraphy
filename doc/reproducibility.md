@@ -16,7 +16,7 @@ For convenience, the constructor for the `AugraphyPipeline` class accepts an opt
 ``` python
 my_random_seed = 42
 
-my_pipeline = AugraphyPipeline(ink_phase, paper_phase, post_phase, my_random_seed)
+my_pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase, random_seed=my_random_seed)
 ```
 
 ---
@@ -35,8 +35,8 @@ random.seed(0)
 
 img = cv2.imread("image.png")
 
-augmented1 = default_augraphy_pipeline().augment(img)["output"]
-augmented2 = default_augraphy_pipeline().augment(img)["output"]
+augmented1 = default_augraphy_pipeline()(img)
+augmented2 = default_augraphy_pipeline()(img)
 
 cv2.imwrite("augmented1.png", augmented1)
 cv2.imwrite("augmented2.png", augmented2)
