@@ -2,7 +2,7 @@
 Installation
 ============
 
-Augraphy is tested and supported only in Python 3.8, 3.9, 3.10， 3.11.
+Augraphy is tested and supported only in Python 3.8, 3.9, 3.10, 3.11.
 
 
 ----------------------

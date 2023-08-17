@@ -162,9 +162,9 @@ class AugraphyPipeline:
         """
 
         # Check if image has correct channel
-        if len(image.shape) > 2 and (image.shape[2] != 3):
+        if len(image.shape) > 2 and (image.shape[2] != 3 and image.shape[2] != 4):
             raise Exception(
-                "Image should have channel number of 3 (BGR), but actual dimensions were {}.".format(
+                "Image should have channel number of 3 (BGR) or 4 (BGRA), but actual dimensions were {}.".format(
                     image.shape,
                 ),
             )
@@ -221,6 +221,11 @@ class AugraphyPipeline:
                 outfilename,
                 image,
             )
+
+        # add alpha layer for color image
+        if len(image.shape) > 2:
+            if image.shape[2] == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
         data = dict()
 

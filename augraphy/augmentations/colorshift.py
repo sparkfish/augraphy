@@ -142,14 +142,18 @@ class ColorShift(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
 
-            image_output = image.copy()
+            image = image.copy()
 
             # convert and make sure image is color image
-            if len(image_output.shape) > 2:
+            has_alpha = 0
+            if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
-                image_output = cv2.cvtColor(image_output, cv2.COLOR_GRAY2BGR)
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             # generate random color shift iterations
             color_shift_iterations = random.randint(self.color_shift_iterations[0], self.color_shift_iterations[1])
@@ -163,13 +167,18 @@ class ColorShift(Augmentation):
             if not (kernel_value % 2):
                 kernel_value += 1
 
+            # first assignment for the iterations
+            image_output = image
             for i in range(color_shift_iterations):
                 image_output = self.apply_color_shift(image_output, kernel_value)
                 # increase kernel value in each iteration to create a betetr effect
                 kernel_value += 2
 
             # return image follows the input image color channel
+            # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output

@@ -213,9 +213,13 @@ class BadPhotoCopy(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
-        # convert and make sure image is color image
+        # check and convert image into BGR format
+        has_alpha = 0
         if len(image.shape) > 2:
             is_gray = 0
+            if image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
         else:
             is_gray = 1
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -336,6 +340,8 @@ class BadPhotoCopy(Augmentation):
         # return image follows the input image color channel
         if is_gray:
             result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+        if has_alpha:
+            result = np.dstack((result, image_alpha))
 
         return result
 

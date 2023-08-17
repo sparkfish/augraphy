@@ -190,9 +190,13 @@ class DirtyRollers(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
-            # convert and make sure image is color image
+            # check and convert image into BGR format
+            has_alpha = 0
             if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -219,8 +223,9 @@ class DirtyRollers(Augmentation):
             if rotate:
                 image_output = cv2.rotate(image_output, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output

@@ -242,6 +242,17 @@ class DirtyDrum(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            # check and convert image into BGR format
+            has_alpha = 0
+            if len(image.shape) > 2:
+                is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
             if self.direction == -1:
                 # Select random direction
                 direction = random.choice([0, 1, 2])
@@ -285,5 +296,11 @@ class DirtyDrum(Augmentation):
                 image_dirty = self.blend(image_dirty_v, image_dirty_h)
 
             image_dirty_drum = self.blend(image, image_dirty)
+
+            # return image follows the input image color channel
+            if is_gray:
+                image_dirty_drum = cv2.cvtColor(image_dirty_drum, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_dirty_drum = np.dstack((image_dirty_drum, image_alpha))
 
             return image_dirty_drum

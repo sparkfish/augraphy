@@ -1,5 +1,6 @@
 import random
 
+import cv2
 import numba as nb
 import numpy as np
 from numba import config
@@ -200,6 +201,17 @@ class Dithering(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            # check and convert image into BGR format
+            has_alpha = 0
+            if len(image.shape) > 2:
+                is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
             if self.dither == "random":
                 dither_type = random.choice(["ordered", "Floyd Steinberg"])
             else:
@@ -209,5 +221,10 @@ class Dithering(Augmentation):
                 image_dither = self.dither_Ordered(image, random.randint(self.order[0], self.order[1]))
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)
+
+            if is_gray:
+                image_dither = cv2.cvtColor(image_dither, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_dither = np.dstack((image_dither, image_alpha))
 
             return image_dither

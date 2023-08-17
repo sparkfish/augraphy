@@ -502,8 +502,12 @@ class BookBinding(Augmentation):
             image = image.copy()
 
             # convert and make sure image is color image
+            has_alpha = 0
             if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -533,5 +537,10 @@ class BookBinding(Augmentation):
             # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                ysize, xsize = image_output.shape[:2]
+                if ysize != image_alpha.shape[0] or xsize != image_alpha.shape[1]:
+                    image_alpha = np.full((ysize, xsize), fill_value=255, dtype="uint8")
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output
