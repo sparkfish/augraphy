@@ -786,6 +786,13 @@ class BindingsAndFasteners(Augmentation):
             image = image.copy()
             ysize, xsize = image.shape[:2]
 
+            # check for alpha layer
+            has_alpha = 0
+            if len(image.shape) > 2:
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
+
             # generate randomized overlay types
             if self.overlay_types == "random":
                 overlay_types = random.choice(
@@ -887,5 +894,11 @@ class BindingsAndFasteners(Augmentation):
                     )
 
             image_output = ob.build_overlay()
+
+            if has_alpha:
+                ysize, xsize = image_output.shape[:2]
+                if ysize != image_alpha.shape[0] or xsize != image_alpha.shape[1]:
+                    image_alpha = cv2.resize(image_alpha, (xsize, ysize), interpolation=cv2.INTER_AREA)
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output

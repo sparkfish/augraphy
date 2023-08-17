@@ -19,7 +19,7 @@ class BrightnessTexturize(Augmentation):
     :type p: float, optional
     """
 
-    def __init__(self, texturize_range=(0.9, 0.99), deviation=0.03, p=1):
+    def __init__(self, texturize_range=(0.8, 0.99), deviation=0.08, p=1):
         """Constructor method"""
         super().__init__(p=p)
         self.low = texturize_range[0]
@@ -34,18 +34,19 @@ class BrightnessTexturize(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image_output = image.copy()
+            image = image.copy()
 
-            # for colour image
+            has_alpha = 0
             if len(image.shape) > 2:
-                hsv = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_BGR2HSV)
-            # for gray image
+                is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
-                bgr = cv2.cvtColor(
-                    image_output.astype("uint8"),
-                    cv2.COLOR_GRAY2BGR,
-                )
-                hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
             # compute random value
             value = random.uniform(self.low, self.high)
@@ -88,8 +89,10 @@ class BrightnessTexturize(Augmentation):
 
             image_output = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
-            # convert back to gray
-            if len(image.shape) < 3:
-                image_output = cv2.cvtColor(hsv, cv2.COLOR_BGR2GRAY)
+            # return image follows the input image color channel
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output
