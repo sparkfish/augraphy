@@ -193,8 +193,15 @@ class InkColorSwap(Augmentation):
             else:
                 ink_swap_color = self.ink_swap_color
 
+            # add alpha value
+            if image.shape[2] == 4:
+                ink_swap_color = (ink_swap_color[0], ink_swap_color[1], ink_swap_color[2], 255)
+
             # create a mask of swap color
             image_color = np.full_like(image, fill_value=ink_swap_color, dtype="uint8")
+            # update alpha
+            if image.shape[2] == 4:
+                image_color[:, :, 3] = image[:, :, 3].copy()
 
             # blend image with swap color
             image_color = cv2.addWeighted(image, 1.0, image_color, 1.0, 0)
