@@ -116,4 +116,4 @@ class Brightness(Augmentation):
             if has_alpha:
                 image_output = np.dstack((image_output, image_alpha))
 
-            return image
+            return image_output

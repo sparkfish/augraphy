@@ -235,7 +235,8 @@ class Hollow(Augmentation):
 
             # get background by removing the detected contours
             image_output = image.copy()
-            image_output[image_mask > 0] = image_median[image_mask > 0]
+            for i in range(3):
+                image_output[:, :, i][image_mask > 0] = image_median[:, :, i][image_mask > 0]
 
             # create a rando mask
             image_random = np.random.randint(0, 255, size=image_mask.shape, dtype="uint8")

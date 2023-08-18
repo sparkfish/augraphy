@@ -175,7 +175,6 @@ class ColorShift(Augmentation):
                 kernel_value += 2
 
             # return image follows the input image color channel
-            # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
             if has_alpha:

@@ -115,6 +115,13 @@ class GlitchEffect(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            # check and convert image into BGR format
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGRA)
+
             # apply color shift before the glitch effect
             color_shift = ColorShift(
                 color_shift_offset_x_range=(3, 5),
@@ -145,5 +152,8 @@ class GlitchEffect(Augmentation):
                 else:
                     image_output = np.rot90(self.apply_glitch(np.rot90(image_output, 1)), 3)
                     image_output = self.apply_glitch(image_output)
+
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGRA2GRAY)
 
             return image_output

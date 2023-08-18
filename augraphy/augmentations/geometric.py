@@ -149,7 +149,10 @@ class Geometric(Augmentation):
 
                 # convert from rgb to grayscale using their average
                 if len(image.shape) < 3:
-                    self.padding_value = np.mean(self.padding_value)
+                    padding_value = np.mean(self.padding_value)
+                elif image.shape[2] == 4:
+                    # add alpha value
+                    padding_value = (self.padding_value[0], self.padding_value[1], self.padding_value[2], 255)
 
                 # padding on left side
                 if self.padding[0] > 0:
@@ -170,7 +173,7 @@ class Geometric(Augmentation):
                     elif self.padding_type == "mirror":
                         image_padding = np.fliplr(image[:, : self.padding[0]].copy())
                     else:
-                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
                     # combine padding image and original image
                     image = np.concatenate([image_padding, image], axis=1)
 
@@ -193,7 +196,7 @@ class Geometric(Augmentation):
                     elif self.padding_type == "mirror":
                         image_padding = np.fliplr(image[:, -self.padding[1] :].copy())
                     else:
-                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
                     # combine padding image and original image
                     image = np.concatenate([image, image_padding], axis=1)
 
@@ -216,7 +219,7 @@ class Geometric(Augmentation):
                     elif self.padding_type == "mirror":
                         image_padding = np.flipud(image[: self.padding[2], :].copy())
                     else:
-                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
                     # combine padding image and original image
                     image = np.concatenate([image_padding, image], axis=0)
 
@@ -239,7 +242,7 @@ class Geometric(Augmentation):
                     elif self.padding_type == "mirror":
                         image_padding = np.flipud(image[-self.padding[3] :, :].copy())
                     else:
-                        image_padding = np.full(padding_shape, fill_value=self.padding_value, dtype="uint8")
+                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
                     # combine padding image and original image
                     image = np.concatenate([image, image_padding], axis=0)
 
