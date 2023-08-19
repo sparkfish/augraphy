@@ -196,7 +196,8 @@ class LinesDegradation(Augmentation):
 
             # replace detected lines with line value
             if len(image_output.shape) > 2:
-                for i in range(image_output.shape[2]):
+                # skip alpha layer
+                for i in range(3):
                     image_output[ystart:yend, xstart:xend, i][mask > 0] = replacement_mask[mask > 0]
             else:
                 image_output[ystart:yend, xstart:xend][mask > 0] = replacement_mask[mask > 0]

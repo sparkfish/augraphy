@@ -172,7 +172,9 @@ class InkShifter(Augmentation):
 
     def __call__(self, image, layer=None, force=None):
         if force or self.should_run():
-            h, w, _ = image.shape
+
+            h, w = image.shape[:2]
+
             text_shift_scale = random.randint(self.text_shift_scale_range[0], self.text_shift_scale_range[1])
             text_shift_factor = random.randint(self.text_shift_factor_range[0], self.text_shift_factor_range[1])
 

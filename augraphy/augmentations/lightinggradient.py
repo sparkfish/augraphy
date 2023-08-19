@@ -201,14 +201,17 @@ class LightingGradient(Augmentation):
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
-            image = image.copy()
+            frame = image.copy()
+
+            has_alpha = 0
+            if len(frame.shape) > 2 and frame.shape[2] == 4:
+                has_alpha = 1
+                frame, image_alpha = frame[:, :, :3], frame[:, :, 3]
 
             if self.transparency is None:
                 transparency = random.uniform(0.5, 0.85)
             else:
                 transparency = self.transparency
-
-            frame = image
 
             height, width = frame.shape[:2]
             if len(frame.shape) > 2:
@@ -230,4 +233,8 @@ class LightingGradient(Augmentation):
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
+
+            if has_alpha:
+                frame = np.dstack((frame, image_alpha))
+
             return frame
