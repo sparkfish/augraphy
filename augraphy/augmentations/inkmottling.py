@@ -69,6 +69,7 @@ class InkMottling(Augmentation):
                 255,
                 size=(int(ysize / ink_mottling_noise_scale), int(xsize / ink_mottling_noise_scale)),
             ).astype("uint8")
+
             image_random = cv2.cvtColor(image_random, cv2.COLOR_GRAY2BGR)
 
             # apply gaussian blur to the mask of noise
@@ -88,6 +89,10 @@ class InkMottling(Augmentation):
                     (xsize, ysize),
                     interpolation=cv2.INTER_AREA,
                 )
+
+            # add alpha layer to random image
+            if image.shape[2] == 4:
+                image_random = np.dstack((image_random, image[:, :, 3]))
 
             # blend noise mask with image ink based on the input alpha
             ink_mottling_alpha = random.uniform(self.ink_mottling_alpha_range[0], self.ink_mottling_alpha_range[1])

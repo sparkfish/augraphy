@@ -1,6 +1,7 @@
 import random
 
 import cv2
+import numpy as np
 
 from augraphy.base.augmentation import Augmentation
 
@@ -32,10 +33,20 @@ class Jpeg(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            has_alpha = 0
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
+
             encode_param = [
                 int(cv2.IMWRITE_JPEG_QUALITY),
                 random.randint(self.quality_range[0], self.quality_range[1]),
             ]
             result, encimg = cv2.imencode(".jpg", image, encode_param)
             image = cv2.imdecode(encimg, 1)
+
+            if has_alpha:
+                image = np.dstack((image, image_alpha))
+
             return image
