@@ -97,9 +97,9 @@ class LowInkLine(Augmentation):
         else:
             low_ink_line = (np.random.random((xsize)) * 255).astype("uint8")
             if len(mask.shape) > 2:
-                new_low_ink_line = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                new_low_ink_line = np.zeros((xsize, mask.shape[2]), dtype="uint8")
                 for i in range(mask.shape[2]):
-                    new_low_ink_line[:, :, i] = low_ink_line.copy()
+                    new_low_ink_line[:, i] = low_ink_line.copy()
                 low_ink_line = new_low_ink_line
 
             # add noise to top and bottom of the line
@@ -107,10 +107,10 @@ class LowInkLine(Augmentation):
                 indices = np.random.random((xsize)) <= (1 - self.noise_probability)
                 low_ink_line_top = (np.random.random((xsize)) * 255).astype("uint8")
                 if len(mask.shape) > 2:
-                    new_low_ink_line_top = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                    new_low_ink_line_top = np.zeros((xsize, mask.shape[2]), dtype="uint8")
                     for i in range(mask.shape[2]):
-                        new_low_ink_line_top[:, :, i] = low_ink_line_top.copy()
-                        new_low_ink_line_top[:, :, i][indices.reshape(1, xsize)] = mask[y - 1, :, i][indices]
+                        new_low_ink_line_top[:, i] = low_ink_line_top.copy()
+                        new_low_ink_line_top[:, i][indices] = mask[y - 1, :, i][indices]
                     low_ink_line_top = new_low_ink_line_top
                 else:
                     low_ink_line_top[indices] = mask[y - 1, :][indices]
@@ -119,32 +119,36 @@ class LowInkLine(Augmentation):
                 indices = np.random.random((xsize)) <= (1 - self.noise_probability)
                 low_ink_line_bottom = (np.random.random((xsize)) * 255).astype("uint8")
                 if len(mask.shape) > 2:
-                    new_low_ink_line_bottom = np.zeros((1, xsize, mask.shape[2]), dtype="uint8")
+                    new_low_ink_line_bottom = np.zeros((xsize, mask.shape[2]), dtype="uint8")
                     for i in range(mask.shape[2]):
-                        new_low_ink_line_bottom[:, :, i] = low_ink_line_bottom.copy()
-                        new_low_ink_line_bottom[:, :, i][indices.reshape(1, xsize)] = mask[y - 1, :, i][indices]
+                        new_low_ink_line_bottom[:, i] = low_ink_line_bottom.copy()
+                        new_low_ink_line_bottom[:, i][indices] = mask[y - 1, :, i][indices]
                     low_ink_line_bottom = new_low_ink_line_bottom
                 else:
                     low_ink_line_bottom[indices] = mask[y - 1, :][indices]
 
-        indices = mask[y, :] < low_ink_line
         if len(mask.shape) > 2:
-            mask[y, :, :3][indices[:, :3]] = low_ink_line[:, :3][indices[:, :3]]
+            indices = mask[y, :, :3] < low_ink_line[:, :3]
+            mask[y, :, :3][indices] = low_ink_line[:, :3][indices]
         else:
+            indices = mask[y, :] < low_ink_line
             mask[y, :][indices] = low_ink_line[indices]
 
         if y - 1 >= 0:
-            indices = mask[y - 1, :] < low_ink_line_top
             if len(mask.shape) > 2:
-                mask[y - 1, :, :3][indices[:, :3]] = low_ink_line_top[:, :3][indices[:, :3]]
+                indices = mask[y - 1, :, :3] < low_ink_line_top[:, :3]
+                mask[y - 1, :, :3][indices] = low_ink_line_top[:, :3][indices]
             else:
+                indices = mask[y - 1, :] < low_ink_line_top
                 mask[y - 1, :][indices] = low_ink_line_top[indices]
 
         if y + 1 < mask.shape[0]:
-            indices = mask[y - 1, :] < low_ink_line_bottom
+
             if len(mask.shape) > 2:
-                mask[y + 1, :, :3][indices[:, :3]] = low_ink_line_bottom[:, :3][indices[:, :3]]
+                indices = mask[y - 1, :, :3] < low_ink_line_bottom[:, :3]
+                mask[y + 1, :, :3][indices] = low_ink_line_bottom[:, :3][indices]
             else:
+                indices = mask[y - 1, :] < low_ink_line_bottom
                 mask[y + 1, :][indices] = low_ink_line_bottom[indices]
 
         return mask
