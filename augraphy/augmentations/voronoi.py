@@ -170,6 +170,12 @@ class VoronoiTessellation(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             result = image.copy()
+
+            has_alpha = 0
+            if len(result.shape) > 2 and result.shape[2] == 4:
+                has_alpha = 1
+                result, image_alpha = result[:, :, :3], result[:, :, 3]
+
             h, w = result.shape[:2]
             if self.noise_type == "random":
                 self.perlin = random.choice([True, False])
@@ -220,4 +226,8 @@ class VoronoiTessellation(Augmentation):
             # original image is padded and voronoi_mesh passes through it like a sliding window
             result = sw.make_patterns(result, voronoi_mesh, self.ws)
             result = result[self.ws : h + self.ws, self.ws : w + self.ws]
+
+            if has_alpha:
+                result = np.dstack((result, image_alpha))
+
             return result

@@ -106,6 +106,11 @@ class Scribbles(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            has_alpha = 0
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
+
             if self.scribbles_type == "text" or self.scribbles_type == "random":
                 # create fonts directory
                 os.makedirs(self.fonts_directory, exist_ok=True)
@@ -244,5 +249,8 @@ class Scribbles(Augmentation):
             )
 
             image_output = ink_generator.generate_ink()
+
+            if has_alpha:
+                image_output = np.dstack((image_output, image_alpha))
 
             return image_output

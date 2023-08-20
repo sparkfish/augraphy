@@ -238,7 +238,15 @@ class WaterMark(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            has_alpha = 0
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
+
             watermark_foreground = self.create_watermark()
             watermark_image = self.apply_watermark(watermark_foreground, image)
+
+            if has_alpha:
+                watermark_image = np.dstack((watermark_image, image_alpha))
 
             return watermark_image

@@ -86,9 +86,13 @@ class SectionShift(Augmentation):
         # fill the shifted area with value
         if self.section_shift_fill_value != -1:
             if self.section_shift_fill_value == "random":
-                image[y0:yn, x0:xn] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                fill_value = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
             else:
-                image[y0:yn, x0:xn] = self.section_shift_fill_value
+                fill_value = self.section_shift_fill_value
+            # add alpha value
+            if image.shape[2] == 4:
+                fill_value = (fill_value[0], fill_value[1], fill_value[2], 255)
+            image[y0:yn, x0:xn] = fill_value
 
         # shift the section of image
         image[y0 + section_shift_y : yn + section_shift_y, x0 + section_shift_x : xn + section_shift_x] = image_section
