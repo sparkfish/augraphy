@@ -53,7 +53,8 @@ class SubtleNoise(Augmentation):
             if len(image.shape) > 2:
                 # convert to int to enable negative
                 image = image.astype("int")
-                for i in range(image.shape[2]):
+                # skip alpha layer
+                for i in range(3):
                     image[:, :, i] = self.add_subtle_noise(image[:, :, i])
             # single channel image
             else:

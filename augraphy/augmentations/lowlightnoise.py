@@ -163,10 +163,9 @@ class LowLightNoise(Augmentation):
             result = image.copy()
 
             has_alpha = 0
-            if len(result.shape) > 2:
-                if result.shape[2] == 4:
-                    has_alpha = 1
-                    result, image_alpha = result[:, :, :3], result[:, :, 3]
+            if len(result.shape) > 2 and result.shape[2] == 4:
+                has_alpha = 1
+                result, image_alpha = result[:, :, :3], result[:, :, 3]
 
             photons = random.randint(self.num_photons_range[0], self.num_photons_range[1])
             alpha = random.uniform(self.alpha_range[0], self.alpha_range[1])

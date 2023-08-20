@@ -115,8 +115,12 @@ class PatternGenerator(Augmentation):
     def __call__(self, image, layer=None, force=False):
         if force or self.should_run():
             result = image.copy()
-            h, w = result.shape[:2]
+            has_alpha = 0
+            if len(result.shape) > 2 and result.shape[2] == 4:
+                has_alpha = 1
+                result, image_alpha = result[:, :, :3], result[:, :, 3]
 
+            h, w = result.shape[:2]
             self.n_rotation = random.randint(self.n_rotation_range[0], self.n_rotation_range[1])
             pattern_image = np.zeros((self.imgy, self.imgx, 3), dtype=np.uint8)
             frequency = random.random() * 100 + 18  # determines the frequency of pattern
@@ -144,4 +148,8 @@ class PatternGenerator(Augmentation):
 
             # overlay pattern into image
             result = sw.superimpose(result, invert)
+
+            if has_alpha:
+                result = np.dstack((result, image_alpha))
+
             return result

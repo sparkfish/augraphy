@@ -88,6 +88,11 @@ class NoiseTexturize(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            has_alpha = 0
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
+
             sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
             turbulence = random.randint(
                 self.turbulence_range[0],
@@ -106,6 +111,9 @@ class NoiseTexturize(Augmentation):
                 result += self.noise(cols, rows, channel, ratio, sigma=sigma)
                 ratio = (ratio // turbulence) or 1
             cut = np.clip(result, 0, 255)
-
             cut = cut.astype(np.uint8)
+
+            if has_alpha:
+                cut = np.dstack((cut, image_alpha))
+
             return cut

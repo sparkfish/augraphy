@@ -186,8 +186,13 @@ class Markup(Augmentation):
     def __call__(self, image, layer=None, force=False):
 
         # change to 3 channels BGR format
+        has_alpha = 0
         if len(image.shape) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        elif image.shape[2] == 4:
+            has_alpha = 1
+            image, image_alpha = image[:, :, :3], image[:, :, 3]
+
         markup_image = image.copy()
 
         if self.markup_color == "random":
@@ -399,5 +404,8 @@ class Markup(Augmentation):
             )
 
             markup_image = ink_generator.generate_ink()
+
+        if has_alpha:
+            markup_image = np.dstack((markup_image, image_alpha))
 
         return markup_image
