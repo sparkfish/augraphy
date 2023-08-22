@@ -10,11 +10,14 @@ import numpy as np
 
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.base.augmentationsequence import AugmentationSequence
+from augraphy.utilities.detectdpi import dpi_resize
+from augraphy.utilities.detectdpi import DPIMetrics
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class AugraphyPipeline:
     """Contains phases of image augmentations and their results.
+
     :param pre_phase: Collection of Augmentations to apply
     :param ink_phase: Collection of Augmentations to apply.
     :type ink_phase: base.augmentationsequence or list
@@ -32,8 +35,16 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
+    :param mask: The mask of labels for each pixel. Mask value should be in range of 0 to 255.
+    :type mask: numpy array (uint8), optional
+    :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate (x, y).
+    :type keypoints: dictionary, optional
+    :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+    :type bounding_boxes: list, optional
     :param save_outputs: Flag to enable saving each phase output image.
     :type save_outputs: bool, optional
+    :param fixed_dpi: Flag to enable a same DPI in both input and augmented image.
+    :type fixed_dpi: bool, optional
     :param log: Flag to enable logging.
     :type log: bool, optional
     :param random_seed: The initial value for PRNGs used in Augraphy.
@@ -50,7 +61,11 @@ class AugraphyPipeline:
         overlay_alpha=0.3,
         ink_color_range=(-1, -1),
         paper_color_range=(255, 255),
+        mask=None,
+        keypoints=None,
+        bounding_boxes=None,
         save_outputs=False,
+        fixed_dpi=False,
         log=False,
         random_seed=None,
     ):
@@ -64,6 +79,7 @@ class AugraphyPipeline:
         self.ink_color_range = ink_color_range
         self.paper_color_range = paper_color_range
         self.save_outputs = save_outputs
+        self.fixed_dpi = fixed_dpi
         self.log = log
         self.random_seed = random_seed
 
@@ -242,6 +258,9 @@ class AugraphyPipeline:
         data["log"]["image_shape"] = image.shape
 
         data["image"] = image.copy()
+        data["mask"] = list()
+        data["keypoints"] = list()
+        data["bounding_boxes"] = list()
 
         data["pipeline"] = self
         data["pre"] = list()
@@ -249,52 +268,8 @@ class AugraphyPipeline:
         data["paper"] = list()
         data["post"] = list()
 
-        if len(self.pre_phase) == 0:
-
-            self.pre_phase = AugmentationSequence([])
-
-            ink = data["image"].copy()
-        else:
-            # apply pre phase augmentation
-            pre = data["image"].copy()
-
-            data["pre"].append(AugmentationResult(None, pre))
-
-            self.apply_phase(data, layer="pre", phase=self.pre_phase)
-
-            if data["pre"][-1].result["rescaled_img"] is not None:
-
-                ink = data["pre"][-1].result["rescaled_img"]
-            else:
-
-                ink = data["image"].copy()
-
-        data["ink"].append(AugmentationResult(None, ink))
-
-        if (self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0):
-            paper_color = random.randint(
-                self.paper_color_range[0],
-                self.paper_color_range[1],
-            )
-        else:
-            paper_color = 255
-
-        data["log"]["paper_color"] = paper_color
-
-        data["paper"].append(
-            AugmentationResult(
-                None,
-                np.full(
-                    (ink.shape[0], ink.shape[1], 3),
-                    paper_color,
-                    dtype=np.uint8,
-                ),
-            ),
-        )
-
         # If phases were defined None or [] in a custom pipeline, they wouldn't
         # be callable objects, so make them empty AugmentationSequences
-
         if len(self.ink_phase) == 0:
             self.ink_phase = AugmentationSequence([])
 
@@ -304,13 +279,55 @@ class AugraphyPipeline:
         if len(self.post_phase) == 0:
             self.post_phase = AugmentationSequence([])
 
-        # apply ink phase augmentation
+        # the input image
+        image_input = data["image"].copy()
+
+        # pre phase
+        if len(self.pre_phase) > 0:
+            if self.fixed_dpi:
+                # compute and save a copy of image original dpi and doc dimensions
+                dpi_object = DPIMetrics(image_input)
+                original_dpi, doc_dimensions = dpi_object()
+            # pre phase input
+            data["pre"].append(AugmentationResult(None, image_input))
+            # apply pre phase augmentations
+            self.apply_phase(data, layer="pre", phase=self.pre_phase)
+            # the output of pre phase is the input for ink phase
+            ink = data["pre"][-1].result
+        else:
+            ink = image_input
+
+        # ink phase
+        # ink phase input
+        data["ink"].append(AugmentationResult(None, ink))
+        # apply ink phase augmentations
         self.apply_phase(data, layer="ink", phase=self.ink_phase)
 
+        # paper phase
+        if (self.paper_color_range[0] != 0) | (self.paper_color_range[1] != 0):
+            paper_color = random.randint(
+                self.paper_color_range[0],
+                self.paper_color_range[1],
+            )
+        else:
+            paper_color = 255
+        data["log"]["paper_color"] = paper_color
+        # paper phase input
+        data["paper"].append(
+            AugmentationResult(
+                None,
+                np.full(
+                    (data["ink"][-1].result.shape[0], data["ink"][-1].result.shape[1], 3),
+                    paper_color,
+                    dtype=np.uint8,
+                ),
+            ),
+        )
         # apply paper phase augmentations
         self.apply_phase(data, layer="paper", phase=self.paper_phase)
 
-        # ink and paper phases always have at least one result by now
+        # post phase
+        # post phase input: ink and paper phases always have at least one result by now
         data["post"].append(
             AugmentationResult(
                 None,
@@ -321,9 +338,20 @@ class AugraphyPipeline:
                 ),
             ),
         )
-
         # apply post phase augmentations
         self.apply_phase(data, layer="post", phase=self.post_phase)
+
+        if self.fixed_dpi and len(self.pre_phase) > 0:
+            dpi_object = DPIMetrics(image_input)
+            current_dpi, current_doc_dimensions = dpi_object()
+            # resize to original input dpi if dpi is changed
+            if current_dpi != original_dpi:
+                image_resize = dpi_resize(
+                    image=data["post"][-1].result,
+                    doc_dimensions=current_doc_dimensions,
+                    target_dpi=original_dpi,
+                )
+                data["post"].append(AugmentationResult(None, image_resize))
 
         # revert to input image type
         if image_type[:5] == "float":
@@ -573,21 +601,10 @@ class AugraphyPipeline:
 
         for augmentation in phase.augmentations:
             result = data[layer][-1].result.copy()
+
             if augmentation.should_run():
                 start = time.process_time()  # time at start of execution
-                if (augmentation.__class__.__name__ == "Rescale") and layer == "post":
-                    if len(data["pre"]):
-                        result = augmentation(
-                            result,
-                            layer,
-                            force=True,
-                            doc_dims=data["pre"][1].result["doc_dimensions"],
-                            original_dpi=data["pre"][1].result["original_dpi"],
-                        )
-                    else:
-                        continue
-                else:
-                    result = augmentation(result, layer, force=True)
+                result = augmentation(result, layer, force=True)
                 end = time.process_time()  # time at end of execution
                 elapsed = end - start  # execution duration
                 data["log"]["time"].append((augmentation, elapsed))

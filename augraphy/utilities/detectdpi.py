@@ -3,7 +3,7 @@ version: 0.0.01
 """
 import math
 
-import numba
+import cv2
 
 lookup_table = [
     "8.3 x 11.7,300",
@@ -136,3 +136,17 @@ class DPIMetrics:
         dpi_detected = self._findDPI(self.image)
         # print("[INFO] The DPI detected is ", dpi_detected)
         return dpi_detected
+
+
+def dpi_resize(image, doc_dimensions, target_dpi=300):
+    """Resize image based on the target dpi and doc dimensions"""
+
+    width_inches, height_inches = doc_dimensions[0], doc_dimensions[1]
+
+    width = width_inches * target_dpi
+
+    height = height_inches * target_dpi
+
+    output_image = cv2.resize(image, (int(width), int(height)), interpolation=cv2.INTER_AREA)
+
+    return output_image
