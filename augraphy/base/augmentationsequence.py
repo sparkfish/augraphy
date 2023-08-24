@@ -27,14 +27,19 @@ class AugmentationSequence(Augmentation):
         output += "])"
         return output
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             result = image
             for augmentation in self.augmentations:
                 if isinstance(result, tuple):
                     result = result[0]
-                current_result = augmentation(result)
+                current_result = augmentation(result, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+                if isinstance(augmentation, Augmentation):
+                    if (mask is not None) or (keypoints is not None) or (bounding_boxes is not None):
+                        current_result, mask, keypoints, bounding_boxes = current_result
                 self.results.append(current_result)
+
                 # make sure result is not None when parsing it to the next augmentation
                 if not isinstance(result, tuple) and current_result is not None:
                     result = current_result

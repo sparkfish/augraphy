@@ -84,7 +84,7 @@ class NoiseTexturize(Augmentation):
         return result
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 

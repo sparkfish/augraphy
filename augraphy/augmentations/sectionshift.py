@@ -98,7 +98,7 @@ class SectionShift(Augmentation):
         image[y0 + section_shift_y : yn + section_shift_y, x0 + section_shift_x : xn + section_shift_x] = image_section
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 

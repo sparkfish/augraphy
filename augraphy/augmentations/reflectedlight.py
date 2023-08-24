@@ -64,7 +64,7 @@ class ReflectedLight(Augmentation):
     def __repr__(self):
         return f"ReflectedLight(reflected_light_smoothness={self.reflected_light_smoothness}, reflected_light_internal_radius_range={self.reflected_light_internal_radius_range}, reflected_light_external_radius_range={self.reflected_light_external_radius_range}, reflected_light_minor_major_ratio_range={self.reflected_light_minor_major_ratio_range},  reflected_light_color={self.reflected_light_color}, reflected_light_internal_max_brightness_range={self.reflected_light_internal_max_brightness_range}, reflected_light_external_max_brightness_range={self.reflected_light_external_max_brightness_range}， reflected_light_location={self.reflected_light_location}, reflected_light_ellipse_angle_range={self.reflected_light_ellipse_angle_range}, reflected_light_gaussian_kernel_size_range={self.reflected_light_gaussian_kernel_size_range},p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # convert and make sure image is color image

@@ -170,7 +170,7 @@ class InkShifter(Augmentation):
         fade += (1 - fade) * f
         return (255 - (255 - img) * fade.reshape((fade.shape[0], fade.shape[1], 1))).astype(np.uint8)
 
-    def __call__(self, image, layer=None, force=None):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             h, w = image.shape[:2]

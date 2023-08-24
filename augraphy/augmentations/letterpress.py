@@ -51,7 +51,7 @@ class Letterpress(Augmentation):
     def __repr__(self):
         return f"Letterpress(n_samples={self.n_samples}, std_range={self.std_range}, value_range={self.value_range}, value_threshold_range={self.value_threshold_range}, blur={self.blur}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
             ysize, xsize = image.shape[:2]

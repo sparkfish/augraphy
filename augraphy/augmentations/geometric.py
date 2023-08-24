@@ -80,7 +80,7 @@ class Geometric(Augmentation):
         return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, padding={self.padding}, padding_type={self.padding_type}, padding_value={self.padding_value}, randomize={self.randomize}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 

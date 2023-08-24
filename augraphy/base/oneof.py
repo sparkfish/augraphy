@@ -22,14 +22,14 @@ class OneOf(Augmentation):
         self.p = p
 
     # Randomly selects an Augmentation to apply to data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # Select one augmentation using the max value in probability values
             augmentation = self.augmentations[np.argmax(self.augmentation_probabilities)]
 
             # Applies the selected Augmentation.
-            image = augmentation(image, force=True)
+            image = augmentation(image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes, force=True)
             return image, [augmentation]
 
     # Constructs a string containing the representations

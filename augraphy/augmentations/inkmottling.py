@@ -35,7 +35,7 @@ class InkMottling(Augmentation):
     def __repr__(self):
         return f"InkMottling(ink_mottling_alpha_range={self.ink_mottling_alpha_range}, ink_mottling_noise_scale_range={self.ink_mottling_noise_scale_range}, ink_mottling_gaussian_kernel_range={self.ink_mottling_gaussian_kernel_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 

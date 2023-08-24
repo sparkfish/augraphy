@@ -64,7 +64,7 @@ class ShadowCast(Augmentation):
         return f"ShadowCast(shadow_side={self.shadow_side}, shadow_vertices_range={self.shadow_vertices_range}, shadow_width_range={self.shadow_width_range}, shadow_height_range={self.shadow_height_range}, shadow_color={self.shadow_color}, shadow_opacity_range={self.shadow_opacity_range}, shadow_iterations_range={self.shadow_iterations_range}, shadow_blur_kernel_range={self.shadow_blur_kernel_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # convert and make sure image is color image
