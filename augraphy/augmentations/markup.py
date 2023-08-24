@@ -183,7 +183,7 @@ class Markup(Augmentation):
                 lineType=cv2.LINE_AA,
             )
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
 
         # change to 3 channels BGR format
         has_alpha = 0

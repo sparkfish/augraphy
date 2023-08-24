@@ -29,7 +29,7 @@ class Gamma(Augmentation):
     def __repr__(self):
         return f"Gamma(gamma_range={self.gamma_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
             image = image.astype(np.uint8)

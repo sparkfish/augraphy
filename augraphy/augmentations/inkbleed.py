@@ -43,7 +43,7 @@ class InkBleed(Augmentation):
         return f"InkBleed(intensity_range={self.intensity_range}, kernel_size={self.kernel_size}, severity={self.severity}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # convert and make sure image is color image

@@ -74,7 +74,7 @@ class InkColorSwap(Augmentation):
     def __repr__(self):
         return f"InkColorSwap(ink_swap_color={self.ink_swap_color}, ink_swap_sequence_number_range={self.ink_swap_sequence_number_range}, ink_swap_min_width_range={self.ink_swap_min_width_range}, ink_swap_max_width_range={self.ink_swap_max_width_range}, ink_swap_min_height_range={self.ink_swap_min_height_range}, ink_swap_max_height_range={self.ink_swap_max_height_range}, ink_swap_min_area_range={self.ink_swap_min_area_range}, ink_swap_max_area_range={self.ink_swap_max_area_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             image = image.copy()

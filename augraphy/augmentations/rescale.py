@@ -41,7 +41,7 @@ class Rescale(Augmentation):
     def __repr__(self):
         return f"Rescale(target_dpi={self.target_dpi}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=None):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
 
         if force or self.should_run():
 
