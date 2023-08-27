@@ -385,7 +385,6 @@ class AugraphyPipeline:
             paper_color = 255
         data["log"]["paper_color"] = paper_color
         # paper phase input
-        # no mask, keypoints or bounding boxes in paper phase, those parameters will be inherited from ink's output
         data["paper"].append(
             AugmentationResult(
                 None,
@@ -394,6 +393,9 @@ class AugraphyPipeline:
                     paper_color,
                     dtype=np.uint8,
                 ),
+                mask=data["ink"][-1].mask,
+                keypoints=data["ink"][-1].keypoints,
+                bounding_boxes=data["ink"][-1].bounding_boxes,
             ),
         )
         # apply paper phase augmentations
@@ -702,8 +704,8 @@ class AugraphyPipeline:
                 start = time.process_time()  # time at start of execution
 
                 result = augmentation(
-                    result,
-                    layer,
+                    image=result,
+                    layer=layer,
                     mask=mask,
                     keypoints=keypoints,
                     bounding_boxes=bounding_boxes,
@@ -782,6 +784,13 @@ class AugraphyPipeline:
                 interpolation=cv2.INTER_AREA,
             )
 
+        # preserve alpha layer
+        has_alpha = 0
+        if len(overlay.shape) > 2 and overlay.shape[2] == 4:
+            has_alpha = 1
+            image_alpha = overlay[:, :, 3]
+            overlay = overlay[:, :, :3]
+
         ink_to_paper_builder = OverlayBuilder(
             overlay_types=self.overlay_type,
             foreground=overlay,
@@ -794,7 +803,12 @@ class AugraphyPipeline:
             ink_color=ink_color,
         )
 
-        return ink_to_paper_builder.build_overlay()
+        image_blended = ink_to_paper_builder.build_overlay()
+
+        if has_alpha:
+            image_blended = np.dstack((image_blended, image_alpha))
+
+        return image_blended
 
     def __repr__(self):
         r = f"pre_phase = {repr(self.pre_phase)}\n\n"

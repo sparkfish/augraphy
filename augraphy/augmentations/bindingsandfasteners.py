@@ -901,4 +901,14 @@ class BindingsAndFasteners(Augmentation):
                     image_alpha = cv2.resize(image_alpha, (xsize, ysize), interpolation=cv2.INTER_AREA)
                 image_output = np.dstack((image_output, image_alpha))
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output
