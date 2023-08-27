@@ -212,6 +212,7 @@ def warp_fold(
     fold_y_shift,
     side,
     backdrop_color,
+    fmask=0,
 ):
     img_fuse = img.copy()
 
@@ -267,18 +268,26 @@ def warp_fold(
     img_crop = img[cys:cye, cxs:cxe]
 
     # get image dimension of cropped image
+    cysize, cxsize = img_crop.shape[:2]
     if len(img_crop.shape) > 2:
-        cysize, cxsize, cdim = img_crop.shape
+        cdim = img_crop.shape[2]
     else:
-        cysize, cxsize = img_crop.shape
         cdim = 2
 
     # darken the folded area
-    darken_ratio = random.uniform(0.99, 1.0)
+    # no darken effect for mask
+    if not fmask:
+        darken_ratio = random.uniform(0.99, 1.0)
+        if len(img_crop.shape) > 2:
+            # skip alpha layer, no darken for alpha layer
+            for i in range(3):
+                img_crop[:, :, i] = img_crop[:, :, i] * darken_ratio
+        else:
+            img_crop * darken_ratio
 
     # warp folding area
     img_warped = four_point_transform(
-        img_crop * darken_ratio,
+        img_crop,
         source_pts,
         destination_pts,
         cxsize,
@@ -308,7 +317,17 @@ def warp_fold(
             noise_side = 1
         else:
             noise_side = 0
+
+        has_alpha = 0
+        if cdim == 4:
+            has_alpha = 1
+            img_alpha = img_warped[:, :, 3]
+            img_warped = img_warped[:, :, :3]
+
         img_warped = add_folding_noise(img_warped, noise_side, fold_noise / 2)
+
+        if has_alpha:
+            img_warped = np.dstack((img_warped, img_alpha))
 
     if cdim > 2:
         img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]
