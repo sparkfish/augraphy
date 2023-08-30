@@ -236,8 +236,8 @@ def warp_fold(
         dbottom_right = [xe, ye + fold_y_shift]
 
         # image cropping points
-        cxs = fold_x
-        cxe = fold_x + fold_width_one_side
+        cxs = fold_x - fold_width_one_side
+        cxe = fold_x
         cys = 0
         cye = ysize
 
@@ -249,8 +249,8 @@ def warp_fold(
         dbottom_right = [xe, ye]
 
         # image cropping points
-        cxs = fold_x + fold_width_one_side
-        cxe = fold_x + (fold_width_one_side * 2)
+        cxs = fold_x
+        cxe = fold_x + fold_width_one_side
         cys = 0
         cye = ysize
 

@@ -38,9 +38,11 @@ class AugraphyPipeline:
     :type paper_color_range: tuple, optional
     :param mask: The mask of labels for each pixel. Mask value should be in range of 0 to 255.
     :type mask: numpy array (uint8), optional
-    :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate (x, y).
+    :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+            For example: keypoints = {"label1":[[xpoint1, ypoint1], [xpoint2, ypoint2]], "label2":[[xpoint3, ypoint3]]}.
     :type keypoints: dictionary, optional
     :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+            For example: bounding_boxes = [[xa1,ya1,xa2,ya2], [xb1,yb2,xb2,yb2]]
     :type bounding_boxes: list, optional
     :param save_outputs: Flag to enable saving each phase output image.
     :type save_outputs: bool, optional
