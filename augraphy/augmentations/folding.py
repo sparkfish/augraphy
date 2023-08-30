@@ -39,7 +39,7 @@ class Folding(Augmentation):
         fold_x=None,
         fold_deviation=(0, 0),
         fold_count=2,
-        fold_noise=0.1,
+        fold_noise=0.01,
         fold_angle_range=(0, 0),
         gradient_width=(0.1, 0.2),
         gradient_height=(0.01, 0.02),
@@ -63,6 +63,8 @@ class Folding(Augmentation):
     def apply_folding(
         self,
         img,
+        keypoints,
+        bounding_boxes,
         ysize,
         xsize,
         fold_x,
@@ -75,6 +77,10 @@ class Folding(Augmentation):
 
         :param img: The image to apply the function.
         :type img: numpy.array (numpy.uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
         :param ysize: Height of the image.
         :type ysize: int
         :param xsize: Width of the image.
@@ -117,7 +123,30 @@ class Folding(Augmentation):
                 backdrop_color=self.backdrop_color,
                 fmask=fmask,
             )
+
+            # warp keypoints
+            if not fmask and keypoints is not None:
+                lx0, ly0, lxn, lyn = fold_x - fold_width_one_side, 0, fold_x, ysize
+                rx0, ry0, rxn, ryn = fold_x, 0, fold_x + (fold_width_one_side), ysize
+
+                # y shifting value for single pixel
+                y_shift_single_step = fold_y_shift / fold_width_one_side
+
+                # warp each label
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        # test for left box
+                        if xpoint >= lx0 and xpoint < lxn and ypoint >= ly0 and ypoint < lyn:
+                            # scale y shift based on their distance to center x of folding
+                            ypoint += round((xpoint - lx0) * y_shift_single_step)
+                        # test for right box
+                        elif xpoint >= rx0 and xpoint < rxn and ypoint >= ry0 and ypoint < ryn:
+                            # scale y shift based on their distance to center x of folding
+                            ypoint += round((fold_width_one_side - (xpoint - fold_x)) * y_shift_single_step)
+                        points[i] = [xpoint, ypoint]
+
             return img_fold_r
+
         else:
             if fold_width_one_side == 0:
                 print(
@@ -129,6 +158,32 @@ class Folding(Augmentation):
                 )
             return img
 
+    def rotate_point(self, xpoint, ypoint, xcenter, ycenter, angle):
+        """Rotate point around an origin based on the provided angle in clockwise direction.
+
+        :param xpoint: The x coordinate of input point.
+        :type xpoint: int
+        :param ypoint: The y coordinate of input point.
+        :type ypoint: int
+        :param xcenter: The x origin point.
+        :type xcenter: int
+        :param ycenter: The y origin point.
+        :type ycenter: int
+        :param angle: The angle of rotation in degree.
+        :type angle: int
+        """
+
+        angle_radian = np.deg2rad(angle)
+
+        rotated_xpoint = xcenter + (
+            (np.cos(angle_radian) * (xpoint - xcenter)) - (np.sin(angle_radian) * (ypoint - ycenter))
+        )
+        rotated_ypoint = ycenter + (
+            (np.sin(angle_radian) * (xpoint - xcenter)) + (np.cos(angle_radian) * (ypoint - ycenter))
+        )
+
+        return rotated_xpoint, rotated_ypoint
+
     def apply_rotate_and_folding(
         self,
         image_fold,
@@ -136,6 +191,8 @@ class Folding(Augmentation):
         fold_x=None,
         fold_width_one_side=None,
         fold_y_shift=None,
+        keypoints=None,
+        bounding_boxes=None,
         fmask=0,
     ):
         """Apply rotation and folding effect.
@@ -166,11 +223,28 @@ class Folding(Augmentation):
                 expand=1,
             )
 
+            # rotate keypoints
+            if not fmask and keypoints is not None:
+                # center of rotation
+                cy = int(iysize / 2)
+                cx = int(ixsize / 2)
+                # compute offset after rotation
+                rysize, rxsize = image_fold.shape[:2]
+                y_offset = (rysize / 2) - cy
+                x_offset = (rxsize / 2) - cx
+                # rotate each label
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        # use - fold_angle because image are rotated anticlockwise
+                        rotated_xpoint, rotated_ypoint = self.rotate_point(xpoint, ypoint, cx, cy, -fold_angle)
+                        points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
+
         # rotated size
         ysize, xsize = image_fold.shape[:2]
 
         # create folding parameters (for non mask, mask will be using input parameters)
         if not fmask:
+
             # folding width from left to center of folding, or from right to center of folding
             min_fold_x = min(np.ceil(self.gradient_width[0] * xsize), xsize).astype("int")
             max_fold_x = min(np.ceil(self.gradient_width[1] * xsize), xsize).astype("int")
@@ -207,8 +281,11 @@ class Folding(Augmentation):
             fold_noise = 0
         else:
             fold_noise = self.fold_noise
+
         image_fold = self.apply_folding(
             image_fold,
+            keypoints,
+            bounding_boxes,
             image_fold.shape[0],
             image_fold.shape[1],
             fold_x,
@@ -227,17 +304,43 @@ class Folding(Augmentation):
                 expand=1,
             )
 
+            # rotate keypoints
+            if not fmask and keypoints is not None:
+                # center of rotation
+                cy = int(ysize / 2)
+                cx = int(xsize / 2)
+                # compute offset after rotation
+                rysize, rxsize = image_fold.shape[:2]
+                y_offset = rysize / 2 - cy
+                x_offset = rxsize / 2 - cx
+                # rotate each label
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        # use - fold_angle because image are rotated anticlockwise
+                        rotated_xpoint, rotated_ypoint = self.rotate_point(xpoint, ypoint, cx, cy, fold_angle)
+                        points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
+
             # get the image without the padding area, we will get extra padding area after the rotation
             rysize, rxsize = image_fold.shape[:2]
 
             # center of x and y
             cx = int(rxsize / 2)
             cy = int(rysize / 2)
-            start_x = cx - int(ixsize / 2)
-            start_y = cy - int(iysize / 2)
+            rcx = int(ixsize / 2)
+            rcy = int(iysize / 2)
+            start_x = cx - rcx
+            start_y = cy - rcy
             end_x = start_x + ixsize
             end_y = start_y + iysize
             image_fold = image_fold[start_y:end_y, start_x:end_x]
+
+            # remove padding area of keypoints
+            if not fmask and keypoints is not None:
+                y_offset = (iysize / 2) - (rysize / 2)
+                x_offset = (ixsize / 2) - (rxsize / 2)
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [round(xpoint + x_offset), round(ypoint + y_offset)]
 
         return image_fold, fold_x, fold_width_one_side, fold_y_shift
 
@@ -258,6 +361,8 @@ class Folding(Augmentation):
                 image_fold, fold_x, fold_width_one_side, fold_y_shift = self.apply_rotate_and_folding(
                     image_fold,
                     fold_angle,
+                    keypoints=keypoints,
+                    bounding_boxes=bounding_boxes,
                     fmask=0,
                 )
 
@@ -283,5 +388,3 @@ class Folding(Augmentation):
                 return [image_fold] + outputs_extra
             else:
                 return image_fold
-
-            return image_fold
