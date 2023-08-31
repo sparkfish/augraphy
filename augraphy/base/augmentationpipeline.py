@@ -307,11 +307,6 @@ class AugraphyPipeline:
                 image,
             )
 
-        # add alpha layer for color image
-        if len(image.shape) > 2:
-            if image.shape[2] == 3:
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
-
         data = dict()
 
         # Store performance metadata and other logs here.
