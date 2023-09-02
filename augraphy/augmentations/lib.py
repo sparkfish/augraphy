@@ -49,6 +49,90 @@ def load_image_from_cache(random_image=0):
         return None
 
 
+def rotate_point(xpoint, ypoint, xcenter, ycenter, angle):
+    """Rotate point around an origin based on the provided angle in clockwise direction.
+
+    :param xpoint: The x coordinate of input point.
+    :type xpoint: int
+    :param ypoint: The y coordinate of input point.
+    :type ypoint: int
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
+    """
+
+    angle_radian = np.deg2rad(angle)
+
+    rotated_xpoint = xcenter + (
+        (np.cos(angle_radian) * (xpoint - xcenter)) - (np.sin(angle_radian) * (ypoint - ycenter))
+    )
+    rotated_ypoint = ycenter + (
+        (np.sin(angle_radian) * (xpoint - xcenter)) + (np.cos(angle_radian) * (ypoint - ycenter))
+    )
+
+    return rotated_xpoint, rotated_ypoint
+
+
+def rotate_keypoints(keypoints, xcenter, ycenter, x_offset, y_offset, angle):
+    """Rotate keypoints around an origin based on the provided angle.
+
+    :param keypoints: The input keypoints.
+    :type keypoints: dictionary
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param x_offset: The relative x offset after the rotation.
+    :type x_offset: int
+    :param y_offset: The relative y offset after the rotation.
+    :type y_offset: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
+    """
+
+    # rotate each label
+    for name, points in keypoints.items():
+        for i, (xpoint, ypoint) in enumerate(points):
+            # use - fold_angle because image are rotated anticlockwise
+            rotated_xpoint, rotated_ypoint = rotate_point(xpoint, ypoint, xcenter, ycenter, angle)
+            points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
+
+
+def rotate_bounding_boxes(bounding_boxes, xcenter, ycenter, x_offset, y_offset, angle):
+    """Rotate bounding boxes around an origin based on the provided angle.
+
+    :param bounding_boxes: The input bounding boxes.
+    :type bounding_boxes: list
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param x_offset: The relative x offset after the rotation.
+    :type x_offset: int
+    :param y_offset: The relative y offset after the rotation.
+    :type y_offset: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
+    """
+
+    for i, bounding_box in enumerate(bounding_boxes):
+        xspoint, yspoint, xepoint, yepoint = bounding_box
+        width = xepoint - xspoint
+        height = yepoint - yspoint
+        # based on start point (x0, y0) only
+        rotated_xspoint, rotated_yspoint = rotate_point(xspoint, yspoint, xcenter, ycenter, angle)
+        # update box with rotated points
+        bounding_boxes[i] = [
+            round(rotated_xspoint + x_offset),
+            round(rotated_yspoint + y_offset),
+            round(rotated_xspoint + x_offset + width),
+            round(rotated_yspoint + y_offset + height),
+        ]
+
+
 # Adapted from this link:
 # # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
 def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):

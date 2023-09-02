@@ -2,7 +2,9 @@ import random
 
 import numpy as np
 
+from augraphy.augmentations.lib import rotate_bounding_boxes
 from augraphy.augmentations.lib import rotate_image_PIL
+from augraphy.augmentations.lib import rotate_keypoints
 from augraphy.augmentations.lib import warp_fold
 from augraphy.base.augmentation import Augmentation
 
@@ -182,32 +184,6 @@ class Folding(Augmentation):
                 )
             return img
 
-    def rotate_point(self, xpoint, ypoint, xcenter, ycenter, angle):
-        """Rotate point around an origin based on the provided angle in clockwise direction.
-
-        :param xpoint: The x coordinate of input point.
-        :type xpoint: int
-        :param ypoint: The y coordinate of input point.
-        :type ypoint: int
-        :param xcenter: The x origin point.
-        :type xcenter: int
-        :param ycenter: The y origin point.
-        :type ycenter: int
-        :param angle: The angle of rotation in degree.
-        :type angle: int
-        """
-
-        angle_radian = np.deg2rad(angle)
-
-        rotated_xpoint = xcenter + (
-            (np.cos(angle_radian) * (xpoint - xcenter)) - (np.sin(angle_radian) * (ypoint - ycenter))
-        )
-        rotated_ypoint = ycenter + (
-            (np.sin(angle_radian) * (xpoint - xcenter)) + (np.cos(angle_radian) * (ypoint - ycenter))
-        )
-
-        return rotated_xpoint, rotated_ypoint
-
     def apply_rotate_and_folding(
         self,
         image_fold,
@@ -257,12 +233,8 @@ class Folding(Augmentation):
                     rysize, rxsize = image_fold.shape[:2]
                     y_offset = (rysize / 2) - cy
                     x_offset = (rxsize / 2) - cx
-                    # rotate each label
-                    for name, points in keypoints.items():
-                        for i, (xpoint, ypoint) in enumerate(points):
-                            # use - fold_angle because image are rotated anticlockwise
-                            rotated_xpoint, rotated_ypoint = self.rotate_point(xpoint, ypoint, cx, cy, -fold_angle)
-                            points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
+                    # rotate keypoints
+                    rotate_keypoints(keypoints, cx, cy, x_offset, y_offset, -fold_angle)
 
                 # rotate bounding boxes
                 if bounding_boxes is not None:
@@ -273,21 +245,9 @@ class Folding(Augmentation):
                     rysize, rxsize = image_fold.shape[:2]
                     y_offset = (rysize / 2) - cy
                     x_offset = (rxsize / 2) - cx
-                    # rotate each bounding boxes
-                    for i, bounding_box in enumerate(bounding_boxes):
-                        xspoint, yspoint, xepoint, yepoint = bounding_box
-                        width = xepoint - xspoint
-                        height = yepoint - yspoint
-                        # use - fold_angle because image are rotated anticlockwise
-                        # start point
-                        rotated_xspoint, rotated_yspoint = self.rotate_point(xspoint, yspoint, cx, cy, -fold_angle)
-                        # update box with rotated points
-                        bounding_boxes[i] = [
-                            round(rotated_xspoint + x_offset),
-                            round(rotated_yspoint + y_offset),
-                            round(rotated_xspoint + x_offset + width),
-                            round(rotated_yspoint + y_offset + height),
-                        ]
+                    # rotate bounding boxes
+                    # use - fold_angle because image are rotated anticlockwise
+                    rotate_bounding_boxes(bounding_boxes, cx, cy, x_offset, y_offset, -fold_angle)
 
         # rotated size
         ysize, xsize = image_fold.shape[:2]
@@ -364,12 +324,8 @@ class Folding(Augmentation):
                     rysize, rxsize = image_fold.shape[:2]
                     y_offset = (rysize / 2) - cy
                     x_offset = (rxsize / 2) - cx
-                    # rotate each label
-                    for name, points in keypoints.items():
-                        for i, (xpoint, ypoint) in enumerate(points):
-                            # use - fold_angle because image are rotated anticlockwise
-                            rotated_xpoint, rotated_ypoint = self.rotate_point(xpoint, ypoint, cx, cy, fold_angle)
-                            points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
+                    # rotate keypoints
+                    rotate_keypoints(keypoints, cx, cy, x_offset, y_offset, fold_angle)
 
                 # rotate bounding boxes
                 if bounding_boxes is not None:
@@ -380,21 +336,9 @@ class Folding(Augmentation):
                     rysize, rxsize = image_fold.shape[:2]
                     y_offset = (rysize / 2) - cy
                     x_offset = (rxsize / 2) - cx
-                    # rotate each bounding boxes
-                    for i, bounding_box in enumerate(bounding_boxes):
-                        xspoint, yspoint, xepoint, yepoint = bounding_box
-                        width = xepoint - xspoint
-                        height = yepoint - yspoint
-                        # use - fold_angle because image are rotated anticlockwise
-                        # start point
-                        rotated_xspoint, rotated_yspoint = self.rotate_point(xspoint, yspoint, cx, cy, fold_angle)
-                        # update box with rotated points
-                        bounding_boxes[i] = [
-                            round(rotated_xspoint + x_offset),
-                            round(rotated_yspoint + y_offset),
-                            round(rotated_xspoint + x_offset + width),
-                            round(rotated_yspoint + y_offset + height),
-                        ]
+                    # rotate bounding boxes
+                    # use - fold_angle because image are rotated anticlockwise
+                    rotate_bounding_boxes(bounding_boxes, cx, cy, x_offset, y_offset, fold_angle)
 
             # get the image without the padding area, we will get extra padding area after the rotation
             rysize, rxsize = image_fold.shape[:2]
