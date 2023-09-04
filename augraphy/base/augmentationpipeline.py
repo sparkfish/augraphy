@@ -36,7 +36,8 @@ class AugraphyPipeline:
     :param paper_color_range: Pair of ints determining the range from which to
            sample the paper color.
     :type paper_color_range: tuple, optional
-    :param mask: The mask of labels for each pixel. Mask value should be in range of 0 to 255.
+    :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
     :type mask: numpy array (uint8), optional
     :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
             For example: keypoints = {"label1":[[xpoint1, ypoint1], [xpoint2, ypoint2]], "label2":[[xpoint3, ypoint3]]}.
