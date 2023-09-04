@@ -382,6 +382,10 @@ class Folding(Augmentation):
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
+            # get mask unique labels
+            if mask is not None:
+                mask_labels = np.unique(mask).tolist() + [0]
+
             # get image dimension
             ysize, xsize = image.shape[:2]
 
@@ -410,6 +414,18 @@ class Folding(Augmentation):
                         fold_y_shift,
                         fmask=1,
                     )
+
+            # update new interpolated mask values into each mask labels
+            if mask is not None:
+                empty_indices = mask == 0
+                new_mask_labels = np.unique(mask)
+                for new_mask_label in new_mask_labels:
+                    # new interpolated value, replace with old nearest value
+                    if new_mask_label not in mask_labels:
+                        differences = [abs(new_mask_label - mask_label) for mask_label in mask_labels]
+                        min_index = np.argmin(differences)
+                        mask[mask == new_mask_label] = mask_labels[min_index]
+                mask[empty_indices] = 0
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
