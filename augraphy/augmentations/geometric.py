@@ -141,9 +141,68 @@ class Geometric(Augmentation):
                     # condition to make sure cropping range is valid
                     check_y = yend > ystart and ystart >= 0
                     check_x = xend > xstart and xstart >= 0
-                    # crop image
+
                     if check_y and check_x:
+                        # crop image
                         image = image[ystart:yend, xstart:xend]
+
+                        # crop mask
+                        if mask is not None:
+                            mask = mask[ystart:yend, xstart:xend]
+
+                        # remove keypoints outside the cropping boundary
+                        if keypoints is not None:
+                            # check each keypoint, and remove them if it is outside the cropping area
+                            for name, points in keypoints.items():
+                                remove_indices = []
+                                # check and save the indices to be removed
+                                for i, (xpoint, ypoint) in enumerate(points):
+                                    if xpoint < xstart or xpoint >= xend or ypoint < ystart or ypoint >= yend:
+                                        remove_indices.append(i)
+                                # remove points
+                                while remove_indices:
+                                    points.pop(remove_indices.pop())
+                                # update points location after the cropping process
+                                for i, (xpoint, ypoint) in enumerate(points):
+                                    xpoint -= xstart
+                                    ypoint -= ystart
+                                    points[i] = [xpoint, ypoint]
+
+                        # remove and limit bounding boxes to the cropped boundary
+                        if bounding_boxes is not None:
+                            # check each keypoint, and remove them if it is outside the cropping area
+                            for i, bounding_box in enumerate(bounding_boxes):
+                                xspoint, yspoint, xepoint, yepoint = bounding_box
+                                # start point is outside the croped area, but end point is inside
+                                if (xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend) and (
+                                    xepoint >= xstart and xepoint < xend and yepoint >= ystart and yepoint < yend
+                                ):
+                                    xspoint = min(max(xspoint, xstart), xend)
+                                    yspoint = min(max(yspoint, ystart), yend)
+                                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                                # end point is outside the croped area, but start point is inside
+                                elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
+                                    xspoint >= xstart and xspoint < xend and yspoint >= ystart and yspoint < yend
+                                ):
+                                    xepoint = min(max(xepoint, xstart), xend)
+                                    yepoint = min(max(yepoint, ystart), yend)
+                                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                                # start point and end point are outside the croped area, remove the whole box
+                                elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
+                                    xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend
+                                ):
+                                    remove_indices.append(i)
+                            # remove boxes
+                            while remove_indices:
+                                bounding_boxes.pop(remove_indices.pop())
+                            # update points location after the cropping process
+                            for i, bounding_box in enumerate(bounding_boxes):
+                                xspoint, yspoint, xepoint, yepoint = bounding_box
+                                xspoint -= xstart
+                                yspoint -= ystart
+                                xepoint -= xstart
+                                yepoint -= ystart
+                                bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
 
             if any(self.padding):
 
@@ -309,4 +368,14 @@ class Geometric(Augmentation):
             if angle != 0:
                 image = rotate_image(image, angle)
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image
