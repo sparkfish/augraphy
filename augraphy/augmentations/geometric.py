@@ -79,231 +79,323 @@ class Geometric(Augmentation):
     def __repr__(self):
         return f"Geometry(scale={self.scale}, translation={self.translation}, fliplr={self.fliplr}, flipud={self.flipud}, crop={self.crop}, rotate_range={self.rotate_range}, padding={self.padding}, padding_type={self.padding_type}, padding_value={self.padding_value}, randomize={self.randomize}, p={self.p})"
 
+    def randomize_parameters(self, image):
+        """Randomize parameters for random geometrical effect.
+
+        :param image: The input image.
+        :type image: numpy array
+        """
+
+        # randomize scale
+        self.scale = (random.uniform(0.5, 1), random.uniform(1, 1.5))
+
+        # randomize translation value
+        ysize, xsize = image.shape[:2]
+        self.translation = (random.randint(0, int(xsize * 0.1)), random.randint(0, int(ysize * 0.1)))
+
+        # randomize flip
+        self.fliplr = random.choice([0, 1])
+        self.flipud = random.choice([0, 1])
+
+        # randomize crop
+        cx1 = random.randint(0, int(xsize / 5))
+        cx2 = random.randint(int(xsize / 2), xsize - 1)
+        cy1 = random.randint(0, int(ysize / 5))
+        cy2 = random.randint(int(ysize / 2), ysize - 1)
+        self.crop = (cx1, cy1, cx2, cy2)
+
+        # randomize rotate
+        self.rotate_range = (-10, 10)
+
+        # randomize padding
+        self.padding = [
+            random.randint(0, int(xsize / 5)),
+            random.randint(0, int(xsize / 5)),
+            random.randint(0, int(ysize / 5)),
+            random.randint(0, int(ysize / 5)),
+        ]
+        self.padding_value = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        self.padding_typee = random.choice(["fill", "mirror", "duplicate"])
+
+    def run_crop(self, image, mask, keypoints, bounding_boxes):
+        """Crop image based on the input cropping box.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+
+        # make sure there's only 4 inputs, x0, y0, xn, yn
+        if len(self.crop) == 4:
+            ysize, xsize = image.shape[:2]
+            xstart, ystart, xend, yend = self.crop
+
+            # when value is float and in between 0-1, scale it with image size
+            if xstart >= 0 and xstart <= 1 and isinstance(xstart, float):
+                xstart = int(xstart * xsize)
+            if ystart >= 0 and ystart <= 1 and isinstance(ystart, float):
+                ystart = int(ystart * ysize)
+            if xend >= 0 and xend <= 1 and isinstance(xend, float):
+                xend = int(xend * xsize)
+            if yend >= 0 and yend <= 1 and isinstance(yend, float):
+                yend = int(yend * ysize)
+
+            # when value is set to -1, it takes image size
+            if yend == -1:
+                yend = ysize
+            if xend == -1:
+                xend = xsize
+            # condition to make sure cropping range is valid
+            check_y = yend > ystart and ystart >= 0
+            check_x = xend > xstart and xstart >= 0
+
+            if check_y and check_x:
+                # crop image
+                image = image[ystart:yend, xstart:xend]
+
+                # crop mask
+                if mask is not None:
+                    mask = mask[ystart:yend, xstart:xend]
+
+                # remove keypoints outside the cropping boundary
+                if keypoints is not None:
+                    # check each keypoint, and remove them if it is outside the cropping area
+                    for name, points in keypoints.items():
+                        remove_indices = []
+                        # check and save the indices to be removed
+                        for i, (xpoint, ypoint) in enumerate(points):
+                            if xpoint < xstart or xpoint >= xend or ypoint < ystart or ypoint >= yend:
+                                remove_indices.append(i)
+                        # remove points
+                        while remove_indices:
+                            points.pop(remove_indices.pop())
+                        # update points location after the cropping process
+                        for i, (xpoint, ypoint) in enumerate(points):
+                            xpoint -= xstart
+                            ypoint -= ystart
+                            points[i] = [xpoint, ypoint]
+
+                # remove and limit bounding boxes to the cropped boundary
+                if bounding_boxes is not None:
+                    # check each point, and remove them if it is outside the cropping area
+                    for i, bounding_box in enumerate(bounding_boxes):
+                        xspoint, yspoint, xepoint, yepoint = bounding_box
+                        # start point is outside the croped area, but end point is inside
+                        if (xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend) and (
+                            xepoint >= xstart and xepoint < xend and yepoint >= ystart and yepoint < yend
+                        ):
+                            xspoint = min(max(xspoint, xstart), xend)
+                            yspoint = min(max(yspoint, ystart), yend)
+                            bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                        # end point is outside the croped area, but start point is inside
+                        elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
+                            xspoint >= xstart and xspoint < xend and yspoint >= ystart and yspoint < yend
+                        ):
+                            xepoint = min(max(xepoint, xstart), xend)
+                            yepoint = min(max(yepoint, ystart), yend)
+                            bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                        # start point and end point are outside the croped area, remove the whole box
+                        elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
+                            xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend
+                        ):
+                            remove_indices.append(i)
+                    # remove boxes
+                    while remove_indices:
+                        bounding_boxes.pop(remove_indices.pop())
+                    # update points location after the cropping process
+                    for i, bounding_box in enumerate(bounding_boxes):
+                        xspoint, yspoint, xepoint, yepoint = bounding_box
+                        xspoint -= xstart
+                        yspoint -= ystart
+                        xepoint -= xstart
+                        yepoint -= ystart
+                        bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
+        return image, mask
+
+    def run_padding(self, image, mask, keypoints, bounding_boxes):
+        """Apply padding to image based on the input padding value.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+
+        # convert from rgb to grayscale using their average
+        if len(image.shape) < 3:
+            padding_value = np.mean(self.padding_value)
+        elif image.shape[2] == 3:
+            padding_value = (self.padding_value[0], self.padding_value[1], self.padding_value[2])
+        elif image.shape[2] == 4:
+            # add alpha value
+            padding_value = (self.padding_value[0], self.padding_value[1], self.padding_value[2], 255)
+
+        # padding on left side
+        if self.padding[0] > 0:
+            # get image size
+            ysize, xsize = image.shape[:2]
+            # convert percentage into pixel amount
+            if self.padding[0] <= 1 and isinstance(self.padding[0], float):
+                self.padding[0] = int(self.padding[0] * xsize)
+            # different padding shape for grayscale and colored image
+            if len(image.shape) > 2:
+                padding_shape = (ysize, self.padding[0], image.shape[2])
+            else:
+                padding_shape = (ysize, self.padding[0])
+            # create the padding image
+            if self.padding_type == "duplicate":
+                image_padding = image[:, -self.padding[0] :].copy()
+                if mask is not None:
+                    mask_padding = mask[:, -self.padding[0] :].copy()
+            elif self.padding_type == "mirror":
+                image_padding = np.fliplr(image[:, : self.padding[0]].copy())
+                if mask is not None:
+                    mask_padding = np.fliplr(mask[:, : self.padding[0]].copy())
+            else:
+                image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
+                if mask is not None:
+                    mask_padding = np.full(padding_shape[:2], fill_value=0, dtype="uint8")
+            # combine padding image and original image
+            image = np.concatenate([image_padding, image], axis=1)
+            if mask is not None:
+                mask = np.concatenate([mask_padding, mask], axis=1)
+
+        # padding on right side
+        if self.padding[1] > 0:
+            # get image size
+            ysize, xsize = image.shape[:2]
+            # convert percentage into pixel amount
+            if self.padding[1] <= 1 and isinstance(self.padding[1], float):
+                self.padding[1] = int(self.padding[1] * xsize)
+            # different padding shape for grayscale and colored image
+            if len(image.shape) > 2:
+                padding_shape = (ysize, self.padding[1], image.shape[2])
+            else:
+                padding_shape = (ysize, self.padding[1])
+            # create the padding image
+            if self.padding_type == "duplicate":
+                image_padding = image[:, : self.padding[1]].copy()
+                if mask is not None:
+                    mask_padding = mask[:, : self.padding[1]].copy()
+            elif self.padding_type == "mirror":
+                image_padding = np.fliplr(image[:, -self.padding[1] :].copy())
+                if mask is not None:
+                    mask_padding = np.fliplr(mask[:, -self.padding[1] :].copy())
+            else:
+                image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
+                if mask is not None:
+                    mask_padding = np.full(padding_shape[:2], fill_value=0, dtype="uint8")
+            # combine padding image and original image
+            image = np.concatenate([image, image_padding], axis=1)
+            if mask is not None:
+                mask = np.concatenate([mask, mask_padding], axis=1)
+
+        # padding on top side
+        if self.padding[2] > 0:
+            # get image size
+            ysize, xsize = image.shape[:2]
+            # convert percentage into pixel amount
+            if self.padding[2] <= 1 and isinstance(self.padding[2], float):
+                self.padding[2] = int(self.padding[2] * ysize)
+            # different padding shape for grayscale and colored image
+            if len(image.shape) > 2:
+                padding_shape = (self.padding[2], xsize, image.shape[2])
+            else:
+                padding_shape = (self.padding[2], xsize)
+            # create the padding image
+            if self.padding_type == "duplicate":
+                image_padding = image[-self.padding[2] :, :].copy()
+                if mask is not None:
+                    mask_padding = mask[-self.padding[2] :, :].copy()
+            elif self.padding_type == "mirror":
+                image_padding = np.flipud(image[: self.padding[2], :].copy())
+                if mask is not None:
+                    mask_padding = np.flipud(mask[: self.padding[2], :].copy())
+            else:
+                image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
+                if mask is not None:
+                    mask_padding = np.full(padding_shape[:2], fill_value=0, dtype="uint8")
+            # combine padding image and original image
+            image = np.concatenate([image_padding, image], axis=0)
+            if mask is not None:
+                mask = np.concatenate([mask_padding, mask], axis=0)
+
+        # padding on bottom side
+        if self.padding[3] > 0:
+            # get image size
+            ysize, xsize = image.shape[:2]
+            # convert percentage into pixel amount
+            if self.padding[3] <= 1 and isinstance(self.padding[3], float):
+                self.padding[3] = int(self.padding[3] * ysize)
+            # different padding shape for grayscale and colored image
+            if len(image.shape) > 2:
+                padding_shape = (self.padding[3], xsize, image.shape[2])
+            else:
+                padding_shape = (self.padding[3], xsize)
+            # create the padding image
+            if self.padding_type == "duplicate":
+                image_padding = image[: self.padding[3], :].copy()
+                if mask is not None:
+                    mask_padding = mask[: self.padding[3], :].copy()
+            elif self.padding_type == "mirror":
+                image_padding = np.flipud(image[-self.padding[3] :, :].copy())
+                if mask is not None:
+                    mask_padding = np.flipud(mask[-self.padding[3] :, :].copy())
+            else:
+                image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
+                if mask is not None:
+                    mask_padding = np.full(padding_shape[:2], fill_value=0, dtype="uint8")
+            # combine padding image and original image
+            image = np.concatenate([image, image_padding], axis=0)
+            if mask is not None:
+                mask = np.concatenate([mask, mask_padding], axis=0)
+
+        # update points location after the padding (we need to add x and y if there's padding on top and left)
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    points[i] = [xpoint + self.padding[0], ypoint + self.padding[2]]
+
+        # # update bounding boxes location after the padding (we need to add x and y if there's padding on top and left)
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                bounding_boxes[i] = [
+                    xspoint + self.padding[0],
+                    yspoint + self.padding[2],
+                    xepoint + self.padding[0],
+                    yepoint + self.padding[2],
+                ]
+
+        return image, mask
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
             if self.randomize:
-                # randomize scale
-                scale = (random.uniform(0.5, 1), random.uniform(1, 1.5))
-
-                # randomize translation value
-                ysize, xsize = image.shape[:2]
-                self.translation = (random.randint(0, int(xsize * 0.1)), random.randint(0, int(ysize * 0.1)))
-
-                # randomize flip
-                self.fliplr = random.choice([0, 1])
-                self.flipud = random.choice([0, 1])
-
-                # randomize crop
-                cx1 = random.randint(0, int(xsize / 5))
-                cx2 = random.randint(int(xsize / 2), xsize - 1)
-                cy1 = random.randint(0, int(ysize / 5))
-                cy2 = random.randint(int(ysize / 2), ysize - 1)
-                self.crop = (cx1, cy1, cx2, cy2)
-
-                # randomize rotate
-                self.rotate_range = (-10, 10)
-
-                # randomize padding
-                self.padding = [
-                    random.randint(0, int(xsize / 5)),
-                    random.randint(0, int(xsize / 5)),
-                    random.randint(0, int(ysize / 5)),
-                    random.randint(0, int(ysize / 5)),
-                ]
-                self.padding_value = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-                self.padding_typee = random.choice(["fill", "mirror", "duplicate"])
+                self.randomize_parameters(image)
 
             # crop image
             if self.crop:
-                # make sure there's only 4 inputs, x0, y0, xn, yn
-                if len(self.crop) == 4:
-                    ysize, xsize = image.shape[:2]
-                    xstart, ystart, xend, yend = self.crop
+                image, mask = self.run_crop(image, mask, keypoints, bounding_boxes)
 
-                    # when value is float and in between 0-1, scale it with image size
-                    if xstart >= 0 and xstart <= 1 and isinstance(xstart, float):
-                        xstart = int(xstart * xsize)
-                    if ystart >= 0 and ystart <= 1 and isinstance(ystart, float):
-                        ystart = int(ystart * ysize)
-                    if xend >= 0 and xend <= 1 and isinstance(xend, float):
-                        xend = int(xend * xsize)
-                    if yend >= 0 and yend <= 1 and isinstance(yend, float):
-                        yend = int(yend * ysize)
-
-                    # when value is set to -1, it takes image size
-                    if yend == -1:
-                        yend = ysize
-                    if xend == -1:
-                        xend = xsize
-                    # condition to make sure cropping range is valid
-                    check_y = yend > ystart and ystart >= 0
-                    check_x = xend > xstart and xstart >= 0
-
-                    if check_y and check_x:
-                        # crop image
-                        image = image[ystart:yend, xstart:xend]
-
-                        # crop mask
-                        if mask is not None:
-                            mask = mask[ystart:yend, xstart:xend]
-
-                        # remove keypoints outside the cropping boundary
-                        if keypoints is not None:
-                            # check each keypoint, and remove them if it is outside the cropping area
-                            for name, points in keypoints.items():
-                                remove_indices = []
-                                # check and save the indices to be removed
-                                for i, (xpoint, ypoint) in enumerate(points):
-                                    if xpoint < xstart or xpoint >= xend or ypoint < ystart or ypoint >= yend:
-                                        remove_indices.append(i)
-                                # remove points
-                                while remove_indices:
-                                    points.pop(remove_indices.pop())
-                                # update points location after the cropping process
-                                for i, (xpoint, ypoint) in enumerate(points):
-                                    xpoint -= xstart
-                                    ypoint -= ystart
-                                    points[i] = [xpoint, ypoint]
-
-                        # remove and limit bounding boxes to the cropped boundary
-                        if bounding_boxes is not None:
-                            # check each keypoint, and remove them if it is outside the cropping area
-                            for i, bounding_box in enumerate(bounding_boxes):
-                                xspoint, yspoint, xepoint, yepoint = bounding_box
-                                # start point is outside the croped area, but end point is inside
-                                if (xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend) and (
-                                    xepoint >= xstart and xepoint < xend and yepoint >= ystart and yepoint < yend
-                                ):
-                                    xspoint = min(max(xspoint, xstart), xend)
-                                    yspoint = min(max(yspoint, ystart), yend)
-                                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
-                                # end point is outside the croped area, but start point is inside
-                                elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
-                                    xspoint >= xstart and xspoint < xend and yspoint >= ystart and yspoint < yend
-                                ):
-                                    xepoint = min(max(xepoint, xstart), xend)
-                                    yepoint = min(max(yepoint, ystart), yend)
-                                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
-                                # start point and end point are outside the croped area, remove the whole box
-                                elif (xepoint < xstart or xepoint >= xend or yepoint < ystart or yepoint >= yend) and (
-                                    xspoint < xstart or xspoint >= xend or yspoint < ystart or yspoint >= yend
-                                ):
-                                    remove_indices.append(i)
-                            # remove boxes
-                            while remove_indices:
-                                bounding_boxes.pop(remove_indices.pop())
-                            # update points location after the cropping process
-                            for i, bounding_box in enumerate(bounding_boxes):
-                                xspoint, yspoint, xepoint, yepoint = bounding_box
-                                xspoint -= xstart
-                                yspoint -= ystart
-                                xepoint -= xstart
-                                yepoint -= ystart
-                                bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
-
+            # apply padding
             if any(self.padding):
-
-                # convert from rgb to grayscale using their average
-                if len(image.shape) < 3:
-                    padding_value = np.mean(self.padding_value)
-                elif image.shape[2] == 4:
-                    # add alpha value
-                    padding_value = (self.padding_value[0], self.padding_value[1], self.padding_value[2], 255)
-
-                # padding on left side
-                if self.padding[0] > 0:
-                    # get image size
-                    ysize, xsize = image.shape[:2]
-                    # convert percentage into pixel amount
-                    if self.padding[0] <= 1 and isinstance(self.padding[0], float):
-                        self.padding[0] = int(self.padding[0] * xsize)
-
-                    # different padding shape for grayscale and colored image
-                    if len(image.shape) > 2:
-                        padding_shape = (ysize, self.padding[0], image.shape[2])
-                    else:
-                        padding_shape = (ysize, self.padding[0])
-                    # create the padding image
-                    if self.padding_type == "duplicate":
-                        image_padding = image[:, -self.padding[0] :].copy()
-                    elif self.padding_type == "mirror":
-                        image_padding = np.fliplr(image[:, : self.padding[0]].copy())
-                    else:
-                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
-                    # combine padding image and original image
-                    image = np.concatenate([image_padding, image], axis=1)
-
-                # padding on right side
-                if self.padding[1] > 0:
-                    # get image size
-                    ysize, xsize = image.shape[:2]
-                    # convert percentage into pixel amount
-                    if self.padding[1] <= 1 and isinstance(self.padding[1], float):
-                        self.padding[1] = int(self.padding[1] * xsize)
-
-                    # different padding shape for grayscale and colored image
-                    if len(image.shape) > 2:
-                        padding_shape = (ysize, self.padding[1], image.shape[2])
-                    else:
-                        padding_shape = (ysize, self.padding[1])
-                    # create the padding image
-                    if self.padding_type == "duplicate":
-                        image_padding = image[:, : self.padding[1]].copy()
-                    elif self.padding_type == "mirror":
-                        image_padding = np.fliplr(image[:, -self.padding[1] :].copy())
-                    else:
-                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
-                    # combine padding image and original image
-                    image = np.concatenate([image, image_padding], axis=1)
-
-                # padding on top side
-                if self.padding[2] > 0:
-                    # get image size
-                    ysize, xsize = image.shape[:2]
-                    # convert percentage into pixel amount
-                    if self.padding[2] <= 1 and isinstance(self.padding[2], float):
-                        self.padding[2] = int(self.padding[2] * ysize)
-
-                    # different padding shape for grayscale and colored image
-                    if len(image.shape) > 2:
-                        padding_shape = (self.padding[2], xsize, image.shape[2])
-                    else:
-                        padding_shape = (self.padding[2], xsize)
-                    # create the padding image
-                    if self.padding_type == "duplicate":
-                        image_padding = image[-self.padding[2] :, :].copy()
-                    elif self.padding_type == "mirror":
-                        image_padding = np.flipud(image[: self.padding[2], :].copy())
-                    else:
-                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
-                    # combine padding image and original image
-                    image = np.concatenate([image_padding, image], axis=0)
-
-                # padding on bottom side
-                if self.padding[3] > 0:
-                    # get image size
-                    ysize, xsize = image.shape[:2]
-                    # convert percentage into pixel amount
-                    if self.padding[3] <= 1 and isinstance(self.padding[3], float):
-                        self.padding[3] = int(self.padding[3] * ysize)
-
-                    # different padding shape for grayscale and colored image
-                    if len(image.shape) > 2:
-                        padding_shape = (self.padding[3], xsize, image.shape[2])
-                    else:
-                        padding_shape = (self.padding[3], xsize)
-                    # create the padding image
-                    if self.padding_type == "duplicate":
-                        image_padding = image[: self.padding[3], :].copy()
-                    elif self.padding_type == "mirror":
-                        image_padding = np.flipud(image[-self.padding[3] :, :].copy())
-                    else:
-                        image_padding = np.full(padding_shape, fill_value=padding_value, dtype="uint8")
-                    # combine padding image and original image
-                    image = np.concatenate([image, image_padding], axis=0)
+                image, mask = self.run_padding(image, mask, keypoints, bounding_boxes)
 
             # resize based on scale
             # remove negative value (if any)
