@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 from augraphy.augmentations.lib import rotate_image
+from augraphy.augmentations.lib import update_mask_labels
 from augraphy.base.augmentation import Augmentation
 
 
@@ -381,6 +382,59 @@ class Geometric(Augmentation):
 
         return image, mask
 
+    def run_scale(self, image, mask, keypoints, bounding_boxes):
+        """Scale image size based on the input scaling ratio.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+
+        # resize based on scale
+        # remove negative value (if any)
+        self.scale = list(self.scale)
+        self.scale[0] = abs(self.scale[0])
+        self.scale[1] = abs(self.scale[1])
+        if self.scale[1] != 1 and self.scale[0] != 1:
+            scale = random.uniform(self.scale[0], self.scale[1])
+            if scale != 1:
+                # scale image
+                new_width = int(image.shape[1] * scale)
+                new_height = int(image.shape[0] * scale)
+                new_size = (new_width, new_height)
+                image = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+
+                # scale mask and update mask labels after the resize process
+                if mask is not None:
+                    mask_labels = np.unique(mask).tolist() + [0]
+                    mask = cv2.resize(mask, new_size, interpolation=cv2.INTER_AREA)
+                    update_mask_labels(mask, mask_labels)
+
+                # scale keypoints
+                if keypoints is not None:
+                    for name, points in keypoints.items():
+                        for i, (xpoint, ypoint) in enumerate(points):
+                            points[i] = [round(xpoint * scale), round(ypoint * scale)]
+
+                # scale bounding boxes
+                if bounding_boxes is not None:
+                    for i, bounding_box in enumerate(bounding_boxes):
+                        xspoint, yspoint, xepoint, yepoint = bounding_box
+                        bounding_boxes[i] = [
+                            round(xspoint * scale),
+                            round(yspoint * scale),
+                            round(xepoint * scale),
+                            round(yepoint * scale),
+                        ]
+
+        return image, mask
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
@@ -397,18 +451,8 @@ class Geometric(Augmentation):
             if any(self.padding):
                 image, mask = self.run_padding(image, mask, keypoints, bounding_boxes)
 
-            # resize based on scale
-            # remove negative value (if any)
-            self.scale = list(self.scale)
-            self.scale[0] = abs(self.scale[0])
-            self.scale[1] = abs(self.scale[1])
-            if self.scale[1] != 1 and self.scale[0] != 1:
-                scale = random.uniform(self.scale[0], self.scale[1])
-                if scale > 0:
-                    new_width = int(image.shape[1] * scale)
-                    new_height = int(image.shape[0] * scale)
-                    new_size = (new_width, new_height)
-                    image = cv2.resize(image, new_size, interpolation=cv2.INTER_AREA)
+            # apply scaling
+            image, mask = self.run_scale(image, mask, keypoints, bounding_boxes)
 
             # translate image based on translation value
             if self.translation[0] != 0 or self.translation[1] != 0:

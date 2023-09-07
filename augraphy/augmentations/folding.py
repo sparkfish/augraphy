@@ -5,6 +5,7 @@ import numpy as np
 from augraphy.augmentations.lib import rotate_bounding_boxes
 from augraphy.augmentations.lib import rotate_image_PIL
 from augraphy.augmentations.lib import rotate_keypoints
+from augraphy.augmentations.lib import update_mask_labels
 from augraphy.augmentations.lib import warp_fold
 from augraphy.base.augmentation import Augmentation
 
@@ -356,7 +357,6 @@ class Folding(Augmentation):
 
             # remove padding area of keypoints and bounding boxes
             if not fmask:
-
                 if keypoints is not None:
                     y_offset = (iysize / 2) - (rysize / 2)
                     x_offset = (ixsize / 2) - (rxsize / 2)
@@ -417,15 +417,7 @@ class Folding(Augmentation):
 
             # update new interpolated mask values into each mask labels
             if mask is not None:
-                empty_indices = mask == 0
-                new_mask_labels = np.unique(mask)
-                for new_mask_label in new_mask_labels:
-                    # new interpolated value, replace with old nearest value
-                    if new_mask_label not in mask_labels:
-                        differences = [abs(new_mask_label - mask_label) for mask_label in mask_labels]
-                        min_index = np.argmin(differences)
-                        mask[mask == new_mask_label] = mask_labels[min_index]
-                mask[empty_indices] = 0
+                update_mask_labels(mask, mask_labels)
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
