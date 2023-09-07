@@ -133,6 +133,26 @@ def rotate_bounding_boxes(bounding_boxes, xcenter, ycenter, x_offset, y_offset, 
         ]
 
 
+def update_mask_labels(mask, mask_labels):
+    """Quantitize labels of current mask based on the input mask labels.
+
+    :param mask: The input mask.
+    :type mask: numpy array
+    :param mask_labels: A list contains input labels.
+    :type mask_labels: list
+    """
+
+    empty_indices = mask == 0
+    new_mask_labels = np.unique(mask)
+    for new_mask_label in new_mask_labels:
+        # new interpolated value, replace with old nearest value
+        if new_mask_label not in mask_labels:
+            differences = [abs(new_mask_label - mask_label) for mask_label in mask_labels]
+            min_index = np.argmin(differences)
+            mask[mask == new_mask_label] = mask_labels[min_index]
+    mask[empty_indices] = 0
+
+
 # Adapted from this link:
 # # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
 def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):
