@@ -3,7 +3,9 @@ import random
 import cv2
 import numpy as np
 
-from augraphy.augmentations.lib import rotate_image
+from augraphy.augmentations.lib import rotate_bounding_boxes
+from augraphy.augmentations.lib import rotate_image_PIL
+from augraphy.augmentations.lib import rotate_keypoints
 from augraphy.augmentations.lib import update_mask_labels
 from augraphy.base.augmentation import Augmentation
 
@@ -435,11 +437,213 @@ class Geometric(Augmentation):
 
         return image, mask
 
+    def run_translation(self, image, mask, keypoints, bounding_boxes):
+        """Translate image based on the input translation value.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+        ysize, xsize = image.shape[:2]
+        if self.translation[0] <= 1 and self.translation[0] >= -1 and isinstance(self.translation[0], float):
+            self.translation = list(self.translation)
+            self.translation[0] = int(self.translation[0] * xsize)
+        if self.translation[1] <= 1 and self.translation[1] >= -1 and isinstance(self.translation[1], float):
+            self.translation = list(self.translation)
+            self.translation[1] = int(self.translation[1] * ysize)
+
+        image_new = np.full_like(image, fill_value=255, dtype="uint8")
+        if mask is not None:
+            mask_new = np.full((image.shape[0], image.shape[1]), fill_value=0, dtype="uint8")
+        offset_x = self.translation[0]
+        offset_y = self.translation[1]
+
+        # x translation
+        if offset_x > 0:
+            image_new[:, offset_x:] = image[:, :-offset_x]
+            image = image_new
+            if mask is not None:
+                mask_new[:, offset_x:] = mask[:, :-offset_x]
+                mask = mask_new
+        elif offset_x < 0:
+            image_new[:, :offset_x] = image[:, abs(offset_x) :]
+            image = image_new
+            if mask is not None:
+                mask_new[:, :offset_x] = mask[:, abs(offset_x) :]
+                mask = mask_new
+
+        image_new = np.full_like(image, fill_value=255, dtype="uint8")
+        if mask is not None:
+            mask_new = np.full((image.shape[0], image.shape[1]), fill_value=0, dtype="uint8")
+
+        # y translation
+        if offset_y > 0:
+            image_new[offset_y:, :] = image[:-offset_y, :]
+            image = image_new
+            if mask is not None:
+                mask_new[offset_y:, :] = mask[:-offset_y, :]
+                mask = mask_new
+        elif offset_y < 0:
+            image_new[:offset_y, :] = image[abs(offset_y) :, :]
+            image = image_new
+            if mask is not None:
+                mask_new[:offset_y, :] = mask[abs(offset_y) :, :]
+                mask = mask_new
+
+        # translate keypoints
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    points[i] = [xpoint + offset_x, ypoint + offset_y]
+
+        # translate bounding boxes
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                bounding_boxes[i] = [
+                    xspoint + offset_x,
+                    yspoint + offset_y,
+                    xepoint + offset_x,
+                    yepoint + offset_y,
+                ]
+
+        return image, mask
+
+    def run_flip(self, image, mask, keypoints, bounding_boxes):
+        """Flip image left-right or up-down based on the input flipping flags.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+
+        # flip left right
+        if self.fliplr:
+            ysize, xsize = image.shape[:2]
+            # flip left right on image
+            image = np.fliplr(image)
+            # flip left right on mask
+            if mask is not None:
+                mask = np.fliplr(mask)
+            # flip left right on keypoints
+            if keypoints is not None:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xsize - 1 - xpoint, ypoint]
+            # flip left right on bounding boxes
+            if bounding_boxes is not None:
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [
+                        xsize - 1 - xspoint,
+                        yspoint,
+                        xsize - 1 - xepoint,
+                        yepoint,
+                    ]
+
+        # flip up down
+        if self.flipud:
+            ysize, xsize = image.shape[:2]
+            # flip up down on image
+            image = np.flipud(image)
+            # flip up down on mask
+            if mask is not None:
+                mask = np.flipud(mask)
+            # flip up down on keypoints
+            if keypoints is not None:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xpoint, ysize - 1 - ypoint]
+            # flip up down on bounding boxes
+            if bounding_boxes is not None:
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [
+                        xspoint,
+                        ysize - 1 - yspoint,
+                        xepoint,
+                        ysize - 1 - yepoint,
+                    ]
+
+        return image, mask
+
+    def run_rotation(self, image, mask, keypoints, bounding_boxes):
+        """Rotate image based on the input rotation angle.
+
+        :param image: The input image.
+        :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
+        """
+
+        # generate random angle
+        if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
+            angle = random.randint(self.rotate_range[0], self.rotate_range[1])
+        else:
+            angle = 0
+        # rotate image
+        if angle != 0:
+            ysize, xsize = image.shape[:2]
+
+            # rotate image
+            image = rotate_image_PIL(image, angle, expand=1)
+
+            # rotate mask
+            if mask is not None:
+                mask_labels = np.unique(mask).tolist() + [0]
+                mask = rotate_image_PIL(mask, angle, expand=1)
+                update_mask_labels(mask, mask_labels)
+
+            # rotate keypoints
+            if keypoints is not None:
+                # center of rotation
+                cy = int(ysize / 2)
+                cx = int(xsize / 2)
+                # compute offset after rotation
+                rysize, rxsize = image.shape[:2]
+                y_offset = (rysize / 2) - cy
+                x_offset = (rxsize / 2) - cx
+                # apply rotation
+                # use -angle because image are rotated anticlockwise
+                rotate_keypoints(keypoints, cx, cy, x_offset, y_offset, -angle)
+
+            # rotate bounding boxes
+            if bounding_boxes is not None:
+                # center of rotation
+                cy = int(ysize / 2)
+                cx = int(xsize / 2)
+                # compute offset after rotation
+                rysize, rxsize = image.shape[:2]
+                y_offset = (rysize / 2) - cy
+                x_offset = (rxsize / 2) - cx
+                # use -angle because image are rotated anticlockwise
+                rotate_bounding_boxes(bounding_boxes, cx, cy, x_offset, y_offset, -angle)
+
+        return image, mask
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
+            # check and randmize geometric transformations
             if self.randomize:
                 self.randomize_parameters(image)
 
@@ -456,53 +660,13 @@ class Geometric(Augmentation):
 
             # translate image based on translation value
             if self.translation[0] != 0 or self.translation[1] != 0:
+                image, mask = self.run_translation(image, mask, keypoints, bounding_boxes)
 
-                ysize, xsize = image.shape[:2]
-                if self.translation[0] <= 1 and self.translation[0] >= -1 and isinstance(self.translation[0], float):
-                    self.translation = list(self.translation)
-                    self.translation[0] = int(self.translation[0] * xsize)
-                if self.translation[1] <= 1 and self.translation[1] >= -1 and isinstance(self.translation[1], float):
-                    self.translation = list(self.translation)
-                    self.translation[1] = int(self.translation[1] * ysize)
+            # apply flipping
+            image, mask = self.run_flip(image, mask, keypoints, bounding_boxes)
 
-                image_new = np.full_like(image, fill_value=255).astype("uint8")
-                offset_x = self.translation[0]
-                offset_y = self.translation[1]
-
-                # x translation
-                if offset_x > 0:
-                    image_new[:, offset_x:] = image[:, :-offset_x]
-                    image = image_new
-                elif offset_x < 0:
-                    image_new[:, :offset_x] = image[:, abs(offset_x) :]
-                    image = image_new
-
-                image_new = np.full_like(image, fill_value=255).astype("uint8")
-
-                # y translation
-                if offset_y > 0:
-                    image_new[offset_y:, :] = image[:-offset_y, :]
-                    image = image_new
-                elif offset_y < 0:
-                    image_new[:offset_y, :] = image[abs(offset_y) :, :]
-                    image = image_new
-
-            # flip left right
-            if self.fliplr:
-                image = np.fliplr(image)
-
-            # flip up down
-            if self.flipud:
-                image = np.flipud(image)
-
-            # generate random angle
-            if (self.rotate_range[0] != 0) | (self.rotate_range[1] != 0):
-                angle = random.randint(self.rotate_range[0], self.rotate_range[1])
-            else:
-                angle = 0
-            # rotate image
-            if angle != 0:
-                image = rotate_image(image, angle)
+            # apply rotation
+            image, mask = self.run_rotation(image, mask, keypoints, bounding_boxes)
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
