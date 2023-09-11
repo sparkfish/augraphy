@@ -4,9 +4,6 @@ import cv2
 import numpy as np
 
 from augraphy.augmentations.colorshift import ColorShift
-from augraphy.augmentations.lib import rotate_bounding_boxes
-from augraphy.augmentations.lib import rotate_keypoints
-from augraphy.augmentations.lib import update_mask_labels
 from augraphy.base.augmentation import Augmentation
 
 
@@ -67,40 +64,6 @@ class GlitchEffect(Augmentation):
 
         # input image shape
         ysize, xsize = image.shape[:2]
-
-        # rotate image, mask, keypoints and bounding boxes for vertical direction
-        if glitch_direction == "vertical":
-            # rotate image
-            image = np.rot90(image, 1)
-            # rotate mask
-            if mask is not None:
-                mask_labels = np.unique(mask).tolist() + [0]
-                mask = np.rot90(mask, 1)
-            # rotate keypoints
-            if keypoints is not None:
-                # center of rotation
-                cy = int(ysize / 2)
-                cx = int(xsize / 2)
-                # compute offset after rotation
-                rysize, rxsize = image.shape[:2]
-                y_offset = (rysize / 2) - cy
-                x_offset = (rxsize / 2) - cx
-                # apply rotation
-                # use -angle because image are rotated anticlockwise
-                rotate_keypoints(keypoints, cx, cy, x_offset, y_offset, -90)
-            # rotate bounding boxes
-            if bounding_boxes is not None:
-                # center of rotation
-                cy = int(ysize / 2)
-                cx = int(xsize / 2)
-                # compute offset after rotation
-                rysize, rxsize = image.shape[:2]
-                y_offset = (rysize / 2) - cy
-                x_offset = (rxsize / 2) - cx
-                # use -angle because image are rotated anticlockwise
-                rotate_bounding_boxes(bounding_boxes, cx, cy, x_offset, y_offset, -90)
-
-        ysize, xsize = image.shape[:2]
         glitch_number = random.randint(self.glitch_number_range[0], self.glitch_number_range[1])
         for i in range(glitch_number):
 
@@ -125,21 +88,35 @@ class GlitchEffect(Augmentation):
             else:
                 glitch_offset = random.randint(self.glitch_offset_range[0], self.glitch_offset_range[1]) * direction
 
-            # get a patch of image
-            start_y = random.randint(0, ysize - glitch_size)
-            image_patch = image[start_y : start_y + glitch_size, :]
-            if mask is not None:
-                mask_patch = mask[start_y : start_y + glitch_size, :]
-            pysize, pxsize = image_patch.shape[:2]
+            # vertical glitch effect
+            if glitch_direction == "vertical":
+                # get a patch of image
+                start_x = random.randint(0, xsize - glitch_size)
+                image_patch = image[:, start_x : start_x + glitch_size]
+                if mask is not None:
+                    mask_patch = mask[:, start_x : start_x + glitch_size]
+                pysize, pxsize = image_patch.shape[:2]
 
-            # create translation matrix in horizontal direction
-            translation_matrix = np.float32([[1, 0, glitch_offset], [0, 1, 0]])
+                # create translation matrix in vertical direction
+                translation_matrix = np.float32([[1, 0, 0], [0, 1, glitch_offset]])
 
-            # get a copy of translated area
-            if direction > 0:
-                image_patch_fill = image_patch[:, -glitch_offset:].copy()
+                # get a copy of translated area
+                image_patch_fill = image_patch[-abs(glitch_offset) :, :].copy()
+
+            # horizontal glitch effect
             else:
-                image_patch_fill = image_patch[:, glitch_offset:].copy()
+                # get a patch of image
+                start_y = random.randint(0, ysize - glitch_size)
+                image_patch = image[start_y : start_y + glitch_size, :]
+                if mask is not None:
+                    mask_patch = mask[start_y : start_y + glitch_size, :]
+                pysize, pxsize = image_patch.shape[:2]
+
+                # create translation matrix in horizontal direction
+                translation_matrix = np.float32([[1, 0, glitch_offset], [0, 1, 0]])
+
+                # get a copy of translated area
+                image_patch_fill = image_patch[:, -abs(glitch_offset) :].copy()
 
             # translate image
             image_patch = cv2.warpAffine(image_patch, translation_matrix, (pxsize, pysize))
@@ -151,88 +128,169 @@ class GlitchEffect(Augmentation):
             if keypoints is not None:
                 for name, points in keypoints.items():
                     for i, (xpoint, ypoint) in enumerate(points):
-                        if (ypoint >= start_y) and (ypoint < (start_y + glitch_size)):
-                            points[i] = [xpoint + glitch_offset, ypoint]
+                        if glitch_direction == "vertical":
+                            if (xpoint >= start_x) and (xpoint < (start_x + glitch_size)):
+                                points[i] = [xpoint, ypoint + glitch_offset]
+                        else:
+                            if (ypoint >= start_y) and (ypoint < (start_y + glitch_size)):
+                                points[i] = [xpoint + glitch_offset, ypoint]
 
             # translate bounding boxes
             if bounding_boxes is not None:
                 new_boxes = []
                 for i, bounding_box in enumerate(bounding_boxes):
                     xspoint, yspoint, xepoint, yepoint = bounding_box
-                    # both start and end point within translated area
-                    if (
-                        (yspoint >= start_y)
-                        and (yspoint < (start_y + glitch_size))
-                        and (yepoint >= start_y)
-                        and (yepoint < (start_y + glitch_size))
-                    ):
-                        bounding_boxes[i] = [
-                            max(0, xspoint + glitch_offset),
-                            yspoint,
-                            min(xepoint + glitch_offset, xsize - 1),
-                            yepoint,
-                        ]
 
-                    # top portion of box is in translation area, but bottom portion is not
-                    elif (
-                        (yspoint >= start_y)
-                        and (yspoint < (start_y + glitch_size))
-                        and ((yepoint < start_y) or (yepoint >= (start_y + glitch_size)))
-                    ):
-                        # shift top box
-                        bounding_boxes[i] = [
-                            max(0, xspoint + glitch_offset),
-                            yspoint,
-                            min(xepoint + glitch_offset, xsize - 1),
-                            start_y + glitch_size,
-                        ]
-                        # remain bottom box
-                        new_boxes.append(
-                            [
-                                xpoint,
-                                start_y + glitch_size,
-                                xepoint,
-                                yepoint,
-                            ],
-                        )
-
-                    # bottom portion of box is in translation area, but top portion is not
-                    elif (
-                        ((yspoint < start_y) or (yspoint >= (start_y + glitch_size)))
-                        and (yepoint >= start_y)
-                        and (yepoint < (start_y + glitch_size))
-                    ):
-                        # shift bottom box
-                        bounding_boxes[i] = [
-                            max(0, xspoint + glitch_offset),
-                            start_y + glitch_size,
-                            min(xepoint + glitch_offset, xsize - 1),
-                            yepoint,
-                        ]
-                        # remain top box
-                        new_boxes.append(
-                            [
+                    if glitch_direction == "vertical":
+                        # both start and end point within translated area
+                        if (
+                            (xspoint >= start_x)
+                            and (xspoint < (start_x + glitch_size))
+                            and (xepoint >= start_x)
+                            and (xepoint < (start_x + glitch_size))
+                        ):
+                            bounding_boxes[i] = [
                                 xspoint,
-                                yspoint,
+                                max(0, yspoint + glitch_offset),
                                 xepoint,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+
+                        # left portion of box is in translation area, but right portion is not
+                        elif (
+                            (xspoint >= start_x)
+                            and (xspoint < (start_x + glitch_size))
+                            and ((xepoint < start_x) or (xepoint >= (start_x + glitch_size)))
+                        ):
+                            # shift left box
+                            bounding_boxes[i] = [
+                                xspoint,
+                                max(0, yspoint + glitch_offset),
+                                start_x + glitch_size,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+                            # remain right box
+                            new_boxes.append(
+                                [
+                                    start_x + glitch_size,
+                                    yspoint,
+                                    xepoint,
+                                    yepoint,
+                                ],
+                            )
+
+                        # right portion of box is in translation area, but left portion is not
+                        elif (
+                            ((xspoint < start_x) or (xspoint >= (start_x + glitch_size)))
+                            and (xepoint >= start_x)
+                            and (xepoint < (start_x + glitch_size))
+                        ):
+                            # shift right box
+                            bounding_boxes[i] = [
+                                start_x,
+                                max(0, yspoint + glitch_offset),
+                                xepoint,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+                            # remain left box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    yspoint,
+                                    start_x,
+                                    yepoint,
+                                ],
+                            )
+
+                    else:
+                        # both start and end point within translated area
+                        if (
+                            (yspoint >= start_y)
+                            and (yspoint < (start_y + glitch_size))
+                            and (yepoint >= start_y)
+                            and (yepoint < (start_y + glitch_size))
+                        ):
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                yspoint,
+                                min(xepoint + glitch_offset, xsize - 1),
+                                yepoint,
+                            ]
+
+                        # top portion of box is in translation area, but bottom portion is not
+                        elif (
+                            (yspoint >= start_y)
+                            and (yspoint < (start_y + glitch_size))
+                            and ((yepoint < start_y) or (yepoint >= (start_y + glitch_size)))
+                        ):
+                            # shift top box
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                yspoint,
+                                min(xepoint + glitch_offset, xsize - 1),
                                 start_y + glitch_size,
-                            ],
-                        )
+                            ]
+                            # remain bottom box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    start_y + glitch_size,
+                                    xepoint,
+                                    yepoint,
+                                ],
+                            )
+
+                        # bottom portion of box is in translation area, but top portion is not
+                        elif (
+                            ((yspoint < start_y) or (yspoint >= (start_y + glitch_size)))
+                            and (yepoint >= start_y)
+                            and (yepoint < (start_y + glitch_size))
+                        ):
+                            # shift bottom box
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                start_y,
+                                min(xepoint + glitch_offset, xsize - 1),
+                                yepoint,
+                            ]
+
+                            # remain top box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    yspoint,
+                                    xepoint,
+                                    start_y,
+                                ],
+                            )
+
                 # merge boxes
                 bounding_boxes += new_boxes
 
             # fill back the empty area after translation
-            if direction > 0:
-                image_patch[:, :glitch_offset] = image_patch_fill
-                # mask's empty area is filled with 0
-                if mask is not None:
-                    mask_patch[:, :glitch_offset] = 0
-
+            if glitch_direction == "vertical":
+                if direction > 0:
+                    image_patch[:glitch_offset, :] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:glitch_offset, :] = 0
+                else:
+                    image_patch[glitch_offset:, :] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[glitch_offset:, :] = 0
             else:
-                image_patch[:, glitch_offset:] = image_patch_fill
-                # mask's empty area is filled with 0
-                if mask is not None:
-                    mask_patch[:, glitch_offset:] = 0
+                if direction > 0:
+                    image_patch[:, :glitch_offset] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:, :glitch_offset] = 0
+
+                else:
+                    image_patch[:, glitch_offset:] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:, glitch_offset:] = 0
 
             # randomly scale single channel to create a single color contrast effect
             random_ratio = random.uniform(0.8, 1.2)
@@ -242,44 +300,14 @@ class GlitchEffect(Augmentation):
             image_patch_ratio[image_patch_ratio < 0] = 0
             image_patch[:, :, channel] = image_patch_ratio.astype("uint8")
 
-            image[start_y : start_y + glitch_size, :] = image_patch
-            if mask is not None:
-                mask[start_y : start_y + glitch_size, :] = mask_patch
-
-        # rotate back image, mask, keypoints and bounding boxes
-        if glitch_direction == "vertical":
-
-            ysize, xsize = image.shape[:2]
-
-            # rotate image
-            image = np.rot90(image, 3)
-            # rotate mask
-            if mask is not None:
-                mask = np.rot90(mask, 3)
-                update_mask_labels(mask, mask_labels)
-            # rotate keypoints
-            if keypoints is not None:
-                # center of rotation
-                cy = int(ysize / 2)
-                cx = int(xsize / 2)
-                # compute offset after rotation
-                rysize, rxsize = image.shape[:2]
-                y_offset = (rysize / 2) - cy
-                x_offset = (rxsize / 2) - cx
-                # apply rotation
-                # use -angle because image are rotated anticlockwise
-                rotate_keypoints(keypoints, cx, cy, x_offset, y_offset, -270)
-            # rotate bounding boxes
-            if bounding_boxes is not None:
-                # center of rotation
-                cy = int(ysize / 2)
-                cx = int(xsize / 2)
-                # compute offset after rotation
-                rysize, rxsize = image.shape[:2]
-                y_offset = (rysize / 2) - cy
-                x_offset = (rxsize / 2) - cx
-                # use -angle because image are rotated anticlockwise
-                rotate_bounding_boxes(bounding_boxes, cx, cy, x_offset, y_offset, -270)
+            if glitch_direction == "vertical":
+                image[:, start_x : start_x + glitch_size] = image_patch
+                if mask is not None:
+                    mask[:, start_x : start_x + glitch_size] = mask_patch
+            else:
+                image[start_y : start_y + glitch_size, :] = image_patch
+                if mask is not None:
+                    mask[start_y : start_y + glitch_size, :] = mask_patch
 
         return image, mask
 
