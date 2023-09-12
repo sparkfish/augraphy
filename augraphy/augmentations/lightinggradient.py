@@ -220,7 +220,7 @@ class LightingGradient(Augmentation):
                 bgr = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
 
-            mask = self.generate_parallel_light_mask(
+            lighting_mask = self.generate_parallel_light_mask(
                 mask_size=(width, height),
                 position=self.light_position,
                 direction=self.direction,
@@ -229,7 +229,7 @@ class LightingGradient(Augmentation):
                 mode=self.mode,
                 linear_decay_rate=self.linear_decay_rate,
             )
-            hsv[:, :, 2] = hsv[:, :, 2] * transparency + mask * (1 - transparency)
+            hsv[:, :, 2] = hsv[:, :, 2] * transparency + lighting_mask * (1 - transparency)
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
@@ -237,4 +237,14 @@ class LightingGradient(Augmentation):
             if has_alpha:
                 frame = np.dstack((frame, image_alpha))
 
-            return frame
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [frame] + outputs_extra
+            else:
+                return frame

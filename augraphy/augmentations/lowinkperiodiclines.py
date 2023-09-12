@@ -100,4 +100,14 @@ class LowInkPeriodicLines(LowInkLine):
             for i in range(count):
                 self.add_periodic_transparency_lines(image, count, period)
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

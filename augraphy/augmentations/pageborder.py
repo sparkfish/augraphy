@@ -234,6 +234,9 @@ class PageBorder(Augmentation):
         image,
         page_border_width,
         page_border_height,
+        mask,
+        keypoints,
+        bounding_boxes,
     ):
         """Create page borders effect and apply it into input image.
 
@@ -243,6 +246,13 @@ class PageBorder(Augmentation):
         :type border_width: int
         :param border_height: Vertical direction and height of borders.
         :type border_height: int
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
         """
 
         border_width = abs(page_border_width)
@@ -551,6 +561,51 @@ class PageBorder(Augmentation):
                             end_x = bxsize
                         border_image_merged = border_image_merged[:, start_x:end_x]
 
+        # for not same page border
+        else:
+            if mask is not None:
+                pad_x = [0, 0]
+                pad_y = [0, 0]
+                if page_border_width > 0:
+                    pad_x = [0, page_border_width]
+                elif page_border_width < 0:
+                    pad_x = [abs(page_border_width), 0]
+                if page_border_height > 0:
+                    pad_y = [0, page_border_height]
+                elif page_border_height < 0:
+                    pad_y = [abs(page_border_height), 0]
+                # padd mask based on the added page border value
+                mask = np.pad(
+                    mask,
+                    pad_width=(pad_y, pad_x),
+                    mode="constant",
+                    constant_values=0,
+                )
+
+            if keypoints is not None:
+                offset_x = 0
+                offset_y = 0
+                if page_border_width < 0:
+                    offset_x = page_border_width
+                if page_border_height < 0:
+                    offset_x = page_border_width
+                # check each keypoint and add the padded length
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xpoint + offset_x, ypoint + offset_y]
+
+            if bounding_boxes is not None:
+                offset_x = 0
+                offset_y = 0
+                if page_border_width < 0:
+                    offset_x = page_border_width
+                if page_border_height < 0:
+                    offset_x = page_border_width
+                # check each point and add the padded length
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [xspoint + offset_x, yspoint + offset_y, xepoint + offset_x, yepoint + offset_y]
+
         # rotate back to original position
         # default, extend top left
         if page_border_width < 0 and page_border_height < 0:
@@ -582,7 +637,7 @@ class PageBorder(Augmentation):
             # rotate counter clockwise 2 times  from left (left is reference) back to right
             border_image_merged = np.rot90(border_image_merged, 2)
 
-        return border_image_merged
+        return border_image_merged, mask
 
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
@@ -624,10 +679,13 @@ class PageBorder(Augmentation):
                 else:
                     border_height = self.page_border_width_height[1]
 
-            image_output = self.create_page_borders(
+            image_output, mask = self.create_page_borders(
                 image.copy(),
                 border_width,
                 border_height,
+                mask,
+                keypoints,
+                bounding_boxes,
             )
 
             # return image follows the input image color channel
@@ -644,4 +702,14 @@ class PageBorder(Augmentation):
                     )
                 image_output = np.dstack((image_output, image_alpha))
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output
