@@ -177,12 +177,12 @@ class LinesDegradation(Augmentation):
 
             # merge mask and set max value = 1
             if gradient_direction == 2:
-                mask = mask_x + mask_y
+                mask_xy = mask_x + mask_y
             elif gradient_direction == 1:
-                mask = mask_y
+                mask_xy = mask_y
             else:
-                mask = mask_x
-            mask[mask > 0] = 1
+                mask_xy = mask_x
+            mask_xy[mask_xy > 0] = 1
 
             # output image
             image_output = image.copy()
@@ -198,9 +198,9 @@ class LinesDegradation(Augmentation):
             if len(image_output.shape) > 2:
                 # skip alpha layer
                 for i in range(3):
-                    image_output[ystart:yend, xstart:xend, i][mask > 0] = replacement_mask[mask > 0]
+                    image_output[ystart:yend, xstart:xend, i][mask_xy > 0] = replacement_mask[mask_xy > 0]
             else:
-                image_output[ystart:yend, xstart:xend][mask > 0] = replacement_mask[mask > 0]
+                image_output[ystart:yend, xstart:xend][mask_xy > 0] = replacement_mask[mask_xy > 0]
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
