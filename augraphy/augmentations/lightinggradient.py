@@ -220,7 +220,7 @@ class LightingGradient(Augmentation):
                 bgr = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
 
-            mask = self.generate_parallel_light_mask(
+            lighting_mask = self.generate_parallel_light_mask(
                 mask_size=(width, height),
                 position=self.light_position,
                 direction=self.direction,
@@ -229,7 +229,7 @@ class LightingGradient(Augmentation):
                 mode=self.mode,
                 linear_decay_rate=self.linear_decay_rate,
             )
-            hsv[:, :, 2] = hsv[:, :, 2] * transparency + mask * (1 - transparency)
+            hsv[:, :, 2] = hsv[:, :, 2] * transparency + lighting_mask * (1 - transparency)
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
