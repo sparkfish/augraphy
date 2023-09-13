@@ -131,13 +131,11 @@ BibTeX:
 
 ## Star History
 Please add a "star" to the repo.  It's exciting to us when we see your interest, which keep us motivated to continue investing in the project!
-<a href="https://star-history.com/#Sparkfish/augraphy&Date">
-  <picture>
+<picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date&theme=dark" />
     <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date" />
     <img src="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date" alt="Star History Chart" />
-  </picture>
-</a>
+</picture>
 
 # License
 Copyright 2023 Sparkfish LLC
