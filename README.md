@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/logo/augraphy.png?raw=true" width="600" title="Augraphy Logo">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/logo/augraphy.png?raw=true" width="500" title="Augraphy Logo">
 </p>
 
 Augraphy is a Python library that creates multiple copies of original documents though an augmentation pipeline that randomly distorts each copy -- degrading the clean version into dirty and realistic copies rendered through synthetic paper printing, faxing, scanning and copy machine processes.
@@ -106,13 +106,21 @@ The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (r
 There are plenty of choices when it comes to [augmentation libraries](https://github.com/AgaMiko/data-augmentation-review).  However, only Augraphy is designed to address everyday office automation needs associated with paper-oriented process distortions that come from printing, faxing, scanning and copy machines.  Most other libraries focus on video and images pertinent to camera-oriented data sources and problem domains.  Augraphy is focused on supporting problems related to automation of document images such as OCR, form recognition, form data extraction, document classification, barcode decoding, denoising, document restoration, identity document data extraction, document cropping, etc.  Eventually, Augraphy will be able to support photo OCR problems with augmentations designed to emulate camera phone distortions.
 
 # Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are _very_ welcome.  Please open an issue to propose and discuss feature requests and major changes.
 
 # Citations
 If you used Augraphy in your research, please cite the project.
 
 BibTeX:
 ```
+@inproceedings{augraphy_paper,
+    author = {Groleau, Alexander and Chee, Kok Wei and Larson, Stefan and Maini, Samay and Boarman, Jonathan},
+    title = {Augraphy: A Data Augmentation Library for Document Images},
+    booktitle = {Proceedings of the 17th International Conference on Document Analysis and Recognition ({ICDAR})},
+    year = {2023},
+    url = {https://arxiv.org/pdf/2208.14558.pdf}
+}
+
 @software{augraphy_library,
     author = {The Augraphy Project},
     title = {Augraphy: an augmentation pipeline for rendering synthetic paper printing, faxing, scanning and copy machine processes},
@@ -120,6 +128,16 @@ BibTeX:
     version = {8.2.4}
 }
 ```
+
+## Star History
+Please add a "star" to the repo.  It's exciting to us when we see your interest, which keep us motivated to continue investing in the project!
+<a href="https://star-history.com/#Sparkfish/augraphy&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date" />
+    <img src="https://api.star-history.com/svg?repos=Sparkfish/augraphy&type=Date" alt="Star History Chart" />
+  </picture>
+</a>
 
 # License
 Copyright 2023 Sparkfish LLC
