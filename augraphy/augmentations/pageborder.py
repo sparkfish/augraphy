@@ -177,8 +177,8 @@ class PageBorder(Augmentation):
         # x
         xcenter = int(xsize / 2)
         bxcenter = int(bxsize / 2)
-        dy_left = abs(xcenter - bxcenter)
-        dy_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
+        dx_left = abs(xcenter - bxcenter)
+        dx_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
 
         # condition where foreground image is larger
         if ysize > bysize:
@@ -196,17 +196,18 @@ class PageBorder(Augmentation):
                 constant_values=0,
             )
 
+        # flag to know if foreground x size is larger
         if xsize > bxsize:
             # (top, bottom), (left, right)
             image_background = np.pad(
                 image_background,
-                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                pad_width=((0, 0), (dx_left, dx_right), (0, 0)),
                 mode="constant",
                 constant_values=0,
             )
             image_mask_background = np.pad(
                 image_mask_background,
-                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                pad_width=((0, 0), (dx_left, dx_right), (0, 0)),
                 mode="constant",
                 constant_values=0,
             )
@@ -215,19 +216,19 @@ class PageBorder(Augmentation):
 
         # overlay image
         if bysize > ysize and bxsize > xsize:
-            image_background[dy_top:-dy_bottom, dy_left:-dy_right][indices] = image_foreground[indices]
-            image_mask_background[dy_top:-dy_bottom, dy_left:-dy_right] += image_mask_foreground
+            image_background[dy_top:-dy_bottom, dx_left:-dx_right][indices] = image_foreground[indices]
+            image_mask_background[dy_top:-dy_bottom, dx_left:-dx_right] += image_mask_foreground
         elif bysize > ysize:
             image_background[dy_top:-dy_bottom, :][indices] = image_foreground[indices]
             image_mask_background[dy_top:-dy_bottom, :] += image_mask_foreground
         elif bxsize > xsize:
-            image_background[:, dy_left:-dy_right][indices] = image_foreground[indices]
-            image_mask_background[:, dy_left:-dy_right] += image_mask_foreground
+            image_background[:, dx_left:-dx_right][indices] = image_foreground[indices]
+            image_mask_background[:, dx_left:-dx_right] += image_mask_foreground
         else:
             image_background[indices] = image_foreground[indices]
             image_mask_background += image_mask_foreground
 
-        return image_background, image_mask_background
+        return image_background, image_mask_background, dy_top, dy_bottom, dx_left, dx_right
 
     def create_page_borders(
         self,
@@ -404,6 +405,11 @@ class PageBorder(Augmentation):
 
         image_mask_background = np.full_like(border_image_merged, fill_value=0, dtype="uint8")
 
+        # extended size in each edge of image
+        ext_left, ext_right, ext_top, ext_bottom = abs(page_border_width), 0, abs(page_border_height), 0
+        # size of initial background
+        bysize, bxsize = border_image_merged.shape[:2]
+
         for i in reversed(range(total_shifts)):
 
             shifted_value_y = int(shifted_value_ys[i])
@@ -469,12 +475,27 @@ class PageBorder(Augmentation):
                 image_mask_rotate_single = rotate_image_PIL(image_mask_rotate_single, rotated_angle, expand=1)
                 border_image_single = rotate_image_PIL(border_image_single, rotated_angle, expand=1)
 
-            border_image_merged, image_mask_background = self.center_overlay(
+            border_image_merged, image_mask_background, dy_top, dy_bottom, dx_left, dx_right = self.center_overlay(
                 border_image_merged,
                 border_image_single,
                 image_mask_background,
                 image_mask_rotate_single,
             )
+
+            # check and compute the extended size
+            nbysize, nbxsize = border_image_merged.shape[:2]
+            if nbysize != bysize:
+                # add new extended size
+                ext_top += dy_top
+                ext_bottom += dy_bottom
+                # update new size
+                bysize = nbysize
+            if nbxsize != bxsize:
+                # add new extended size
+                ext_left += dx_left
+                ext_right += dx_right
+                # update new size
+                bxsize = nbxsize
 
         # update background value based on mask
         image_mask_background[image_mask_background > 0] = 255
@@ -563,18 +584,41 @@ class PageBorder(Augmentation):
 
         # for not same page border
         else:
+            # rotate back to original extended value
+            # default, extend top left
+            if page_border_width < 0 and page_border_height < 0:
+                pass
+            # bottom left
+            elif page_border_width < 0 and page_border_height > 0:
+                # rotate counter clockwise once from topleft （topleft is reference) back to bottomleft
+                ext_left, ext_right, ext_top, ext_bottom = ext_top, ext_bottom, ext_right, ext_left
+            # bottom right
+            elif page_border_width > 0 and page_border_height > 0:
+                # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
+                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            # top right
+            elif page_border_width > 0 and page_border_height < 0:
+                # rotate counter clockwise 3 times from topleft （topleft is reference) back to topright
+                ext_left, ext_right, ext_top, ext_bottom = ext_bottom, ext_top, ext_right, ext_left
+            # top
+            elif page_border_width == 0 and page_border_height < 0:
+                pass
+            # bottom
+            elif page_border_width == 0 and page_border_height > 0:
+                # rotate counter clockwise twice from top (top is reference) back to bottom
+                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            # left
+            elif page_border_width < 0 and page_border_height == 0:
+                pass
+            # right
+            elif page_border_width > 0 and page_border_height == 0:
+                # rotate counter clockwise 2 times  from left (left is reference) back to right
+                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+
             if mask is not None:
-                pad_x = [0, 0]
-                pad_y = [0, 0]
-                if page_border_width > 0:
-                    pad_x = [0, page_border_width]
-                elif page_border_width < 0:
-                    pad_x = [abs(page_border_width), 0]
-                if page_border_height > 0:
-                    pad_y = [0, page_border_height]
-                elif page_border_height < 0:
-                    pad_y = [abs(page_border_height), 0]
-                # padd mask based on the added page border value
+                pad_x = [ext_left, ext_right]
+                pad_y = [ext_top, ext_bottom]
+
                 mask = np.pad(
                     mask,
                     pad_width=(pad_y, pad_x),
@@ -583,24 +627,16 @@ class PageBorder(Augmentation):
                 )
 
             if keypoints is not None:
-                offset_x = 0
-                offset_y = 0
-                if page_border_width < 0:
-                    offset_x = page_border_width
-                if page_border_height < 0:
-                    offset_x = page_border_width
+                offset_x = ext_left
+                offset_y = ext_top
                 # check each keypoint and add the padded length
                 for name, points in keypoints.items():
                     for i, (xpoint, ypoint) in enumerate(points):
                         points[i] = [xpoint + offset_x, ypoint + offset_y]
 
             if bounding_boxes is not None:
-                offset_x = 0
-                offset_y = 0
-                if page_border_width < 0:
-                    offset_x = page_border_width
-                if page_border_height < 0:
-                    offset_x = page_border_width
+                offset_x = ext_left
+                offset_y = ext_top
                 # check each point and add the padded length
                 for i, bounding_box in enumerate(bounding_boxes):
                     xspoint, yspoint, xepoint, yepoint = bounding_box
@@ -616,7 +652,7 @@ class PageBorder(Augmentation):
             border_image_merged = np.rot90(border_image_merged, 1)
         # bottom right
         elif page_border_width > 0 and page_border_height > 0:
-            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomleft
+            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
             border_image_merged = np.rot90(border_image_merged, 2)
         # top right
         elif page_border_width > 0 and page_border_height < 0:
