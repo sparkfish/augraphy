@@ -482,20 +482,21 @@ class PageBorder(Augmentation):
                 image_mask_rotate_single,
             )
 
-            # check and compute the extended size
-            nbysize, nbxsize = border_image_merged.shape[:2]
-            if nbysize != bysize:
-                # add new extended size
-                ext_top += dy_top
-                ext_bottom += dy_bottom
-                # update new size
-                bysize = nbysize
-            if nbxsize != bxsize:
-                # add new extended size
-                ext_left += dx_left
-                ext_right += dx_right
-                # update new size
-                bxsize = nbxsize
+            if not self.same_page_border:
+                # check and compute the extended size
+                nbysize, nbxsize = border_image_merged.shape[:2]
+                if nbysize != bysize:
+                    # add new extended size
+                    ext_top += dy_top
+                    ext_bottom += dy_bottom
+                    # update new size
+                    bysize = nbysize
+                if nbxsize != bxsize:
+                    # add new extended size
+                    ext_left += dx_left
+                    ext_right += dx_right
+                    # update new size
+                    bxsize = nbxsize
 
         # update background value based on mask
         image_mask_background[image_mask_background > 0] = 255
@@ -535,6 +536,7 @@ class PageBorder(Augmentation):
                 if bysize > ysize and bxsize > xsize:
                     if self.same_page_border:
                         border_image_merged = border_image_merged[dy_top:-dy_bottom, dx_left:-dx_right]
+
                     else:
                         if page_border_trim_sides[0]:
                             start_x = dx_left
@@ -582,43 +584,80 @@ class PageBorder(Augmentation):
                             end_x = bxsize
                         border_image_merged = border_image_merged[:, start_x:end_x]
 
-        # for not same page border
-        else:
-            # rotate back to original extended value
-            # default, extend top left
-            if page_border_width < 0 and page_border_height < 0:
-                pass
-            # bottom left
-            elif page_border_width < 0 and page_border_height > 0:
-                # rotate counter clockwise once from topleft （topleft is reference) back to bottomleft
-                ext_left, ext_right, ext_top, ext_bottom = ext_top, ext_bottom, ext_right, ext_left
-            # bottom right
-            elif page_border_width > 0 and page_border_height > 0:
-                # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
-                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
-            # top right
-            elif page_border_width > 0 and page_border_height < 0:
-                # rotate counter clockwise 3 times from topleft （topleft is reference) back to topright
-                ext_left, ext_right, ext_top, ext_bottom = ext_bottom, ext_top, ext_right, ext_left
-            # top
-            elif page_border_width == 0 and page_border_height < 0:
-                pass
-            # bottom
-            elif page_border_width == 0 and page_border_height > 0:
-                # rotate counter clockwise twice from top (top is reference) back to bottom
-                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
-            # left
-            elif page_border_width < 0 and page_border_height == 0:
-                pass
-            # right
-            elif page_border_width > 0 and page_border_height == 0:
-                # rotate counter clockwise 2 times  from left (left is reference) back to right
-                ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+        # rotate back to original extended value and trimming sides
+        # default, extend top left
+        if page_border_width < 0 and page_border_height < 0:
+            pass
+        # bottom left
+        elif page_border_width < 0 and page_border_height > 0:
+            # rotate counter clockwise once from topleft （topleft is reference) back to bottomleft
+            ext_left, ext_right, ext_top, ext_bottom = ext_top, ext_bottom, ext_right, ext_left
+            page_border_trim_sides = [
+                page_border_trim_sides[1],
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+            ]
+        # bottom right
+        elif page_border_width > 0 and page_border_height > 0:
+            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
+        # top right
+        elif page_border_width > 0 and page_border_height < 0:
+            # rotate counter clockwise 3 times from topleft （topleft is reference) back to topright
+            ext_left, ext_right, ext_top, ext_bottom = ext_bottom, ext_top, ext_left, ext_right
+            page_border_trim_sides = [
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+                page_border_trim_sides[2],
+            ]
+        # top
+        elif page_border_width == 0 and page_border_height < 0:
+            pass
+        # bottom
+        elif page_border_width == 0 and page_border_height > 0:
+            # rotate counter clockwise twice from top (top is reference) back to bottom
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
+        # left
+        elif page_border_width < 0 and page_border_height == 0:
+            pass
+        # right
+        elif page_border_width > 0 and page_border_height == 0:
+            # rotate counter clockwise 2 times  from left (left is reference) back to right
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
 
-            if mask is not None:
+        if mask is not None:
+            # for same page border, remove part of the mask
+            if self.same_page_border:
+                mask[:ext_top, :] = 0
+                mask[mask.shape[0] - ext_bottom :, :] = 0
+                mask[:, :ext_left] = 0
+                mask[:, mask.shape[1] - ext_right :] = 0
+
+            # padding and followed trim for not same page border
+            else:
+                # padding
                 pad_x = [ext_left, ext_right]
                 pad_y = [ext_top, ext_bottom]
-
                 mask = np.pad(
                     mask,
                     pad_width=(pad_y, pad_x),
@@ -626,21 +665,88 @@ class PageBorder(Augmentation):
                     constant_values=0,
                 )
 
-            if keypoints is not None:
-                offset_x = ext_left
-                offset_y = ext_top
-                # check each keypoint and add the padded length
-                for name, points in keypoints.items():
-                    for i, (xpoint, ypoint) in enumerate(points):
-                        points[i] = [xpoint + offset_x, ypoint + offset_y]
+                # trim
+                if sum(page_border_trim_sides) > 0:
+                    # trim left
+                    if page_border_trim_sides[0] and ext_left > 0:
+                        mask = mask[:, ext_left:]
+                    # trim top
+                    if page_border_trim_sides[1] and ext_top > 0:
+                        mask = mask[ext_top:, :]
+                    # trim right
+                    if page_border_trim_sides[2] and ext_right > 0:
+                        mask = mask[:, : mask.shape[1] - ext_right]
+                    # trim bottom
+                    if page_border_trim_sides[3] and ext_bottom > 0:
+                        mask = mask[: mask.shape[0] - ext_bottom, :]
 
-            if bounding_boxes is not None:
-                offset_x = ext_left
-                offset_y = ext_top
-                # check each point and add the padded length
-                for i, bounding_box in enumerate(bounding_boxes):
-                    xspoint, yspoint, xepoint, yepoint = bounding_box
-                    bounding_boxes[i] = [xspoint + offset_x, yspoint + offset_y, xepoint + offset_x, yepoint + offset_y]
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                remove_indices = []
+                for i, (xpoint, ypoint) in enumerate(points):
+                    # remove points if it is outside boundaries
+                    if self.same_page_border:
+                        if (
+                            (xpoint < ext_left)
+                            or (xpoint >= image.shape[1] - ext_right)
+                            or (ypoint < ext_top)
+                            or (ypoint >= image.shape[0] - ext_bottom)
+                        ):
+                            remove_indices.append(i)
+                    # add offset for padded area
+                    else:
+                        # check if trim left, add offset only if there's no trim left
+                        if not page_border_trim_sides[0]:
+                            xpoint = xpoint + ext_left
+                        # check if trim top, add offset only if there's no trim top
+                        if not page_border_trim_sides[1]:
+                            ypoint = ypoint + ext_top
+                        points[i] = [xpoint, ypoint]
+                # remove out of boundaries points
+                while remove_indices:
+                    points.pop(remove_indices.pop())
+
+        if bounding_boxes is not None:
+            remove_indices = []
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                # for same page border, reduce or remove box when it is outside boundary
+                if self.same_page_border:
+                    xend = image.shape[1] - ext_right
+                    yend = image.shape[0] - ext_bottom
+
+                    # both points are not in boundary
+                    if (xspoint < ext_left or xspoint >= xend or yspoint < ext_top or yspoint >= yend) and (
+                        xepoint < ext_left or xepoint >= xend or yepoint < ext_top or yepoint >= yend
+                    ):
+                        remove_indices.append(i)
+
+                    # start point is not in boundary, but end point is within boundary
+                    elif xspoint < ext_left or xspoint >= xend or yspoint < ext_top or yspoint >= yend:
+                        xspoint = min(max(xspoint, ext_left), xend)
+                        yspoint = min(max(yspoint, ext_top), yend)
+                        bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
+                    # end point is not in boundary, but start point is within boundary
+                    elif xepoint < ext_left or xepoint >= xend or yepoint < ext_top or yepoint >= yend:
+                        xepoint = min(max(xepoint, ext_left), xend)
+                        yepoint = min(max(yepoint, ext_top), yend)
+                        bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                # add offset for padded area
+                else:
+                    # check if trim left, add offset only if there's no trim left
+                    if not page_border_trim_sides[0]:
+                        xspoint = xspoint + ext_left
+                        xepoint = xepoint + ext_left
+                    # check if trim top, add offset only if there's no trim top
+                    if not page_border_trim_sides[1]:
+                        yspoint = yspoint + ext_top
+                        yepoint = yepoint + ext_top
+                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
+            # remove out of boundaries points
+            while remove_indices:
+                bounding_boxes.pop(remove_indices.pop())
 
         # rotate back to original position
         # default, extend top left
