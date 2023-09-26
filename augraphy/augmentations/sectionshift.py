@@ -112,7 +112,8 @@ class SectionShift(Augmentation):
         # shift mask
         if mask is not None:
             mask[
-                y0 + section_shift_y : yn + section_shift_y, x0 + section_shift_x : xn + section_shift_x
+                y0 + section_shift_y : yn + section_shift_y,
+                x0 + section_shift_x : xn + section_shift_x,
             ] = mask_section
 
         # shift keypoints inside the shifting boundary
