@@ -118,11 +118,24 @@ class SectionShift(Augmentation):
 
         # shift keypoints inside the shifting boundary
         if keypoints is not None:
-            # check each keypoint, and remove them if it is outside the shifting area
             for name, points in keypoints.items():
                 for i, (xpoint, ypoint) in enumerate(points):
                     if xpoint >= x0 and xpoint < xn and ypoint >= y0 and ypoint < yn:
                         points[i] = [xpoint + section_shift_x, ypoint + section_shift_y]
+
+        # shift bounding boxes inside the shifting boundary
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                # start point is in the box
+                if xspoint >= x0 and xspoint < xn and yspoint >= y0 and yspoint < yn:
+                    xspoint += section_shift_x
+                    yspoint += section_shift_y
+                # end point is in the box
+                if xepoint >= x0 and xepoint < xn and yepoint >= y0 and yepoint < yn:
+                    xepoint += section_shift_x
+                    yepoint += section_shift_y
+                bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
