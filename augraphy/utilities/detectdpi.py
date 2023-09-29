@@ -4,6 +4,9 @@ version: 0.0.01
 import math
 
 import cv2
+import numpy as np
+
+from augraphy.augmentations.lib import update_mask_labels
 
 lookup_table = [
     "8.3 x 11.7,300",
@@ -138,7 +141,7 @@ class DPIMetrics:
         return dpi_detected
 
 
-def dpi_resize(image, doc_dimensions, target_dpi=300):
+def dpi_resize(image, mask, keypoints, bounding_boxes, doc_dimensions, target_dpi=300):
     """Resize image based on the target dpi and doc dimensions"""
 
     width_inches, height_inches = doc_dimensions[0], doc_dimensions[1]
@@ -147,6 +150,31 @@ def dpi_resize(image, doc_dimensions, target_dpi=300):
 
     height = height_inches * target_dpi
 
+    # resize image
     output_image = cv2.resize(image, (int(width), int(height)), interpolation=cv2.INTER_AREA)
+    # resize mask
+    if mask is not None:
+        mask_labels = np.unique(mask).tolist() + [0]
+        mask = cv2.resize(mask, (int(width), int(height)), interpolation=cv2.INTER_AREA)
+        update_mask_labels(mask, mask_labels)
+    # resize keypoints
+    if keypoints is not None:
+        x_scale = int(width) / image.shape[1]
+        y_scale = int(height) / image.shape[0]
+        for name, points in keypoints.items():
+            for i, (xpoint, ypoint) in enumerate(points):
+                points[i] = [round(xpoint * x_scale), round(ypoint * y_scale)]
+    # resize bounding boxes
+    if bounding_boxes is not None:
+        x_scale = int(width) / image.shape[1]
+        y_scale = int(height) / image.shape[0]
+        for i, bounding_box in enumerate(bounding_boxes):
+            xspoint, yspoint, xepoint, yepoint = bounding_box
+            bounding_boxes[i] = [
+                round(xspoint * x_scale),
+                round(yspoint * y_scale),
+                round(xepoint * x_scale),
+                round(yepoint * y_scale),
+            ]
 
-    return output_image
+    return output_image, mask

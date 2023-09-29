@@ -47,7 +47,14 @@ class Rescale(Augmentation):
 
             dpi_object = DPIMetrics(image)
             original_dpi, doc_dimensions = dpi_object()
-            image_resize = dpi_resize(image=image, doc_dimensions=doc_dimensions, target_dpi=self.target_dpi)
+            image_resize, mask = dpi_resize(
+                image=image,
+                mask=mask,
+                keypoints=keypoints,
+                bounding_boxes=bounding_boxes,
+                doc_dimensions=doc_dimensions,
+                target_dpi=self.target_dpi,
+            )
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
