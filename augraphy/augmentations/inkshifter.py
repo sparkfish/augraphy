@@ -96,7 +96,7 @@ class InkShifter(Augmentation):
 
         if mask is not None:
             mask_labels = np.unique(mask).tolist() + [0]
-            mask_displaced = cv2.remap(
+            mask = cv2.remap(
                 mask,
                 mapx,
                 mapy,
@@ -104,9 +104,9 @@ class InkShifter(Augmentation):
                 borderMode=cv2.BORDER_CONSTANT,
                 borderValue=fill,
             )
-            update_mask_labels(mask_displaced, mask_labels)
+            update_mask_labels(mask, mask_labels)
 
-        return image_displaced, mask_displaced
+        return image_displaced, mask
 
     def noise_map(self, shape, res=(64, 64)):
         """Generate a noise map based on Perlin Noise
