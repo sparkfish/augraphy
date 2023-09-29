@@ -22,6 +22,7 @@ import random
 import cv2
 import numpy as np
 
+from augraphy.augmentations.lib import update_mask_labels
 from augraphy.base.augmentation import Augmentation
 
 
@@ -36,16 +37,20 @@ class InkShifter(Augmentation):
         noise_type="random",
         p=1.0,
     ):
-        """
-        InkShifter augmentation shifts and displaces the image using noise maps.
+        """InkShifter augmentation shifts and displaces the image using noise maps.
 
-        :param text_shift_scale_range (tuple): Range for the text shift scale.
-        :param: text_shift_factor_range (tuple): Range for the text shift factor.
-        :param: text_fade_range (tuple): Range for the text fade.
-        :param: noise_type (str): Type of noise to use ("random", "perlin", or None).
-        :param p (float): Probability of applying the augmentation.
-
+        :param text_shift_scale_range: Range for the text shift scale.
+        :type text_shift_scale_range: tuple, optional
+        :param: text_shift_factor_range: Range for the text shift factor.
+        :type text_shift_factor_range: tuple, optional
+        :param: text_fade_range: Range for the text fade.
+        :type text_fade_range: tuple, optional
+        :param: noise_type: Type of noise to use ("random", "perlin", or None).
+        :type noise_type: string, optional
+        :param p: The probability that this Augmentation will be applied.
+        :type p: float, optional
         """
+
         super().__init__(p=p)
         self.text_shift_scale_range = text_shift_scale_range
         self.text_shift_factor_range = text_shift_factor_range
@@ -57,20 +62,27 @@ class InkShifter(Augmentation):
     def __repr(self):
         return f"InkShifter: text_shift_scale_range = {self.text_shift_scale_range}, text_shift_factor_range = {self.text_shift_factor_range}, text_fade_range = {self.text_fade_range}, noise_type = {self.noise_type}, blur_kernel_size = {self.blur_kernel_size}, blur_sigma = {self.blur_sigma}"
 
-    def displace_image(self, img, mapx, mapy, fill=(255, 255, 255)):
-        """
-        Apply displacement map to an image.
+    def displace_image(self, img, mask, mapx, mapy, fill=(255, 255, 255)):
+        """Apply displacement map to an image.
 
         :param img: Input Image
-        :param mapx (numpy.ndarray): x-componet of the displacement map
-        :param mapy (numpy.ndarray): y component of the displacement map
-        :param fill: Fill value of the pixels outside the image
-
+        :type img: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param mapx: x-componet of the displacement map
+        :type mapx: numpy array
+        :param mapy: y component of the displacement map
+        :type mapy: numpy array
+        :param fill: Fill value of the pixels outside the image in BGR
+        :type fill: tuple
         """
+
         gridx, gridy = np.meshgrid(
             np.arange(img.shape[1], dtype=np.float32),
             np.arange(img.shape[0], dtype=np.float32),
         )
+
         if mapx is None:
             mapx = gridx
         else:
@@ -80,15 +92,31 @@ class InkShifter(Augmentation):
         else:
             mapy += gridy
 
-        return cv2.remap(img, mapx, mapy, cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=fill)
+        image_displaced = cv2.remap(img, mapx, mapy, cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=fill)
+
+        if mask is not None:
+            mask_labels = np.unique(mask).tolist() + [0]
+            mask_displaced = cv2.remap(
+                mask,
+                mapx,
+                mapy,
+                cv2.INTER_CUBIC,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=fill,
+            )
+            update_mask_labels(mask_displaced, mask_labels)
+
+        return image_displaced, mask_displaced
 
     def noise_map(self, shape, res=(64, 64)):
-        """
-        Generate a noise map based on Perlin Noise
-        :param shape(tuple): Desired shape of the perlin noise map
-        :param res(tuple): Resolution of the noise map
+        """Generate a noise map based on Perlin Noise
 
+        :param shape: Desired shape of the perlin noise map
+        :type shape: tuple
+        :param res: Resolution of the noise map
+        :type res: tuple, optional
         """
+
         orig_shape = shape
         shape = np.ceil(shape[0] / res[0]) * res[0], np.ceil(shape[1] / res[1]) * res[1]
 
@@ -140,14 +168,18 @@ class InkShifter(Augmentation):
         return noise_blurred
 
     def noise_map_fractal(self, shape, res=(64, 64), octaves=1, persistence=0.5):
-        """
-        Generate a fractal noise map
-        :param shape(tuple): desired shape of the fractal noise map
-        :param res(tuple): resolution of the noise map
-        :param octaves(int): Number of octaves in the fractal noise
-        :param persistence (float): Persistence value for the fractal nois
+        """Generate a fractal noise map
 
+        :param shape: desired shape of the fractal noise map
+        :type shape: tuple
+        :param res: resolution of the noise map
+        :type res: tuple, optional
+        :param octaves: Number of octaves in the fractal noise
+        :type octaves: int, optional
+        :param persistence: Persistence value for the fractal nois
+        :type persistence: float, optional
         """
+
         noise = np.zeros(shape)
         frequency = 1
         amplitude = 1
@@ -158,13 +190,16 @@ class InkShifter(Augmentation):
         return noise.astype("float32")
 
     def put_fading(self, img, fade, f=0.5):
-        """
-        Apply fading effect to the image
-        :param img(numpy.ndarray): input image
-        :param fade(numpy.ndarray): fade values
-        :param f(float): Fading factor
+        """Apply fading effect to the image
 
+        :param img: input image
+        :type img: numpy array
+        :param fade(numpy.ndarray): fade values
+        :type face: numpy array
+        :param f: Fading factor
+        :type f: float, optional
         """
+
         fade -= fade.min()
         fade /= fade.max()
         fade += (1 - fade) * f
@@ -190,22 +225,17 @@ class InkShifter(Augmentation):
             if perlin_noise:
                 noisemap_x = self.noise_map((h, w), (text_shift_scale, text_shift_scale))
                 noisemap_y = self.noise_map((h, w), (text_shift_scale, text_shift_scale))
-                amp = random.random()
-                disp_img = self.displace_image(
-                    image,
-                    -amp * text_shift_factor * noisemap_x,
-                    text_shift_factor * noisemap_y,
-                )
-
             else:
                 noisemap_x = self.noise_map_fractal((h, w), (text_shift_scale, text_shift_scale))
                 noisemap_y = self.noise_map_fractal((h, w), (text_shift_scale, text_shift_scale))
-                amp = random.random()
-                disp_img = self.displace_image(
-                    image,
-                    -amp * text_shift_factor * noisemap_x,
-                    text_shift_factor * noisemap_y,
-                )
+
+            amp = random.random()
+            image_displaced, mask = self.displace_image(
+                image,
+                mask,
+                -amp * text_shift_factor * noisemap_x,
+                text_shift_factor * noisemap_y,
+            )
 
             # check for additional output of mask, keypoints and bounding boxes
             outputs_extra = []
@@ -215,6 +245,6 @@ class InkShifter(Augmentation):
             # returns additional mask, keypoints and bounding boxes if there is additional input
             if outputs_extra:
                 # returns in the format of [image, mask, keypoints, bounding_boxes]
-                return [disp_img] + outputs_extra
+                return [image_displaced] + outputs_extra
             else:
-                return disp_img
+                return image_displaced
