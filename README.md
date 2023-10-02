@@ -53,6 +53,61 @@ augmented = pipeline(img)
 # Documentation
 For full documentation, including installation and tutorials, check the [doc directory](https://github.com/sparkfish/augraphy/tree/dev/doc).
 
+# Additional Target Support
+Some augmentations support additional inputs such as mask, keypoints and bounding boxes.
+
+|    Augmentation    |      Image      |       Mask      |    Keypoints    | Bounding Boxes  |
+|--------------------|----------------:|----------------:|----------------:|----------------:|
+|BadPhotoCopy        |        ✓        |        -        |        -        |        -        |
+|BindingsAndFasteners|        ✓        |        -        |        -        |        -        |
+|BleedThrough        |        ✓        |        -        |        -        |        -        |
+|BookBinding         |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Brightness          |        ✓        |        -        |        -        |        -        |
+|BrightnessTexturize |        ✓        |        -        |        -        |        -        |
+|ColorPaper          |        ✓        |        -        |        -        |        -        |
+|ColorShift          |        ✓        |        -        |        -        |        -        |
+|DelaunayTessellation|        ✓        |        -        |        -        |        -        |
+|DirtyDrum           |        ✓        |        -        |        -        |        -        |
+|DirtyRollers        |        ✓        |        -        |        -        |        -        |
+|Dithering           |        ✓        |        -        |        -        |        -        |
+|DotMatrix           |        ✓        |        -        |        -        |        -        |
+|Faxify              |        ✓        |        -        |        -        |        -        |
+|Folding             |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Gamma               |        ✓        |        -        |        -        |        -        |
+|Geometric           |        ✓        |        ✓        |        ✓        |        ✓*       |
+|GlitchEffect        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Hollow              |        ✓        |        -        |        -        |        -        |
+|InkBleed            |        ✓        |        -        |        -        |        -        |
+|InkColorSwap        |        ✓        |        -        |        -        |        -        |
+|InkMottling         |        ✓        |        -        |        -        |        -        |
+|InkShifter          |        ✓        |        ✓        |        ✕        |        ✕        |
+|Jpeg                |        ✓        |        -        |        -        |        -        |
+|Letterpress         |        ✓        |        -        |        -        |        -        |
+|LightingGradient    |        ✓        |        -        |        -        |        -        |
+|LinesDegradation    |        ✓        |        -        |        -        |        -        |
+|LowInkPeriodicLines |        ✓        |        -        |        -        |        -        |
+|LowInkRandomLines   |        ✓        |        -        |        -        |        -        |
+|LowLightNoise       |        ✓        |        -        |        -        |        -        |
+|Markup              |        ✓        |        -        |        -        |        -        |
+|NoiseTexturize      |        ✓        |        -        |        -        |        -        |
+|NoisyLines          |        ✓        |        -        |        -        |        -        |
+|PageBorder          |        ✓        |        ✓        |        ✓        |        ✓*       |
+|PatternGenerator    |        ✓        |        -        |        -        |        -        |
+|ReflectedLight      |        ✓        |        -        |        -        |        -        |
+|Scribbles           |        ✓        |        -        |        -        |        -        |
+|SectionShift        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|ShadowCast          |        ✓        |        -        |        -        |        -        |
+|Squish              |        ✓        |        ✓        |        ✓        |        ✓*       |
+|SubtleNoise         |        ✓        |        -        |        -        |        -        |
+|VoronoiTessellation |        ✓        |        -        |        -        |        -        |
+|WaterMark           |        ✓        |        -        |        -        |        -        |
+
+Remarks: <br />
+[-] : augmentation doesn't affect this input. <br />
+[✓] : augmentation is supported on this input. <br />
+[✕] : augmentation is not supported on this input. <br />
+[✓*] : augmentation is supported on this input under certain criteria. <br />
+
 # Benchmark Results
 The benchmark results are computed with Augraphy 8.20 and Tobacco3482 dataset (resume subset with a total of 120 images). It is evaluated with a 2 cores machine - Intel(R) Xeon(R) Gold 6226R CPU @ 2.90GHz.
 
