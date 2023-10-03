@@ -46,61 +46,69 @@ pipeline = default_augraphy_pipeline()
 
 image = cv2.imread("image.png")
 
-augmented = pipeline(img)
+augmented = pipeline(image)
 
 ```
 
 # Documentation
 For full documentation, including installation and tutorials, check the [doc directory](https://github.com/sparkfish/augraphy/tree/dev/doc).
 
-# Additional Target Support
-Some augmentations support additional inputs such as mask, keypoints and bounding boxes.
+# List of Augmentations
+## Pixel Level Augmentations
+Pixel level augmentations apply augmentation to the input image only, that including alpha layer of the image. Additional inputs such as mask, keypoints or bounding boxes will not be affected.
 
-|    Augmentation    |      Image      |       Mask      |    Keypoints    | Bounding Boxes  |
-|--------------------|----------------:|----------------:|----------------:|----------------:|
-|BadPhotoCopy        |        ✓        |        -        |        -        |        -        |
-|BindingsAndFasteners|        ✓        |        -        |        -        |        -        |
-|BleedThrough        |        ✓        |        -        |        -        |        -        |
-|BookBinding         |        ✓        |        ✓        |        ✓        |        ✓*       |
-|Brightness          |        ✓        |        -        |        -        |        -        |
-|BrightnessTexturize |        ✓        |        -        |        -        |        -        |
-|ColorPaper          |        ✓        |        -        |        -        |        -        |
-|ColorShift          |        ✓        |        -        |        -        |        -        |
-|DelaunayTessellation|        ✓        |        -        |        -        |        -        |
-|DirtyDrum           |        ✓        |        -        |        -        |        -        |
-|DirtyRollers        |        ✓        |        -        |        -        |        -        |
-|Dithering           |        ✓        |        -        |        -        |        -        |
-|DotMatrix           |        ✓        |        -        |        -        |        -        |
-|Faxify              |        ✓        |        -        |        -        |        -        |
-|Folding             |        ✓        |        ✓        |        ✓        |        ✓*       |
-|Gamma               |        ✓        |        -        |        -        |        -        |
-|Geometric           |        ✓        |        ✓        |        ✓        |        ✓*       |
-|GlitchEffect        |        ✓        |        ✓        |        ✓        |        ✓*       |
-|Hollow              |        ✓        |        -        |        -        |        -        |
-|InkBleed            |        ✓        |        -        |        -        |        -        |
-|InkColorSwap        |        ✓        |        -        |        -        |        -        |
-|InkMottling         |        ✓        |        -        |        -        |        -        |
-|InkShifter          |        ✓        |        ✓        |        ✕        |        ✕        |
-|Jpeg                |        ✓        |        -        |        -        |        -        |
-|Letterpress         |        ✓        |        -        |        -        |        -        |
-|LightingGradient    |        ✓        |        -        |        -        |        -        |
-|LinesDegradation    |        ✓        |        -        |        -        |        -        |
-|LowInkPeriodicLines |        ✓        |        -        |        -        |        -        |
-|LowInkRandomLines   |        ✓        |        -        |        -        |        -        |
-|LowLightNoise       |        ✓        |        -        |        -        |        -        |
-|Markup              |        ✓        |        -        |        -        |        -        |
-|NoiseTexturize      |        ✓        |        -        |        -        |        -        |
-|NoisyLines          |        ✓        |        -        |        -        |        -        |
-|PageBorder          |        ✓        |        ✓        |        ✓        |        ✓*       |
-|PatternGenerator    |        ✓        |        -        |        -        |        -        |
-|ReflectedLight      |        ✓        |        -        |        -        |        -        |
-|Scribbles           |        ✓        |        -        |        -        |        -        |
-|SectionShift        |        ✓        |        ✓        |        ✓        |        ✓*       |
-|ShadowCast          |        ✓        |        -        |        -        |        -        |
-|Squish              |        ✓        |        ✓        |        ✓        |        ✓*       |
-|SubtleNoise         |        ✓        |        -        |        -        |        -        |
-|VoronoiTessellation |        ✓        |        -        |        -        |        -        |
-|WaterMark           |        ✓        |        -        |        -        |        -        |
+|    Augmentation    |      Image      |   Alpha Layer   |
+|--------------------|----------------:|----------------:|
+|BadPhotoCopy        |        ✓        |        -        |
+|BindingsAndFasteners|        ✓        |        -        |
+|BleedThrough        |        ✓        |        -        |
+|Brightness          |        ✓        |        -        |
+|BrightnessTexturize |        ✓        |        -        |
+|ColorPaper          |        ✓        |        -        |
+|ColorShift          |        ✓        |        -        |
+|DelaunayTessellation|        ✓        |        -        |
+|DirtyDrum           |        ✓        |        -        |
+|DirtyRollers        |        ✓        |        -        |
+|Dithering           |        ✓        |        -        |
+|DotMatrix           |        ✓        |        -        |
+|Faxify              |        ✓        |        -        |
+|Gamma               |        ✓        |        -        |
+|Hollow              |        ✓        |        -        |
+|InkBleed            |        ✓        |        -        |
+|InkColorSwap        |        ✓        |        -        |
+|InkMottling         |        ✓        |        -        |
+|Jpeg                |        ✓        |        -        |
+|Letterpress         |        ✓        |        -        |
+|LightingGradient    |        ✓        |        -        |
+|LinesDegradation    |        ✓        |        -        |
+|LowInkPeriodicLines |        ✓        |        -        |
+|LowInkRandomLines   |        ✓        |        -        |
+|LowLightNoise       |        ✓        |        -        |
+|Markup              |        ✓        |        -        |
+|NoiseTexturize      |        ✓        |        -        |
+|NoisyLines          |        ✓        |        -        |
+|PatternGenerator    |        ✓        |        -        |
+|ReflectedLight      |        ✓        |        -        |
+|Scribbles           |        ✓        |        -        |
+|ShadowCast          |        ✓        |        -        |
+|SubtleNoise         |        ✓        |        -        |
+|VoronoiTessellation |        ✓        |        -        |
+|WaterMark           |        ✓        |        -        |
+
+## Spatial level Augmentations
+Spatial level augmentations apply augmentation to all inputs such as image (including alpha layer), mask, keypoints and bounding boxes.
+
+
+|    Augmentation    |      Image      |   Alpha Layer   |       Mask      |    Keypoints    | Bounding Boxes  |
+|--------------------|----------------:|----------------:|----------------:|----------------:|----------------:|
+|BookBinding         |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Folding             |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Geometric           |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|GlitchEffect        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|InkShifter          |        ✓        |        ✓        |        ✓        |        ✕        |        ✕        |
+|PageBorder          |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|SectionShift        |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
+|Squish              |        ✓        |        ✓        |        ✓        |        ✓        |        ✓*       |
 
 Remarks: <br />
 [-] : augmentation doesn't affect this input. <br />
