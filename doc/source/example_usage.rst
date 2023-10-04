@@ -235,3 +235,70 @@ Input image:
 Augmented image:
 
 .. figure:: example_usage/example_output2.png
+
+
+------------------------------------------------------------------
+Examples 3 : Augmentation with mask, keypoints, and bounding boxes
+------------------------------------------------------------------
+
+Create a custom pipeline with spatial level augmentations. Paper phase is empty because additional inputs such as mask, keypoints and bounding boxes won't applicable in paper phase::
+
+    from augraphy import *
+    import random
+
+    ink_phase = [Geometric(translation=(0, 0.2)),
+                 Squish(squish_direction=1,
+                        squish_location='random',
+                        squish_number_range=(5, 10),
+                        squish_distance_range=(5, 7),
+                        squish_line=0, squish_line_thickness_range=(1, 1))]
+
+    paper_phase = []
+
+    post_phase = [Folding(fold_x=None,
+                          fold_deviation=(0, 0),
+                          fold_count=random.randint(4,7),
+                          fold_noise=0,
+                          fold_angle_range=(0, 0),
+                          gradient_width=(0.1, 0.2),
+                          gradient_height=(0.01, 0.02),
+                          backdrop_color=(0, 0, 0)]
+
+
+    pipeline = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+    image = cv2.imread("image.png")
+
+    image_augmented = pipeline(image)
+
+Input image:
+
+.. figure:: example_usage/input.png
+
+Input mask:
+
+.. figure:: example_usage/input_mask.png
+
+Input keypoints:
+
+.. figure:: example_usage/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: example_usage/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: example_usage/example_output3.png
+
+Augmented mask:
+
+.. figure:: example_usage/example_output3_mask.png
+
+Augmented keypoints:
+
+.. figure:: example_usage/example_output3_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: example_usage/example_output3_bounding_boxes.png
