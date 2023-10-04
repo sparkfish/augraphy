@@ -10,7 +10,7 @@ BookBinding
 --------
 Overview
 --------
-The BookBinding augmentation creates the effect of a page curling away from the scanner bed, towards the binding of a book or magazine. Right now it supports 2 variants of page curling direction.
+The BookBinding augmentation creates the effect of a page curling away from the scanner bed, towards the binding of a book or magazine. Right now it supports 2 variants of page curling direction. For additional input such as mask and keypoints, they are fully supported. For bounding boxes, only the start point or end point of the box will be affected.
 
 
 Initially, a clean image with single line of text is created.
@@ -116,3 +116,47 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/bookbinding/book_binding_down.png
+
+
+---------
+Example 3
+---------
+In this example, a BookBinding augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
+The BookBinding augmentation will be using the default parameter value and hence no additional parameter values will be specified.
+
+Code example:
+
+::
+
+    book_binder = BookBinding()
+
+    img_book_binding, mask, keypoints, bounding_boxes= book_binder(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Input keypoints:
+
+.. figure:: augmentations/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: augmentations/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: augmentations/bookbinding/book_binding3.png
+
+Augmented mask:
+
+.. figure:: augmentations/bookbinding/book_binding3_mask.png
+
+Augmented keypoints:
+
+.. figure:: augmentations/bookbinding/book_binding3_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: augmentations/bookbinding/book_binding3_bounding_boxes.png
