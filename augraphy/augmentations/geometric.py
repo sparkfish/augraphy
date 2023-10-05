@@ -249,6 +249,7 @@ class Geometric(Augmentation):
         if self.padding[0] > 0:
             # get image size
             ysize, xsize = image.shape[:2]
+            self.padding = list(self.padding)
             # convert percentage into pixel amount
             if self.padding[0] <= 1 and isinstance(self.padding[0], float):
                 self.padding[0] = int(self.padding[0] * xsize)
