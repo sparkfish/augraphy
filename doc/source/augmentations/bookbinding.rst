@@ -112,6 +112,7 @@ Code example:
 
 
     img_book_binding_down= book_binder_down(image)
+    cv2.imshow("book_binding_down", img_book_binding_down)
 
 Augmented image:
 
@@ -122,7 +123,7 @@ Augmented image:
 Example 3
 ---------
 In this example, a BookBinding augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
-The BookBinding augmentation will be using the default parameter value and hence no additional parameter values will be specified.
+The BookBinding augmentation will be using the default parameters value and hence no additional parameters value will be specified.
 
 Code example:
 
@@ -131,6 +132,7 @@ Code example:
     book_binder = BookBinding()
 
     img_book_binding, mask, keypoints, bounding_boxes= book_binder(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+    cv2.imshow("book_binding", img_book_binding)
 
 
 Input mask:
