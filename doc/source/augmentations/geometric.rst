@@ -63,6 +63,7 @@ Code example:
                           )
 
     img_geometric_transform = geometric(image)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:
@@ -81,7 +82,9 @@ Code example:
 ::
 
     geometric = Geometric(scale=(1.5, 2.0))
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Input mask:
@@ -124,7 +127,9 @@ Code example:
 ::
 
     geometric = Geometric(translation=(100, -100))
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:
@@ -155,7 +160,9 @@ Code example:
 ::
 
     geometric = Geometric(fliplr=1, flipud=1)
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:
@@ -186,7 +193,9 @@ Code example:
 ::
 
     geometric = Geometric(crop=(0.2, 0.2, 0.8, 0.8))
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:
@@ -217,7 +226,9 @@ Code example:
 ::
 
     geometric = Geometric(rotate_range=(-60,60))
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:
@@ -248,7 +259,9 @@ Code example:
 ::
 
     geometric = Geometric(padding=[0.1,0.1,0.1,0.1])
+
     img_geometric_transform, mask, keypoints, bounding_boxes = geometric(image, mask, keypoints, bounding_boxes)
+
     cv2.imshow("geometric_transform", img_geometric_transform)
 
 Augmented image:

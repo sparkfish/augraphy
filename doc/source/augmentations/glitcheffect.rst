@@ -10,7 +10,7 @@ GlitchEffect
 --------
 Overview
 --------
-The GlitchEffect augmentation create glitch effect by applying ColorShift and shifts patches of image horizontally or vertically.
+The GlitchEffect augmentation create glitch effect by applying ColorShift and shifts patches of image horizontally or vertically. For additional input such as mask and keypoints, they are fully supported. For bounding boxes, additional boxes might be created on the shifted area. Size of some existing boxes might be pruned on the shifted area too.
 
 Initially, a clean image with single line of text is created.
 
@@ -67,3 +67,47 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/glitcheffect/glitch_effect.png
+
+---------
+Example 2
+---------
+In this example, a GlitchEffect augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
+The GlitchEffect augmentation will be using the default parameters value and hence no additional parameters value will be specified.
+
+Code example:
+
+::
+
+    glitcheffect= GlitchEffect()
+
+    img_glitcheffect, mask, keypoints, bounding_boxes = glitcheffect(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+    cv2.imshow("glitcheffect, img_glitcheffect)
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Input keypoints:
+
+.. figure:: augmentations/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: augmentations/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: augmentations/glitcheffect/glitch_effect2.png
+
+Augmented mask:
+
+.. figure:: augmentations/glitcheffect/glitch_effect2_mask.png
+
+Augmented keypoints:
+
+.. figure:: augmentations/glitcheffect/glitch_effect2_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: augmentations/glitcheffect/glitch_effect2_bounding_boxes.png

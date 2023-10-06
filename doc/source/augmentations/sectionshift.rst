@@ -10,7 +10,7 @@ SectionShift
 --------
 Overview
 --------
-The SectionShift augmentation shifts single or multiple sections of image in horizontal, vertical or both directions, creating an effect of shifted image sections.
+The SectionShift augmentation shifts single or multiple sections of image in horizontal, vertical or both directions, creating an effect of shifted image sections. For additional input such as mask and keypoints, they are fully supported. For bounding boxes, they will be affected only if the starting point or ending point of the box in the shifting area.
 
 Initially, a clean image with single line of text is created.
 
@@ -68,3 +68,49 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/sectionshift/section_shift.png
+
+
+---------
+Example 2
+---------
+In this example, a SectionShift augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
+The SectionShift augmentation will be using the default parameters value and hence no additional parameters value will be specified.
+
+Code example:
+
+::
+
+    sectionshift = SectionShift()
+
+    img_sectionshift, mask, keypoints, bounding_boxes = sectionshift(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+    cv2.imshow("sectionshift", img_sectionshift)
+
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Input keypoints:
+
+.. figure:: augmentations/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: augmentations/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: augmentations/sectionshift/section_shift2.png
+
+Augmented mask:
+
+.. figure:: augmentations/sectionshift/section_shift2_mask.png
+
+Augmented keypoints:
+
+.. figure:: augmentations/sectionshift/section_shift2_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: augmentations/sectionshift/section_shift2_bounding_boxes.png
