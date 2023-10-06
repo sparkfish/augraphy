@@ -10,7 +10,7 @@ InkShifter
 --------
 Overview
 --------
-The Inkshifter Augmentation applies a noise map on the image and displaces the text on the image
+The Inkshifter Augmentation applies a noise map on the image and displaces the text on the image. For additional input such as mask, keypoints and bounding boxes, only mask is supported.
 
 Code example:
 
@@ -78,15 +78,47 @@ Code example:
         text_shift_scale_range=(18, 27),
         text_shift_factor_range=(1, 4),
         text_fade_range=(0, 2),
-	    noise_type = "random",
+	noise_type = "random",
     )
 
     inkshifter_img = inkshifter_obj(image)
     cv2.imshow("Inkshifter Augmentation", inkshifter_img)
 
 
-Augmented image:
+Augmented image1:
 
 .. figure:: augmentations/inkshifter/inkshifter.png
 
+Augmented image2:
+
 .. figure:: augmentations/inkshifter/inkshifter1.png
+
+
+---------
+Example 2
+---------
+In this example, we demonstrate the usage of the InkShifter augmentation in image and an additional mask input.
+The InkShifter augmentation will be using the default parameters value and hence no additional parameters value will be specified.
+
+Code example:
+
+::
+
+    inkshifter_obj = InkShifter()
+
+    inkshifter_img, mask, _, _ = inkshifter_obj(image=image, mask=mask)
+
+    cv2.imshow("Inkshifter Augmentation", inkshifter_img)
+
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Augmented image:
+
+.. figure:: augmentations/inkshifter/inkshifter2.png
+
+Augmented mask:
+
+.. figure:: augmentations/inkshifter/inkshifter2_mask.png

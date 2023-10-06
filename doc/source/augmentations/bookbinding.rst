@@ -73,7 +73,8 @@ Code example:
                                  use_cache_images = 0,
                                  )
 
-    img_book_binding_up= book_binder_up(image)
+    img_book_binding_up = book_binder_up(image)
+
     cv2.imshow("book_binding_up", img_book_binding_up)
 
 Augmented image:
@@ -111,7 +112,8 @@ Code example:
                                   )
 
 
-    img_book_binding_down= book_binder_down(image)
+    img_book_binding_down = book_binder_down(image)
+
     cv2.imshow("book_binding_down", img_book_binding_down)
 
 Augmented image:
@@ -131,7 +133,8 @@ Code example:
 
     book_binder = BookBinding()
 
-    img_book_binding, mask, keypoints, bounding_boxes= book_binder(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+    img_book_binding, mask, keypoints, bounding_boxes = book_binder(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
     cv2.imshow("book_binding", img_book_binding)
 
 

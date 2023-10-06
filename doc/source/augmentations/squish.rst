@@ -10,7 +10,7 @@ Squish
 --------
 Overview
 --------
-The Squish augmentation creates a squish effect by removing a fixed horizontal or vertical section of the image.
+The Squish augmentation creates a squish effect by removing a fixed horizontal or vertical section of the image. For additional input such as mask and keypoints, they are fully supported. For bounding boxes, they will be affected only if the starting point or ending point of the box is in the squishing area.
 
 Initially, a clean image with single line of text is created.
 
@@ -65,8 +65,54 @@ Code example:
                     )
 
     img_squish = squish(image)
+
     cv2.imshow("squish", img_squish)
 
 Augmented image:
 
 .. figure:: augmentations/squish/squish.png
+
+---------
+Example 2
+---------
+In this example, a Squish augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
+The Squish augmentation will be using the default parameters value and hence no additional parameters value will be specified.
+
+Code example:
+
+::
+
+    squish = Squish()
+
+    img_squish, mask, keypoints, bounding_boxes = squish(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+    cv2.imshow("squish", img_squish)
+
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Input keypoints:
+
+.. figure:: augmentations/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: augmentations/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: augmentations/squish/squish2.png
+
+Augmented mask:
+
+.. figure:: augmentations/squish/squish2_mask.png
+
+Augmented keypoints:
+
+.. figure:: augmentations/squish/squish2_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: augmentations/squish/squish2_bounding_boxes.png
