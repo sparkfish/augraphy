@@ -221,7 +221,7 @@ class Markup(Augmentation):
         # Applying dilate operation to connect text lines horizontaly.
         contours, hierarchy = cv2.findContours(
             binary_image,
-            cv2.RETR_EXTERNAL,
+            cv2.RETR_LIST,
             cv2.CHAIN_APPROX_NONE,
         )  # Each line is detected as a contour.
 
