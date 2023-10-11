@@ -150,7 +150,7 @@ class Folding(Augmentation):
                             points[i] = [xpoint, ypoint]
 
                 # warp bounding boxes
-                if keypoints is not None:
+                if bounding_boxes is not None:
                     lx0, ly0, lxn, lyn = fold_x - fold_width_one_side, 0, fold_x, ysize
                     rx0, ry0, rxn, ryn = fold_x, 0, fold_x + (fold_width_one_side), ysize
 
