@@ -433,6 +433,7 @@ class BookBinding(Augmentation):
             p=1,
         )
         if not curve_down:
+            iysize, ixsize = image.shape[:2]
             # flip image
             image = np.flipud(image)
             # flip mask
@@ -442,16 +443,16 @@ class BookBinding(Augmentation):
             if keypoints is not None:
                 for name, points in keypoints.items():
                     for i, (xpoint, ypoint) in enumerate(points):
-                        points[i] = [xpoint, mask.shape[0] - 1 - ypoint]
+                        points[i] = [xpoint, iysize - 1 - ypoint]
             # flip bounding boxes
             if bounding_boxes is not None:
                 for i, bounding_box in enumerate(bounding_boxes):
                     xspoint, yspoint, xepoint, yepoint = bounding_box
                     bounding_boxes[i] = [
                         xspoint,
-                        mask.shape[0] - 1 - yspoint,
+                        iysize - 1 - yspoint,
                         xepoint,
-                        mask.shape[0] - 1 - yepoint,
+                        iysize - 1 - yepoint,
                     ]
 
         image_shadow = self.add_book_shadow(image, radius)
@@ -558,6 +559,7 @@ class BookBinding(Augmentation):
         if mask is not None or keypoints is not None or bounding_boxes is not None:
             image_right, mask, keypoints, bounding_boxes = image_right
         if not curve_down:
+            iysize, ixsize = image_right.shape[:2]
             # flip image
             image_right = np.flipud(image_right)
             # flip mask
@@ -567,16 +569,16 @@ class BookBinding(Augmentation):
             if keypoints is not None:
                 for name, points in keypoints.items():
                     for i, (xpoint, ypoint) in enumerate(points):
-                        points[i] = [xpoint, mask.shape[0] - 1 - ypoint]
+                        points[i] = [xpoint, iysize - 1 - ypoint]
             # flip bounding boxes
             if bounding_boxes is not None:
                 for i, bounding_box in enumerate(bounding_boxes):
                     xspoint, yspoint, xepoint, yepoint = bounding_box
                     bounding_boxes[i] = [
                         xspoint,
-                        mask.shape[0] - 1 - yspoint,
+                        iysize - 1 - yspoint,
                         xepoint,
-                        mask.shape[0] - 1 - yepoint,
+                        iysize - 1 - yepoint,
                     ]
         # left
         image_left = np.fliplr(self.curve_page(np.fliplr(image_added_border_left), curve_value_left, backdrop_color))
