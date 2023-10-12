@@ -49,6 +49,7 @@ def load_image_from_cache(random_image=0):
         return None
 
 
+@jit(nopython=True, cache=True, parallel=True)
 def rotate_point(xpoint, ypoint, xcenter, ycenter, angle):
     """Rotate point around an origin based on the provided angle in clockwise direction.
 
