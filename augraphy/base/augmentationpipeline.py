@@ -353,6 +353,7 @@ class AugraphyPipeline:
                 # compute and save a copy of image original dpi and doc dimensions
                 dpi_object = DPIMetrics(image_input)
                 original_dpi, doc_dimensions = dpi_object()
+
             # pre phase input
             data["pre"].append(
                 AugmentationResult(None, image_input, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes),
@@ -418,22 +419,57 @@ class AugraphyPipeline:
         self.apply_phase(data, layer="post", phase=self.post_phase)
 
         if self.fixed_dpi and len(self.pre_phase) > 0:
-            dpi_object = DPIMetrics(image_input)
+
+            dpi_object = DPIMetrics(data["post"][-1].result)
             current_dpi, current_doc_dimensions = dpi_object()
             # resize to original input dpi if dpi is changed
             if current_dpi != original_dpi:
-                image_resize = dpi_resize(
-                    image=data["post"][-1].result,
-                    doc_dimensions=current_doc_dimensions,
-                    target_dpi=original_dpi,
-                )
+                iysize, ixsize = image_input.shape[:2]
+                # rescale image
+                image_resize = cv2.resize(data["post"][-1].result, (ixsize, iysize), interpolation=cv2.INTER_AREA)
+                # rescale mask
+                if data["post"][-1].mask is not None:
+                    mask_resize = cv2.resize(data["post"][-1].mask, (ixsize, iysize), interpolation=cv2.INTER_AREA)
+                else:
+                    mask_resize = None
+
+                # rescale keypoints
+                if data["post"][-1].keypoints is not None:
+                    scale_x = ixsize / data["post"][-1].result.shape[1]
+                    scale_y = iysize / data["post"][-1].result.shape[0]
+                    keypoints_resize = {}
+                    for name, points in data["post"][-1].keypoints.items():
+                        keypoints_resize[name] = []
+                        for i, (xpoint, ypoint) in enumerate(points):
+                            keypoints_resize[name].append([round(xpoint * scale_x), round(ypoint * scale_y)])
+                else:
+                    keypoints_resize = None
+
+                # scale bounding boxes
+                if bounding_boxes is not None:
+                    scale_x = ixsize / data["post"][-1].result.shape[1]
+                    scale_y = iysize / data["post"][-1].result.shape[0]
+                    bounding_boxes_resize = []
+                    for i, bounding_box in enumerate(bounding_boxes):
+                        xspoint, yspoint, xepoint, yepoint = bounding_box
+                        bounding_boxes_resize.append(
+                            [
+                                round(xspoint * scale_x),
+                                round(yspoint * scale_y),
+                                round(xepoint * scale_x),
+                                round(yepoint * scale_y),
+                            ],
+                        )
+                else:
+                    bounding_boxes_resize = None
+
                 data["post"].append(
                     AugmentationResult(
                         None,
                         image_resize,
-                        data["post"][-1].mask,
-                        data["post"][-1].keypoints,
-                        data["post"][-1].bounding_boxes,
+                        mask_resize,
+                        keypoints_resize,
+                        bounding_boxes_resize,
                     ),
                 )
 

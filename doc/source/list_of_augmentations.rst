@@ -56,5 +56,6 @@ Spatial Level Augmentations
    augmentations/glitcheffect.rst
    augmentations/inkshifter.rst
    augmentations/pageborder.rst
+   augmentations/rescale.rst
    augmentations/sectionshift.rst
    augmentations/squish.rst
