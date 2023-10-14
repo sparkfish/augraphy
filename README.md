@@ -27,7 +27,7 @@ After both the ink and paper phases are completed, processing continues by apply
 The end result is an image that mimics real documents.
 
 <p align="center" width="100%">
-    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/Pipeline.png?raw=true">
+    <img src="https://github.com/sparkfish/augraphy/blob/dev/images/augraphy-pipeline.png?raw=true">
 </p>
 
 ## Example Before / After Images
