@@ -188,7 +188,18 @@ class PaperFactory(Augmentation):
                 brighten_max = 1 + brighten_ratio
                 brightness = Brightness(brightness_range=(brighten_min, brighten_max), min_brightness=1)
                 texture = brightness(texture)
-            return texture
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [texture] + outputs_extra
+            else:
+                return texture
 
     def check_paper_edges(self, texture):
         """Crop image section with better texture.
