@@ -105,10 +105,14 @@ class PaperFactory(Augmentation):
                 ysize, xsize = image.shape[:2]
                 sigma = random.uniform(3, 5)
                 turbulence = random.randint(3, 9)
-                texture = generate_texture(ysize, xsize, channel=1, value=255, sigma=sigma, turbulence=turbulence)
-
-                if len(image.shape) > 2:
-                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+                texture = generate_texture(
+                    ysize,
+                    xsize,
+                    channel=random.choice([1, 3]),
+                    value=255,
+                    sigma=sigma,
+                    turbulence=turbulence,
+                )
 
             # blend multiple textures
             if self.blend_texture:
@@ -129,12 +133,11 @@ class PaperFactory(Augmentation):
                     new_texture = generate_texture(
                         ysize,
                         xsize,
-                        channel=1,
+                        channel=random.choice([1, 3]),
                         value=255,
                         sigma=sigma,
                         turbulence=turbulence,
                     )
-                    new_texture = cv2.cvtColor(new_texture, cv2.COLOR_GRAY2BGR)
 
                 # resize for size consistency between both textures
                 new_texture = cv2.resize(

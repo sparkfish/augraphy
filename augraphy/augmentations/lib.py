@@ -194,16 +194,12 @@ def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
     :type turbulence: int
 
     """
-    image_output = np.full((ysize, xsize, channel), fill_value=value, dtype="float")
+    image_output = np.full((ysize, xsize, 1), fill_value=value, dtype="float")
     ratio = min(xsize, ysize)
     while ratio != 1:
-        image_output += generate_noise(xsize, ysize, channel, ratio, sigma=sigma)
+        image_output += generate_noise(xsize, ysize, 1, ratio, sigma=sigma)
         ratio = (ratio // turbulence) or 1
     image_output = np.clip(image_output, 0, 255)
-
-    # get single channel image
-    if channel == 1:
-        image_output = image_output[:, :, 0]
 
     new_min = 32
     new_max = 255
@@ -211,7 +207,39 @@ def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
         new_max - new_min
     ) + new_min
 
-    return image_output.astype("uint8")
+    # convert to 3 channels and uint8
+    image_output = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_GRAY2BGR)
+
+    # add colors into the texture
+    if channel == 3:
+
+        # generate random color
+        hue_offset = random.randint(0, 15)
+        hue = random.randint(hue_offset, 254 - hue_offset)
+        hue_range = [hue - hue_offset, hue + hue_offset + 1]
+
+        # set min and max saturation
+        saturation_offset = random.randint(40, 60)
+        saturation = random.randint(saturation_offset, 254 - saturation_offset)
+        saturation_range = [saturation - saturation_offset, saturation + saturation_offset + 1]
+
+        # convert to hsv and get each channel
+        image_hsv = cv2.cvtColor(image_output, cv2.COLOR_BGR2HSV)
+        image_h = image_hsv[:, :, 0]
+        image_s = image_hsv[:, :, 1]
+        image_v = image_hsv[:, :, 2]
+
+        # update new hue and saturation value
+        image_h[:] = np.random.randint(hue_range[0], hue_range[1], size=(ysize, xsize))
+        image_s[:] = np.random.randint(saturation_range[0], saturation_range[1], size=(ysize, xsize))
+        # set min and max value
+        image_v[image_v < 50] += 50
+        image_v[image_v > 200] -= 50
+
+        # convert back to bgr
+        image_output = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
+
+    return image_output
 
 
 def rotate_image(mat, angle, white_background=1):
