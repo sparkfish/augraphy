@@ -154,6 +154,159 @@ def update_mask_labels(mask, mask_labels):
     mask[empty_indices] = 0
 
 
+def quilt_texture(image_texture, patch_size, patch_number_width, patch_number_height):
+    """Generate new texture image by quilting patches of input image.
+
+    :param image_texture: The input image texture.
+    :type image_texture: numpy array
+    :param patch_size: The size of each image patch.
+    :type patch_size: int
+    :param patch_number_width: The number of image patch in horizontal direction.
+    :type patch_number_width: int
+    :param patch_number_height: The number of image patch in vertical direction.
+    :type patch_number_height: int
+    """
+
+    overlap = patch_size // 5
+
+    # size of output
+    ysize = (patch_number_height * patch_size) - (patch_number_height - 1) * overlap
+    xsize = (patch_number_width * patch_size) - (patch_number_width - 1) * overlap
+
+    # convert from gray to bgr
+    if len(image_texture.shape) < 3:
+        image_texture = cv2.cvtColor(image_texture, cv2.COLOR_GRAY2BGR)
+
+    # output
+    image_quilt = np.zeros((ysize, xsize, image_texture.shape[2]), dtype="uint8")
+
+    # size of image texture
+    ysize, xsize = image_texture.shape[:2]
+
+    # hsv channel of texture
+    image_hsv = cv2.cvtColor(image_texture, cv2.COLOR_BGR2HSV)
+
+    # get a reference patch's hue, saturation and value
+    y = np.random.randint(ysize - patch_size)
+    x = np.random.randint(xsize - patch_size)
+    h_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 0])
+    s_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 1])
+    v_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 2])
+    offset = 10
+    h_range = [h_reference - offset, h_reference + offset]
+    s_range = [s_reference - offset, s_reference + offset]
+    v_range = [v_reference - offset, v_reference + offset]
+
+    # generate and apply random patch
+    for i in range(patch_number_height):
+        for j in range(patch_number_width):
+            y = i * (patch_size - overlap)
+            x = j * (patch_size - overlap)
+            image_patch = get_random_patch(
+                image_texture,
+                image_hsv,
+                patch_size,
+                ysize,
+                xsize,
+                h_range,
+                s_range,
+                v_range,
+            )
+            image_quilt[y : y + patch_size, x : x + patch_size] = image_patch
+
+    # smoothing
+    image_quilt = cv2.medianBlur(image_quilt, ksize=11)
+
+    image_quilt = enhance_contrast(image_quilt)
+
+    return image_quilt
+
+
+def get_random_patch(image_texture, image_hsv, patch_size, ysize, xsize, h_range, s_range, v_range):
+    """Get patch of image from texture based on input hue, saturation and value range.
+
+    :param image_texture: The input image texture.
+    :type image_texture: numpy array
+    :param image_hsv: The input image texture in HSV channel.
+    :type image_hsv: numpy array
+    :param patch_size: The size of each image patch.
+    :type patch_size: int
+    :param y_size: The height of image texture.
+    :type y_size: int
+    :param x_size: The width of image texture.
+    :type x_size: int
+    :param h_range: The range of reference hue values.
+    :type h_range: tuple
+    :param s_range: The range of reference saturation values.
+    :type s_range: tuple
+    :param v_range: The range of reference value values.
+    :type v_range: tuple
+    """
+
+    n = 0
+    y = np.random.randint(ysize - patch_size)
+    x = np.random.randint(xsize - patch_size)
+    image_patch = image_texture[y : y + patch_size, x : x + patch_size]
+
+    # use a fixed number to prevent infinity loops
+    while n < 1000:
+
+        y = np.random.randint(ysize - patch_size)
+        x = np.random.randint(xsize - patch_size)
+
+        # get mean of h, s and v channel of current patch
+        h_mean = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 0])
+        s_mean = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 1])
+        v_mean = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 2])
+
+        if (
+            h_mean >= h_range[0]
+            and h_mean < h_range[1]
+            and s_mean >= s_range[0]
+            and s_mean < s_range[1]
+            and v_mean >= v_range[0]
+            and v_mean < v_range[1]
+        ):
+
+            # get patch of image
+            image_patch = image_texture[y : y + patch_size, x : x + patch_size]
+
+            # apply gamma correction
+            mid = np.mean(v_range) / 255
+            gamma = np.log(mid * 255) / np.log(v_mean)
+            image_patch = np.power(image_patch, gamma).clip(0, 255).astype(np.uint8)
+            break
+
+        n += 1
+
+    return image_patch
+
+
+# adapted from this link:
+# https://stackoverflow.com/questions/39308030/how-do-i-increase-the-contrast-of-an-image-in-python-opencv
+def enhance_contrast(image):
+    """Enhance image contrast by applying clahe in L channel of image.
+
+    :param image: The input image.
+    :type image: numpy array
+    """
+
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    l_channel, a, b = cv2.split(lab)
+
+    # Applying CLAHE to L-channel
+    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(32, 32))
+    cl = clahe.apply(l_channel)
+
+    # merge the CLAHE enhanced L-channel with the a and b channel
+    image_merge = cv2.merge((cl, a, b))
+
+    # Converting image from LAB Color model to BGR color space
+    enhanced_image = cv2.cvtColor(image_merge, cv2.COLOR_LAB2BGR)
+
+    return enhanced_image
+
+
 # Adapted from this link:
 # # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
 def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):
