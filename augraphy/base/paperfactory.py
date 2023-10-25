@@ -6,8 +6,10 @@ import cv2
 import numpy as np
 
 from augraphy.augmentations.brightness import Brightness
+from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import generate_texture
+from augraphy.augmentations.lib import quilt_texture
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.utilities.overlaybuilder import OverlayBuilder
@@ -19,8 +21,12 @@ class PaperFactory(Augmentation):
 
     :param texture_path: Directory location to pull paper textures from.
     :type texture_path: string, optional
+    :param texture_enable_color: Flag to enable color in the texture.
+        Use "random" for random choice.
+    :type texture__enable_color: int or string, optional
     :param blend_texture: Flag to blend multiple textures.
-    :type blend_texture: int, optional
+        Use "random" for random choice.
+    :type blend_texture: int or string, optional
     :param blend_method: The method to blend multiple textures.
     :type blend_method: string, optional
     :param p: The probability that this Augmentation will be applied.
@@ -30,13 +36,15 @@ class PaperFactory(Augmentation):
     def __init__(
         self,
         texture_path="./paper_textures",
-        blend_texture=1,
+        texture_enable_color="random",
+        blend_texture="random",
         blend_method="random",
         p=1,
     ):
         """Constructor method"""
         super().__init__(p=p)
         self.texture_path = texture_path
+        self.texture_enable_color = texture_enable_color
         self.blend_texture = blend_texture
         self.blend_method = blend_method
         self.texture_file_names = []
@@ -59,9 +67,14 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(texture_path={self.texture_path},blend_texture={self.blend_texture}, blend_method={self.blend_method}, p={self.p})"
+        return f"PaperFactory(texture_path={self.texture_path},texture_enable_color={self.texture_enable_color},blend_texture={self.blend_texture}, blend_method={self.blend_method}, p={self.p})"
 
     def retrieve_texture(self, image):
+        """Retrieve image texture from the input texture path.
+
+        :param image: The input image.
+        :type image: numpy array
+        """
         shape = image.shape
         random_index = random.randint(0, len(self.paper_textures) - 1)
         texture = self.paper_textures[random_index]
@@ -92,9 +105,49 @@ class PaperFactory(Augmentation):
 
         return texture
 
+    def generate_random_texture(self, image):
+        """Generate random texture by creating random or repeating patterns.
+
+        :param image: The input image.
+        :type image: numpy array
+        """
+
+        ysize, xsize = image.shape[:2]
+        sigma = random.uniform(3, 5)
+        turbulence = random.randint(3, 9)
+        texture = generate_texture(
+            ysize,
+            xsize,
+            channel=1,
+            value=255,
+            sigma=sigma,
+            turbulence=turbulence,
+        )
+
+        # quilt texture to create new repeating texture
+        if random.randint(0, 1):
+            patch_size = random.randint(15, 30)
+            patch_number_width = int(xsize / patch_size)
+            patch_number_height = int(ysize / patch_size)
+            texture = quilt_texture(texture, patch_size, patch_number_width, patch_number_height)
+
+        return texture
+
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
+
+            # check for flag in blending textures
+            if self.blend_texture == "random":
+                blend_texture = random.randint(0, 1)
+            else:
+                blend_texture = self.blend_texture
+
+            # check for flag in enabling texture's color
+            if self.texture_enable_color == "random":
+                texture_enable_color = random.randint(0, 1)
+            else:
+                texture_enable_color = self.texture_enable_color
 
             # get texture from paper
             if self.paper_textures:
@@ -102,46 +155,24 @@ class PaperFactory(Augmentation):
                 texture = self.retrieve_texture(image)
             # generate random mask as texture
             else:
-                ysize, xsize = image.shape[:2]
-                sigma = random.uniform(3, 5)
-                turbulence = random.randint(3, 9)
-                texture = generate_texture(
-                    ysize,
-                    xsize,
-                    channel=random.choice([1, 3]),
-                    value=255,
-                    sigma=sigma,
-                    turbulence=turbulence,
-                )
+                texture = self.generate_random_texture(image)
 
             # blend multiple textures
-            if self.blend_texture:
-                if len(texture.shape) < 3:
-                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+            if blend_texture:
 
                 # get another image as texture
                 if len(self.paper_textures) > 0:
-                    new_texture = self.retrieve_texture(image)
-                    if len(new_texture.shape) < 3:
+                    new_texture = self.retrieve_texture(texture)
+                    if len(new_texture.shape) < 3 and len(texture.shape) > 2:
                         new_texture = cv2.cvtColor(new_texture, cv2.COLOR_GRAY2BGR)
-
-                # generate noise as texture if no texture is provided
+                    elif len(new_texture.shape) > 2 and len(texture.shape) < 3:
+                        new_texture = cv2.cvtColor(new_texture, cv2.COLOR_BGR2GRAY)
                 else:
-                    ysize, xsize = texture.shape[:2]
-                    sigma = random.uniform(3, 5)
-                    turbulence = random.randint(3, 9)
-                    new_texture = generate_texture(
-                        ysize,
-                        xsize,
-                        channel=random.choice([1, 3]),
-                        value=255,
-                        sigma=sigma,
-                        turbulence=turbulence,
-                    )
+                    new_texture = self.generate_random_texture(texture)
 
                 # resize for size consistency between both textures
                 new_texture = cv2.resize(
-                    new_texture,
+                    texture,
                     (texture.shape[1], texture.shape[0]),
                     interpolation=cv2.INTER_AREA,
                 )
@@ -180,6 +211,26 @@ class PaperFactory(Augmentation):
                 )
 
                 texture = ob.build_overlay()
+
+            if texture_enable_color:
+                if len(texture.shape) < 3:
+                    # use ColorPaper to add color into the paper
+                    texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+
+                    hue_offset = 10
+                    hue = random.randint(hue_offset, 255 - hue_offset)
+                    hue_range = [hue - hue_offset, hue + hue_offset]
+
+                    saturation_offset = 10
+                    saturation = random.randint(50 + saturation_offset, 205 - saturation_offset)
+                    saturation_range = [saturation - saturation_offset, saturation + saturation_offset]
+
+                    color_paper = ColorPaper(hue_range=hue_range, saturation_range=saturation_range)
+
+                    texture = color_paper(texture)
+            else:
+                if len(texture.shape) > 2:
+                    texture = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
 
             # texture_intensity
             texture_intensity = generate_average_intensity(texture)
