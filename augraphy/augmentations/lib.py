@@ -174,7 +174,9 @@ def quilt_texture(image_texture, patch_size, patch_number_width, patch_number_he
     xsize = (patch_number_width * patch_size) - (patch_number_width - 1) * overlap
 
     # convert from gray to bgr
+    is_gray = 0
     if len(image_texture.shape) < 3:
+        is_gray = 1
         image_texture = cv2.cvtColor(image_texture, cv2.COLOR_GRAY2BGR)
 
     # output
@@ -217,7 +219,12 @@ def quilt_texture(image_texture, patch_size, patch_number_width, patch_number_he
     # smoothing
     image_quilt = cv2.medianBlur(image_quilt, ksize=11)
 
+    # enhance contrast of texture
     image_quilt = enhance_contrast(image_quilt)
+
+    # image follows input texture color channel
+    if is_gray:
+        image_quilt = cv2.cvtColor(image_quilt, cv2.COLOR_BGR2GRAY)
 
     return image_quilt
 
@@ -360,37 +367,15 @@ def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
         new_max - new_min
     ) + new_min
 
-    # convert to 3 channels and uint8
-    image_output = cv2.cvtColor(image_output.astype("uint8"), cv2.COLOR_GRAY2BGR)
+    # convert to uint8
+    image_output = np.uint8(image_output)
 
-    # add colors into the texture
+    # conver to color image
     if channel == 3:
-
-        # generate random color
-        hue_offset = random.randint(0, 15)
-        hue = random.randint(hue_offset, 254 - hue_offset)
-        hue_range = [hue - hue_offset, hue + hue_offset + 1]
-
-        # set min and max saturation
-        saturation_offset = random.randint(40, 60)
-        saturation = random.randint(saturation_offset, 254 - saturation_offset)
-        saturation_range = [saturation - saturation_offset, saturation + saturation_offset + 1]
-
-        # convert to hsv and get each channel
-        image_hsv = cv2.cvtColor(image_output, cv2.COLOR_BGR2HSV)
-        image_h = image_hsv[:, :, 0]
-        image_s = image_hsv[:, :, 1]
-        image_v = image_hsv[:, :, 2]
-
-        # update new hue and saturation value
-        image_h[:] = np.random.randint(hue_range[0], hue_range[1], size=(ysize, xsize))
-        image_s[:] = np.random.randint(saturation_range[0], saturation_range[1], size=(ysize, xsize))
-        # set min and max value
-        image_v[image_v < 50] += 50
-        image_v[image_v > 200] -= 50
-
-        # convert back to bgr
-        image_output = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
+        image_output = cv2.cvtColor(image_output, cv2.COLOR_GRAY2BGR)
+    elif channel == 1:
+        # remove additional channel for grayscale image
+        image_output = image_output[:, :, 0]
 
     return image_output
 
