@@ -417,7 +417,7 @@ def generate_edge_texture(oxsize, oysize):
     # peserve the texture at the edges by applying median filtered image to the center area
     image_merge[edge_size:-edge_size, edge_size:-edge_size] = image_merge_median[
         edge_size:-edge_size,
-        edge_size:-edge_size
+        edge_size:-edge_size,
     ]
 
     # further smoothen the image
