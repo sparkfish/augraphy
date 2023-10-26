@@ -189,8 +189,19 @@ def quilt_texture(image_texture, patch_size, patch_number_width, patch_number_he
     image_hsv = cv2.cvtColor(image_texture, cv2.COLOR_BGR2HSV)
 
     # get a reference patch's hue, saturation and value
-    y = np.random.randint(ysize - patch_size)
-    x = np.random.randint(xsize - patch_size)
+
+    n = 0
+    while n < 10:
+        y = np.random.randint(ysize - patch_size)
+        x = np.random.randint(xsize - patch_size)
+        # to prevent black or white blank image
+        if (
+            np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 2]) < 245
+            and np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 2]) > 10
+        ):
+            break
+        n += 1
+
     h_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 0])
     s_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 1])
     v_reference = np.mean(image_hsv[y : y + patch_size, x : x + patch_size, 2])
@@ -256,7 +267,7 @@ def get_random_patch(image_texture, image_hsv, patch_size, ysize, xsize, h_range
     image_patch = image_texture[y : y + patch_size, x : x + patch_size]
 
     # use a fixed number to prevent infinity loops
-    while n < 1000:
+    while n < 10:
 
         y = np.random.randint(ysize - patch_size)
         x = np.random.randint(xsize - patch_size)
@@ -378,6 +389,44 @@ def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
         image_output = image_output[:, :, 0]
 
     return image_output
+
+
+def generate_edge_texture(oxsize, oysize):
+    """Generate a mask of edges based texture.
+
+    :param oxsize: The width of the output mask.
+    :type oxsize: int
+    :param oysize: The height of the output mask.
+    :type oysize: int
+    """
+
+    ysize = 200
+    xsize = 200
+    edge_size = random.randint(5, 15)
+
+    # create 2 images with random values and sum them
+    image1 = np.random.randint(0, 128, size=(ysize, xsize), dtype="uint8")
+    image2 = np.random.randint(120, 255, size=(ysize, xsize), dtype="uint8")
+    image1 = cv2.GaussianBlur(image1, [15, 15], 0)
+    image2 = cv2.GaussianBlur(image2, [15, 15], 0)
+    image_merge = image1 + image2
+
+    # further apply median filter to the merged image
+    image_merge_median = cv2.medianBlur(image_merge, 25)
+
+    # peserve the texture at the edges by applying median filtered image to the center area
+    image_merge[edge_size:-edge_size, edge_size:-edge_size] = image_merge_median[
+        edge_size:-edge_size, edge_size:-edge_size
+    ]
+
+    # further smoothen the image
+    image_merge = cv2.GaussianBlur(image_merge, [3, 3], 0)
+    image_merge = cv2.medianBlur(image_merge, 5)
+
+    # resize to input size
+    image_edge_texture = cv2.resize(image_merge, (oxsize, oysize), 0)
+
+    return image_edge_texture
 
 
 def rotate_image(mat, angle, white_background=1):

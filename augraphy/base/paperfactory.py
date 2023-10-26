@@ -8,6 +8,7 @@ import numpy as np
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
+from augraphy.augmentations.lib import generate_edge_texture
 from augraphy.augmentations.lib import generate_texture
 from augraphy.augmentations.lib import quilt_texture
 from augraphy.base.augmentation import Augmentation
@@ -125,11 +126,33 @@ class PaperFactory(Augmentation):
         )
 
         # quilt texture to create new repeating texture
+        f_quilt = 0
         if random.randint(0, 1):
             patch_size = random.randint(15, 30)
             patch_number_width = int(xsize / patch_size)
             patch_number_height = int(ysize / patch_size)
             texture = quilt_texture(texture, patch_size, patch_number_width, patch_number_height)
+            f_quilt = 1
+
+        # add edges based texture
+        if random.randint(0, 1):
+            # generate edge texture
+            edge_texture = generate_edge_texture(texture.shape[1], texture.shape[0])
+
+            # scale value to texture value
+            cmin_value = np.min(edge_texture)
+            cmax_value = np.max(edge_texture)
+            max_value = np.max(texture)
+            if f_quilt:
+                min_value = np.min(texture) * 0.95
+            else:
+                min_value = min(np.min(texture) * random.randint(4, 5), max_value - 10)
+            edge_texture = (
+                ((edge_texture - cmin_value) / (cmax_value - cmin_value)) * (max_value - min_value)
+            ) + min_value
+
+            # merge edge texture into texture
+            texture = cv2.multiply(texture, np.uint8(edge_texture), scale=1 / 255)
 
         return texture
 
