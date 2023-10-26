@@ -400,8 +400,8 @@ def generate_edge_texture(oxsize, oysize):
     :type oysize: int
     """
 
-    ysize = 200
-    xsize = 200
+    ysize = 400
+    xsize = 400
     edge_size = random.randint(5, 15)
 
     # create 2 images with random values and sum them
@@ -416,7 +416,8 @@ def generate_edge_texture(oxsize, oysize):
 
     # peserve the texture at the edges by applying median filtered image to the center area
     image_merge[edge_size:-edge_size, edge_size:-edge_size] = image_merge_median[
-        edge_size:-edge_size, edge_size:-edge_size
+        edge_size:-edge_size,
+        edge_size:-edge_size
     ]
 
     # further smoothen the image
