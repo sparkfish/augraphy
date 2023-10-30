@@ -400,32 +400,83 @@ def generate_edge_texture(oxsize, oysize):
     :type oysize: int
     """
 
-    ysize = 400
-    xsize = 400
-    edge_size = random.randint(5, 15)
+    iysize, ixsize = 400, 400
 
-    # create 2 images with random values and sum them
-    image1 = np.random.randint(0, 128, size=(ysize, xsize), dtype="uint8")
-    image2 = np.random.randint(120, 255, size=(ysize, xsize), dtype="uint8")
-    image1 = cv2.GaussianBlur(image1, [15, 15], 0)
-    image2 = cv2.GaussianBlur(image2, [15, 15], 0)
-    image_merge = image1 + image2
+    # mask of noise
+    image_noise = np.full((iysize, ixsize), fill_value=255, dtype="uint8")
 
-    # further apply median filter to the merged image
-    image_merge_median = cv2.medianBlur(image_merge, 25)
+    # image center
+    center_xs = [0, int(ixsize / 2), ixsize, int(ixsize / 2)]
+    center_ys = [int(iysize / 2), 0, int(iysize / 2), iysize]
 
-    # peserve the texture at the edges by applying median filtered image to the center area
-    image_merge[edge_size:-edge_size, edge_size:-edge_size] = image_merge_median[
-        edge_size:-edge_size,
-        edge_size:-edge_size,
+    noise_value = [128, 255]
+    n_clusters = [300, 500]
+    n_samples = [1080, 1280]
+    stds = [int(ixsize / 4), int(iysize / 4)]
+
+    n_samples = [
+        random.randint(n_samples[0], n_samples[1]) for i in range(random.randint(n_clusters[0], n_clusters[1]))
     ]
+    std = random.randint(stds[0], stds[1])
 
-    # further smoothen the image
-    image_merge = cv2.GaussianBlur(image_merge, [3, 3], 0)
-    image_merge = cv2.medianBlur(image_merge, 5)
+    generated_points_x = np.array([[0]], dtype=("float"))
+    generated_points_y = np.array([[0]], dtype=("float"))
 
-    # resize to input size
-    image_edge_texture = cv2.resize(image_merge, (oxsize, oysize), 0)
+    for center_x, center_y in zip(center_xs, center_ys):
+
+        # generate clusters of noises
+        cgenerated_points_x, _ = make_blobs(
+            n_samples=n_samples,
+            center_box=(center_x, center_x),
+            cluster_std=std,
+            n_features=1,
+        )
+
+        # generate clusters of noises
+        cgenerated_points_y, _ = make_blobs(
+            n_samples=n_samples,
+            center_box=(center_y, center_y),
+            cluster_std=std,
+            n_features=1,
+        )
+
+        generated_points_x = np.concatenate((generated_points_x, cgenerated_points_x), axis=0)
+        generated_points_y = np.concatenate((generated_points_y, cgenerated_points_y), axis=0)
+
+    # generate x and y points of noise
+    generated_points_x = generated_points_x.astype("int")
+    generated_points_y = generated_points_y.astype("int")
+
+    # remove invalid points
+    ind_delete_x1 = np.where(generated_points_x < 2)
+    ind_delete_x2 = np.where(generated_points_x >= ixsize - 2)
+    ind_delete_y1 = np.where(generated_points_y < 2)
+    ind_delete_y2 = np.where(generated_points_y >= iysize - 2)
+
+    ind_delete = np.concatenate(
+        (ind_delete_x1, ind_delete_x2, ind_delete_y1, ind_delete_y2),
+        axis=1,
+    )
+    generated_points_x = np.delete(generated_points_x, ind_delete, axis=0)
+    generated_points_y = np.delete(generated_points_y, ind_delete, axis=0)
+
+    # update noise value
+    image_random = np.random.random((iysize, ixsize))
+    image_random[image_random < noise_value[0] / 255] = 0
+    image_random[image_random > noise_value[1] / 255] = 0
+    image_random = (image_random * 255).astype("uint8")
+
+    # update points with random value
+    image_noise[generated_points_y, generated_points_x] = image_random[generated_points_y, generated_points_x]
+
+    # apply blur
+    image_noise = cv2.GaussianBlur(image_noise, (random.choice([7, 9, 11, 13]), random.choice([7, 9, 11, 13])), 0)
+
+    # create edge texture
+    image_edge_texture = image_noise + image_noise
+
+    # resize to expected size
+    image_edge_texture = cv2.resize(image_edge_texture, (oxsize, oysize), 0)
 
     return image_edge_texture
 
