@@ -481,6 +481,60 @@ def generate_edge_texture(oxsize, oysize):
     return image_edge_texture
 
 
+# adapted from this repository:
+# https://github.com/NewYaroslav/strange_pattern
+@jit(nopython=True, cache=True, parallel=True)
+def generate_strange_texture(oxsize, oysize):
+    """Generate a random strange texture.
+
+    :param oxsize: The width of the output texture image.
+    :type oxsize: int
+    :param oysize: The height of the output texture image.
+    :type oysize: int
+    """
+
+    background_value = random.uniform(0.04, 0.11)
+
+    # initialize random parameter
+    t_random = random.uniform(0, 100)
+    m_random = [random.uniform(0, 100), random.uniform(0, 100)]
+
+    # initialize output
+    image_strange_texture = np.zeros((oysize, oxsize, 3))
+
+    # calculate color
+    for y in nb.prange(oysize):
+        for x in nb.prange(oxsize):
+
+            # initial value
+            value = int(x + t_random * 80.0 + m_random[0] * 10.0) ^ int(y + t_random * 80.0 + m_random[1] * 10.0)
+
+            # update pixel value
+            color = 1.0
+            if value <= 1:
+                color = background_value
+            if value % 2 == 0 and value > 2:
+                color = background_value
+            for i in range(3, int(np.floor(np.sqrt(float(value)))), random.randint(1, 10)):
+                if value % i == 0:
+                    color = background_value
+
+            # generate random color
+            new_color = [
+                color / random.uniform(0.01, 3),
+                color / random.uniform(0.01, 3),
+                color / random.uniform(0.01, 3),
+            ]
+
+            # update color
+            image_strange_texture[y, x] = new_color
+
+    # rotate texture randomly
+    image_strange_texture = np.rot90(image_strange_texture, random.randint(0, 3))
+
+    return image_strange_texture
+
+
 def rotate_image(mat, angle, white_background=1):
     """Rotates an image (angle in degrees) and expands image to avoid
     cropping.
