@@ -9,6 +9,7 @@ from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import generate_edge_texture
+from augraphy.augmentations.lib import generate_strange_texture
 from augraphy.augmentations.lib import generate_texture
 from augraphy.augmentations.lib import quilt_texture
 from augraphy.base.augmentation import Augmentation
@@ -114,45 +115,96 @@ class PaperFactory(Augmentation):
         """
 
         ysize, xsize = image.shape[:2]
-        sigma = random.uniform(3, 5)
-        turbulence = random.randint(3, 9)
-        texture = generate_texture(
-            ysize,
-            xsize,
-            channel=1,
-            value=255,
-            sigma=sigma,
-            turbulence=turbulence,
-        )
+
+        # compute texture type
+        texture_type = random.randint(0, 1)
+
+        # generate stains based texture
+        if texture_type:
+            sigma = random.uniform(3, 5)
+            turbulence = random.randint(3, 9)
+            texture = generate_texture(
+                ysize,
+                xsize,
+                channel=1,
+                value=255,
+                sigma=sigma,
+                turbulence=turbulence,
+            )
+
+        # generate strange texture
+        else:
+            texture = generate_strange_texture(xsize, ysize)
+            texture = cv2.cvtColor(np.uint8(texture * 255), cv2.COLOR_BGR2GRAY)
 
         # quilt texture to create new repeating texture
-        f_quilt = 0
         if random.randint(0, 1):
             patch_size = random.randint(15, 30)
             patch_number_width = int(xsize / patch_size)
             patch_number_height = int(ysize / patch_size)
             texture = quilt_texture(texture, patch_size, patch_number_width, patch_number_height)
-            f_quilt = 1
 
         # add edges based texture
+        texture_edge = generate_edge_texture(texture.shape[1], texture.shape[0])
+
+        # get mask of edge texture
+        _, texture_edge_binary = cv2.threshold(texture_edge, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+        contours, hierarchy = cv2.findContours(
+            texture_edge_binary,
+            cv2.RETR_LIST,
+            cv2.CHAIN_APPROX_NONE,
+        )
+
+        # initialize mask of  edge texture
+        texture_edge_mask = np.zeros_like(texture_edge, dtype="uint8")
+
+        # find largest inner contour as edge texture
+        for contour in contours:
+            x0, y0, width, height = cv2.boundingRect(contour)
+            area = cv2.contourArea(contour)
+            if area > (ysize * xsize * 0.6) and width != xsize and height != ysize:
+                texture_edge_mask = cv2.drawContours(texture_edge_mask, [contour], -1, (255), cv2.FILLED)
+                break
+
+        # remove area outside edge texture
+        texture[texture_edge_mask <= 0] = 0
+
+        # randomly crop 1 or 2 side of edge
+        crop_x = int(xsize / 20)
+        crop_y = int(ysize / 20)
         if random.randint(0, 1):
-            # generate edge texture
-            edge_texture = generate_edge_texture(texture.shape[1], texture.shape[0])
+            selections = [0, 1, 2, 3]
+            selection1 = random.choice(selections)
+            # remove top
+            if selection1 == 0:
+                texture = texture[crop_y:, :]
+            # remove bottom
+            elif selection1 == 1:
+                texture = texture[: ysize - crop_y, :]
+            # removeleft
+            elif selection1 == 2:
+                texture = texture[:, crop_x:]
+            # remove right
+            elif selection1 == 3:
+                texture = texture[:, : xsize - crop_x]
 
-            # scale value to texture value
-            cmin_value = np.min(edge_texture)
-            cmax_value = np.max(edge_texture)
-            max_value = np.max(texture)
-            if f_quilt:
-                min_value = np.min(texture) * 0.95
-            else:
-                min_value = min(np.min(texture) * random.randint(4, 5), max_value - 10)
-            edge_texture = (
-                ((edge_texture - cmin_value) / (cmax_value - cmin_value)) * (max_value - min_value)
-            ) + min_value
-
-            # merge edge texture into texture
-            texture = cv2.multiply(texture, np.uint8(edge_texture), scale=1 / 255)
+            if random.randint(0, 1):
+                # crop a second time
+                selections.remove(selection1)
+                selection2 = random.choice(selections)
+                # remove top
+                if selection2 == 0:
+                    texture = texture[crop_y:, :]
+                # remove bottom
+                elif selection2 == 1:
+                    texture = texture[: ysize - crop_y, :]
+                # removeleft
+                elif selection2 == 2:
+                    texture = texture[:, crop_x:]
+                # remove right
+                elif selection2 == 3:
+                    texture = texture[:, : xsize - crop_x]
 
         return texture
 
