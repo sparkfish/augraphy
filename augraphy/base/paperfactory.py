@@ -9,6 +9,7 @@ from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import generate_edge_texture
+from augraphy.augmentations.lib import generate_FFT_texture
 from augraphy.augmentations.lib import generate_strange_texture
 from augraphy.augmentations.lib import generate_texture
 from augraphy.augmentations.lib import quilt_texture
@@ -40,7 +41,7 @@ class PaperFactory(Augmentation):
         texture_path="./paper_textures",
         texture_enable_color="random",
         blend_texture="random",
-        blend_method="random",
+        blend_method="ink_to_paper",
         p=1,
     ):
         """Constructor method"""
@@ -117,10 +118,10 @@ class PaperFactory(Augmentation):
         ysize, xsize = image.shape[:2]
 
         # compute texture type
-        texture_type = random.randint(0, 1)
+        texture_type = random.choice([0, 1, 2])
 
         # generate stains based texture
-        if texture_type:
+        if texture_type == 0:
             sigma = random.uniform(3, 5)
             turbulence = random.randint(3, 9)
             texture = generate_texture(
@@ -133,9 +134,13 @@ class PaperFactory(Augmentation):
             )
 
         # generate strange texture
-        else:
+        elif texture_type == 1:
             texture = generate_strange_texture(xsize, ysize)
             texture = cv2.cvtColor(np.uint8(texture * 255), cv2.COLOR_BGR2GRAY)
+
+        # generate FFT texture
+        else:
+            texture = generate_FFT_texture(xsize, ysize)
 
         # quilt texture to create new repeating texture
         if random.randint(0, 1):
