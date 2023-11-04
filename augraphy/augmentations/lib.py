@@ -545,13 +545,13 @@ def generate_FFT_texture(oxsize, oysize):
     """
 
     # fixed internal resolution
-    ysize, xsize = 100, 100
+    ysize, xsize = 200, 200
 
     wave_grid_output = np.zeros((ysize, xsize), dtype="uint8")
 
     for i in range(random.randint(3, 5)):
         # fixed resolution of the wave image
-        resolution = random.uniform(0.9, 0.95)
+        resolution = random.uniform(0.1, 0.95)
 
         # Create a 2D grid of coordinates
         x_array = np.arange(-xsize / 2, xsize / 2) * resolution
@@ -603,7 +603,37 @@ def generate_FFT_texture(oxsize, oysize):
         wave_grid_output += new_wave_grid
 
     # blur to smoothen texture
-    wave_grid_output = cv2.GaussianBlur(wave_grid_output, (35, 35), 0)
+    wave_grid_output = cv2.GaussianBlur(wave_grid_output, (3, 3), 0)
+
+    # further fft to get stains based texture
+    cy, cx = ysize // 2, xsize // 2
+    mask = np.ones((ysize, xsize), np.uint8)
+
+    # r to remove low frequency area
+    r = random.randint(25, 35)
+
+    # compute mask to remove low frequency area
+    y, x = np.ogrid[:ysize, :xsize]
+    mask_area = (x - cx) ** 2 + (y - cy) ** 2 <= r * r
+    mask[mask_area] = 0
+
+    # convert to fft and shift to zero-frequency
+    wave_grid_output_fft = np.fft.fft2(wave_grid_output)
+    wave_grid_output_fft_shifted = np.fft.fftshift(wave_grid_output_fft)
+
+    # apply mask and inverse DFT
+    wave_grid_output_fft_shifted *= mask
+    wave_grid_output2_fft = np.fft.ifft2(np.fft.ifftshift(wave_grid_output_fft_shifted))
+    wave_grid_output2 = np.abs(wave_grid_output2_fft)
+
+    # normalize image back to 0 - 255
+    wave_grid_output2 = (wave_grid_output2 - wave_grid_output2.min()) / (
+        wave_grid_output2.max() - wave_grid_output2.min()
+    )
+    wave_grid_output = 255 - np.uint8(wave_grid_output2 * 255)
+
+    # median filter to smoothen texture
+    wave_grid_output = cv2.medianBlur(wave_grid_output, 3)
 
     # resize to output size
     wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
