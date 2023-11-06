@@ -535,8 +535,8 @@ def generate_strange_texture(oxsize, oysize):
     return image_strange_texture
 
 
-def generate_FFT_texture(oxsize, oysize):
-    """Generate a wave pattern texture using FFT.
+def generate_stains_texture(oxsize, oysize):
+    """Generate a stains similar texture using FFT.
 
     :param oxsize: The width of the output texture image.
     :type oxsize: int
@@ -605,12 +605,123 @@ def generate_FFT_texture(oxsize, oysize):
     # blur to smoothen texture
     wave_grid_output = cv2.GaussianBlur(wave_grid_output, (3, 3), 0)
 
-    # further fft to get stains based texture
+    # remove low frequency area
+    wave_grid_output = remove_frequency(wave_grid_output, random.randint(25, 35))
+
+    # median filter to smoothen texture
+    wave_grid_output = cv2.medianBlur(wave_grid_output, 3)
+
+    # resize to output size
+    wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
+
+    return wave_grid_output
+
+
+def generate_granular_texture(oxsize, oysize):
+    """Generate random granular texture using FFT.
+
+    :param oxsize: The width of the output texture image.
+    :type oxsize: int
+    :param oysize: The height of the output texture image.
+    :type oysize: int
+    """
+
+    # fixed internal resolution
+    ysize, xsize = 500, 500
+
+    wave_grid_output = np.zeros((ysize, xsize), dtype="uint8")
+
+    # fixed resolution of the wave image
+    resolution = random.uniform(0.95, 0.95)
+
+    # Create a 2D grid of coordinates
+    x_array = np.arange(-xsize / 2, xsize / 2) * resolution
+    y_array = np.arange(-ysize / 2, ysize / 2) * resolution
+    x_grid, y_grid = np.meshgrid(x_array, y_array)
+
+    # iterations for adding waves
+    iterations = random.randint(3, 5)
+    wave_grid = np.zeros((ysize, xsize), dtype="float")
+    for i in range(iterations):
+
+        # Calculate the wave height using a sine function
+        A = np.random.uniform(5, 15)  # Amplitude
+        f = np.random.uniform(0.01, 0.02)  # Frequency
+        p = np.random.uniform(0, 2 * np.pi)  # Phase
+        kx = np.random.uniform(-1, 1)  # x-component of wave vector
+        ky = np.random.uniform(-1, 1)  # y-component of wave vector
+        h_sine = A * np.sin(2 * np.pi * (f * (kx * x_grid + ky * y_grid) - p))
+
+        # Calculate the wave height using a cosine function
+        A = np.random.uniform(5, 15)  # Amplitude
+        f = np.random.uniform(0.01, 0.02)  # Frequency
+        p = np.random.uniform(0, 2 * np.pi)  # Phase
+        kx = np.random.uniform(-1, 1)  # x-component of wave vector
+        ky = np.random.uniform(-1, 1)  # y-component of wave vector
+        h_cosine = A * np.cos(2 * np.pi * (f * (kx * x_grid + ky * y_grid) - p))
+
+        # combine heights from sine and cosine
+        wave_grid = h_sine + h_cosine
+
+    # Compute the FFT of the wave heights, shift the zero-frequency component to the center and then sum them
+    wave_grid_fft_shifted = np.fft.fftshift(np.fft.fft2(wave_grid))
+
+    # unshift the FFT component
+    new_wave_grid = np.fft.ifft2(np.fft.ifftshift((wave_grid_fft_shifted)))
+
+    # get the real part only
+    new_wave_grid = np.real(new_wave_grid)
+
+    # scale to 0 -1
+    new_wave_grid = (new_wave_grid - new_wave_grid.min()) / (new_wave_grid.max() - new_wave_grid.min())
+
+    # convert to uint8
+    wave_grid_output = np.uint8(new_wave_grid * 255)
+
+    # blur to smoothen texture
+    wave_grid_output = cv2.GaussianBlur(wave_grid_output, (3, 3), 0)
+
+    # remove frequency > 10
+    frequency = 10
+    wave_grid_output = remove_frequency(wave_grid_output, frequency=frequency)
+
+    # remove border textures
+    offset = 50
+    wave_grid_output = wave_grid_output[offset:-offset, offset:-offset]
+
+    # rescale
+    wave_grid_output = (wave_grid_output - wave_grid_output.min()) / (wave_grid_output.max() - wave_grid_output.min())
+    wave_grid_output = 255 - np.uint8(wave_grid_output * 255)
+
+    # remove frequency > 100
+    frequency = 100
+    wave_grid_output = remove_frequency(wave_grid_output, frequency)
+
+    # rescale again
+    wave_grid_output = (wave_grid_output - wave_grid_output.min()) / (wave_grid_output.max() - wave_grid_output.min())
+    wave_grid_output = np.uint8(wave_grid_output * 255)
+
+    # resize to output size
+    wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
+
+    return wave_grid_output
+
+
+def remove_frequency(wave_grid_output, frequency):
+    """Remove image area bigger than the input frequency by using FFT.
+
+    :param wave_grid_output: The input image.
+    :type wave_grid_output: numpy array
+    :param frequency: The frequency threshold.
+    :type frequency: int
+    """
+
+    ysize, xsize = wave_grid_output.shape[:2]
+
     cy, cx = ysize // 2, xsize // 2
     mask = np.ones((ysize, xsize), np.uint8)
 
-    # r to remove low frequency area
-    r = random.randint(25, 35)
+    r = random.randint(frequency, frequency)
 
     # compute mask to remove low frequency area
     y, x = np.ogrid[:ysize, :xsize]
@@ -631,12 +742,6 @@ def generate_FFT_texture(oxsize, oysize):
         wave_grid_output2.max() - wave_grid_output2.min()
     )
     wave_grid_output = 255 - np.uint8(wave_grid_output2 * 255)
-
-    # median filter to smoothen texture
-    wave_grid_output = cv2.medianBlur(wave_grid_output, 3)
-
-    # resize to output size
-    wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
 
     return wave_grid_output
 
