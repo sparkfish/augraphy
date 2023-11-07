@@ -8,7 +8,8 @@ import numpy as np
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
-from augraphy.augmentations.lib import generate_edge_texture
+from augraphy.augmentations.lib import generate_broken_edge_texture
+from augraphy.augmentations.lib import generate_curvy_edge_texture
 from augraphy.augmentations.lib import generate_granular_texture
 from augraphy.augmentations.lib import generate_stains_texture
 from augraphy.augmentations.lib import generate_strange_texture
@@ -154,31 +155,42 @@ class PaperFactory(Augmentation):
             patch_number_height = int(ysize / patch_size)
             texture = quilt_texture(texture, patch_size, patch_number_width, patch_number_height)
 
-        # add edges based texture
-        texture_edge = generate_edge_texture(texture.shape[1], texture.shape[0])
+        # randomize edge type
+        edge_type = random.choice([0, 1])
 
-        # get mask of edge texture
-        _, texture_edge_binary = cv2.threshold(texture_edge, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # generate broken edge texture
+        if edge_type == 0:
 
-        contours, hierarchy = cv2.findContours(
-            texture_edge_binary,
-            cv2.RETR_LIST,
-            cv2.CHAIN_APPROX_NONE,
-        )
+            # add edges based texture
+            texture_edge = generate_broken_edge_texture(texture.shape[1], texture.shape[0])
 
-        # initialize mask of  edge texture
-        texture_edge_mask = np.zeros_like(texture_edge, dtype="uint8")
+            # get mask of edge texture
+            _, texture_edge_binary = cv2.threshold(texture_edge, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        # find largest inner contour as edge texture
-        for contour in contours:
-            x0, y0, width, height = cv2.boundingRect(contour)
-            area = cv2.contourArea(contour)
-            if area > (ysize * xsize * 0.6) and width != xsize and height != ysize:
-                texture_edge_mask = cv2.drawContours(texture_edge_mask, [contour], -1, (255), cv2.FILLED)
-                break
+            contours, hierarchy = cv2.findContours(
+                texture_edge_binary,
+                cv2.RETR_LIST,
+                cv2.CHAIN_APPROX_NONE,
+            )
 
-        # remove area outside edge texture
-        texture[texture_edge_mask <= 0] = 0
+            # initialize mask of  edge texture
+            texture_edge_mask = np.zeros_like(texture_edge, dtype="uint8")
+
+            # find largest inner contour as edge texture
+            for contour in contours:
+                x0, y0, width, height = cv2.boundingRect(contour)
+                area = cv2.contourArea(contour)
+                if area > (ysize * xsize * 0.6) and width != xsize and height != ysize:
+                    texture_edge_mask = cv2.drawContours(texture_edge_mask, [contour], -1, (255), cv2.FILLED)
+                    break
+
+            # remove area outside edge texture
+            texture[texture_edge_mask <= 0] = 0
+
+        # generate curvy edge texture
+        else:
+            texture_edge = generate_curvy_edge_texture(texture.shape[1], texture.shape[0])
+            texture = cv2.multiply(texture, texture_edge, scale=1 / 255)
 
         # randomly crop 1 or 2 side of edge
         crop_x = int(xsize / 20)
