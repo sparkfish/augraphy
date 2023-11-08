@@ -10,8 +10,9 @@ from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
 from augraphy.augmentations.lib import generate_broken_edge_texture
 from augraphy.augmentations.lib import generate_curvy_edge_texture
+from augraphy.augmentations.lib import generate_fine_stains_texture
 from augraphy.augmentations.lib import generate_granular_texture
-from augraphy.augmentations.lib import generate_stains_texture
+from augraphy.augmentations.lib import generate_rough_stains_texture
 from augraphy.augmentations.lib import generate_strange_texture
 from augraphy.augmentations.lib import generate_texture
 from augraphy.augmentations.lib import quilt_texture
@@ -120,9 +121,9 @@ class PaperFactory(Augmentation):
         ysize, xsize = image.shape[:2]
 
         # compute texture type
-        texture_type = random.choice([0, 1, 2, 3])
+        texture_type = random.choice([0, 1, 2, 3, 4])
 
-        # generate stains based texture
+        # generate dirty texture using normal distribution
         if texture_type == 0:
             sigma = random.uniform(3, 5)
             turbulence = random.randint(3, 9)
@@ -140,9 +141,13 @@ class PaperFactory(Augmentation):
             texture = generate_strange_texture(xsize, ysize)
             texture = cv2.cvtColor(np.uint8(texture * 255), cv2.COLOR_BGR2GRAY)
 
-        # generate stains texture
+        # generate rough stains texture
         elif texture_type == 2:
-            texture = generate_stains_texture(xsize, ysize)
+            texture = generate_rough_stains_texture(xsize, ysize)
+
+        # generate fine stains texture
+        elif texture_type == 3:
+            texture = generate_fine_stains_texture(xsize, ysize)
 
         # generate random granular texture
         else:
