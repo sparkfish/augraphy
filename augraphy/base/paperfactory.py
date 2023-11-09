@@ -8,17 +8,9 @@ import numpy as np
 from augraphy.augmentations.brightness import Brightness
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.lib import generate_average_intensity
-from augraphy.augmentations.lib import generate_broken_edge_texture
-from augraphy.augmentations.lib import generate_curvy_edge_texture
-from augraphy.augmentations.lib import generate_fine_stains_texture
-from augraphy.augmentations.lib import generate_granular_texture
-from augraphy.augmentations.lib import generate_rough_stains_texture
-from augraphy.augmentations.lib import generate_strange_texture
-from augraphy.augmentations.lib import generate_texture
-from augraphy.augmentations.lib import quilt_texture
 from augraphy.base.augmentation import Augmentation
-from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.utilities.overlaybuilder import OverlayBuilder
+from augraphy.utilities.texturegenerator import TextureGenerator
 
 
 class PaperFactory(Augmentation):
@@ -118,84 +110,34 @@ class PaperFactory(Augmentation):
         :type image: numpy array
         """
 
+        texture_generator = TextureGenerator()
+
         ysize, xsize = image.shape[:2]
 
-        # compute texture type
-        texture_type = random.choice([0, 1, 2, 3, 4])
+        # randomize texture type
+        texture_type = random.choice(["normal", "strange", "rough_stains", "fine_stains", "granular"])
+        # generate texture
+        texture = texture_generator(
+            texture_type=texture_type,
+            texture_width=xsize,
+            texture_height=ysize,
+            quilt_texture=0,
+        )
 
-        # generate dirty texture using normal distribution
-        if texture_type == 0:
-            sigma = random.uniform(3, 5)
-            turbulence = random.randint(3, 9)
-            texture = generate_texture(
-                ysize,
-                xsize,
-                channel=1,
-                value=255,
-                sigma=sigma,
-                turbulence=turbulence,
-            )
-
-        # generate strange texture
-        elif texture_type == 1:
-            texture = generate_strange_texture(xsize, ysize)
-            texture = cv2.cvtColor(np.uint8(texture * 255), cv2.COLOR_BGR2GRAY)
-
-        # generate rough stains texture
-        elif texture_type == 2:
-            texture = generate_rough_stains_texture(xsize, ysize)
-
-        # generate fine stains texture
-        elif texture_type == 3:
-            texture = generate_fine_stains_texture(xsize, ysize)
-
-        # generate random granular texture
-        else:
-            texture = generate_granular_texture(xsize, ysize)
-
-        # quilt texture to create new repeating texture
-        if random.randint(0, 1):
-            patch_size = random.randint(15, 30)
-            patch_number_width = int(xsize / patch_size)
-            patch_number_height = int(ysize / patch_size)
-            texture = quilt_texture(texture, patch_size, patch_number_width, patch_number_height)
-
-        # randomize edge type
-        edge_type = random.choice([0, 1])
-
-        # generate broken edge texture
-        if edge_type == 0:
-
-            # add edges based texture
-            texture_edge = generate_broken_edge_texture(texture.shape[1], texture.shape[0])
-
-            # get mask of edge texture
-            _, texture_edge_binary = cv2.threshold(texture_edge, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-            contours, hierarchy = cv2.findContours(
-                texture_edge_binary,
-                cv2.RETR_LIST,
-                cv2.CHAIN_APPROX_NONE,
-            )
-
-            # initialize mask of  edge texture
-            texture_edge_mask = np.zeros_like(texture_edge, dtype="uint8")
-
-            # find largest inner contour as edge texture
-            for contour in contours:
-                x0, y0, width, height = cv2.boundingRect(contour)
-                area = cv2.contourArea(contour)
-                if area > (ysize * xsize * 0.6) and width != xsize and height != ysize:
-                    texture_edge_mask = cv2.drawContours(texture_edge_mask, [contour], -1, (255), cv2.FILLED)
-                    break
-
-            # remove area outside edge texture
-            texture[texture_edge_mask <= 0] = 0
-
-        # generate curvy edge texture
-        else:
-            texture_edge = generate_curvy_edge_texture(texture.shape[1], texture.shape[0])
+        # randomize edge texture type
+        edge_type = random.choice(["curvy_edge", "broken_edge"])
+        texture_edge = texture_generator(
+            texture_type=edge_type,
+            texture_width=xsize,
+            texture_height=ysize,
+            quilt_texture=0,
+        )
+        if edge_type == "curvy_edge":
+            # blend edge into texture
             texture = cv2.multiply(texture, texture_edge, scale=1 / 255)
+        else:
+            # remove area outside edge texture
+            texture[texture_edge <= 0] = 0
 
         # randomly crop 1 or 2 side of edge
         crop_x = int(xsize / 20)
