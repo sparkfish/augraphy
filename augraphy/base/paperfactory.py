@@ -115,7 +115,8 @@ class PaperFactory(Augmentation):
         ysize, xsize = image.shape[:2]
 
         # randomize texture type
-        texture_type = random.choice(["normal", "strange", "rough_stains", "fine_stains", "granular"])
+        texture_type = random.choice(["normal", "strange", "rough_stains", "fine_stains", "severe_stains", "granular"])
+
         # generate texture
         texture = texture_generator(
             texture_type=texture_type,
