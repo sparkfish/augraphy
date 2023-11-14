@@ -313,6 +313,58 @@ class TextureGenerator:
 
         return wave_grid_output
 
+    def generate_granular_texture2(self, oxsize, oysize):
+        """Generate random granular texture using additive Median filter.
+
+        :param oxsize: The width of the output texture image.
+        :type oxsize: int
+        :param oysize: The height of the output texture image.
+        :type oysize: int
+        """
+
+        # fixed internal resolution
+        ysize, xsize = 500, 500
+
+        number_granules = 800
+        granule_max_size = int(min(xsize, ysize) / 20)
+
+        wave_grid_output = np.zeros((ysize, xsize), dtype="float")
+
+        for _ in range(10):
+            wave_grid = np.zeros((ysize, xsize), dtype="float")
+            for _ in range(number_granules):
+                y = np.random.randint(0, ysize)
+                x = np.random.randint(0, xsize)
+                intensity = np.random.randint(0, 25)  # Intensity of the spot
+                granule_size = random.randint(1, granule_max_size)
+                wave_grid[y : y + granule_size, x : x + granule_size] += intensity
+
+            wave_grid_output += cv2.medianBlur(np.uint8(wave_grid), 9).astype("float")
+
+        wave_grid_output = np.uint8(wave_grid_output)
+        wave_grid_output = cv2.GaussianBlur(wave_grid_output, (5, 5), 0)
+        wave_grid_output = wave_grid_output[50:-50, 50:-50]
+
+        # remove frequency > 10
+        frequency = 10
+        wave_grid_output = self.remove_frequency(wave_grid_output, frequency=frequency)
+
+        # remove dark area
+        wave_grid_output_brighten = (wave_grid_output.astype("float")) * 10
+        wave_grid_output_brighten[wave_grid_output_brighten > 255] = 255
+        wave_grid_output_brighten = np.uint8(wave_grid_output_brighten)
+
+        # update dark area to brighten area
+        min_brightness = 240
+        wave_grid_output[wave_grid_output < min_brightness] = wave_grid_output_brighten[
+            wave_grid_output < min_brightness
+        ]
+
+        # resize to output size
+        wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
+
+        return wave_grid_output
+
     def generate_curvy_edge_texture(self, oxsize, oysize):
         """Generate a masked of curves based edge texture using FFT.
 
@@ -819,7 +871,11 @@ class TextureGenerator:
         elif texture_type == "severe_stains":
             image_texture = self.generate_severe_stains_texture(texture_width, texture_height)
         elif texture_type == "granular":
-            image_texture = self.generate_granular_texture(texture_width, texture_height)
+            granular_method = random.choice([1, 2])
+            if granular_method == 1:
+                image_texture = self.generate_granular_texture(texture_width, texture_height)
+            elif granular_method == 2:
+                image_texture = self.generate_granular_texture2(texture_width, texture_height)
         elif texture_type == "curvy_edge":
             image_texture = self.generate_curvy_edge_texture(texture_width, texture_height)
         else:
