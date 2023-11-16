@@ -238,9 +238,12 @@ class TextureGenerator:
             rresolutions=(0.95, 0.95),
             rA=(5, 15),
             rf=(0.01, 0.03),
-            rp=(0, 2 * np.pi),
-            rkx=(-1, 1),
-            rky=(-1, 1),
+            srp=(0, 2 * np.pi),
+            srkx=(-1, 1),
+            srky=(-1, 1),
+            crp=(0, 2 * np.pi),
+            crkx=(-1, 1),
+            crky=(-1, 1),
         )
 
         # blur to smoothen texture
@@ -276,9 +279,12 @@ class TextureGenerator:
             rresolutions=(0.95, 0.95),
             rA=(5, 15),
             rf=(0.01, 0.02),
-            rp=(0, 2 * np.pi),
-            rkx=(-1, 1),
-            rky=(-1, 1),
+            srp=(0, 2 * np.pi),
+            srkx=(-1, 1),
+            srky=(-1, 1),
+            crp=(0, 2 * np.pi),
+            crkx=(-1, 1),
+            crky=(-1, 1),
         )
 
         # blur to smoothen texture
@@ -402,14 +408,15 @@ class TextureGenerator:
 
         # create single directional gradient effect
         direction = random.choice([0, 1, 2, 3])
+        offset = random.randint(1, 3)
         if direction == 0:
-            wave_grid_output = wave_grid_output[2:, :] - wave_grid_output[:-2, :]
+            wave_grid_output = wave_grid_output[offset:, :] - wave_grid_output[:-offset, :]
         elif direction == 1:
-            wave_grid_output = wave_grid_output[:-2, :] - wave_grid_output[2:, :]
+            wave_grid_output = wave_grid_output[:-offset, :] - wave_grid_output[offset:, :]
         elif direction == 2:
-            wave_grid_output = wave_grid_output[:, 2:] - wave_grid_output[:, :-2]
+            wave_grid_output = wave_grid_output[:, offset:] - wave_grid_output[:, :-offset]
         else:
-            wave_grid_output = wave_grid_output[:, :-2] - wave_grid_output[:, 2:]
+            wave_grid_output = wave_grid_output[:, :-offset] - wave_grid_output[:, offset:]
 
         # rescale into 0-1
         wave_grid_output = (wave_grid_output - wave_grid_output.min()) / (
@@ -436,6 +443,55 @@ class TextureGenerator:
 
         return wave_grid_output
 
+    def generate_granular_texture4(self, oxsize, oysize):
+        """Generate random granular texture using single directional gradient on gaussian noise.
+
+        :param oxsize: The width of the output texture image.
+        :type oxsize: int
+        :param oysize: The height of the output texture image.
+        :type oysize: int
+        """
+
+        # fixed internal resolution
+        ysize, xsize = 1000, 1000
+
+        # generate random gaussian noise
+        wave_grid_output = np.zeros((ysize, xsize), dtype="uint8")
+        for i in range(10):
+            wave_grid_output += cv2.GaussianBlur(
+                np.random.randint(188, 255, size=(ysize, xsize), dtype="uint8"),
+                (9, 9),
+                0,
+            )
+        wave_grid_output = cv2.GaussianBlur(wave_grid_output, (3, 3), 0)
+
+        # remove frequency > 10
+        frequency = 10
+        wave_grid_output = self.remove_frequency(wave_grid_output, frequency=frequency)
+
+        # create single directional gradient effect
+        offset = random.randint(2, 4)
+        wave_grid_output = wave_grid_output[offset:, :] - wave_grid_output[:-offset, :]
+
+        # rescale into 0-1
+        wave_grid_output = (wave_grid_output - wave_grid_output.min()) / (
+            wave_grid_output.max() - wave_grid_output.min()
+        )
+
+        # rescale to new range
+        new_max = 255
+        new_min = random.randint(220, 250)
+        wave_grid_output = wave_grid_output * (new_max - new_min) + new_min
+        wave_grid_output = np.uint8(wave_grid_output)
+
+        # smooth the texture
+        wave_grid_output = cv2.GaussianBlur(wave_grid_output, (9, 9), 0)
+
+        # resize to output size
+        wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
+
+        return wave_grid_output
+
     def generate_curvy_edge_texture(self, oxsize, oysize):
         """Generate a masked of curves based edge texture using FFT.
 
@@ -451,13 +507,16 @@ class TextureGenerator:
             xsize,
             ysize,
             f_iterations=(1, 1),
-            g_iterations=(1, 1),
+            g_iterations=(2, 4),
             rresolutions=(0.95, 0.95),
             rA=(5, 15),
             rf=(0.05, 0.1),
-            rp=(0, 2 * np.pi),
-            rkx=(-1, 1),
-            rky=(-1, 1),
+            srp=(0, 2 * np.pi),
+            srkx=(-1, 1),
+            srky=(-1, 1),
+            crp=(0, 2 * np.pi),
+            crkx=(-1, 1),
+            crky=(-1, 1),
         )
 
         # blur to smoothen texture
@@ -500,9 +559,12 @@ class TextureGenerator:
             rresolutions=(0.95, 0.95),
             rA=(5, 15),
             rf=(0.01, 0.02),
-            rp=(0, 2 * np.pi),
-            rkx=(-1, 1),
-            rky=(-1, 1),
+            srp=(0, 2 * np.pi),
+            srkx=(-1, 1),
+            srky=(-1, 1),
+            crp=(0, 2 * np.pi),
+            crkx=(-1, 1),
+            crky=(-1, 1),
         )
 
         wave_grid_output += self.generate_normal_texture(ysize, xsize, 1, value=255, sigma=1, turbulence=2)
@@ -579,7 +641,22 @@ class TextureGenerator:
 
         return wave_grid_output
 
-    def generate_FFT_grid(self, xsize, ysize, f_iterations, g_iterations, rresolutions, rA, rf, rp, rkx, rky):
+    def generate_FFT_grid(
+        self,
+        xsize,
+        ysize,
+        f_iterations,
+        g_iterations,
+        rresolutions,
+        rA,
+        rf,
+        srp,
+        srkx,
+        srky,
+        crp,
+        crkx,
+        crky,
+    ):
         """Generate random wave grid, process it in FFT and convert it back into spatial domain.
 
         :param xsize: The width of the output image.
@@ -596,13 +673,18 @@ class TextureGenerator:
         :type rA: tuple
         :param rf: Tuple of floats in determining the frequency of waves.
         :type rf tuple
-        :param rp: Tuple of floats in determining the phase of waves.
-        :type rp tuple
-        :param rkx: Tuple of floats in determining the x-component of wave vector.
-        :type rkx tuple
-        :param rky: Tuple of floats in determining the y-component of wave vector.
-        :type rky tuple
-
+        :param srp: Tuple of floats in determining the phase of sine waves.
+        :type srp tuple
+        :param srkx: Tuple of floats in determining the x-component of sine wave vector.
+        :type srkx tuple
+        :param srky: Tuple of floats in determining the y-component of sine wave vector.
+        :type srky tuple
+        :param crp: Tuple of floats in determining the phase of cosine waves.
+        :type crp tuple
+        :param crkx: Tuple of floats in determining the x-component of cosine wave vector.
+        :type crkx tuple
+        :param crky: Tuple of floats in determining the y-component of cosine wave vector.
+        :type crky tuple
         """
 
         wave_grid_output = np.zeros((ysize, xsize), dtype="uint8")
@@ -624,12 +706,15 @@ class TextureGenerator:
                     y_grid,
                     xsize,
                     ysize,
-                    iterations=(2, 4),
+                    iterations=g_iterations,
                     rA=rA,
                     rf=rf,
-                    rp=rp,
-                    rkx=rkx,
-                    rky=rky,
+                    srp=srp,
+                    srkx=srkx,
+                    srky=srky,
+                    crp=crp,
+                    crkx=crkx,
+                    crky=crky,
                 )
 
                 # Compute the FFT of the wave heights, shift the zero-frequency component to the center and then sum them
@@ -652,7 +737,7 @@ class TextureGenerator:
 
         return wave_grid_output
 
-    def generate_wave_grid(self, xgrid, ygrid, xsize, ysize, iterations, rA, rf, rp, rkx, rky):
+    def generate_wave_grid(self, xgrid, ygrid, xsize, ysize, iterations, rA, rf, srp, srkx, srky, crp, crkx, crky):
         """Create grid of waves using heights of sine and cosine waves.
 
         :param xgrid: The x coordinates grid.
@@ -669,12 +754,18 @@ class TextureGenerator:
         :type rA: tuple
         :param rf: Tuple of floats in determining the frequency of waves.
         :type rf tuple
-        :param rp: Tuple of floats in determining the phase of waves.
-        :type rp tuple
-        :param rkx: Tuple of floats in determining the x-component of wave vector.
-        :type rkx tuple
-        :param rky: Tuple of floats in determining the y-component of wave vector.
-        :type rky tuple
+        :param srp: Tuple of floats in determining the phase of sine waves.
+        :type srp tuple
+        :param srkx: Tuple of floats in determining the x-component of sine wave vector.
+        :type srkx tuple
+        :param srky: Tuple of floats in determining the y-component of sine wave vector.
+        :type srky tuple
+        :param crp: Tuple of floats in determining the phase of cosine waves.
+        :type crp tuple
+        :param crkx: Tuple of floats in determining the x-component of cosine wave vector.
+        :type crkx tuple
+        :param crky: Tuple of floats in determining the y-component of cosine wave vector.
+        :type crky tuple
         """
 
         # iterations for adding waves
@@ -686,17 +777,17 @@ class TextureGenerator:
             # Calculate the wave height using a sine function
             A = np.random.uniform(rA[0], rA[1])  # Amplitude
             f = np.random.uniform(rf[0], rf[1])  # Frequency
-            p = np.random.uniform(rp[0], rp[1])  # Phase
-            kx = np.random.uniform(rkx[0], rkx[1])  # x-component of wave vector
-            ky = np.random.uniform(rky[0], rky[1])  # y-component of wave vector
+            p = np.random.uniform(srp[0], srp[1])  # Phase
+            kx = np.random.uniform(srkx[0], srkx[1])  # x-component of wave vector
+            ky = np.random.uniform(srky[0], srky[1])  # y-component of wave vector
             h_sine = A * np.sin(2 * np.pi * (f * (kx * xgrid + ky * ygrid) - p))
 
             # Calculate the wave height using a cosine function
             A = np.random.uniform(rA[0], rA[1])  # Amplitude
             f = np.random.uniform(rf[0], rf[1])  # Frequency
-            p = np.random.uniform(rp[0], rp[1])  # Phase
-            kx = np.random.uniform(rkx[0], rkx[1])  # x-component of wave vector
-            ky = np.random.uniform(rky[0], rky[1])  # y-component of wave vector
+            p = np.random.uniform(crp[0], crp[1])  # Phase
+            kx = np.random.uniform(crkx[0], crkx[1])  # x-component of wave vector
+            ky = np.random.uniform(crky[0], crky[1])  # y-component of wave vector
             h_cosine = A * np.cos(2 * np.pi * (f * (kx * xgrid + ky * ygrid) - p))
 
             # combine heights from sine and cosine
@@ -942,13 +1033,15 @@ class TextureGenerator:
         elif texture_type == "severe_stains":
             image_texture = self.generate_severe_stains_texture(texture_width, texture_height)
         elif texture_type == "granular":
-            granular_method = random.choice([1, 2, 3])
+            granular_method = random.choice([1, 2, 3, 4])
             if granular_method == 1:
                 image_texture = self.generate_granular_texture(texture_width, texture_height)
             elif granular_method == 2:
                 image_texture = self.generate_granular_texture2(texture_width, texture_height)
             elif granular_method == 3:
                 image_texture = self.generate_granular_texture3(texture_width, texture_height)
+            elif granular_method == 4:
+                image_texture = self.generate_granular_texture4(texture_width, texture_height)
         elif texture_type == "curvy_edge":
             image_texture = self.generate_curvy_edge_texture(texture_width, texture_height)
         else:
