@@ -384,7 +384,7 @@ class TextureGenerator:
         ysize, xsize = 1000, 1000
 
         number_granules = 800
-        granule_min_size = np.floor(min(xsize, ysize) / 500)
+        granule_min_size = np.floor(min(xsize, ysize) / 600)
         granule_max_size = np.ceil(min(xsize, ysize) / 495)
 
         wave_grid_output = np.zeros((ysize, xsize), dtype="float")
@@ -486,6 +486,90 @@ class TextureGenerator:
 
         # smooth the texture
         wave_grid_output = cv2.GaussianBlur(wave_grid_output, (9, 9), 0)
+
+        # resize to output size
+        wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
+
+        return wave_grid_output
+
+    def generate_granular_texture5(self, oxsize, oysize):
+        """Generate random granular texture using single directional gradient and stacking largest dots to smallest dots.
+
+        :param oxsize: The width of the output texture image.
+        :type oxsize: int
+        :param oysize: The height of the output texture image.
+        :type oysize: int
+        """
+
+        """Generate random granular texture using single directional gradient on dots of filled circle.
+
+        :param oxsize: The width of the output texture image.
+        :type oxsize: int
+        :param oysize: The height of the output texture image.
+        :type oysize: int
+        """
+
+        # fixed internal resolution
+        ysize, xsize = 1000, 1000
+
+        number_granules = 500
+        granule_min_size = np.floor(min(xsize, ysize) / 10)
+        granule_max_size = np.ceil(min(xsize, ysize) / 5)
+
+        wave_grid_output = np.zeros((ysize, xsize), dtype="float")
+
+        for _ in range(50):
+            intensity = np.random.randint(1, 2)  # Intensity of the spot
+            wave_grid = np.zeros((ysize, xsize), dtype="float")
+            for _ in range(number_granules):
+                y = np.random.randint(0, ysize)
+                x = np.random.randint(0, xsize)
+
+                granule_size = random.randint(granule_min_size, granule_max_size)
+                cv2.circle(wave_grid, (x, y), granule_size, intensity, thickness=-1)
+
+            wave_grid_output += wave_grid
+
+            # reduce granule size
+            granule_min_size = np.floor(granule_min_size * 0.9)
+            granule_max_size = np.ceil(granule_max_size * 0.9)
+
+        # stack images to create more dots effect
+        wave_grid_output2 = np.fliplr(wave_grid_output) + np.flipud(wave_grid_output)
+        wave_grid_output3 = np.fliplr(wave_grid_output2) + np.flipud(wave_grid_output2)
+        wave_grid_output = np.fliplr(wave_grid_output3) + np.flipud(wave_grid_output3)
+
+        # create single directional gradient effect
+        direction = random.choice([0, 1, 2, 3])
+        offset = random.randint(1, 3)
+        if direction == 0:
+            wave_grid_output = wave_grid_output[offset:, :] - wave_grid_output[:-offset, :]
+        elif direction == 1:
+            wave_grid_output = wave_grid_output[:-offset, :] - wave_grid_output[offset:, :]
+        elif direction == 2:
+            wave_grid_output = wave_grid_output[:, offset:] - wave_grid_output[:, :-offset]
+        else:
+            wave_grid_output = wave_grid_output[:, :-offset] - wave_grid_output[:, offset:]
+
+        # rescale into 0-1
+        wave_grid_output = (wave_grid_output - wave_grid_output.min()) / (
+            wave_grid_output.max() - wave_grid_output.min()
+        )
+
+        # convert to uint8
+        wave_grid_output = np.uint8(wave_grid_output * 255)
+        wave_grid_output = cv2.GaussianBlur(wave_grid_output, (5, 5), 0)
+
+        # remove dark area
+        wave_grid_output_brighten = (wave_grid_output.astype("float")) * 1.75
+        wave_grid_output_brighten[wave_grid_output_brighten > 255] = 255
+        wave_grid_output_brighten = np.uint8(wave_grid_output_brighten)
+
+        # update dark area to brighten area
+        min_brightness = 230
+        wave_grid_output[wave_grid_output < min_brightness] = wave_grid_output_brighten[
+            wave_grid_output < min_brightness
+        ]
 
         # resize to output size
         wave_grid_output = cv2.resize(wave_grid_output, (oxsize, oysize), interpolation=cv2.INTER_LINEAR)
@@ -1033,7 +1117,7 @@ class TextureGenerator:
         elif texture_type == "severe_stains":
             image_texture = self.generate_severe_stains_texture(texture_width, texture_height)
         elif texture_type == "granular":
-            granular_method = random.choice([1, 2, 3, 4])
+            granular_method = random.choice([1, 2, 3, 4, 5])
             if granular_method == 1:
                 image_texture = self.generate_granular_texture(texture_width, texture_height)
             elif granular_method == 2:
@@ -1042,6 +1126,8 @@ class TextureGenerator:
                 image_texture = self.generate_granular_texture3(texture_width, texture_height)
             elif granular_method == 4:
                 image_texture = self.generate_granular_texture4(texture_width, texture_height)
+            elif granular_method == 5:
+                image_texture = self.generate_granular_texture5(texture_width, texture_height)
         elif texture_type == "curvy_edge":
             image_texture = self.generate_curvy_edge_texture(texture_width, texture_height)
         else:
