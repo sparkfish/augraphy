@@ -384,11 +384,6 @@ class PaperFactory(Augmentation):
             else:
                 texture = self.generate_random_texture(image)
 
-            from matplotlib import pyplot as plt
-
-            plt.figure()
-            plt.imshow(texture)
-
             # blend multiple textures
             if blend_texture:
                 # get another image as texture
