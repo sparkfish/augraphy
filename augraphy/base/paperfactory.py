@@ -396,11 +396,6 @@ class PaperFactory(Augmentation):
                 else:
                     new_texture = self.generate_random_texture(texture)
 
-                from matplotlib import pyplot as plt
-
-                plt.figure()
-                plt.imshow(new_texture)
-
                 # resize for size consistency between both textures
                 new_texture = cv2.resize(
                     new_texture,
