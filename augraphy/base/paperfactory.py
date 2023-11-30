@@ -45,6 +45,10 @@ class PaperFactory(Augmentation):
     :param blend_texture: Flag to blend multiple textures.
         Use "random" for random choice.
     :type blend_texture: int or string, optional
+    :param blend_texture_path: Directory location to pull the paper textures for texture blending purpose.
+    :type blend_texture_path: string, optional
+    :param blend_generate_texture: Flag to enable the generation of blending textures instead of reading it from directory.
+    :type blend_generate_texture: int, optional
     :param blend_texture_background_type: Types of background texture for secondary blending texture.
         The primary background blending texture will be retrieved from "generate_texture_background_type".
     :type blend_texture_background_type: string, optional
@@ -65,6 +69,8 @@ class PaperFactory(Augmentation):
         generate_texture_edge_type="random",
         texture_enable_color="random",
         blend_texture="random",
+        blend_texture_path="./paper_textures",
+        blend_generate_texture=0,
         blend_texture_background_type="random",
         blend_texture_edge_type="random",
         blend_method="ink_to_paper",
@@ -78,12 +84,16 @@ class PaperFactory(Augmentation):
         self.generate_texture_edge_type = generate_texture_edge_type
         self.texture_enable_color = texture_enable_color
         self.blend_texture = blend_texture
+        self.blend_texture_path = blend_texture_path
+        self.blend_generate_texture = blend_generate_texture
         self.blend_texture_background_type = blend_texture_background_type
         self.blend_texture_edge_type = blend_texture_edge_type
         self.blend_method = blend_method
         self.texture_file_names = []
-        self.texture_file_name = None
         self.paper_textures = list()
+        self.blend_texture_file_names = []
+        self.blend_paper_textures = list()
+
         # read texture from directory if texture genetation is disabled
         if not self.generate_texture:
             for file in glob.glob(f"{texture_path}/*"):
@@ -101,26 +111,40 @@ class PaperFactory(Augmentation):
 
                     self.paper_textures.append(cv2.imread(file))
 
+        if self.blend_texture and not self.blend_generate_texture:
+            for file in glob.glob(f"{blend_texture_path}/*"):
+                texture = cv2.imread(file)
+                self.blend_texture_file_names.append(os.path.basename(file))
+                # prevent invalid image file
+                if hasattr(texture, "dtype") and texture.dtype == np.uint8:
+
+                    if len(texture.shape) > 2 and texture.shape[2] == 4:
+                        texture = cv2.cvtColor(texture, cv2.COLOR_BGRA2BGR)
+                    elif len(texture.shape) > 2 and texture.shape[2] == 3:
+                        pass
+                    else:
+                        texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
+
+                    self.blend_paper_textures.append(cv2.imread(file))
+
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(texture_path={self.texture_path},generate_texture={self.generate_texture},generate_texture_background_type={self.generate_texture_background_type},generate_texture_edge_type={self.generate_texture_edge_type},texture_enable_color={self.texture_enable_color},blend_texture={self.blend_texture}, blend_texture_background_type={self.blend_texture_background_type}, blend_texture_edge_type={self.blend_texture_edge_type}, blend_method={self.blend_method}, p={self.p})"
+        return f"PaperFactory(texture_path={self.texture_path},generate_texture={self.generate_texture},generate_texture_background_type={self.generate_texture_background_type},generate_texture_edge_type={self.generate_texture_edge_type},texture_enable_color={self.texture_enable_color},blend_texture={self.blend_texture}, blend_texture_path={self.blend_texture_path},blend_generate_texture={self.blend_generate_texture},blend_texture_background_type={self.blend_texture_background_type}, blend_texture_edge_type={self.blend_texture_edge_type}, blend_method={self.blend_method}, p={self.p})"
 
-    def retrieve_texture(self, image):
+    def retrieve_texture(self, image, fblend):
         """Retrieve image texture from the input texture path.
 
         :param image: The input image.
         :type image: numpy array
         """
         shape = image.shape
-        random_index = random.randint(0, len(self.paper_textures) - 1)
-        texture = self.paper_textures[random_index]
+        if fblend:
+            paper_textures = self.blend_paper_textures
+        else:
+            paper_textures = self.paper_textures
+        random_index = random.randint(0, len(paper_textures) - 1)
+        texture = paper_textures[random_index]
         texture = np.rot90(texture, random.randint(1, 4))
-        self.texture_file_name = self.texture_file_names[random_index]
-        # reset file names and textures
-        """
-        self.texture_file_names = []
-        self.paper_textures = []
-        """
 
         # check for edge
         texture = self.check_paper_edges(texture)
@@ -422,7 +446,7 @@ class PaperFactory(Augmentation):
             # get texture from paper
             if len(self.paper_textures) > 0:
                 # get image texture
-                texture = self.retrieve_texture(image)
+                texture = self.retrieve_texture(image, 0)
             # generate random mask as texture
             else:
                 texture = self.generate_random_texture(image, 0)
@@ -430,8 +454,8 @@ class PaperFactory(Augmentation):
             # blend multiple textures
             if blend_texture:
                 # get another image as texture
-                if len(self.paper_textures) > 0:
-                    new_texture = self.retrieve_texture(texture)
+                if len(self.blend_paper_textures) > 0:
+                    new_texture = self.retrieve_texture(texture, 1)
                     if len(new_texture.shape) < 3 and len(texture.shape) > 2:
                         new_texture = cv2.cvtColor(new_texture, cv2.COLOR_GRAY2BGR)
                     elif len(new_texture.shape) > 2 and len(texture.shape) < 3:
