@@ -74,7 +74,7 @@ class InkColorSwap(Augmentation):
     def __repr__(self):
         return f"InkColorSwap(ink_swap_color={self.ink_swap_color}, ink_swap_sequence_number_range={self.ink_swap_sequence_number_range}, ink_swap_min_width_range={self.ink_swap_min_width_range}, ink_swap_max_width_range={self.ink_swap_max_width_range}, ink_swap_min_height_range={self.ink_swap_min_height_range}, ink_swap_max_height_range={self.ink_swap_max_height_range}, ink_swap_min_area_range={self.ink_swap_min_area_range}, ink_swap_max_area_range={self.ink_swap_max_area_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             image = image.copy()
@@ -193,8 +193,15 @@ class InkColorSwap(Augmentation):
             else:
                 ink_swap_color = self.ink_swap_color
 
+            # add alpha value
+            if image.shape[2] == 4:
+                ink_swap_color = (ink_swap_color[0], ink_swap_color[1], ink_swap_color[2], 255)
+
             # create a mask of swap color
             image_color = np.full_like(image, fill_value=ink_swap_color, dtype="uint8")
+            # update alpha
+            if image.shape[2] == 4:
+                image_color[:, :, 3] = image[:, :, 3].copy()
 
             # blend image with swap color
             image_color = cv2.addWeighted(image, 1.0, image_color, 1.0, 0)
@@ -206,4 +213,14 @@ class InkColorSwap(Augmentation):
             if is_gray:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

@@ -52,11 +52,18 @@ class SectionShift(Augmentation):
     def __repr__(self):
         return f"SectionShift(section_shift_number_range={self.section_shift_number_range}, section_shift_locations={self.section_shift_locations}, section_shift_x_range={self.section_shift_x_range}, section_shift_y_range={self.section_shift_y_range},  section_shift_fill_value={self.section_shift_fill_value}, p={self.p})"
 
-    def apply_shift(self, image, shift_box, section_shift_x, section_shift_y):
+    def apply_shift(self, image, mask, keypoints, bounding_boxes, shift_box, section_shift_x, section_shift_y):
         """Core function to shift section of image based on the input box and shifting values.
 
         :param image: The input image.
         :type image: numpy array
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
         :param shift_box: Tuple contains the box of the shifting location in format of x0, y0, xn, yn.
         :type shift_box: tuple
         :param section_shift_x: The shifting value in horizontal direction.
@@ -82,19 +89,56 @@ class SectionShift(Augmentation):
 
         # the section of shifted image
         image_section = image[y0:yn, x0:xn].copy()
+        if mask is not None:
+            mask_section = mask[y0:yn, x0:xn].copy()
 
         # fill the shifted area with value
         if self.section_shift_fill_value != -1:
             if self.section_shift_fill_value == "random":
-                image[y0:yn, x0:xn] = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                fill_value = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
             else:
-                image[y0:yn, x0:xn] = self.section_shift_fill_value
+                fill_value = self.section_shift_fill_value
+            # add alpha value
+            if image.shape[2] == 4:
+                fill_value = (fill_value[0], fill_value[1], fill_value[2], 255)
+            image[y0:yn, x0:xn] = fill_value
+            # fill mask shifted area with 0
+            if mask is not None:
+                mask[y0:yn, x0:xn] = 0
 
         # shift the section of image
         image[y0 + section_shift_y : yn + section_shift_y, x0 + section_shift_x : xn + section_shift_x] = image_section
 
+        # shift mask
+        if mask is not None:
+            mask[
+                y0 + section_shift_y : yn + section_shift_y,
+                x0 + section_shift_x : xn + section_shift_x,
+            ] = mask_section
+
+        # shift keypoints inside the shifting boundary
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    if xpoint >= x0 and xpoint < xn and ypoint >= y0 and ypoint < yn:
+                        points[i] = [xpoint + section_shift_x, ypoint + section_shift_y]
+
+        # shift bounding boxes inside the shifting boundary
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                # start point is in the box
+                if xspoint >= x0 and xspoint < xn and yspoint >= y0 and yspoint < yn:
+                    xspoint += section_shift_x
+                    yspoint += section_shift_y
+                # end point is in the box
+                if xepoint >= x0 and xepoint < xn and yepoint >= y0 and yepoint < yn:
+                    xepoint += section_shift_x
+                    yepoint += section_shift_y
+                bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
@@ -181,10 +225,20 @@ class SectionShift(Augmentation):
                     shift_box[3] = ysize - abs(section_shift_height_size) - 1
 
                 # apply section shift
-                self.apply_shift(image, shift_box, section_shift_x, section_shift_y)
+                self.apply_shift(image, mask, keypoints, bounding_boxes, shift_box, section_shift_x, section_shift_y)
 
             # return image follows the input image color channel
             if is_gray:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

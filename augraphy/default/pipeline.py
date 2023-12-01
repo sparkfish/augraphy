@@ -293,7 +293,7 @@ def default_augraphy_pipeline():
         OneOf(
             [
                 BadPhotoCopy(
-                    mask=None,
+                    noise_mask=None,
                     noise_type=-1,
                     noise_side="random",
                     noise_iteration=(1, 2),

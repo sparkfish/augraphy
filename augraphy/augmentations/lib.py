@@ -49,64 +49,134 @@ def load_image_from_cache(random_image=0):
         return None
 
 
-# Adapted from this link:
-# # https://stackoverflow.com/questions/51646185/how-to-generate-a-paper-like-background-with-opencv
-def generate_noise(xsize, ysize, channel, ratio=1, sigma=1):
-    """Generate noises through normal distribution.
+@jit(nopython=True, cache=True, parallel=True)
+def rotate_point(xpoint, ypoint, xcenter, ycenter, angle):
+    """Rotate point around an origin based on the provided angle in clockwise direction.
 
-    :param xsize: The width of the generated noise.
-    :type xsize: int
-    :param ysize: The height of the generated noise.
-    :type ysize: int
-    :param ratio: The size of generated noise pattern.
-    :type ratio: int
-    :param sigma: The bounds of noise fluctuations.
-    :type sigma: float
+    :param xpoint: The x coordinate of input point.
+    :type xpoint: int
+    :param ypoint: The y coordinate of input point.
+    :type ypoint: int
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
     """
 
-    new_ysize = int(ysize / ratio)
-    new_xsize = int(xsize / ratio)
-    result = np.random.normal(0, sigma, (new_xsize, new_ysize, channel))
-    if ratio != 1:
-        result = cv2.resize(result, dsize=(xsize, ysize), interpolation=cv2.INTER_LINEAR)
-    return result.reshape((ysize, xsize, channel))
+    angle_radian = np.deg2rad(angle)
+
+    rotated_xpoint = xcenter + (
+        (np.cos(angle_radian) * (xpoint - xcenter)) - (np.sin(angle_radian) * (ypoint - ycenter))
+    )
+    rotated_ypoint = ycenter + (
+        (np.sin(angle_radian) * (xpoint - xcenter)) + (np.cos(angle_radian) * (ypoint - ycenter))
+    )
+
+    return rotated_xpoint, rotated_ypoint
 
 
-def generate_texture(ysize, xsize, channel, value=255, sigma=1, turbulence=2):
-    """Generate random texture through multiple iterations of noise addition.
+def rotate_keypoints(keypoints, xcenter, ycenter, x_offset, y_offset, angle):
+    """Rotate keypoints around an origin based on the provided angle.
 
-    :param xsize: The width of the generated noise.
-    :type xsize: int
-    :param ysize: The height of the generated noise.
-    :type ysize: int
-    :param channel: The number of channel in the generated noise.
-    :type channel: int
-    :param value: The initial value of the generated noise.
-    :type value: int
-    :param sigma: The bounds of noise fluctuations.
-    :type sigma: float
-    :param turbulence: The value to define how quickly big patterns will be replaced with the small ones.
-    :type turbulence: int
-
+    :param keypoints: The input keypoints.
+    :type keypoints: dictionary
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param x_offset: The relative x offset after the rotation.
+    :type x_offset: int
+    :param y_offset: The relative y offset after the rotation.
+    :type y_offset: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
     """
-    image_output = np.full((ysize, xsize, channel), fill_value=value, dtype="float")
-    ratio = min(xsize, ysize)
-    while ratio != 1:
-        image_output += generate_noise(xsize, ysize, channel, ratio, sigma=sigma)
-        ratio = (ratio // turbulence) or 1
-    image_output = np.clip(image_output, 0, 255)
 
-    # get single channel image
-    if channel == 1:
-        image_output = image_output[:, :, 0]
+    # rotate each label
+    for name, points in keypoints.items():
+        for i, (xpoint, ypoint) in enumerate(points):
+            # use - fold_angle because image are rotated anticlockwise
+            rotated_xpoint, rotated_ypoint = rotate_point(xpoint, ypoint, xcenter, ycenter, angle)
+            points[i] = [round(rotated_xpoint + x_offset), round(rotated_ypoint + y_offset)]
 
-    new_min = 32
-    new_max = 255
-    image_output = ((image_output - np.min(image_output)) / (np.max(image_output) - np.min(image_output))) * (
-        new_max - new_min
-    ) + new_min
 
-    return image_output.astype("uint8")
+def rotate_bounding_boxes(bounding_boxes, xcenter, ycenter, x_offset, y_offset, angle):
+    """Rotate bounding boxes around an origin based on the provided angle.
+
+    :param bounding_boxes: The input bounding boxes.
+    :type bounding_boxes: list
+    :param xcenter: The x origin point.
+    :type xcenter: int
+    :param ycenter: The y origin point.
+    :type ycenter: int
+    :param x_offset: The relative x offset after the rotation.
+    :type x_offset: int
+    :param y_offset: The relative y offset after the rotation.
+    :type y_offset: int
+    :param angle: The angle of rotation in degree.
+    :type angle: int
+    """
+
+    for i, bounding_box in enumerate(bounding_boxes):
+        xspoint, yspoint, xepoint, yepoint = bounding_box
+        width = xepoint - xspoint
+        height = yepoint - yspoint
+        # based on start point (x0, y0) only
+        rotated_xspoint, rotated_yspoint = rotate_point(xspoint, yspoint, xcenter, ycenter, angle)
+        # update box with rotated points
+        bounding_boxes[i] = [
+            round(rotated_xspoint + x_offset),
+            round(rotated_yspoint + y_offset),
+            round(rotated_xspoint + x_offset + width),
+            round(rotated_yspoint + y_offset + height),
+        ]
+
+
+def update_mask_labels(mask, mask_labels):
+    """Quantitize labels of current mask based on the input mask labels.
+
+    :param mask: The input mask.
+    :type mask: numpy array
+    :param mask_labels: A list contains input labels.
+    :type mask_labels: list
+    """
+
+    empty_indices = mask == 0
+    new_mask_labels = np.unique(mask)
+    for new_mask_label in new_mask_labels:
+        # new interpolated value, replace with old nearest value
+        if new_mask_label not in mask_labels:
+            differences = [abs(new_mask_label - mask_label) for mask_label in mask_labels]
+            min_index = np.argmin(differences)
+            mask[mask == new_mask_label] = mask_labels[min_index]
+    mask[empty_indices] = 0
+
+
+# adapted from this link:
+# https://stackoverflow.com/questions/39308030/how-do-i-increase-the-contrast-of-an-image-in-python-opencv
+def enhance_contrast(image):
+    """Enhance image contrast by applying clahe in L channel of image.
+
+    :param image: The input image.
+    :type image: numpy array
+    """
+
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    l_channel, a, b = cv2.split(lab)
+
+    # Applying CLAHE to L-channel
+    clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(32, 32))
+    cl = clahe.apply(l_channel)
+
+    # merge the CLAHE enhanced L-channel with the a and b channel
+    image_merge = cv2.merge((cl, a, b))
+
+    # Converting image from LAB Color model to BGR color space
+    enhanced_image = cv2.cvtColor(image_merge, cv2.COLOR_LAB2BGR)
+
+    return enhanced_image
 
 
 def rotate_image(mat, angle, white_background=1):
@@ -212,6 +282,7 @@ def warp_fold(
     fold_y_shift,
     side,
     backdrop_color,
+    fmask=0,
 ):
     img_fuse = img.copy()
 
@@ -235,8 +306,8 @@ def warp_fold(
         dbottom_right = [xe, ye + fold_y_shift]
 
         # image cropping points
-        cxs = fold_x
-        cxe = fold_x + fold_width_one_side
+        cxs = fold_x - fold_width_one_side
+        cxe = fold_x
         cys = 0
         cye = ysize
 
@@ -248,8 +319,8 @@ def warp_fold(
         dbottom_right = [xe, ye]
 
         # image cropping points
-        cxs = fold_x + fold_width_one_side
-        cxe = fold_x + (fold_width_one_side * 2)
+        cxs = fold_x
+        cxe = fold_x + fold_width_one_side
         cys = 0
         cye = ysize
 
@@ -267,18 +338,26 @@ def warp_fold(
     img_crop = img[cys:cye, cxs:cxe]
 
     # get image dimension of cropped image
+    cysize, cxsize = img_crop.shape[:2]
     if len(img_crop.shape) > 2:
-        cysize, cxsize, cdim = img_crop.shape
+        cdim = img_crop.shape[2]
     else:
-        cysize, cxsize = img_crop.shape
         cdim = 2
 
     # darken the folded area
-    darken_ratio = random.uniform(0.99, 1.0)
+    # no darken effect for mask
+    if not fmask:
+        darken_ratio = random.uniform(0.99, 1.0)
+        if len(img_crop.shape) > 2:
+            # skip alpha layer, no darken for alpha layer
+            for i in range(3):
+                img_crop[:, :, i] = img_crop[:, :, i] * darken_ratio
+        else:
+            img_crop * darken_ratio
 
     # warp folding area
     img_warped = four_point_transform(
-        img_crop * darken_ratio,
+        img_crop,
         source_pts,
         destination_pts,
         cxsize,
@@ -308,7 +387,17 @@ def warp_fold(
             noise_side = 1
         else:
             noise_side = 0
+
+        has_alpha = 0
+        if cdim == 4:
+            has_alpha = 1
+            img_alpha = img_warped[:, :, 3]
+            img_warped = img_warped[:, :, :3]
+
         img_warped = add_folding_noise(img_warped, noise_side, fold_noise / 2)
+
+        if has_alpha:
+            img_warped = np.dstack((img_warped, img_alpha))
 
     if cdim > 2:
         img_fuse[cys:cye, cxs:cxe, :] = img_warped[:-fold_y_shift, :, :]

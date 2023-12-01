@@ -183,11 +183,16 @@ class Markup(Augmentation):
                 lineType=cv2.LINE_AA,
             )
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
 
         # change to 3 channels BGR format
+        has_alpha = 0
         if len(image.shape) < 3:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        elif image.shape[2] == 4:
+            has_alpha = 1
+            image, image_alpha = image[:, :, :3], image[:, :, 3]
+
         markup_image = image.copy()
 
         if self.markup_color == "random":
@@ -216,7 +221,7 @@ class Markup(Augmentation):
         # Applying dilate operation to connect text lines horizontaly.
         contours, hierarchy = cv2.findContours(
             binary_image,
-            cv2.RETR_EXTERNAL,
+            cv2.RETR_LIST,
             cv2.CHAIN_APPROX_NONE,
         )  # Each line is detected as a contour.
 
@@ -400,4 +405,17 @@ class Markup(Augmentation):
 
             markup_image = ink_generator.generate_ink()
 
-        return markup_image
+        if has_alpha:
+            markup_image = np.dstack((markup_image, image_alpha))
+
+        # check for additional output of mask, keypoints and bounding boxes
+        outputs_extra = []
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            outputs_extra = [mask, keypoints, bounding_boxes]
+
+        # returns additional mask, keypoints and bounding boxes if there is additional input
+        if outputs_extra:
+            # returns in the format of [image, mask, keypoints, bounding_boxes]
+            return [markup_image] + outputs_extra
+        else:
+            return markup_image

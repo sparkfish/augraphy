@@ -272,13 +272,13 @@ class DotMatrix(Augmentation):
                             if indices[y, x]:
                                 dot_matrix_patch[y, x] = np.uint8(dot_color_patch[y, x])
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
             ysize, xsize = image.shape[:2]
 
-            # convert and make sure image is color image
+            # check and convert image into BGR format
             if len(image.shape) > 2:
                 is_gray = 0
             else:
@@ -568,4 +568,14 @@ class DotMatrix(Augmentation):
             if is_gray:
                 image_dot_matrix = cv2.cvtColor(image_dot_matrix, cv2.COLOR_BGR2GRAY)
 
-            return image_dot_matrix
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_dot_matrix] + outputs_extra
+            else:
+                return image_dot_matrix

@@ -1,4 +1,3 @@
-import math
 import random
 
 import cv2
@@ -8,6 +7,7 @@ from numba import jit
 
 from augraphy.augmentations.lib import four_point_transform
 from augraphy.augmentations.lib import load_image_from_cache
+from augraphy.augmentations.lib import update_mask_labels
 from augraphy.augmentations.pageborder import PageBorder
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.overlaybuilder import OverlayBuilder
@@ -102,7 +102,7 @@ class BookBinding(Augmentation):
         # compute mask of shadow
         img_dist = np.repeat(np.arange(cols), rows)
         img_dist = np.transpose(img_dist.reshape(cols, rows))
-        img_d = img_dist + (radius * (1 - math.cos(angle)))
+        img_d = img_dist + (radius * (1 - np.cos(np.deg2rad(angle))))
         img_mask = (img_dist / img_d) ** 2
 
         min_value = np.min(img_mask)
@@ -128,7 +128,7 @@ class BookBinding(Augmentation):
 
         return img_output.astype("uint8")
 
-    def curve_page(self, img, curve_value, backdrop_color):
+    def curve_page(self, img, curve_value, backdrop_color, mask=None, keypoints=None, bounding_boxes=None):
         """Generate curvy effect in the input image.
 
         :param img: The image to apply the function.
@@ -137,7 +137,13 @@ class BookBinding(Augmentation):
         :type curve_value: int
         :param backdrop_color: The color of the filled background.
         :type backdrop_color: tuple
-
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8), optional
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary, optional
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list, optional
         """
         rows = img.shape[0]
         cols = img.shape[1]
@@ -159,7 +165,31 @@ class BookBinding(Augmentation):
         curve_factor = (cols * 2) + (cols * 2 * curve_value / rows)
         self.curve_page_processing(img, img_output, curve_value, rows, cols, curve_factor)
 
-        return img_output
+        # apply curve to mask
+        if mask is not None:
+            mask_output = np.full((rows + curve_value, cols), fill_value=0, dtype=mask.dtype)
+            self.curve_page_processing(mask, mask_output, curve_value, rows, cols, curve_factor)
+            mask = mask_output
+
+        # apply curve processing to keypoints
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    offset_y = int(curve_value * np.sin(2 * 3.14 * xpoint / curve_factor))
+                    points[i] = [xpoint, ypoint + offset_y]
+
+        # apply curve processing to bounding boxes
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                height = yepoint - yspoint
+                offset_y = int(curve_value * np.sin(2 * 3.14 * xspoint / curve_factor))
+                bounding_boxes[i] = [xspoint, yspoint + offset_y, xepoint, yspoint + height + offset_y]
+
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            return [img_output, mask, keypoints, bounding_boxes]
+        else:
+            return img_output
 
     @staticmethod
     @jit(nopython=True, cache=True)
@@ -181,7 +211,7 @@ class BookBinding(Augmentation):
         """
         for y in range(rows):
             for x in range(cols):
-                offset_y = int(curve_value * math.sin(2 * 3.14 * x / curve_factor))
+                offset_y = int(curve_value * np.sin(2 * 3.14 * x / curve_factor))
                 offseted_y = y + offset_y
                 img_output[offseted_y, x] = img[y, x]
 
@@ -244,7 +274,15 @@ class BookBinding(Augmentation):
                 if not color_eval:
                     break
 
-    def curve_transform(self, image, curve_ratio_range, image_direction):
+    def curve_transform(
+        self,
+        image,
+        curve_ratio_range,
+        image_direction,
+        mask=None,
+        keypoints=None,
+        bounding_boxes=None,
+    ):
         """Bend image further in horizontal direction using perspective transform.
 
         :param image: The image to apply the function.
@@ -253,6 +291,13 @@ class BookBinding(Augmentation):
         :type curve_ratio: float
         :param image_direction: Flag to identify left or right side of image.
         :type image_direction: string
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8), optional
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary, optional
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list, optional
         """
 
         curve_ratio = random.uniform(curve_ratio_range[0], curve_ratio_range[1])
@@ -261,34 +306,73 @@ class BookBinding(Augmentation):
 
         # start and end points for left and right side of images
         if image_direction == "left":
+            new_curve_ratio = curve_ratio
             source_points = np.float32([[0, 0], [xsize, 0], [xsize, ysize], [0, ysize]])
             target_points = np.float32(
-                [[int(xsize * curve_ratio), 0], [xsize, 0], [xsize, ysize], [int(xsize * curve_ratio), ysize]],
+                [[int(xsize * new_curve_ratio), 0], [xsize, 0], [xsize, ysize], [int(xsize * new_curve_ratio), ysize]],
             )
         else:
+            new_curve_ratio = 1 - curve_ratio
             source_points = np.float32([[0, 0], [xsize, 0], [xsize, ysize], [0, ysize]])
             target_points = np.float32(
-                [[0, 0], [int(xsize * (1 - curve_ratio)), 0], [int(xsize * (1 - curve_ratio)), ysize], [0, ysize]],
+                [[0, 0], [int(xsize * new_curve_ratio), 0], [int(xsize * new_curve_ratio), ysize], [0, ysize]],
             )
 
         # perspective transform to further bend image in x direction only
         image_transformed = four_point_transform(image, source_points, target_points, xsize, ysize)
 
+        # transform mask
+        if mask is not None:
+            mask_labels = np.unique(mask).tolist() + [0]
+            mask = four_point_transform(mask, source_points, target_points, xsize, ysize)
+            update_mask_labels(mask, mask_labels)
+
         # crop the blank area after the transform
         if image_direction == "left":
             image_transformed = image_transformed[:, int(xsize * curve_ratio) :]
+            if mask is not None:
+                mask = mask[:, int(xsize * curve_ratio) :]
         else:
             image_transformed = image_transformed[:, : int(xsize * (1 - curve_ratio))]
+            if mask is not None:
+                mask = mask[:, : int(xsize * (1 - curve_ratio))]
 
-        return image_transformed.astype("uint8")
+        # transform keypoints
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    points[i] = [int(xpoint * new_curve_ratio), ypoint]
 
-    def curve_processing(self, image, image_left):
+        # transform bounding boxes
+        if bounding_boxes is not None:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                bounding_boxes[i] = [
+                    int(xspoint * new_curve_ratio),
+                    yspoint,
+                    int(xepoint * new_curve_ratio),
+                    yepoint,
+                ]
+
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            return [image_transformed.astype("uint8"), mask, keypoints, bounding_boxes]
+        else:
+            return image_transformed.astype("uint8")
+
+    def curve_processing(self, image, image_left, mask=None, keypoints=None, bounding_boxes=None):
         """Core function for curvy effect processing.
 
         :param image: The right image of the book binding effect.
         :type image: numpy.array (numpy.uint8)
         :param image_left: The left image of the book binding effect.
         :type image_left: numpy.array (numpy.uint8)
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8), optional
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary, optional
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list, optional
         """
 
         # min value is 1, to differentiate between background
@@ -349,9 +433,37 @@ class BookBinding(Augmentation):
             p=1,
         )
         if not curve_down:
+            iysize, ixsize = image.shape[:2]
+            # flip image
             image = np.flipud(image)
+            # flip mask
+            if mask is not None:
+                mask = np.flipud(mask)
+            # flip keypoints
+            if keypoints is not None:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xpoint, iysize - 1 - ypoint]
+            # flip bounding boxes
+            if bounding_boxes is not None:
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [
+                        xspoint,
+                        iysize - 1 - yspoint,
+                        xepoint,
+                        iysize - 1 - yepoint,
+                    ]
+
         image_shadow = self.add_book_shadow(image, radius)
-        image_added_border_right = page_border(image_shadow)
+        image_added_border_right = page_border(
+            image=image_shadow,
+            mask=mask,
+            keypoints=keypoints,
+            bounding_boxes=bounding_boxes,
+        )
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            image_added_border_right, mask, keypoints, bounding_boxes = image_added_border_right
 
         # left side of image
         # create borders
@@ -385,6 +497,7 @@ class BookBinding(Augmentation):
             pad_value_top = 0
             pad_value_bottom = pad_value
         if image_added_border_left.shape[0] > image_added_border_right.shape[0]:
+            # pad image
             image_added_border_right = np.pad(
                 image_added_border_right,
                 pad_width=((pad_value_top, pad_value_bottom), (0, 0), (0, 0)),
@@ -395,6 +508,32 @@ class BookBinding(Augmentation):
                 image_added_border_right[:pad_value_top, :] = backdrop_color
             else:
                 image_added_border_right[-pad_value_bottom:, :] = backdrop_color
+            # pad mask
+            if mask is not None:
+                mask = np.pad(
+                    mask,
+                    pad_width=((pad_value_top, pad_value_bottom), (0, 0)),
+                    mode="constant",
+                    constant_values=0,
+                )
+
+            # pad keypoints
+            if keypoints is not None and pad_value_top != 0:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xpoint, ypoint + pad_value_top]
+
+            # pad bounding boxes
+            if bounding_boxes is not None and pad_value_top != 0:
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [
+                        xspoint,
+                        yspoint + pad_value_top,
+                        xepoint,
+                        yepoint + pad_value_top,
+                    ]
+
         elif image_added_border_right.shape[0] > image_added_border_left.shape[0]:
             image_added_border_left = np.pad(
                 image_added_border_left,
@@ -408,22 +547,67 @@ class BookBinding(Augmentation):
                 image_added_border_left[-pad_value_bottom:, :] = backdrop_color
 
         # apply curvy effect
-        image_right = self.curve_page(image_added_border_right, curve_value_right, backdrop_color)
+        # right
+        image_right = self.curve_page(
+            image_added_border_right,
+            curve_value_right,
+            backdrop_color,
+            mask,
+            keypoints,
+            bounding_boxes,
+        )
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            image_right, mask, keypoints, bounding_boxes = image_right
         if not curve_down:
+            iysize, ixsize = image_right.shape[:2]
+            # flip image
             image_right = np.flipud(image_right)
+            # flip mask
+            if mask is not None:
+                mask = np.flipud(mask)
+            # flip keypoints
+            if keypoints is not None:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        points[i] = [xpoint, iysize - 1 - ypoint]
+            # flip bounding boxes
+            if bounding_boxes is not None:
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+                    bounding_boxes[i] = [
+                        xspoint,
+                        iysize - 1 - yspoint,
+                        xepoint,
+                        iysize - 1 - yepoint,
+                    ]
+        # left
         image_left = np.fliplr(self.curve_page(np.fliplr(image_added_border_left), curve_value_left, backdrop_color))
         if not curve_down:
             image_left = np.flipud(image_left)
 
         # further perspective transform
-        image_right = self.curve_transform(image_right, self.curve_ratio_right, image_direction="right")
-        image_left = self.curve_transform(image_left, self.curve_ratio_left, image_direction="left")
+        image_right = self.curve_transform(
+            image=image_right,
+            curve_ratio_range=self.curve_ratio_right,
+            image_direction="right",
+            mask=mask,
+            keypoints=keypoints,
+            bounding_boxes=bounding_boxes,
+        )
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            image_right, mask, keypoints, bounding_boxes = image_right
+        image_left = self.curve_transform(
+            image=image_left,
+            curve_ratio_range=self.curve_ratio_left,
+            image_direction="left",
+        )
 
         # pad image so that both images are aligned on the top portion
         if not curve_down:
             pad_value = abs(image_left.shape[0] - image_right.shape[0])
             pad_value_top = pad_value
             if image_left.shape[0] > image_right.shape[0]:
+                # pad image
                 image_right = np.pad(
                     image_right,
                     pad_width=((pad_value_top, 0), (0, 0), (0, 0)),
@@ -431,6 +615,32 @@ class BookBinding(Augmentation):
                     constant_values=0,
                 )
                 image_right[:pad_value_top, :] = backdrop_color
+                # pad mask
+                if mask is not None:
+                    mask = np.pad(
+                        mask,
+                        pad_width=((pad_value_top, 0), (0, 0)),
+                        mode="constant",
+                        constant_values=0,
+                    )
+
+                # pad keypoints
+                if keypoints is not None and pad_value_top != 0:
+                    for name, points in keypoints.items():
+                        for i, (xpoint, ypoint) in enumerate(points):
+                            points[i] = [xpoint, ypoint + pad_value_top]
+
+                # pad bounding boxes
+                if bounding_boxes is not None and pad_value_top != 0:
+                    for i, bounding_box in enumerate(bounding_boxes):
+                        xspoint, yspoint, xepoint, yepoint = bounding_box
+                        bounding_boxes[i] = [
+                            xspoint,
+                            yspoint + pad_value_top,
+                            xepoint,
+                            yepoint + pad_value_top,
+                        ]
+
             elif image_right.shape[0] > image_left.shape[0]:
                 image_left = np.pad(
                     image_left,
@@ -461,6 +671,37 @@ class BookBinding(Augmentation):
         # merged left image and right image
         image_output[:ysize, :xsize] = image_left
         image_output[:cysize, xsize:] = image_right
+
+        # add image left to mask, keypoints and bounding boxes by ading offset or padding
+        # pad mask with image left xsize
+        if mask is not None:
+            pad_y = 0
+            if cysize < ysize:
+                pad_y = ysize - cysize
+
+            mask = np.pad(
+                mask,
+                pad_width=((0, pad_y), (xsize, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+
+        # add image left xsize as offset to keypoints
+        if keypoints is not None and pad_value_top != 0:
+            for name, points in keypoints.items():
+                for i, (xpoint, ypoint) in enumerate(points):
+                    points[i] = [xpoint + xsize, ypoint]
+
+        # add image left xsize as offset to bounding boxes
+        if bounding_boxes is not None and pad_value_top != 0:
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                bounding_boxes[i] = [
+                    xspoint + xsize,
+                    yspoint,
+                    xepoint + xsize,
+                    yepoint,
+                ]
 
         # add shadow effect
         if self.enable_shadow:
@@ -495,15 +736,19 @@ class BookBinding(Augmentation):
                     indices = np.logical_and(image_output[:, :, i] == backdrop_color[i], image_mask[:, :, i] > 0)
                     image_output[:, :, i][indices] = self.backdrop_color[i]
 
-        return image_output
+        return image_output, mask, keypoints, bounding_boxes
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
             # convert and make sure image is color image
+            has_alpha = 0
             if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -528,10 +773,31 @@ class BookBinding(Augmentation):
             else:
                 image_left = image.copy()
 
-            image_output = self.curve_processing(image, image_left)
+            image_output, mask, keypoints, bounding_boxes = self.curve_processing(
+                image=image,
+                image_left=image_left,
+                mask=mask,
+                keypoints=keypoints,
+                bounding_boxes=bounding_boxes,
+            )
 
             # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                ysize, xsize = image_output.shape[:2]
+                if ysize != image_alpha.shape[0] or xsize != image_alpha.shape[1]:
+                    image_alpha = np.full((ysize, xsize), fill_value=255, dtype="uint8")
+                image_output = np.dstack((image_output, image_alpha))
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

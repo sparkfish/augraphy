@@ -35,7 +35,7 @@ class InkMottling(Augmentation):
     def __repr__(self):
         return f"InkMottling(ink_mottling_alpha_range={self.ink_mottling_alpha_range}, ink_mottling_noise_scale_range={self.ink_mottling_noise_scale_range}, ink_mottling_gaussian_kernel_range={self.ink_mottling_gaussian_kernel_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
@@ -69,6 +69,7 @@ class InkMottling(Augmentation):
                 255,
                 size=(int(ysize / ink_mottling_noise_scale), int(xsize / ink_mottling_noise_scale)),
             ).astype("uint8")
+
             image_random = cv2.cvtColor(image_random, cv2.COLOR_GRAY2BGR)
 
             # apply gaussian blur to the mask of noise
@@ -89,6 +90,10 @@ class InkMottling(Augmentation):
                     interpolation=cv2.INTER_AREA,
                 )
 
+            # add alpha layer to random image
+            if image.shape[2] == 4:
+                image_random = np.dstack((image_random, image[:, :, 3]))
+
             # blend noise mask with image ink based on the input alpha
             ink_mottling_alpha = random.uniform(self.ink_mottling_alpha_range[0], self.ink_mottling_alpha_range[1])
             image_blend = cv2.addWeighted(image, (1 - ink_mottling_alpha), image_random, ink_mottling_alpha, 0)
@@ -98,4 +103,14 @@ class InkMottling(Augmentation):
             if is_gray:
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

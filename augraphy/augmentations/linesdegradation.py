@@ -65,7 +65,7 @@ class LinesDegradation(Augmentation):
     def __repr__(self):
         return f"LinesDegradation(line_roi={self.line_roi}, line_gradient_range={self.line_gradient_range}, line_gradient_direction={self.line_gradient_direction}, line_split_probability={self.line_split_probability}, line_replacement_value={self.line_replacement_value}, line_min_length={self.line_min_length}, line_long_to_short_ratio={self.line_long_to_short_ratio}, line_replacement_probability={self.line_replacement_probability}, line_replacement_thickness={self.line_replacement_thickness}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # initialize parameters with random value
@@ -177,12 +177,12 @@ class LinesDegradation(Augmentation):
 
             # merge mask and set max value = 1
             if gradient_direction == 2:
-                mask = mask_x + mask_y
+                mask_xy = mask_x + mask_y
             elif gradient_direction == 1:
-                mask = mask_y
+                mask_xy = mask_y
             else:
-                mask = mask_x
-            mask[mask > 0] = 1
+                mask_xy = mask_x
+            mask_xy[mask_xy > 0] = 1
 
             # output image
             image_output = image.copy()
@@ -196,9 +196,20 @@ class LinesDegradation(Augmentation):
 
             # replace detected lines with line value
             if len(image_output.shape) > 2:
-                for i in range(image_output.shape[2]):
-                    image_output[ystart:yend, xstart:xend, i][mask > 0] = replacement_mask[mask > 0]
+                # skip alpha layer
+                for i in range(3):
+                    image_output[ystart:yend, xstart:xend, i][mask_xy > 0] = replacement_mask[mask_xy > 0]
             else:
-                image_output[ystart:yend, xstart:xend][mask > 0] = replacement_mask[mask > 0]
+                image_output[ystart:yend, xstart:xend][mask_xy > 0] = replacement_mask[mask_xy > 0]
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

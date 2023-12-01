@@ -10,18 +10,21 @@ from augraphy.utilities.noisegenerator import NoiseGenerator
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 from augraphy.utilities.pixelbleed import PixelBleed
 from augraphy.utilities.slidingwindow import PatternMaker
+from augraphy.utilities.texturegenerator import TextureGenerator
+
 
 __all__ = [
     "ComposePipelines",
+    "DPIMetrics",
     "FigshareDownloader",
     "Function",
     "ImageOverlay",
     "InkGenerator",
     "Interop",
-    "OverlayBuilder",
     "Noise",
     "NoiseGenerator",
+    "OverlayBuilder",
     "PatternMaker",
     "PixelBleed",
-    "DPIMetrics",
+    "TextureGenerator",
 ]
