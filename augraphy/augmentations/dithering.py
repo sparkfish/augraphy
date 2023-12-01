@@ -1,5 +1,6 @@
 import random
 
+import cv2
 import numba as nb
 import numpy as np
 from numba import config
@@ -47,18 +48,17 @@ class Dithering(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
+        ysize, xsize = image.shape[:2]
+        img_dither_fs = image.copy().astype("float")
         if len(image.shape) > 2:  # coloured image
-            ysize, xsize, dim = image.shape
-            img_dither_fs = image.copy().astype("float")
-            for channel_num in range(dim):
+            # skip alpha channel
+            for channel_num in range(3):
                 self.apply_Floyd_Steinberg(
                     img_dither_fs[:, :, channel_num],
                     ysize,
                     xsize,
                 )
         else:  # grayscale or binary
-            ysize, xsize = image.shape
-            img_dither_fs = image.copy().astype("float")
             self.apply_Floyd_Steinberg(img_dither_fs, ysize, xsize)
 
         return img_dither_fs.astype("uint8")
@@ -131,10 +131,11 @@ class Dithering(Augmentation):
                 ordered_matrix[y][x] = np.floor((value / total_number) * 255)
         ordered_matrix = np.array(ordered_matrix, dtype="float64")
 
+        ysize, xsize = image.shape[:2]
+        img_dither_ordered = image.copy().astype("float")
         if len(image.shape) > 2:  # coloured image
-            ysize, xsize, dim = image.shape
-            img_dither_ordered = image.copy().astype("float")
-            for channel_num in range(dim):
+            # skip alpha channel
+            for channel_num in range(3):
                 self.apply_Ordered(
                     img_dither_ordered[:, :, channel_num],
                     ysize,
@@ -143,8 +144,6 @@ class Dithering(Augmentation):
                     ordered_matrix,
                 )
         else:  # grayscale or binary
-            ysize, xsize = image.shape
-            img_dither_ordered = image.copy().astype("float")
             self.apply_Ordered(
                 img_dither_ordered,
                 ysize,
@@ -196,9 +195,16 @@ class Dithering(Augmentation):
         return matrix
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            # check and convert image into BGR format
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             if self.dither == "random":
                 dither_type = random.choice(["ordered", "Floyd Steinberg"])
@@ -210,4 +216,17 @@ class Dithering(Augmentation):
             else:
                 image_dither = self.dither_Floyd_Steinberg(image)
 
-            return image_dither
+            if is_gray:
+                image_dither = cv2.cvtColor(image_dither, cv2.COLOR_BGR2GRAY)
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_dither] + outputs_extra
+            else:
+                return image_dither

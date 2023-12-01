@@ -37,8 +37,16 @@ class ColorPaper(Augmentation):
         :type image: numpy.array (numpy.uint8)
         """
 
-        if len(image.shape) < 3:
+        has_alpha = 0
+        if len(image.shape) > 2:
+            is_gray = 0
+            if image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
+        else:
+            is_gray = 1
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
         ysize, xsize = image.shape[:2]
 
         # convert to hsv colorspace
@@ -52,15 +60,31 @@ class ColorPaper(Augmentation):
         image_hsv[:, :, 1] = image_s
 
         # convert back to bgr
-        color_image = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
+        image_color = cv2.cvtColor(image_hsv, cv2.COLOR_HSV2BGR)
 
-        return color_image
+        # return image follows the input image color channel
+        if is_gray:
+            image_color = cv2.cvtColor(image_color, cv2.COLOR_BGR2GRAY)
+        if has_alpha:
+            image_color = np.dstack((image_color, image_alpha))
+
+        return image_color
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
             color_image = self.add_color(image)
 
-            return color_image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [color_image] + outputs_extra
+            else:
+                return color_image

@@ -76,7 +76,7 @@ class Hollow(Augmentation):
         return f"HollowText(hollow_median_kernel_value_range={self.hollow_median_kernel_value_range}, hollow_min_width_range={self.hollow_min_width_range}, hollow_max_width_range={self.hollow_max_width_range}, hollow_min_height_range={self.hollow_min_height_range}, hollow_max_height_range={self.hollow_max_height_range},  hollow_min_area_range={self.hollow_min_area_range}, hollow_max_area_range={self.hollow_max_area_range}, hollow_dilation_kernel_size_range={self.hollow_dilation_kernel_size_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
@@ -235,7 +235,8 @@ class Hollow(Augmentation):
 
             # get background by removing the detected contours
             image_output = image.copy()
-            image_output[image_mask > 0] = image_median[image_mask > 0]
+            for i in range(3):
+                image_output[:, :, i][image_mask > 0] = image_median[:, :, i][image_mask > 0]
 
             # create a rando mask
             image_random = np.random.randint(0, 255, size=image_mask.shape, dtype="uint8")
@@ -263,4 +264,14 @@ class Hollow(Augmentation):
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

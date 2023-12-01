@@ -199,16 +199,19 @@ class LightingGradient(Augmentation):
         return x_value
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
-            image = image.copy()
+            frame = image.copy()
+
+            has_alpha = 0
+            if len(frame.shape) > 2 and frame.shape[2] == 4:
+                has_alpha = 1
+                frame, image_alpha = frame[:, :, :3], frame[:, :, 3]
 
             if self.transparency is None:
                 transparency = random.uniform(0.5, 0.85)
             else:
                 transparency = self.transparency
-
-            frame = image
 
             height, width = frame.shape[:2]
             if len(frame.shape) > 2:
@@ -217,7 +220,7 @@ class LightingGradient(Augmentation):
                 bgr = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
                 hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
 
-            mask = self.generate_parallel_light_mask(
+            lighting_mask = self.generate_parallel_light_mask(
                 mask_size=(width, height),
                 position=self.light_position,
                 direction=self.direction,
@@ -226,8 +229,22 @@ class LightingGradient(Augmentation):
                 mode=self.mode,
                 linear_decay_rate=self.linear_decay_rate,
             )
-            hsv[:, :, 2] = hsv[:, :, 2] * transparency + mask * (1 - transparency)
+            hsv[:, :, 2] = hsv[:, :, 2] * transparency + lighting_mask * (1 - transparency)
             frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
             frame[frame > 255] = 255
             frame = np.asarray(frame, dtype=np.uint8)
-            return frame
+
+            if has_alpha:
+                frame = np.dstack((frame, image_alpha))
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [frame] + outputs_extra
+            else:
+                return frame

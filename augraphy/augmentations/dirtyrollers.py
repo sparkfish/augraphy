@@ -186,11 +186,11 @@ class DirtyRollers(Augmentation):
         return mask
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
-            # convert and make sure image is color image
+            # check and convert image into BGR format
             if len(image.shape) > 2:
                 is_gray = 0
             else:
@@ -206,7 +206,7 @@ class DirtyRollers(Augmentation):
             if rotate:
                 image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-            mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
+            scanline_mask = self.create_scanline_mask(image.shape[1], image.shape[0], line_width)
 
             meta_mask = self.create_scanline_mask(
                 image.shape[1],
@@ -214,13 +214,22 @@ class DirtyRollers(Augmentation):
                 line_width * random.randint(10, 25),
             )
 
-            image_output = self.apply_scanline_mask(image, mask, meta_mask).astype("uint8")
+            image_output = self.apply_scanline_mask(image, scanline_mask, meta_mask).astype("uint8")
 
             if rotate:
                 image_output = cv2.rotate(image_output, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

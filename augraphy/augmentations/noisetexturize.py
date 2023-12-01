@@ -84,9 +84,14 @@ class NoiseTexturize(Augmentation):
         return result
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            has_alpha = 0
+            if len(image.shape) > 2 and image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
 
             sigma = random.randint(self.sigma_range[0], self.sigma_range[1])
             turbulence = random.randint(
@@ -106,6 +111,19 @@ class NoiseTexturize(Augmentation):
                 result += self.noise(cols, rows, channel, ratio, sigma=sigma)
                 ratio = (ratio // turbulence) or 1
             cut = np.clip(result, 0, 255)
-
             cut = cut.astype(np.uint8)
-            return cut
+
+            if has_alpha:
+                cut = np.dstack((cut, image_alpha))
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [cut] + outputs_extra
+            else:
+                return cut

@@ -46,13 +46,23 @@ class GlitchEffect(Augmentation):
     def __repr__(self):
         return f"GlitchEffect(glitch_direction={self.glitch_direction}, glitch_number_range={self.glitch_number_range}, glitch_size_range={self.glitch_size_range}, glitch_offset_range={self.glitch_offset_range}, p={self.p})"
 
-    def apply_glitch(self, image):
+    def apply_glitch(self, image, glitch_direction, mask, keypoints, bounding_boxes):
         """Apply glitch effect into the image by shifting patches of images.
 
         :param image: Image to apply the glitch effect.
         :type image: numpy array
+        :param direction: The direction of glitch effect.
+        :type direction: string
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
         """
 
+        # input image shape
         ysize, xsize = image.shape[:2]
         glitch_number = random.randint(self.glitch_number_range[0], self.glitch_number_range[1])
         for i in range(glitch_number):
@@ -67,7 +77,7 @@ class GlitchEffect(Augmentation):
                 glitch_size = random.randint(self.glitch_size_range[0], self.glitch_size_range[1])
 
             # generate random direction
-            direction = random.choice([-1, 1])
+            direction = random.choice([1, -1])
 
             # generate random glitch offset
             if self.glitch_offset_range[0] <= 1.0 and isinstance(self.glitch_offset_range[0], float):
@@ -78,26 +88,209 @@ class GlitchEffect(Augmentation):
             else:
                 glitch_offset = random.randint(self.glitch_offset_range[0], self.glitch_offset_range[1]) * direction
 
-            # get a patch of image
-            start_y = random.randint(0, ysize - glitch_size)
-            image_patch = image[start_y : start_y + glitch_size, :]
-            pysize, pxsize = image_patch.shape[:2]
+            # vertical glitch effect
+            if glitch_direction == "vertical":
+                # get a patch of image
+                start_x = random.randint(0, xsize - glitch_size)
+                image_patch = image[:, start_x : start_x + glitch_size]
+                if mask is not None:
+                    mask_patch = mask[:, start_x : start_x + glitch_size]
+                pysize, pxsize = image_patch.shape[:2]
 
-            # create translation matrix in horizontal direction
-            translation_matrix = np.float32([[1, 0, glitch_offset], [0, 1, 0]])
+                # create translation matrix in vertical direction
+                translation_matrix = np.float32([[1, 0, 0], [0, 1, glitch_offset]])
 
-            # get a copy of translated area
-            if direction > 0:
-                image_patch_fill = image_patch[:, -glitch_offset:].copy()
+                # get a copy of translated area
+                image_patch_fill = image_patch[-abs(glitch_offset) :, :].copy()
+
+            # horizontal glitch effect
             else:
-                image_patch_fill = image_patch[:, :glitch_offset].copy()
+                # get a patch of image
+                start_y = random.randint(0, ysize - glitch_size)
+                image_patch = image[start_y : start_y + glitch_size, :]
+                if mask is not None:
+                    mask_patch = mask[start_y : start_y + glitch_size, :]
+                pysize, pxsize = image_patch.shape[:2]
+
+                # create translation matrix in horizontal direction
+                translation_matrix = np.float32([[1, 0, glitch_offset], [0, 1, 0]])
+
+                # get a copy of translated area
+                image_patch_fill = image_patch[:, -abs(glitch_offset) :].copy()
+
             # translate image
             image_patch = cv2.warpAffine(image_patch, translation_matrix, (pxsize, pysize))
-            # fill back the empty are after translation
-            if direction > 0:
-                image_patch[:, :glitch_offset] = image_patch_fill
+            # translate mask
+            if mask is not None:
+                mask_patch = cv2.warpAffine(mask_patch, translation_matrix, (pxsize, pysize))
+
+            # translate keypoints
+            if keypoints is not None:
+                for name, points in keypoints.items():
+                    for i, (xpoint, ypoint) in enumerate(points):
+                        if glitch_direction == "vertical":
+                            if (xpoint >= start_x) and (xpoint < (start_x + glitch_size)):
+                                points[i] = [xpoint, ypoint + glitch_offset]
+                        else:
+                            if (ypoint >= start_y) and (ypoint < (start_y + glitch_size)):
+                                points[i] = [xpoint + glitch_offset, ypoint]
+
+            # translate bounding boxes
+            if bounding_boxes is not None:
+                new_boxes = []
+                for i, bounding_box in enumerate(bounding_boxes):
+                    xspoint, yspoint, xepoint, yepoint = bounding_box
+
+                    if glitch_direction == "vertical":
+                        # both start and end point within translated area
+                        if (
+                            (xspoint >= start_x)
+                            and (xspoint < (start_x + glitch_size))
+                            and (xepoint >= start_x)
+                            and (xepoint < (start_x + glitch_size))
+                        ):
+                            bounding_boxes[i] = [
+                                xspoint,
+                                max(0, yspoint + glitch_offset),
+                                xepoint,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+
+                        # left portion of box is in translation area, but right portion is not
+                        elif (
+                            (xspoint >= start_x)
+                            and (xspoint < (start_x + glitch_size))
+                            and ((xepoint < start_x) or (xepoint >= (start_x + glitch_size)))
+                        ):
+                            # shift left box
+                            bounding_boxes[i] = [
+                                xspoint,
+                                max(0, yspoint + glitch_offset),
+                                start_x + glitch_size,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+                            # remain right box
+                            new_boxes.append(
+                                [
+                                    start_x + glitch_size,
+                                    yspoint,
+                                    xepoint,
+                                    yepoint,
+                                ],
+                            )
+
+                        # right portion of box is in translation area, but left portion is not
+                        elif (
+                            ((xspoint < start_x) or (xspoint >= (start_x + glitch_size)))
+                            and (xepoint >= start_x)
+                            and (xepoint < (start_x + glitch_size))
+                        ):
+                            # shift right box
+                            bounding_boxes[i] = [
+                                start_x,
+                                max(0, yspoint + glitch_offset),
+                                xepoint,
+                                min(yepoint + glitch_offset, ysize - 1),
+                            ]
+                            # remain left box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    yspoint,
+                                    start_x,
+                                    yepoint,
+                                ],
+                            )
+
+                    else:
+                        # both start and end point within translated area
+                        if (
+                            (yspoint >= start_y)
+                            and (yspoint < (start_y + glitch_size))
+                            and (yepoint >= start_y)
+                            and (yepoint < (start_y + glitch_size))
+                        ):
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                yspoint,
+                                min(xepoint + glitch_offset, xsize - 1),
+                                yepoint,
+                            ]
+
+                        # top portion of box is in translation area, but bottom portion is not
+                        elif (
+                            (yspoint >= start_y)
+                            and (yspoint < (start_y + glitch_size))
+                            and ((yepoint < start_y) or (yepoint >= (start_y + glitch_size)))
+                        ):
+                            # shift top box
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                yspoint,
+                                min(xepoint + glitch_offset, xsize - 1),
+                                start_y + glitch_size,
+                            ]
+                            # remain bottom box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    start_y + glitch_size,
+                                    xepoint,
+                                    yepoint,
+                                ],
+                            )
+
+                        # bottom portion of box is in translation area, but top portion is not
+                        elif (
+                            ((yspoint < start_y) or (yspoint >= (start_y + glitch_size)))
+                            and (yepoint >= start_y)
+                            and (yepoint < (start_y + glitch_size))
+                        ):
+                            # shift bottom box
+                            bounding_boxes[i] = [
+                                max(0, xspoint + glitch_offset),
+                                start_y,
+                                min(xepoint + glitch_offset, xsize - 1),
+                                yepoint,
+                            ]
+
+                            # remain top box
+                            new_boxes.append(
+                                [
+                                    xspoint,
+                                    yspoint,
+                                    xepoint,
+                                    start_y,
+                                ],
+                            )
+
+                # merge boxes
+                bounding_boxes += new_boxes
+
+            # fill back the empty area after translation
+            if glitch_direction == "vertical":
+                if direction > 0:
+                    image_patch[:glitch_offset, :] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:glitch_offset, :] = 0
+                else:
+                    image_patch[glitch_offset:, :] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[glitch_offset:, :] = 0
             else:
-                image_patch[:, -glitch_offset:] = image_patch_fill
+                if direction > 0:
+                    image_patch[:, :glitch_offset] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:, :glitch_offset] = 0
+
+                else:
+                    image_patch[:, glitch_offset:] = image_patch_fill
+                    # mask's empty area is filled with 0
+                    if mask is not None:
+                        mask_patch[:, glitch_offset:] = 0
 
             # randomly scale single channel to create a single color contrast effect
             random_ratio = random.uniform(0.8, 1.2)
@@ -107,13 +300,27 @@ class GlitchEffect(Augmentation):
             image_patch_ratio[image_patch_ratio < 0] = 0
             image_patch[:, :, channel] = image_patch_ratio.astype("uint8")
 
-            image[start_y : start_y + glitch_size, :] = image_patch
+            if glitch_direction == "vertical":
+                image[:, start_x : start_x + glitch_size] = image_patch
+                if mask is not None:
+                    mask[:, start_x : start_x + glitch_size] = mask_patch
+            else:
+                image[start_y : start_y + glitch_size, :] = image_patch
+                if mask is not None:
+                    mask[start_y : start_y + glitch_size, :] = mask_patch
 
-        return image
+        return image, mask
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
+
+            # check and convert image into BGR format
+            if len(image.shape) > 2:
+                is_gray = 0
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGRA)
 
             # apply color shift before the glitch effect
             color_shift = ColorShift(
@@ -132,18 +339,36 @@ class GlitchEffect(Augmentation):
             else:
                 glitch_direction = self.glitch_direction
 
-            # for vertical direction, rotate image by 90 degree because apply_glitch create glithces horizontally
-            if glitch_direction == "vertical":
-                image_output = np.rot90(self.apply_glitch(np.rot90(image_output, 1)), 3)
-            elif glitch_direction == "horizontal":
-                image_output = self.apply_glitch(image_output)
             # for 2 directional glitches, it will be either horizontal or vertical direction first
-            else:
+            if glitch_direction == "all":
+                horizontal_first = 0
                 if random.random() > 0.5:
-                    image_output = self.apply_glitch(image_output)
-                    image_output = np.rot90(self.apply_glitch(np.rot90(image_output, 1)), 3)
-                else:
-                    image_output = np.rot90(self.apply_glitch(np.rot90(image_output, 1)), 3)
-                    image_output = self.apply_glitch(image_output)
+                    horizontal_first = 1
 
-            return image_output
+                # apply horizontal glitch before vertical glitch
+                if horizontal_first:
+                    image_output, mask = self.apply_glitch(image_output, "horizontal", mask, keypoints, bounding_boxes)
+
+                # apply vertical glitch
+                image_output, mask = self.apply_glitch(image_output, "horizontal", mask, keypoints, bounding_boxes)
+
+                # apply horizontal glitch after vertical glitch
+                if not horizontal_first:
+                    image_output, mask = self.apply_glitch(image_output, "horizontal", mask, keypoints, bounding_boxes)
+            else:
+                image_output, mask = self.apply_glitch(image_output, glitch_direction, mask, keypoints, bounding_boxes)
+
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGRA2GRAY)
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

@@ -177,8 +177,8 @@ class PageBorder(Augmentation):
         # x
         xcenter = int(xsize / 2)
         bxcenter = int(bxsize / 2)
-        dy_left = abs(xcenter - bxcenter)
-        dy_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
+        dx_left = abs(xcenter - bxcenter)
+        dx_right = abs(abs(xsize - xcenter) - abs(bxsize - bxcenter))
 
         # condition where foreground image is larger
         if ysize > bysize:
@@ -196,17 +196,18 @@ class PageBorder(Augmentation):
                 constant_values=0,
             )
 
+        # flag to know if foreground x size is larger
         if xsize > bxsize:
             # (top, bottom), (left, right)
             image_background = np.pad(
                 image_background,
-                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                pad_width=((0, 0), (dx_left, dx_right), (0, 0)),
                 mode="constant",
                 constant_values=0,
             )
             image_mask_background = np.pad(
                 image_mask_background,
-                pad_width=((0, 0), (dy_left, dy_right), (0, 0)),
+                pad_width=((0, 0), (dx_left, dx_right), (0, 0)),
                 mode="constant",
                 constant_values=0,
             )
@@ -215,25 +216,28 @@ class PageBorder(Augmentation):
 
         # overlay image
         if bysize > ysize and bxsize > xsize:
-            image_background[dy_top:-dy_bottom, dy_left:-dy_right][indices] = image_foreground[indices]
-            image_mask_background[dy_top:-dy_bottom, dy_left:-dy_right] += image_mask_foreground
+            image_background[dy_top:-dy_bottom, dx_left:-dx_right][indices] = image_foreground[indices]
+            image_mask_background[dy_top:-dy_bottom, dx_left:-dx_right] += image_mask_foreground
         elif bysize > ysize:
             image_background[dy_top:-dy_bottom, :][indices] = image_foreground[indices]
             image_mask_background[dy_top:-dy_bottom, :] += image_mask_foreground
         elif bxsize > xsize:
-            image_background[:, dy_left:-dy_right][indices] = image_foreground[indices]
-            image_mask_background[:, dy_left:-dy_right] += image_mask_foreground
+            image_background[:, dx_left:-dx_right][indices] = image_foreground[indices]
+            image_mask_background[:, dx_left:-dx_right] += image_mask_foreground
         else:
             image_background[indices] = image_foreground[indices]
             image_mask_background += image_mask_foreground
 
-        return image_background, image_mask_background
+        return image_background, image_mask_background, dy_top, dy_bottom, dx_left, dx_right
 
     def create_page_borders(
         self,
         image,
         page_border_width,
         page_border_height,
+        mask,
+        keypoints,
+        bounding_boxes,
     ):
         """Create page borders effect and apply it into input image.
 
@@ -243,6 +247,13 @@ class PageBorder(Augmentation):
         :type border_width: int
         :param border_height: Vertical direction and height of borders.
         :type border_height: int
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 1 to 255.
+            Value of 0 will be assigned to the filled area after the transformation.
+        :type mask: numpy array (uint8)
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate.
+        :type keypoints: dictionary
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list
         """
 
         border_width = abs(page_border_width)
@@ -394,6 +405,11 @@ class PageBorder(Augmentation):
 
         image_mask_background = np.full_like(border_image_merged, fill_value=0, dtype="uint8")
 
+        # extended size in each edge of image
+        ext_left, ext_right, ext_top, ext_bottom = abs(page_border_width), 0, abs(page_border_height), 0
+        # size of initial background
+        bysize, bxsize = border_image_merged.shape[:2]
+
         for i in reversed(range(total_shifts)):
 
             shifted_value_y = int(shifted_value_ys[i])
@@ -459,12 +475,28 @@ class PageBorder(Augmentation):
                 image_mask_rotate_single = rotate_image_PIL(image_mask_rotate_single, rotated_angle, expand=1)
                 border_image_single = rotate_image_PIL(border_image_single, rotated_angle, expand=1)
 
-            border_image_merged, image_mask_background = self.center_overlay(
+            border_image_merged, image_mask_background, dy_top, dy_bottom, dx_left, dx_right = self.center_overlay(
                 border_image_merged,
                 border_image_single,
                 image_mask_background,
                 image_mask_rotate_single,
             )
+
+            if not self.same_page_border:
+                # check and compute the extended size
+                nbysize, nbxsize = border_image_merged.shape[:2]
+                if nbysize != bysize:
+                    # add new extended size
+                    ext_top += dy_top
+                    ext_bottom += dy_bottom
+                    # update new size
+                    bysize = nbysize
+                if nbxsize != bxsize:
+                    # add new extended size
+                    ext_left += dx_left
+                    ext_right += dx_right
+                    # update new size
+                    bxsize = nbxsize
 
         # update background value based on mask
         image_mask_background[image_mask_background > 0] = 255
@@ -504,6 +536,7 @@ class PageBorder(Augmentation):
                 if bysize > ysize and bxsize > xsize:
                     if self.same_page_border:
                         border_image_merged = border_image_merged[dy_top:-dy_bottom, dx_left:-dx_right]
+
                     else:
                         if page_border_trim_sides[0]:
                             start_x = dx_left
@@ -551,6 +584,170 @@ class PageBorder(Augmentation):
                             end_x = bxsize
                         border_image_merged = border_image_merged[:, start_x:end_x]
 
+        # rotate back to original extended value and trimming sides
+        # default, extend top left
+        if page_border_width < 0 and page_border_height < 0:
+            pass
+        # bottom left
+        elif page_border_width < 0 and page_border_height > 0:
+            # rotate counter clockwise once from topleft （topleft is reference) back to bottomleft
+            ext_left, ext_right, ext_top, ext_bottom = ext_top, ext_bottom, ext_right, ext_left
+            page_border_trim_sides = [
+                page_border_trim_sides[1],
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+            ]
+        # bottom right
+        elif page_border_width > 0 and page_border_height > 0:
+            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
+        # top right
+        elif page_border_width > 0 and page_border_height < 0:
+            # rotate counter clockwise 3 times from topleft （topleft is reference) back to topright
+            ext_left, ext_right, ext_top, ext_bottom = ext_bottom, ext_top, ext_left, ext_right
+            page_border_trim_sides = [
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+                page_border_trim_sides[2],
+            ]
+        # top
+        elif page_border_width == 0 and page_border_height < 0:
+            pass
+        # bottom
+        elif page_border_width == 0 and page_border_height > 0:
+            # rotate counter clockwise twice from top (top is reference) back to bottom
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
+        # left
+        elif page_border_width < 0 and page_border_height == 0:
+            pass
+        # right
+        elif page_border_width > 0 and page_border_height == 0:
+            # rotate counter clockwise 2 times  from left (left is reference) back to right
+            ext_left, ext_right, ext_top, ext_bottom = ext_right, ext_left, ext_bottom, ext_top
+            page_border_trim_sides = [
+                page_border_trim_sides[2],
+                page_border_trim_sides[3],
+                page_border_trim_sides[0],
+                page_border_trim_sides[1],
+            ]
+
+        if mask is not None:
+            # for same page border, remove part of the mask
+            if self.same_page_border:
+                mask[:ext_top, :] = 0
+                mask[mask.shape[0] - ext_bottom :, :] = 0
+                mask[:, :ext_left] = 0
+                mask[:, mask.shape[1] - ext_right :] = 0
+
+            # padding and followed trim for not same page border
+            else:
+                # padding
+                pad_x = [ext_left, ext_right]
+                pad_y = [ext_top, ext_bottom]
+                mask = np.pad(
+                    mask,
+                    pad_width=(pad_y, pad_x),
+                    mode="constant",
+                    constant_values=0,
+                )
+
+                # trim
+                if sum(page_border_trim_sides) > 0:
+                    # trim left
+                    if page_border_trim_sides[0] and ext_left > 0:
+                        mask = mask[:, ext_left:]
+                    # trim top
+                    if page_border_trim_sides[1] and ext_top > 0:
+                        mask = mask[ext_top:, :]
+                    # trim right
+                    if page_border_trim_sides[2] and ext_right > 0:
+                        mask = mask[:, : mask.shape[1] - ext_right]
+                    # trim bottom
+                    if page_border_trim_sides[3] and ext_bottom > 0:
+                        mask = mask[: mask.shape[0] - ext_bottom, :]
+
+        if keypoints is not None:
+            for name, points in keypoints.items():
+                remove_indices = []
+                for i, (xpoint, ypoint) in enumerate(points):
+                    # remove points if it is outside boundaries
+                    if self.same_page_border:
+                        if (
+                            (xpoint < ext_left)
+                            or (xpoint >= image.shape[1] - ext_right)
+                            or (ypoint < ext_top)
+                            or (ypoint >= image.shape[0] - ext_bottom)
+                        ):
+                            remove_indices.append(i)
+                    # add offset for padded area
+                    else:
+                        # check if trim left, add offset only if there's no trim left
+                        if not page_border_trim_sides[0]:
+                            xpoint = xpoint + ext_left
+                        # check if trim top, add offset only if there's no trim top
+                        if not page_border_trim_sides[1]:
+                            ypoint = ypoint + ext_top
+                        points[i] = [xpoint, ypoint]
+                # remove out of boundaries points
+                while remove_indices:
+                    points.pop(remove_indices.pop())
+
+        if bounding_boxes is not None:
+            remove_indices = []
+            for i, bounding_box in enumerate(bounding_boxes):
+                xspoint, yspoint, xepoint, yepoint = bounding_box
+                # for same page border, reduce or remove box when it is outside boundary
+                if self.same_page_border:
+                    xend = image.shape[1] - ext_right
+                    yend = image.shape[0] - ext_bottom
+
+                    # both points are not in boundary
+                    if (xspoint < ext_left or xspoint >= xend or yspoint < ext_top or yspoint >= yend) and (
+                        xepoint < ext_left or xepoint >= xend or yepoint < ext_top or yepoint >= yend
+                    ):
+                        remove_indices.append(i)
+
+                    # start point is not in boundary, but end point is within boundary
+                    elif xspoint < ext_left or xspoint >= xend or yspoint < ext_top or yspoint >= yend:
+                        xspoint = min(max(xspoint, ext_left), xend)
+                        yspoint = min(max(yspoint, ext_top), yend)
+                        bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
+                    # end point is not in boundary, but start point is within boundary
+                    elif xepoint < ext_left or xepoint >= xend or yepoint < ext_top or yepoint >= yend:
+                        xepoint = min(max(xepoint, ext_left), xend)
+                        yepoint = min(max(yepoint, ext_top), yend)
+                        bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+                # add offset for padded area
+                else:
+                    # check if trim left, add offset only if there's no trim left
+                    if not page_border_trim_sides[0]:
+                        xspoint = xspoint + ext_left
+                        xepoint = xepoint + ext_left
+                    # check if trim top, add offset only if there's no trim top
+                    if not page_border_trim_sides[1]:
+                        yspoint = yspoint + ext_top
+                        yepoint = yepoint + ext_top
+                    bounding_boxes[i] = [xspoint, yspoint, xepoint, yepoint]
+
+            # remove out of boundaries points
+            while remove_indices:
+                bounding_boxes.pop(remove_indices.pop())
+
         # rotate back to original position
         # default, extend top left
         if page_border_width < 0 and page_border_height < 0:
@@ -561,7 +758,7 @@ class PageBorder(Augmentation):
             border_image_merged = np.rot90(border_image_merged, 1)
         # bottom right
         elif page_border_width > 0 and page_border_height > 0:
-            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomleft
+            # rotate counter clockwise twice from topleft （topleft is reference) back to bottomright
             border_image_merged = np.rot90(border_image_merged, 2)
         # top right
         elif page_border_width > 0 and page_border_height < 0:
@@ -582,14 +779,18 @@ class PageBorder(Augmentation):
             # rotate counter clockwise 2 times  from left (left is reference) back to right
             border_image_merged = np.rot90(border_image_merged, 2)
 
-        return border_image_merged
+        return border_image_merged, mask
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # convert and make sure image is color image
+            has_alpha = 0
             if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -620,14 +821,37 @@ class PageBorder(Augmentation):
                 else:
                     border_height = self.page_border_width_height[1]
 
-            image_output = self.create_page_borders(
+            image_output, mask = self.create_page_borders(
                 image.copy(),
                 border_width,
                 border_height,
+                mask,
+                keypoints,
+                bounding_boxes,
             )
 
             # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                oysize, oxsize = image_output.shape[:2]
+                # check and make sure image alpha has a same size with image output
+                if oysize != height or oxsize != width:
+                    image_alpha = cv2.resize(
+                        image_alpha,
+                        (oxsize, oysize),
+                        interpolation=cv2.INTER_AREA,
+                    )
+                image_output = np.dstack((image_output, image_alpha))
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

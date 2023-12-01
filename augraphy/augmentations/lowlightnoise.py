@@ -76,9 +76,15 @@ class LowLightNoise(Augmentation):
         bias_im = np.zeros_like(image) + value
         # add random column noise to the image
         col_pattern = np.random.uniform(0, int(value * 0.1) // 2, size=shape[0])
-        for channel in range(shape[2]):
+        if len(shape) > 2:
+            # skip alpha channel
+            for channel in range(3):
+                for column in columns:
+                    bias_im[:, column, channel] = value + col_pattern
+        else:
             for column in columns:
-                bias_im[:, column, channel] = value + col_pattern
+                bias_im[:, column] = value + col_pattern
+
         return bias_im
 
     def _apply_filter(self, image):
@@ -106,12 +112,15 @@ class LowLightNoise(Augmentation):
         """
         base_current = current * exposure_time / gain  # noise due to thermal heat of the sensor
         dark_im = np.random.poisson(base_current, size=image.shape)
-        y_max, x_max, channels = dark_im.shape
+        y_max, x_max = dark_im.shape[:2]
         n_hot = int(0.00001 * x_max * y_max)
         hot_x = np.random.randint(0, x_max, size=n_hot)
         hot_y = np.random.randint(0, y_max, size=n_hot)
-        for channel in range(channels):
-            dark_im[hot_y, hot_x, channel] = current * exposure_time / gain
+        if len(dark_im.shape) > 2:
+            for channel in range(3):
+                dark_im[hot_y, hot_x, channel] = current * exposure_time / gain
+        else:
+            dark_im[hot_y, hot_x] = current * exposure_time / gain
         bias_im = self._add_bias(image.copy(), value)  # noise due to accumulation of photon on the screen
         noise = 0.1 * bias_im + 0.1 * dark_im
         return noise
@@ -149,9 +158,15 @@ class LowLightNoise(Augmentation):
         output_img = self._apply_filter(res)
         return output_img
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             result = image.copy()
+
+            has_alpha = 0
+            if len(result.shape) > 2 and result.shape[2] == 4:
+                has_alpha = 1
+                result, image_alpha = result[:, :, :3], result[:, :, 3]
+
             photons = random.randint(self.num_photons_range[0], self.num_photons_range[1])
             alpha = random.uniform(self.alpha_range[0], self.alpha_range[1])
             beta = random.uniform(self.beta_range[0], self.beta_range[1])
@@ -165,4 +180,18 @@ class LowLightNoise(Augmentation):
                 bias,
                 photons,
             )
-        return result
+
+        if has_alpha:
+            result = np.dstack((result, image_alpha))
+
+        # check for additional output of mask, keypoints and bounding boxes
+        outputs_extra = []
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            outputs_extra = [mask, keypoints, bounding_boxes]
+
+        # returns additional mask, keypoints and bounding boxes if there is additional input
+        if outputs_extra:
+            # returns in the format of [image, mask, keypoints, bounding_boxes]
+            return [result] + outputs_extra
+        else:
+            return result

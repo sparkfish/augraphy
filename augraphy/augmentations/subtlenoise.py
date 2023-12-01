@@ -45,7 +45,7 @@ class SubtleNoise(Augmentation):
         return image
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
 
@@ -53,13 +53,24 @@ class SubtleNoise(Augmentation):
             if len(image.shape) > 2:
                 # convert to int to enable negative
                 image = image.astype("int")
-                for i in range(image.shape[2]):
+                # skip alpha layer
+                for i in range(3):
                     image[:, :, i] = self.add_subtle_noise(image[:, :, i])
             # single channel image
             else:
                 image = self.add_subtle_noise(image)
 
             # clip values between 0-255
-            image = np.clip(image, 0, 255)
+            image = np.uint8(np.clip(image, 0, 255))
 
-            return image.astype("uint8")
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

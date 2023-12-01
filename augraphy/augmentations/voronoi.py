@@ -167,9 +167,15 @@ class VoronoiTessellation(Augmentation):
         return mesh
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             result = image.copy()
+
+            has_alpha = 0
+            if len(result.shape) > 2 and result.shape[2] == 4:
+                has_alpha = 1
+                result, image_alpha = result[:, :, :3], result[:, :, 3]
+
             h, w = result.shape[:2]
             if self.noise_type == "random":
                 self.perlin = random.choice([True, False])
@@ -220,4 +226,18 @@ class VoronoiTessellation(Augmentation):
             # original image is padded and voronoi_mesh passes through it like a sliding window
             result = sw.make_patterns(result, voronoi_mesh, self.ws)
             result = result[self.ws : h + self.ws, self.ws : w + self.ws]
-            return result
+
+            if has_alpha:
+                result = np.dstack((result, image_alpha))
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [result] + outputs_extra
+            else:
+                return result

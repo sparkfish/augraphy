@@ -29,7 +29,7 @@ class Gamma(Augmentation):
     def __repr__(self):
         return f"Gamma(gamma_range={self.gamma_range}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
             image = image.astype(np.uint8)
@@ -39,4 +39,15 @@ class Gamma(Augmentation):
                 [((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)],
             ).astype("uint8")
             frame = cv2.LUT(image, table)
-            return frame
+
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [frame] + outputs_extra
+            else:
+                return frame

@@ -10,7 +10,7 @@ PageBorder
 --------
 Overview
 --------
-The Page Border augmentation stacking multiple images, creating an effect of single or multiple page borders on any side of the page.
+The Page Border augmentation stacking multiple images, creating an effect of single or multiple page borders on any side of the page. For additional input such as mask and keypoints, they are fully supported. For bounding boxes, their box size might be pruned if part of their box is within the border area.
 
 Initially, a clean image with single line of text is created.
 
@@ -78,3 +78,49 @@ Code example:
 Augmented image:
 
 .. figure:: augmentations/pageborder/page_border.png
+
+
+---------
+Example 2
+---------
+In this example, a PageBorder augmentation will be applied to additional inputs such as mask, keypoints and bounding boxes.
+The PageBorder augmentation will be using the default parameters value and hence no additional parameters value will be specified.
+
+Code example:
+
+::
+
+    page_border = PageBorder()
+
+    img_page_border, mask, keypoints, bounding_boxes = page_border(image=image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes)
+
+    cv2.imshow("page_border", img_page_border)
+
+
+Input mask:
+
+.. figure:: augmentations/input_mask.png
+
+Input keypoints:
+
+.. figure:: augmentations/input_keypoints.png
+
+Input bounding boxes:
+
+.. figure:: augmentations/input_bounding_boxes.png
+
+Augmented image:
+
+.. figure:: augmentations/pageborder/page_border2.png
+
+Augmented mask:
+
+.. figure:: augmentations/pageborder/page_border2_mask.png
+
+Augmented keypoints:
+
+.. figure:: augmentations/pageborder/page_border2_keypoints.png
+
+Augmented bounding boxes:
+
+.. figure:: augmentations/pageborder/page_border2_bounding_boxes.png

@@ -51,7 +51,7 @@ class Letterpress(Augmentation):
     def __repr__(self):
         return f"Letterpress(n_samples={self.n_samples}, std_range={self.std_range}, value_range={self.value_range}, value_threshold_range={self.value_threshold_range}, blur={self.blur}, p={self.p})"
 
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
             ysize, xsize = image.shape[:2]
@@ -94,7 +94,6 @@ class Letterpress(Augmentation):
 
             # initialize empty noise mask and noise mask with random values
             noise_mask = np.copy(image)
-            noise_mask2 = (np.random.random((image.shape[0], image.shape[1])) * 255).astype("uint8")
             noise_mask2 = np.random.randint(
                 self.value_range[0],
                 self.value_range[1],
@@ -104,8 +103,8 @@ class Letterpress(Augmentation):
 
             # insert noise value according to generate points
             if len(image.shape) > 2:
-
-                for i in range(image.shape[2]):
+                # skip alpha layer
+                for i in range(3):
                     noise_mask[generated_points_y, generated_points_x, i] = noise_mask2[
                         generated_points_y,
                         generated_points_x,
@@ -126,4 +125,14 @@ class Letterpress(Augmentation):
             indices = image < value_threshold
             image[indices] = noise_mask[indices]
 
-            return image
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image] + outputs_extra
+            else:
+                return image

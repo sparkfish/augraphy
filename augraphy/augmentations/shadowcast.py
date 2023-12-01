@@ -64,12 +64,16 @@ class ShadowCast(Augmentation):
         return f"ShadowCast(shadow_side={self.shadow_side}, shadow_vertices_range={self.shadow_vertices_range}, shadow_width_range={self.shadow_width_range}, shadow_height_range={self.shadow_height_range}, shadow_color={self.shadow_color}, shadow_opacity_range={self.shadow_opacity_range}, shadow_iterations_range={self.shadow_iterations_range}, shadow_blur_kernel_range={self.shadow_blur_kernel_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
 
             # convert and make sure image is color image
+            has_alpha = 0
             if len(image.shape) > 2:
                 is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -196,5 +200,17 @@ class ShadowCast(Augmentation):
             # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
+            if has_alpha:
+                image_output = np.dstack((image_output, image_alpha))
 
-            return image_output
+            # check for additional output of mask, keypoints and bounding boxes
+            outputs_extra = []
+            if mask is not None or keypoints is not None or bounding_boxes is not None:
+                outputs_extra = [mask, keypoints, bounding_boxes]
+
+            # returns additional mask, keypoints and bounding boxes if there is additional input
+            if outputs_extra:
+                # returns in the format of [image, mask, keypoints, bounding_boxes]
+                return [image_output] + outputs_extra
+            else:
+                return image_output

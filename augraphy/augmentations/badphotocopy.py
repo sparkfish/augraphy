@@ -15,8 +15,8 @@ from augraphy.utilities.noisegenerator import NoiseGenerator
 class BadPhotoCopy(Augmentation):
     """Uses added noise to generate an effect of dirty copier.
 
-    :param mask: Mask of noise to generate badphotocopy effect.
-    :type mask: uint8, optional
+    :param noise_mask: Mask of noise to generate badphotocopy effect.
+    :type noise_mask: uint8, optional
     :param noise_type: Types of noises to generate different mask patterns. Use -1 to select randomly.
         1 = sklearn.datasets' make_blobs noise
         2 = gaussian noise
@@ -53,7 +53,7 @@ class BadPhotoCopy(Augmentation):
 
     def __init__(
         self,
-        mask=None,
+        noise_mask=None,
         noise_type=-1,
         noise_side="random",
         noise_iteration=(1, 2),
@@ -70,7 +70,7 @@ class BadPhotoCopy(Augmentation):
     ):
         """Constructor method"""
         super().__init__(p=p, numba_jit=numba_jit)
-        self.mask = mask
+        self.noise_mask = noise_mask
         self.noise_type = noise_type
         self.noise_side = noise_side
         self.noise_iteration = noise_iteration
@@ -103,7 +103,7 @@ class BadPhotoCopy(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"BadPhotoCopy(mask={self.mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, numba_jit={self.numba_jit}, p={self.p})"
+        return f"BadPhotoCopy(noise_mask={self.noise_mask}, noise_type={self.noise_type}, noise_side={self.noise_side}, noise_iteration={self.noise_iteration}, noise_size={self.noise_size}, noise_value={self.noise_value}, noise_sparsity={self.noise_sparsity}, noise_concentration={self.noise_concentration}, blur_noise={self.blur_noise}, blur_noise_kernel={self.blur_noise_kernel}, wave_pattern={self.wave_pattern}, edge_effect={self.edge_effect}, numba_jit={self.numba_jit}, p={self.p})"
 
     @staticmethod
     @jit(nopython=True, cache=True, parallel=True)
@@ -206,16 +206,26 @@ class BadPhotoCopy(Augmentation):
 
         return mask.astype("uint8")
 
-    def apply_augmentation(self, image):
+    def apply_augmentation(self, image, mask, keypoints, bounding_boxes):
         """applies augmentation to the input image.
 
         :param image: The image to apply the augmentation.
         :type image: numpy.array (numpy.uint8)
+        :param mask: The mask of labels for each pixel. Mask value should be in range of 0 to 255.
+        :type mask: numpy array (uint8), optional
+        :param keypoints: A dictionary of single or multiple labels where each label is a nested list of points coordinate (x, y).
+        :type keypoints: dictionary, optional
+        :param bounding_boxes: A nested list where each nested list contains box location (x1, y1, x2, y2).
+        :type bounding_boxes: list, optional
         """
 
-        # convert and make sure image is color image
+        # check and convert image into BGR format
+        has_alpha = 0
         if len(image.shape) > 2:
             is_gray = 0
+            if image.shape[2] == 4:
+                has_alpha = 1
+                image, image_alpha = image[:, :, :3], image[:, :, 3]
         else:
             is_gray = 1
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -242,11 +252,11 @@ class BadPhotoCopy(Augmentation):
             noise_side = self.noise_side
 
         # check if provided mask is numpy array
-        if isinstance(self.mask, np.ndarray):
-            mask = self.mask
+        if isinstance(self.noise_mask, np.ndarray):
+            noise_mask = self.noise_mask
             # noise mask needs to be in grayscale form
-            if len(mask.shape) > 2:
-                mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            if len(noise_mask.shape) > 2:
+                noise_mask = cv2.cvtColor(noise_mask, cv2.COLOR_BGR2GRAY)
 
         # generate mask of noise
         else:
@@ -255,7 +265,7 @@ class BadPhotoCopy(Augmentation):
                 noise_side=noise_side,
                 numba_jit=self.numba_jit,
             )
-            mask = noise_generator.generate_noise(
+            noise_mask = noise_generator.generate_noise(
                 noise_value=self.noise_value,
                 noise_iteration=self.noise_iteration,
                 noise_size=self.noise_size,
@@ -266,7 +276,7 @@ class BadPhotoCopy(Augmentation):
             )
 
         # resize back to original size
-        mask = cv2.resize(mask, (xsize, ysize)).astype("uint8")
+        noise_mask = cv2.resize(noise_mask, (xsize, ysize)).astype("uint8")
 
         # apply blur to mask of noise
         if self.blur_noise == -1:
@@ -274,7 +284,7 @@ class BadPhotoCopy(Augmentation):
         else:
             blur_noise = self.blur_noise
         if blur_noise:
-            mask = cv2.GaussianBlur(mask, self.blur_noise_kernel, 0)
+            noise_mask = cv2.GaussianBlur(noise_mask, self.blur_noise_kernel, 0)
 
         # apply wave pattern to mask
         if self.wave_pattern == -1:
@@ -282,13 +292,13 @@ class BadPhotoCopy(Augmentation):
         else:
             wave_pattern = self.wave_pattern
         if wave_pattern:
-            mask = self.apply_wave(mask, noise_side)
+            noise_mask = self.apply_wave(noise_mask, noise_side)
 
         # add dotted noise effect to mask (unsmoothen)
         if not blur_noise:
-            noise_mask = np.random.randint(0, 255, (ysize, xsize))
-            mask[mask > noise_mask] = 255
-        noise_img = mask
+            random_mask = np.random.randint(0, 255, (ysize, xsize))
+            noise_mask[noise_mask > random_mask] = 255
+        noise_img = noise_mask
 
         # blend noise into image
         result = image.copy()
@@ -336,11 +346,23 @@ class BadPhotoCopy(Augmentation):
         # return image follows the input image color channel
         if is_gray:
             result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+        if has_alpha:
+            result = np.dstack((result, image_alpha))
 
-        return result
+        # check for additional output of mask, keypoints and bounding boxes
+        outputs_extra = []
+        if mask is not None or keypoints is not None or bounding_boxes is not None:
+            outputs_extra = [mask, keypoints, bounding_boxes]
+
+        # returns additional mask, keypoints and bounding boxes if there is additional input
+        if outputs_extra:
+            # returns in the format of [image, mask, keypoints, bounding_boxes]
+            return [result] + outputs_extra
+        else:
+            return result
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, force=False):
+    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
-            result = self.apply_augmentation(image)
+            result = self.apply_augmentation(image, mask, keypoints, bounding_boxes)
             return result
