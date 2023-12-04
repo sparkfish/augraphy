@@ -510,17 +510,65 @@ class PaperFactory(Augmentation):
                     # use ColorPaper to add color into the paper
                     texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
 
-                    hue_offset = 10
-                    hue = random.randint(hue_offset, 255 - hue_offset)
+                    # old paper colors
+                    colors = [
+                        [33, 40, 45],
+                        [50, 60, 67],
+                        [66, 80, 90],
+                        [83, 101, 112],
+                        [100, 121, 134],
+                        [116, 141, 157],
+                        [132, 135, 138],
+                        [133, 161, 179],
+                        [136, 143, 147],
+                        [139, 150, 157],
+                        [143, 157, 166],
+                        [147, 165, 176],
+                        [151, 172, 186],
+                        [155, 179, 195],
+                        [158, 186, 205],
+                        [184, 212, 230],
+                        [193, 217, 233],
+                        [202, 223, 236],
+                        [211, 228, 240],
+                        [219, 233, 243],
+                        [228, 239, 246],
+                    ]
+
+                    # primary color
+                    random_index = random.randint(0, len(colors) - 2)
+                    color = colors[random_index]
+                    color_hsv = cv2.cvtColor(np.array([[color]], dtype="uint8"), cv2.COLOR_BGR2HSV)
+
+                    # hue determines color
+                    hue = color_hsv[:, :, 0][0][0]
+                    hue_offset = 2
                     hue_range = [hue - hue_offset, hue + hue_offset]
 
-                    saturation_offset = 10
-                    saturation = random.randint(50 + saturation_offset, 205 - saturation_offset)
+                    # saturation determines richness of color
+                    saturation = color_hsv[:, :, 1][0][0]
+                    saturation_offset = 5
                     saturation_range = [saturation - saturation_offset, saturation + saturation_offset]
 
+                    # add color
                     color_paper = ColorPaper(hue_range=hue_range, saturation_range=saturation_range)
-
                     texture = color_paper(texture)
+
+                    # add secondary color by using overlaybuilder
+                    random_index2 = random.randint(random_index, len(colors) - 1)
+                    color = colors[random_index2]
+                    image_color = np.full((texture.shape[0], texture.shape[1], 3), fill_value=color, dtype="uint8")
+                    ob = OverlayBuilder(
+                        "overlay",
+                        image_color,
+                        texture,
+                        1,
+                        (1, 1),
+                        "center",
+                        0,
+                        0.5,
+                    )
+                    texture = ob.build_overlay()
             else:
                 if len(texture.shape) > 2:
                     texture = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
@@ -528,7 +576,7 @@ class PaperFactory(Augmentation):
             # texture_intensity
             texture_intensity = generate_average_intensity(texture)
             # brighten dark texture based on target intensity, max intensity = 255 (brightest)
-            target_intensity = 200
+            target_intensity = 180
             if texture_intensity < target_intensity:
                 brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
                 brighten_min = 1 + (brighten_ratio / 2)
