@@ -1,13 +1,13 @@
 import random
-import cv2
 
-import numpy as np
+import cv2
 import numba as nb
+import numpy as np
 from numba import config
 from numba import jit
-from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 from augraphy.base.augmentation import Augmentation
+from augraphy.utilities.overlaybuilder import OverlayBuilder
 
 
 class Moire(Augmentation):
@@ -28,9 +28,9 @@ class Moire(Augmentation):
 
     def __init__(
         self,
-        moire_density = (15,20),
-        moire_blend_method = "normal",
-        moire_blend_alpha = 0.1,
+        moire_density=(15, 20),
+        moire_blend_method="normal",
+        moire_blend_alpha=0.1,
         numba_jit=1,
         p=1,
     ):
@@ -58,40 +58,39 @@ class Moire(Augmentation):
         :param density_range: Pair of ints determining of density of the moire pattern stripes.
         :type density_range: tuple, optional
         """
-        
-        image = np.zeros((ysize, xsize),dtype="uint8")
-        
+
+        image = np.zeros((ysize, xsize), dtype="uint8")
+
         # random relative location
-        relative_x = random.randint(5,10)
-        relative_y = random.randint(5,10)
-        
+        relative_x = random.randint(5, 10)
+        relative_y = random.randint(5, 10)
+
         # random density
-        density = random.randint(density_range[0],density_range[1])
+        density = random.randint(density_range[0], density_range[1])
 
         # random phase
         phase = 2 * np.pi * random.uniform(0.001, 0.01)
-        
+
         # random offset
-        if random.random()> 0.5:
-            x_offset = random.randint(-5,-2)
+        if random.random() > 0.5:
+            x_offset = random.randint(-5, -2)
         else:
-            x_offset = random.randint(2,5)
-        if random.random()> 0.5:
-            y_offset = random.randint(-5,-2)
+            x_offset = random.randint(2, 5)
+        if random.random() > 0.5:
+            y_offset = random.randint(-5, -2)
         else:
-            y_offset = random.randint(2,5)
-        
+            y_offset = random.randint(2, 5)
+
         # create moire pattern
         for y in nb.prange(ysize):
             new_y = ((y / ysize) * (y_offset * relative_y)) - relative_y
             for x in nb.prange(xsize):
                 new_x = ((x / xsize) * (x_offset * relative_x)) - relative_x
-                
+
                 value = np.sin(phase + (density * 2 * np.pi * (np.sqrt(new_x**2 + new_y**2))))
                 image[x, y] = int(255 * (value + 1) / 2)
-        
-        return image 
 
+        return image
 
     def blend_moire(self, image, image_moire):
         """Blend moire pattern into the image by using OverLayBuilder.
@@ -103,7 +102,7 @@ class Moire(Augmentation):
         """
 
         # minimum intensity so that pattern will not be too dark
-        image_moire[image_moire<30] = 30
+        image_moire[image_moire < 30] = 30
 
         # Create overlay object and blend moire pattern
         ob = OverlayBuilder(
@@ -144,11 +143,11 @@ class Moire(Augmentation):
                 0.5,
             )
             image_moire = ob.build_overlay()
-            image_moire = cv2.resize(image_moire, (image.shape[1],image.shape[0]), interpolation = cv2.INTER_LINEAR)
-            
+            image_moire = cv2.resize(image_moire, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_LINEAR)
+
             # enhance effect by using median filter
             image_moire = cv2.medianBlur(image_moire, 5)
-            
+
             # blend moire pattern into image
             image_output = self.blend_moire(image, image_moire)
 
