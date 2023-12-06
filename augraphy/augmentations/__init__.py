@@ -29,6 +29,7 @@ from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.lowlightnoise import LowLightNoise
 from augraphy.augmentations.markup import Markup
+from augraphy.augmentations.moire import Moire
 from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.noisylines import NoisyLines
 from augraphy.augmentations.pageborder import PageBorder
@@ -75,6 +76,7 @@ __all__ = [
     "LowInkRandomLines",
     "LowLightNoise",
     "Markup",
+    "Moire",
     "NoiseTexturize",
     "NoisyLines",
     "PageBorder",

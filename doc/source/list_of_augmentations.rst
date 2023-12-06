@@ -34,6 +34,7 @@ Pixel Level Augmentations
    augmentations/lowinkrandomlines.rst
    augmentations/lowlightnoise
    augmentations/markup.rst
+   augmentations/moire.rst
    augmentations/noisetexturize.rst
    augmentations/noisylines.rst
    augmentations/quasi_crystal.rst
