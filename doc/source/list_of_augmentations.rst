@@ -20,6 +20,7 @@ Pixel Level Augmentations
    augmentations/dirtyrollers.rst
    augmentations/dithering.rst
    augmentations/dotmatrix.rst
+   augmentations/doubleexposure.rst
    augmentations/faxify.rst
    augmentations/gamma.rst
    augmentations/hollow.rst

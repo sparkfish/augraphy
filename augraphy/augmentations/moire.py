@@ -124,10 +124,16 @@ class Moire(Augmentation):
         if force or self.should_run():
             image = image.copy()
 
+            # convert and make sure image is color image
             has_alpha = 0
-            if len(image.shape) > 2 and image.shape[2] == 4:
-                has_alpha = 1
-                image, image_alpha = image[:, :, :3], image[:, :, 3]
+            if len(image.shape) > 2:
+                is_gray = 0
+                if image.shape[2] == 4:
+                    has_alpha = 1
+                    image, image_alpha = image[:, :, :3], image[:, :, 3]
+            else:
+                is_gray = 1
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             # create moire pattern
             image_moire1 = self.generate_moire_pattern(1000, 1000, self.moire_density)
@@ -151,6 +157,9 @@ class Moire(Augmentation):
             # blend moire pattern into image
             image_output = self.blend_moire(image, image_moire)
 
+            # return image follows the input image color channel
+            if is_gray:
+                image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
             if has_alpha:
                 image_output = np.dstack((image_output, image_alpha))
 
