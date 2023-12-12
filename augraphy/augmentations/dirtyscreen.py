@@ -2,11 +2,11 @@ import random
 
 import cv2
 import numpy as np
-
 from sklearn.datasets import make_blobs
 
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.overlaybuilder import OverlayBuilder
+
 
 class DirtyScreen(Augmentation):
     """Creates a dirty screen effect by applying blobs of different size in the entire image.
@@ -27,10 +27,10 @@ class DirtyScreen(Augmentation):
 
     def __init__(
         self,
-        n_clusters = (50,100),
-        n_samples = (2,20),
-        std_range = (1,5),
-        value_range = (150,250),
+        n_clusters=(50, 100),
+        n_samples=(2, 20),
+        std_range=(1, 5),
+        value_range=(150, 250),
         p=1,
     ):
         super().__init__(p=p)
@@ -60,33 +60,33 @@ class DirtyScreen(Augmentation):
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
             ysize, xsize = image.shape[:2]
-            
+
             noise_mask_merged = np.full_like(image, fill_value=255, dtype="uint8")
-            
+
             for i in range(10):
-            
+
                 max_box_size = max(ysize, xsize)
-                
+
                 center_box_min = 0
-                center_box_max = max_box_size-1
-                
+                center_box_max = max_box_size - 1
+
                 n_samples = [
                     random.randint(self.n_samples[0], self.n_samples[1])
                     for _ in range(random.randint(self.n_clusters[0], self.n_clusters[1]))
                 ]
                 std = random.randint(self.std_range[0], self.std_range[1])
-    
+
                 # generate clusters of blobs
                 generated_points, point_group = make_blobs(
                     n_samples=n_samples,
-                    center_box=(center_box_min , center_box_max),
+                    center_box=(center_box_min, center_box_max),
                     cluster_std=std,
                     n_features=2,
                 )
-                
+
                 # remove decimals
                 generated_points = generated_points.astype("int")
-    
+
                 # delete location where < 0 and > image size
                 ind_delete = np.logical_or.reduce(
                     (
@@ -98,7 +98,7 @@ class DirtyScreen(Augmentation):
                 )
                 generated_points_x = np.delete(generated_points[:, 0], ind_delete.reshape(ind_delete.shape[0]), axis=0)
                 generated_points_y = np.delete(generated_points[:, 1], ind_delete.reshape(ind_delete.shape[0]), axis=0)
-  
+
                 # initialize empty noise mask and noise mask with value range
                 noise_mask = np.full_like(image, fill_value=255, dtype="uint8")
                 noise_mask_value = np.random.randint(
@@ -117,16 +117,18 @@ class DirtyScreen(Augmentation):
                             generated_points_x,
                         ]
                 else:
-                    noise_mask[generated_points_y, generated_points_x] = noise_mask_value[generated_points_y, generated_points_x]
-
+                    noise_mask[generated_points_y, generated_points_x] = noise_mask_value[
+                        generated_points_y,
+                        generated_points_x,
+                    ]
 
                 # merge points
-                noise_mask_merged = cv2.multiply(noise_mask_merged, noise_mask,scale=1/255)
+                noise_mask_merged = cv2.multiply(noise_mask_merged, noise_mask, scale=1 / 255)
 
             # add points into input
             image_output = image.copy()
-            image_output[noise_mask_merged!=255] = noise_mask_merged[noise_mask_merged!=255]
-    
+            image_output[noise_mask_merged != 255] = noise_mask_merged[noise_mask_merged != 255]
+
             # blend points image into input again
             ob = OverlayBuilder(
                 "ink_to_paper",
@@ -139,7 +141,7 @@ class DirtyScreen(Augmentation):
                 0.5,
             )
             image_output = ob.build_overlay()
-            
+
             # return image follows the input image color channel
             if is_gray:
                 image_output = cv2.cvtColor(image_output, cv2.COLOR_BGR2GRAY)
