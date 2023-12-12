@@ -18,6 +18,7 @@ Pixel Level Augmentations
    augmentations/delaunay.rst
    augmentations/dirtydrum.rst
    augmentations/dirtyrollers.rst
+   augmentations/dirtyscreen.rst
    augmentations/dithering.rst
    augmentations/dotmatrix.rst
    augmentations/doubleexposure.rst

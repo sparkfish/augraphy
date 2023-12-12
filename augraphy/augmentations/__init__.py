@@ -9,6 +9,7 @@ from augraphy.augmentations.colorshift import ColorShift
 from augraphy.augmentations.delaunay import DelaunayTessellation
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
+from augraphy.augmentations.dirtyscreen import DirtyScreen
 from augraphy.augmentations.dithering import Dithering
 from augraphy.augmentations.dotmatrix import DotMatrix
 from augraphy.augmentations.doubleexposure import DoubleExposure
@@ -57,6 +58,7 @@ __all__ = [
     "DelaunayTessellation",
     "DirtyDrum",
     "DirtyRollers",
+    "DirtyScreen",
     "Dithering",
     "DotMatrix",
     "DoubleExposure",
