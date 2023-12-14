@@ -241,6 +241,101 @@ def generate_average_intensity(image):
         return np.average(image)
 
 
+# for lens flare
+@jit(nopython=True, cache=True, parallel=True)
+def mix(a, b, t):
+    """Linear interpolation between a and b based on t
+
+    :param a: First value of the interpolation.
+    :type a: float
+    :param b: Second value of the interpolation.
+    :type b: float
+    :param t: Weight of the interpolation.
+    :type t: float
+    """
+    return (a * (1.0 - t)) + (b * t)
+
+
+# for lens flare
+@jit(nopython=True, cache=True, parallel=True)
+def lnorm(v):
+    """Function similar with np.linalg.norm for 1D array.
+
+    :param v: Input array
+    :type v: Numpy array
+    """
+
+    return np.sqrt(np.sum(np.square(v)))
+
+
+# for lens flare
+@jit(nopython=True, cache=True, parallel=True)
+def lensflare(uv, pos, uvd, f0):
+    """Function to generate lens flare per pixel.
+
+    :param uv: Pixel location.
+    :type uv: Numpy array
+    :param pos: Lens flare location.
+    :type pos: Numpy array
+    :param uvd: Product of pixel location with their distance.
+    :type uvd: Numpy array
+    :param f0: Constant relative to pixel and lens flare location.
+    :type f0: float
+
+    """
+
+    f2 = max(1.0 / (1.0 + 32.0 * np.power(lnorm(uvd + 0.8 * pos), 2.0)), 0.0) * 0.25
+    f22 = max(1.0 / (1.0 + 32.0 * np.power(lnorm(uvd + 0.85 * pos), 2.0)), 0.0) * 0.23
+    f23 = max(1.0 / (1.0 + 32.0 * np.power(lnorm(uvd + 0.9 * pos), 2.0)), 0.0) * 0.21
+
+    uvx = mix(uv, uvd, -0.5)
+
+    f4 = max(0.01 - np.power(lnorm(uvx + 0.4 * pos), 2.4), 0.0) * 6.0
+    f42 = max(0.01 - np.power(lnorm(uvx + 0.45 * pos), 2.4), 0.0) * 5.0
+    f43 = max(0.01 - np.power(lnorm(uvx + 0.5 * pos), 2.4), 0.0) * 3.0
+
+    uvx = mix(uv, uvd, -0.4)
+
+    f5 = max(0.01 - np.power(lnorm(uvx + 0.2 * pos), 5.5), 0.0) * 2.0
+    f52 = max(0.01 - np.power(lnorm(uvx + 0.4 * pos), 5.5), 0.0) * 2.0
+    f53 = max(0.01 - np.power(lnorm(uvx + 0.6 * pos), 5.5), 0.0) * 2.0
+
+    uvx = mix(uv, uvd, -0.5)
+
+    f6 = max(0.01 - np.power(lnorm(uvx - 0.3 * pos), 1.6), 0.0) * 6.0
+    f62 = max(0.01 - np.power(lnorm(uvx - 0.325 * pos), 1.6), 0.0) * 3.0
+    f63 = max(0.01 - np.power(lnorm(uvx - 0.35 * pos), 1.6), 0.0) * 5.0
+
+    c = np.array([0.0, 0.0, 0.0])
+
+    c[0] += f2 + f4 + f5 + f6
+    c[1] += f22 + f42 + f52 + f62
+    c[2] += f23 + f43 + f53 + f63
+    c = c * 1.3 - np.array([lnorm(uvd) * 0.05, lnorm(uvd) * 0.05, lnorm(uvd) * 0.05])
+    c += np.array([f0, f0, f0])
+
+    return c
+
+
+# for lens flare
+@jit(nopython=True, cache=True, parallel=True)
+def color_modifier(color, factor, factor2):
+    """Color modifier function for LensFlare
+
+    :param color: Color in BGR format.
+    :type color: Numpy array
+    :param factor: Weight factor 1 of color.
+    :type factor: float
+     :param factor2: Weight factor 2 of color.
+    :type factor2: float
+    """
+    # Calculate the weighted average of the color channels
+    w = color[0] + color[1] + color[2]
+
+    # Mix the original color with the weighted average with different factors
+    return mix(color, w * np.array([factor, factor, factor]), w * factor2)
+
+
 # Generate noise to edges of folding
 @jit(nopython=True, cache=True, parallel=True)
 def add_folding_noise(img, side, p=0.1):
