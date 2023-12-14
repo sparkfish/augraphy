@@ -29,6 +29,7 @@ Pixel Level Augmentations
    augmentations/inkcolorswap.rst
    augmentations/inkmottling.rst
    augmentations/jpeg.rst
+   augmentations/lensflare.rst
    augmentations/letterpress.rst
    augmentations/lightinggradient.rst
    augmentations/linesdegradation.rst
