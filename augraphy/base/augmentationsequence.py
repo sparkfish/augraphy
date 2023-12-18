@@ -29,6 +29,8 @@ class AugmentationSequence(Augmentation):
 
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
+            # reset to prevent memory leaks
+            self.results = []
             result = image
             for augmentation in self.augmentations:
                 if isinstance(result, tuple):
