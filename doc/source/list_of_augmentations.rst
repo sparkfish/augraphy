@@ -28,6 +28,7 @@ Pixel Level Augmentations
    augmentations/inkbleed.rst
    augmentations/inkcolorswap.rst
    augmentations/inkmottling.rst
+   augmentations/lcdscreenpattern.rst
    augmentations/jpeg.rst
    augmentations/lensflare.rst
    augmentations/letterpress.rst

@@ -24,6 +24,7 @@ from augraphy.augmentations.inkcolorswap import InkColorSwap
 from augraphy.augmentations.inkmottling import InkMottling
 from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
+from augraphy.augmentations.lcdscreenpattern import LCDScreenPattern
 from augraphy.augmentations.lensflare import LensFlare
 from augraphy.augmentations.letterpress import Letterpress
 from augraphy.augmentations.lightinggradient import LightingGradient
@@ -73,6 +74,7 @@ __all__ = [
     "InkColorSwap",
     "InkMottling",
     "InkShifter",
+    "LCDScreenPattern",
     "Jpeg",
     "LensFlare",
     "Letterpress",
