@@ -6,6 +6,7 @@ import numpy as np
 from augraphy.base.augmentation import Augmentation
 from augraphy.utilities.overlaybuilder import OverlayBuilder
 
+
 class LCDScreenPattern(Augmentation):
     """Creates a LCD Screen Pattern effect by overlaying different line patterns into image.
 
@@ -30,10 +31,10 @@ class LCDScreenPattern(Augmentation):
     def __init__(
         self,
         pattern_type="random",
-        pattern_value_range = (0,16),
-        pattern_skip_distance_range = (3,5), 
-        pattern_overlay_method = "darken",
-        pattern_overlay_alpha = 0.3, 
+        pattern_value_range=(0, 16),
+        pattern_skip_distance_range=(3, 5),
+        pattern_overlay_method="darken",
+        pattern_overlay_alpha=0.3,
         p=1,
     ):
         """Constructor method"""
@@ -50,7 +51,7 @@ class LCDScreenPattern(Augmentation):
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
         if force or self.should_run():
             image = image.copy()
-            
+
             # check and convert image into BGR format
             has_alpha = 0
             if len(image.shape) > 2:
@@ -61,65 +62,66 @@ class LCDScreenPattern(Augmentation):
             else:
                 is_gray = 1
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-            
+
             ysize, xsize = image.shape[:2]
-            
+
             # get types of pattern
             if self.pattern_type == "random":
-                pattern_type = random.choice(["Vertical", "Horizontal", "Forward_Diagonal", "Back_Diagonal", "Cross"])    
+                pattern_type = random.choice(["Vertical", "Horizontal", "Forward_Diagonal", "Back_Diagonal", "Cross"])
             else:
                 pattern_type = self.pattern_type
-            
+
             # get value
             value = random.randint(self.pattern_value_range[0], self.pattern_value_range[1])
-            
+
             # initialize image
             image_pattern = np.full_like(image, fill_value=255, dtype="uint8")
-            
-            
-            pattern_skip_distance = random.randint(self.pattern_skip_distance_range[0], self.pattern_skip_distance_range[1])
-            
+
+            pattern_skip_distance = random.randint(
+                self.pattern_skip_distance_range[0],
+                self.pattern_skip_distance_range[1],
+            )
+
             if pattern_type == "Vertical":
-                image_pattern[:,::pattern_skip_distance] = value
-                
+                image_pattern[:, ::pattern_skip_distance] = value
+
             elif pattern_type == "Horizontal":
-                image_pattern[::pattern_skip_distance,:] = value
-                
+                image_pattern[::pattern_skip_distance, :] = value
+
             elif pattern_type == "Forward_Diagonal":
                 # minimum skip size
                 pattern_skip_distance = max(3, pattern_skip_distance)
-                
-                y, x = np.meshgrid(np.arange(ysize), np.arange(xsize), indexing='ij')
+
+                y, x = np.meshgrid(np.arange(ysize), np.arange(xsize), indexing="ij")
 
                 # Create diagonal lines pattern
                 image_pattern = ((x + y) % pattern_skip_distance == 0).astype(np.uint8) * 255
-                image_pattern = 255-image_pattern
-                image_pattern[image_pattern==0] = value
+                image_pattern = 255 - image_pattern
+                image_pattern[image_pattern == 0] = value
 
                 # Convert from gray to BGR
-                if len(image.shape)>2:
-                    image_pattern = cv2.cvtColor(image_pattern, cv2.COLOR_GRAY2BGR) 
+                if len(image.shape) > 2:
+                    image_pattern = cv2.cvtColor(image_pattern, cv2.COLOR_GRAY2BGR)
 
             elif pattern_type == "Back_Diagonal":
                 # minimum skip size
                 pattern_skip_distance = max(3, pattern_skip_distance)
-                
-                y, x = np.meshgrid(np.arange(ysize), np.arange(xsize), indexing='ij')
+
+                y, x = np.meshgrid(np.arange(ysize), np.arange(xsize), indexing="ij")
 
                 # Create diagonal lines pattern
                 image_pattern = ((x - y) % pattern_skip_distance == 0).astype(np.uint8) * 255
-                image_pattern = 255-image_pattern
-                image_pattern[image_pattern==0] = value
-                
+                image_pattern = 255 - image_pattern
+                image_pattern[image_pattern == 0] = value
+
                 # Convert from gray to BGR
-                if len(image.shape)>2:
-                    image_pattern = cv2.cvtColor(image_pattern, cv2.COLOR_GRAY2BGR) 
+                if len(image.shape) > 2:
+                    image_pattern = cv2.cvtColor(image_pattern, cv2.COLOR_GRAY2BGR)
 
             else:
-                image_pattern[::2,::2] = value
-                image_pattern[1::2,1::2] = value
-            
-            
+                image_pattern[::2, ::2] = value
+                image_pattern[1::2, 1::2] = value
+
             # blend pattern into image
             ob = OverlayBuilder(
                 self.pattern_overlay_method,
@@ -132,7 +134,6 @@ class LCDScreenPattern(Augmentation):
                 self.pattern_overlay_alpha,
             )
             image_output = ob.build_overlay()
-            
 
             # return image follows the input image color channel
             if is_gray:
