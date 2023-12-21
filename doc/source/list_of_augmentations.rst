@@ -16,6 +16,7 @@ Pixel Level Augmentations
    augmentations/colorpaper.rst
    augmentations/colorshift.rst
    augmentations/delaunay.rst
+   augmentations/depthsimulatedblur.rst
    augmentations/dirtydrum.rst
    augmentations/dirtyrollers.rst
    augmentations/dirtyscreen.rst
