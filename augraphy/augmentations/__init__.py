@@ -7,6 +7,7 @@ from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.colorshift import ColorShift
 from augraphy.augmentations.delaunay import DelaunayTessellation
+from augraphy.augmentations.depthsimulatedblur import DepthSimulatedBlur
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
 from augraphy.augmentations.dirtyscreen import DirtyScreen
@@ -58,6 +59,7 @@ __all__ = [
     "ColorPaper",
     "ColorShift",
     "DelaunayTessellation",
+    "DepthSimulatedBlur",
     "DirtyDrum",
     "DirtyRollers",
     "DirtyScreen",
