@@ -53,7 +53,7 @@ Code example:
 
     depthsimulatedblur = DepthSimulatedBlur(blur_center = "random",
                                             blur_major_axes_length_range = (120, 200),
-                                            blur_minor_axes_length_range = (120, 200), 
+                                            blur_minor_axes_length_range = (120, 200),
                                             )
 
     img_depthsimulatedblur = depthsimulatedblur(image)

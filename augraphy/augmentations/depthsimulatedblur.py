@@ -21,9 +21,9 @@ class DepthSimulatedBlur(Augmentation):
 
     def __init__(
         self,
-        blur_center = "random",
-        blur_major_axes_length_range = (120, 200),
-        blur_minor_axes_length_range = (120,200), 
+        blur_center="random",
+        blur_major_axes_length_range=(120, 200),
+        blur_minor_axes_length_range=(120, 200),
         p=1,
     ):
         super().__init__(p=p)
@@ -56,32 +56,30 @@ class DepthSimulatedBlur(Augmentation):
             # initial gaussian kernel value, will be incremented per iteration
             kernel_value = 3
             gaussian_kernel = [kernel_value, kernel_value]
-            
-            
+
             axes_major = random.randint(self.blur_major_axes_length_range[0], self.blur_major_axes_length_range[1])
             axes_minor = random.randint(self.blur_minor_axes_length_range[0], self.blur_minor_axes_length_range[1])
-            
+
             if self.blur_center == "random":
                 center_x = random.randint(0, xsize)
                 center_y = random.randint(0, ysize)
             else:
                 center_x = self.blur_center[0]
                 center_y = self.blur_center[0]
-                
 
             step = 10
             decremental_value = 10
-            angle = random.randint(0,360)  # Angle of rotation (in degrees)
+            angle = random.randint(0, 360)  # Angle of rotation (in degrees)
             center_coordinates = (center_x, center_y)
             color = (255, 255, 255)  # BGR color (here, blue)
             thickness = -1  # Line thickness
-            
+
             image_output = image.copy()
-            
+
             # it still run slow now, need further optimization
             for i in range(step):
 
-                image_ellipse= np.zeros_like(image, dtype="uint8")
+                image_ellipse = np.zeros_like(image, dtype="uint8")
 
                 axes_length = (axes_major, axes_minor)  # Major and minor axes lengths
 
@@ -90,9 +88,15 @@ class DepthSimulatedBlur(Augmentation):
 
                 # blur image
                 image_blur = cv2.GaussianBlur(image, gaussian_kernel, 0)
-    
+
                 # blend blur region into image
-                image_output = cv2.seamlessClone(image_output, image_blur, 255-image_ellipse, (int(xsize/2), int(ysize/2)), cv2.NORMAL_CLONE)
+                image_output = cv2.seamlessClone(
+                    image_output,
+                    image_blur,
+                    255 - image_ellipse,
+                    (int(xsize / 2), int(ysize / 2)),
+                    cv2.NORMAL_CLONE,
+                )
 
                 # increase gaussian kernel size
                 gaussian_kernel[0] += 4
