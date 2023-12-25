@@ -15,6 +15,10 @@ class DepthSimulatedBlur(Augmentation):
     :type blur_major_axes_length_range: tuple, optional
     :param blur_minor_axes_length_range: Pair of ints determining the value of minor axis in the blurring ellipse.
     :type blur_minor_axes_length_range: tuple, optional
+    :param blur_iteration_range: Pair of ints determining the value of number of blurring iterations.
+        The higher the iteration number, the smoother the transition of blurring area to non blurring area.
+        However, it runs slower with higher iterations number.
+    :type blur_iteration_range: tuple, optional
     :param p: The probability this Augmentation will be applied.
     :type p: float, optional
     """
@@ -24,16 +28,18 @@ class DepthSimulatedBlur(Augmentation):
         blur_center="random",
         blur_major_axes_length_range=(120, 200),
         blur_minor_axes_length_range=(120, 200),
+        blur_iteration_range=(8, 10),
         p=1,
     ):
         super().__init__(p=p)
         self.blur_center = blur_center
         self.blur_major_axes_length_range = blur_major_axes_length_range
         self.blur_minor_axes_length_range = blur_minor_axes_length_range
+        self.blur_iteration_range = blur_iteration_range
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"DepthSimulatedBlur(blur_center={self.blur_center}, blur_major_axes_length_range={self.blur_major_axes_length_range}, blur_minor_axes_length_range={self.blur_minor_axes_length_range}, p={self.p})"
+        return f"DepthSimulatedBlur(blur_center={self.blur_center}, blur_major_axes_length_range={self.blur_major_axes_length_range}, blur_minor_axes_length_range={self.blur_minor_axes_length_range}, blur_iteration_range={self.blur_iteration_range}, p={self.p})"
 
     # Applies the Augmentation to input data.
     def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
@@ -53,31 +59,49 @@ class DepthSimulatedBlur(Augmentation):
 
             ysize, xsize = image.shape[:2]
 
-            # initial gaussian kernel value, will be incremented per iteration
-            kernel_value = 3
-            gaussian_kernel = [kernel_value, kernel_value]
-
             axes_major = random.randint(self.blur_major_axes_length_range[0], self.blur_major_axes_length_range[1])
             axes_minor = random.randint(self.blur_minor_axes_length_range[0], self.blur_minor_axes_length_range[1])
 
+            min_x = int(xsize / 5)
+            min_y = int(ysize / 5)
+            max_x = xsize - min_x
+            max_y = ysize - min_y
+
             if self.blur_center == "random":
-                center_x = random.randint(0, xsize)
-                center_y = random.randint(0, ysize)
+                center_x = random.randint(min_x, max_x)
+                center_y = random.randint(min_y, max_y)
             else:
                 center_x = self.blur_center[0]
                 center_y = self.blur_center[0]
 
-            step = 10
-            decremental_value = 10
-            angle = random.randint(0, 360)  # Angle of rotation (in degrees)
+            step = random.randint(self.blur_iteration_range[0], self.blur_iteration_range[1])
+
+            # decremental value per step
+            decremental_value = int(max(1, np.ceil(min(axes_major, axes_minor) / step)))
+
+            # gaussian kernel incremental value per step
+            gaussian_kernels = np.linspace(3, random.randint(15, 21), step)
+            for i, gaussian_kernel in enumerate(gaussian_kernels):
+                gaussian_kernel = np.ceil(gaussian_kernel)
+                if not gaussian_kernel % 2:
+                    gaussian_kernel += 1
+                gaussian_kernels[i] = gaussian_kernel
+
+            # Angle of rotation (in degrees)
+            angle = random.randint(0, 360)
+            # Center of ellipse
             center_coordinates = (center_x, center_y)
-            color = (255, 255, 255)  # BGR color (here, blue)
-            thickness = -1  # Line thickness
+            # BGR color
+            color = (255, 255, 255)
+            # fill ellipse
+            thickness = -1
 
             image_output = image.copy()
 
             # it still run slow now, need further optimization
             for i in range(step):
+
+                gaussian_kernel = (int(gaussian_kernels[i]), int(gaussian_kernels[i]))
 
                 image_ellipse = np.zeros_like(image, dtype="uint8")
 
@@ -97,10 +121,6 @@ class DepthSimulatedBlur(Augmentation):
                     (int(xsize / 2), int(ysize / 2)),
                     cv2.NORMAL_CLONE,
                 )
-
-                # increase gaussian kernel size
-                gaussian_kernel[0] += 4
-                gaussian_kernel[1] += 4
 
                 # increase major and minor length
                 axes_major = max(axes_major - decremental_value, 1)
