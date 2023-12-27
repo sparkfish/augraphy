@@ -69,10 +69,12 @@ class Stains(Augmentation):
             stains_generator = TextureGenerator()
 
             # generate stains
-            image_stains = stains_generator(texture_type=stains_type,
-                                            texture_width=xsize,
-                                            texture_height=ysize,
-                                            quilt_texture=0)
+            image_stains = stains_generator(
+                texture_type=stains_type,
+                texture_width=xsize,
+                texture_height=ysize,
+                quilt_texture=0,
+            )
 
             # blend points image into input again
             ob = OverlayBuilder(
