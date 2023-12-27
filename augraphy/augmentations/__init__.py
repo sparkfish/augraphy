@@ -45,6 +45,7 @@ from augraphy.augmentations.scribbles import Scribbles
 from augraphy.augmentations.sectionshift import SectionShift
 from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.augmentations.squish import Squish
+from augraphy.augmentations.stains import Stains
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.voronoi import VoronoiTessellation
 from augraphy.augmentations.watermark import WaterMark
@@ -97,6 +98,7 @@ __all__ = [
     "SectionShift",
     "ShadowCast",
     "Squish",
+    "Stains",
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",
