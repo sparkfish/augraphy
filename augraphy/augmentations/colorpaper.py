@@ -52,8 +52,8 @@ class ColorPaper(Augmentation):
         # convert to hsv colorspace
         image_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         # assign hue and saturation
-        image_h = np.random.randint(self.hue_range[0], self.hue_range[1], size=(ysize, xsize))
-        image_s = np.random.randint(self.saturation_range[0], self.saturation_range[1], size=(ysize, xsize))
+        image_h = np.random.randint(self.hue_range[0], self.hue_range[1] + 1, size=(ysize, xsize))
+        image_s = np.random.randint(self.saturation_range[0], self.saturation_range[1] + 1, size=(ysize, xsize))
 
         # assign hue and saturation channel back to hsv image
         image_hsv[:, :, 0] = image_h
