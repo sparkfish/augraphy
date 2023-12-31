@@ -41,7 +41,15 @@ class PaperFactory(Augmentation):
     :type generate_texture_edge_type: string, optional
     :param texture_enable_color: Flag to enable color in the texture.
         Use "random" for random choice.
-    :type texture__enable_color: int or string, optional
+    :type texture_enable_color: int or string, optional
+    :param texture_color: Color set of the texture. Use "random" for random color.
+        Use "Blank" for preset blank paper colors.
+        Use "Old" for preset old paper colors.
+        Use nested list to define own color set. It should be in the format of [BGR1, BGR2...].
+        Each element in the list should be a tuple defining the color in BGR format.
+    :type texture_color: list or string, optional
+    :param texture_color_blend_method: Method to blend color into texture.
+    :type texture_color_blend_method: string, optional
     :param blend_texture: Flag to blend multiple textures.
         Use "random" for random choice.
     :type blend_texture: int or string, optional
@@ -68,6 +76,8 @@ class PaperFactory(Augmentation):
         generate_texture_background_type="random",
         generate_texture_edge_type="random",
         texture_enable_color="random",
+        texture_color="random",
+        texture_color_blend_method="overlay",
         blend_texture="random",
         blend_texture_path="./paper_textures",
         blend_generate_texture=0,
@@ -83,6 +93,8 @@ class PaperFactory(Augmentation):
         self.generate_texture_background_type = generate_texture_background_type
         self.generate_texture_edge_type = generate_texture_edge_type
         self.texture_enable_color = texture_enable_color
+        self.texture_color = texture_color
+        self.texture_color_blend_method = texture_color_blend_method
         self.blend_texture = blend_texture
         self.blend_texture_path = blend_texture_path
         self.blend_generate_texture = blend_generate_texture
@@ -129,7 +141,7 @@ class PaperFactory(Augmentation):
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):
-        return f"PaperFactory(texture_path={self.texture_path},generate_texture={self.generate_texture},generate_texture_background_type={self.generate_texture_background_type},generate_texture_edge_type={self.generate_texture_edge_type},texture_enable_color={self.texture_enable_color},blend_texture={self.blend_texture}, blend_texture_path={self.blend_texture_path},blend_generate_texture={self.blend_generate_texture},blend_texture_background_type={self.blend_texture_background_type}, blend_texture_edge_type={self.blend_texture_edge_type}, blend_method={self.blend_method}, p={self.p})"
+        return f"PaperFactory(texture_path={self.texture_path},generate_texture={self.generate_texture},generate_texture_background_type={self.generate_texture_background_type},generate_texture_edge_type={self.generate_texture_edge_type},texture_enable_color={self.texture_enable_color},texture_color={self.texture_color},texture_color_blend_method={self.texture_color_blend_method},blend_texture={self.blend_texture}, blend_texture_path={self.blend_texture_path},blend_generate_texture={self.blend_generate_texture},blend_texture_background_type={self.blend_texture_background_type}, blend_texture_edge_type={self.blend_texture_edge_type}, blend_method={self.blend_method}, p={self.p})"
 
     def retrieve_texture(self, image, fblend):
         """Retrieve image texture from the input texture path.
@@ -510,17 +522,122 @@ class PaperFactory(Augmentation):
                     # use ColorPaper to add color into the paper
                     texture = cv2.cvtColor(texture, cv2.COLOR_GRAY2BGR)
 
-                    hue_offset = 10
-                    hue = random.randint(hue_offset, 255 - hue_offset)
+                    if self.texture_color_blend_method == "random":
+                        texture_color_blend_method = random.choice(
+                            [
+                                "ink_to_paper",
+                                "min",
+                                "max",
+                                "mix",
+                                "normal",
+                                "lighten",
+                                "darken",
+                                "screen",
+                                "dodge",
+                                "multiply",
+                                "divide",
+                                "grain_merge",
+                                "overlay",
+                                "FFT",
+                            ],
+                        )
+                    else:
+                        texture_color_blend_method = self.texture_color_blend_method
+
+                    # get color information
+                    if self.texture_color == "random":
+                        texture_color = random.choice(["Blank", "Old"])
+                    else:
+                        texture_color = self.texture_color
+
+                    if texture_color == "Blank":
+                        # blank paper colors
+                        colors = [
+                            [208, 208, 208],
+                            [225, 225, 225],
+                            [236, 236, 236],
+                            [246, 246, 246],
+                        ]
+                        # offset
+                        hue_offset = 0
+                        saturation_offset = 0
+
+                    elif texture_color == "Old":
+                        # old paper colors
+                        colors = [
+                            [33, 40, 45],
+                            [50, 60, 67],
+                            [66, 80, 90],
+                            [83, 101, 112],
+                            [100, 121, 134],
+                            [116, 141, 157],
+                            [132, 135, 138],
+                            [133, 161, 179],
+                            [136, 143, 147],
+                            [139, 150, 157],
+                            [143, 157, 166],
+                            [147, 165, 176],
+                            [151, 172, 186],
+                            [155, 179, 195],
+                            [158, 186, 205],
+                            [184, 212, 230],
+                            [193, 217, 233],
+                            [202, 223, 236],
+                            [211, 228, 240],
+                            [219, 233, 243],
+                            [228, 239, 246],
+                        ]
+
+                        # offset
+                        hue_offset = 2
+                        saturation_offset = 2
+
+                    else:
+                        # using input color sets
+                        colors = list(texture_color)
+                        if len(colors) == 1:
+                            # at least 2 colors (for primary and secondary)
+                            colors.append(colors[0])
+                        # sort color from dark to light using sum
+                        sort_order = np.argsort(np.sum(colors, axis=1))
+                        colors = [colors[order] for order in sort_order]
+
+                        # offset
+                        hue_offset = 0
+                        saturation_offset = 0
+
+                    # primary color for 1st blending process using ColorPaper
+                    random_index = random.randint(0, len(colors) - 2)
+                    color = colors[random_index]
+                    color_hsv = cv2.cvtColor(np.array([[color]], dtype="uint8"), cv2.COLOR_BGR2HSV)
+
+                    # hue determines color
+                    hue = color_hsv[:, :, 0][0][0]
                     hue_range = [hue - hue_offset, hue + hue_offset]
 
-                    saturation_offset = 10
-                    saturation = random.randint(50 + saturation_offset, 205 - saturation_offset)
+                    # saturation determines richness of color
+                    saturation = color_hsv[:, :, 1][0][0]
                     saturation_range = [saturation - saturation_offset, saturation + saturation_offset]
 
+                    # add color
                     color_paper = ColorPaper(hue_range=hue_range, saturation_range=saturation_range)
-
                     texture = color_paper(texture)
+
+                    # add secondary color by using overlaybuilder
+                    random_index2 = random.randint(random_index, len(colors) - 1)
+                    color = colors[random_index2]
+                    image_color = np.full((texture.shape[0], texture.shape[1], 3), fill_value=color, dtype="uint8")
+                    ob = OverlayBuilder(
+                        texture_color_blend_method,
+                        image_color,
+                        texture,
+                        1,
+                        (1, 1),
+                        "center",
+                        0,
+                        0.5,
+                    )
+                    texture = ob.build_overlay()
             else:
                 if len(texture.shape) > 2:
                     texture = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
@@ -528,7 +645,7 @@ class PaperFactory(Augmentation):
             # texture_intensity
             texture_intensity = generate_average_intensity(texture)
             # brighten dark texture based on target intensity, max intensity = 255 (brightest)
-            target_intensity = 200
+            target_intensity = 180
             if texture_intensity < target_intensity:
                 brighten_ratio = abs(texture_intensity - target_intensity) / texture_intensity
                 brighten_min = 1 + (brighten_ratio / 2)

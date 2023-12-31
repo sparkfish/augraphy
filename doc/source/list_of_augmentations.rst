@@ -16,17 +16,22 @@ Pixel Level Augmentations
    augmentations/colorpaper.rst
    augmentations/colorshift.rst
    augmentations/delaunay.rst
+   augmentations/depthsimulatedblur.rst
    augmentations/dirtydrum.rst
    augmentations/dirtyrollers.rst
+   augmentations/dirtyscreen.rst
    augmentations/dithering.rst
    augmentations/dotmatrix.rst
+   augmentations/doubleexposure.rst
    augmentations/faxify.rst
    augmentations/gamma.rst
    augmentations/hollow.rst
    augmentations/inkbleed.rst
    augmentations/inkcolorswap.rst
    augmentations/inkmottling.rst
+   augmentations/lcdscreenpattern.rst
    augmentations/jpeg.rst
+   augmentations/lensflare.rst
    augmentations/letterpress.rst
    augmentations/lightinggradient.rst
    augmentations/linesdegradation.rst
@@ -34,6 +39,7 @@ Pixel Level Augmentations
    augmentations/lowinkrandomlines.rst
    augmentations/lowlightnoise
    augmentations/markup.rst
+   augmentations/moire.rst
    augmentations/noisetexturize.rst
    augmentations/noisylines.rst
    augmentations/quasi_crystal.rst

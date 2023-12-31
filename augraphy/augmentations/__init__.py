@@ -7,10 +7,13 @@ from augraphy.augmentations.brightnesstexturize import BrightnessTexturize
 from augraphy.augmentations.colorpaper import ColorPaper
 from augraphy.augmentations.colorshift import ColorShift
 from augraphy.augmentations.delaunay import DelaunayTessellation
+from augraphy.augmentations.depthsimulatedblur import DepthSimulatedBlur
 from augraphy.augmentations.dirtydrum import DirtyDrum
 from augraphy.augmentations.dirtyrollers import DirtyRollers
+from augraphy.augmentations.dirtyscreen import DirtyScreen
 from augraphy.augmentations.dithering import Dithering
 from augraphy.augmentations.dotmatrix import DotMatrix
+from augraphy.augmentations.doubleexposure import DoubleExposure
 from augraphy.augmentations.faxify import Faxify
 from augraphy.augmentations.folding import Folding
 from augraphy.augmentations.gamma import Gamma
@@ -22,6 +25,8 @@ from augraphy.augmentations.inkcolorswap import InkColorSwap
 from augraphy.augmentations.inkmottling import InkMottling
 from augraphy.augmentations.inkshifter import InkShifter
 from augraphy.augmentations.jpeg import Jpeg
+from augraphy.augmentations.lcdscreenpattern import LCDScreenPattern
+from augraphy.augmentations.lensflare import LensFlare
 from augraphy.augmentations.letterpress import Letterpress
 from augraphy.augmentations.lightinggradient import LightingGradient
 from augraphy.augmentations.linesdegradation import LinesDegradation
@@ -29,6 +34,7 @@ from augraphy.augmentations.lowinkperiodiclines import LowInkPeriodicLines
 from augraphy.augmentations.lowinkrandomlines import LowInkRandomLines
 from augraphy.augmentations.lowlightnoise import LowLightNoise
 from augraphy.augmentations.markup import Markup
+from augraphy.augmentations.moire import Moire
 from augraphy.augmentations.noisetexturize import NoiseTexturize
 from augraphy.augmentations.noisylines import NoisyLines
 from augraphy.augmentations.pageborder import PageBorder
@@ -39,6 +45,7 @@ from augraphy.augmentations.scribbles import Scribbles
 from augraphy.augmentations.sectionshift import SectionShift
 from augraphy.augmentations.shadowcast import ShadowCast
 from augraphy.augmentations.squish import Squish
+from augraphy.augmentations.stains import Stains
 from augraphy.augmentations.subtlenoise import SubtleNoise
 from augraphy.augmentations.voronoi import VoronoiTessellation
 from augraphy.augmentations.watermark import WaterMark
@@ -53,10 +60,13 @@ __all__ = [
     "ColorPaper",
     "ColorShift",
     "DelaunayTessellation",
+    "DepthSimulatedBlur",
     "DirtyDrum",
     "DirtyRollers",
+    "DirtyScreen",
     "Dithering",
     "DotMatrix",
+    "DoubleExposure",
     "Faxify",
     "Folding",
     "Gamma",
@@ -67,7 +77,9 @@ __all__ = [
     "InkColorSwap",
     "InkMottling",
     "InkShifter",
+    "LCDScreenPattern",
     "Jpeg",
+    "LensFlare",
     "Letterpress",
     "LightingGradient",
     "LinesDegradation",
@@ -75,6 +87,7 @@ __all__ = [
     "LowInkRandomLines",
     "LowLightNoise",
     "Markup",
+    "Moire",
     "NoiseTexturize",
     "NoisyLines",
     "PageBorder",
@@ -85,6 +98,7 @@ __all__ = [
     "SectionShift",
     "ShadowCast",
     "Squish",
+    "Stains",
     "SubtleNoise",
     "VoronoiTessellation",
     "WaterMark",
