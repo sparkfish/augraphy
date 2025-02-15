@@ -11,6 +11,7 @@ import numpy as np
 from augraphy.base.augmentation import Augmentation
 from augraphy.base.augmentationresult import AugmentationResult
 from augraphy.base.augmentationsequence import AugmentationSequence
+from augraphy.base.oneof import OneOf
 from augraphy.utilities.detectdpi import dpi_resize
 from augraphy.utilities.detectdpi import DPIMetrics
 from augraphy.utilities.overlaybuilder import OverlayBuilder
@@ -750,7 +751,11 @@ class AugraphyPipeline:
                 data["log"]["time"].append((augmentation, elapsed))
 
                 # not "OneOf" or "AugmentationSequence"
-                if isinstance(augmentation, Augmentation):
+                if (
+                    isinstance(augmentation, Augmentation)
+                    and not isinstance(augmentation, AugmentationSequence)
+                    and not isinstance(augmentation, OneOf)
+                ):
                     # unpacking augmented image, mask, keypoints and bounding boxes from output
                     if (mask is not None) or (keypoints is not None) or (bounding_boxes is not None):
                         result, mask, keypoints, bounding_boxes = result

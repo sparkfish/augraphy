@@ -48,5 +48,6 @@ class AugmentationSequence(Augmentation):
                 elif isinstance(current_result, tuple):
                     if current_result[0] is not None:
                         result = current_result
-
+            if (mask is not None) or (keypoints is not None) or (bounding_boxes is not None):
+                result = (result, mask, keypoints, bounding_boxes)
             return result, self.augmentations

@@ -29,8 +29,10 @@ class OneOf(Augmentation):
             augmentation = self.augmentations[np.argmax(self.augmentation_probabilities)]
 
             # Applies the selected Augmentation.
-            image = augmentation(image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes, force=True)
-            return image, [augmentation]
+            result = augmentation(image, mask=mask, keypoints=keypoints, bounding_boxes=bounding_boxes, force=True)
+            if isinstance(augmentation, AugmentationSequence):
+                return result[0], result[1]
+            return result, [augmentation]
 
     # Constructs a string containing the representations
     # of each augmentation
