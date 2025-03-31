@@ -25,9 +25,9 @@ An example of simple augmentation pipeline with just single augmentation in each
     import cv2
     import numpy as np
 
-    ink_phase   = [InkShifter]
+    ink_phase   = [InkShifter()]
     paper_phase = [VoronoiTessellation(p=1)]
-    post_phase  = [GlitchEffect]
+    post_phase  = [GlitchEffect()]
     pipeline    = AugraphyPipeline(ink_phase=ink_phase, paper_phase=paper_phase, post_phase=post_phase)
 
     image = np.full((1200, 1200,3), 250, dtype="uint8")
