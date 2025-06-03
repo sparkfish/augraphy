@@ -1,9 +1,10 @@
 import random
 
-import cv2
-import numpy as np
-
 from augraphy.base.augmentation import Augmentation
+
+import cv2
+
+import numpy as np
 
 
 class Hollow(Augmentation):
@@ -11,56 +12,56 @@ class Hollow(Augmentation):
        The detected contours are removed by using median filter operation.
 
     :param hollow_median_kernel_value_range: Pair of ints determining the median filter kernel value.
-    :type hollow_median_kernel_value_range: tuple, optional
+    :type hollow_median_kernel_value_range: tuple[int, int], optional
     :param hollow_min_width_range: Pair of ints/floats determining the minimum width of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the minimum width will be scaled by image width:
             min width (int) = image width  * min width (float and 0.0 - 1.0)
-    :type hollow_min_width_range: tuple, optional
+    :type hollow_min_width_range: tuple[int | float, int | float], optional
     :param hollow_max_width_range: Pair of ints/floats determining the maximum width of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the maximum width will be scaled by image width:
             max width (int) = image width  * max width (float and 0.0 - 1.0)
-    :type hollow_max_width_range: tuple, optional
+    :type hollow_max_width_range: tuple[int | float, int | float], optional
     :param hollow_min_height_range: Pair of ints/floats determining the minimum height of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the minimum height will be scaled by image height:
             min height (int) = image height  * min height (float and 0.0 - 1.0)
-    :type hollow_min_height_range: tuple, optional
+    :type hollow_min_height_range: tuple[int | float, int | float], optional
     :param hollow_max_height_range: Pair of ints/floats determining the maximum height of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the maximum height will be scaled by image height:
             max height (int) = image height  * max height (float and 0.0 - 1.0)
-    :type hollow_max_height_range: tuple, optional
+    :type hollow_max_height_range: tuple[int | float, int | float], optional
     :param hollow_min_area_range: Pair of ints/floats determining the minimum area of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the minimum area will be scaled by image area:
             min area (int) = image area  * min area (float and 0.0 - 1.0)
-    :type hollow_min_area_range: tuple, optional
+    :type hollow_min_area_range: tuple[int | float, int | float], optional
     :param hollow_max_area_range: Pair of ints/floats determining the maximum area of the contour.
             If the value is within the range of 0.0 to 1.0 and the value is float,
             the maximum area will be scaled by image area:
             max area (int) = image area  * max area (float and 0.0 - 1.0)
-    :type hollow_max_area_range: tuple, optional
+    :type hollow_max_area_range: tuple[int | float, int | float], optional
     :param hollow_dilation_kernel_size_range: Pair of ints determining the kernel value of the dilation.
             The dilation affect the final thickness of the hollow efect.
-    :type hollow_dilation_kernel_size_range: tuple, optional
+    :type hollow_dilation_kernel_size_range: tuple[int, int], optional
     :param p: The probability that this Augmentation will be applied.
     :type p: float, optional
     """
 
     def __init__(
-        self,
-        hollow_median_kernel_value_range=(71, 101),
-        hollow_min_width_range=(1, 2),
-        hollow_max_width_range=(150, 200),
-        hollow_min_height_range=(1, 2),
-        hollow_max_height_range=(150, 200),
-        hollow_min_area_range=(10, 20),
-        hollow_max_area_range=(2000, 5000),
-        hollow_dilation_kernel_size_range=(1, 2),
-        p=1,
-    ):
+        self: "Hollow",
+        hollow_median_kernel_value_range: tuple[int, int] = (71, 101),
+        hollow_min_width_range: tuple[int | float, int | float] = (1, 2),
+        hollow_max_width_range: tuple[int | float, int | float] = (150, 200),
+        hollow_min_height_range: tuple[int | float, int | float] = (1, 2),
+        hollow_max_height_range: tuple[int | float, int | float] = (150, 200),
+        hollow_min_area_range: tuple[int | float, int | float] = (10, 20),
+        hollow_max_area_range: tuple[int | float, int | float] = (2000, 5000),
+        hollow_dilation_kernel_size_range: tuple[int, int] = (1, 2),
+        p: float = 1,
+    ) -> None:
         super().__init__(p=p)
         self.hollow_median_kernel_value_range = hollow_median_kernel_value_range
         self.hollow_min_width_range = hollow_min_width_range
@@ -72,11 +73,32 @@ class Hollow(Augmentation):
         self.hollow_dilation_kernel_size_range = hollow_dilation_kernel_size_range
 
     # Constructs a string representation of this Augmentation.
-    def __repr__(self):
-        return f"HollowText(hollow_median_kernel_value_range={self.hollow_median_kernel_value_range}, hollow_min_width_range={self.hollow_min_width_range}, hollow_max_width_range={self.hollow_max_width_range}, hollow_min_height_range={self.hollow_min_height_range}, hollow_max_height_range={self.hollow_max_height_range},  hollow_min_area_range={self.hollow_min_area_range}, hollow_max_area_range={self.hollow_max_area_range}, hollow_dilation_kernel_size_range={self.hollow_dilation_kernel_size_range}, p={self.p})"
+    def __repr__(self: "Hollow") -> str:
+        return (
+            f"HollowText(hollow_median_kernel_value_range={self.hollow_median_kernel_value_range}, "
+            f"hollow_min_width_range={self.hollow_min_width_range}, "
+            f"hollow_max_width_range={self.hollow_max_width_range}, "
+            f"hollow_min_height_range={self.hollow_min_height_range}, "
+            f"hollow_max_height_range={self.hollow_max_height_range}, "
+            f"hollow_min_area_range={self.hollow_min_area_range}, "
+            f"hollow_max_area_range={self.hollow_max_area_range}, "
+            f"hollow_dilation_kernel_size_range={self.hollow_dilation_kernel_size_range}, "
+            f"p={self.p})"
+        )
 
     # Applies the Augmentation to input data.
-    def __call__(self, image, layer=None, mask=None, keypoints=None, bounding_boxes=None, force=False):
+    from typing import Any, Optional, Union
+    import numpy as np
+
+    def __call__(
+        self: "Hollow",
+        image: np.ndarray,
+        layer: Optional[Any] = None,
+        mask: Optional[Any] = None,
+        keypoints: Optional[Any] = None,
+        bounding_boxes: Optional[Any] = None,
+        force: bool = False,
+    ) -> Union[np.ndarray, list]:
         if force or self.should_run():
             image = image.copy()
 
@@ -132,47 +154,23 @@ class Hollow(Augmentation):
 
             # width
             if self.hollow_min_width_range[0] <= 1.0 and isinstance(self.hollow_min_width_range[0], float):
-                min_width = random.randint(
-                    int(self.hollow_min_width_range[0] * xsize * upscale),
-                    int(self.hollow_min_width_range[1] * xsize * upscale),
-                )
+                min_width = random.randint(int(self.hollow_min_width_range[0] * xsize * upscale), int(self.hollow_min_width_range[1] * xsize * upscale))
             else:
-                min_width = random.randint(
-                    self.hollow_min_width_range[0] * upscale,
-                    self.hollow_min_width_range[1] * upscale,
-                )
+                min_width = random.randint(self.hollow_min_width_range[0] * upscale, self.hollow_min_width_range[1] * upscale)
             if self.hollow_max_width_range[0] <= 1.0 and isinstance(self.hollow_max_width_range[0], float):
-                max_width = random.randint(
-                    int(self.hollow_max_width_range[0] * xsize * upscale),
-                    int(self.hollow_max_width_range[1] * xsize * upscale),
-                )
+                max_width = random.randint(int(self.hollow_max_width_range[0] * xsize * upscale), int(self.hollow_max_width_range[1] * xsize * upscale))
             else:
-                max_width = random.randint(
-                    self.hollow_max_width_range[0] * upscale,
-                    self.hollow_max_width_range[1] * upscale,
-                )
+                max_width = random.randint(self.hollow_max_width_range[0] * upscale, self.hollow_max_width_range[1] * upscale)
 
             # height
             if self.hollow_min_height_range[0] <= 1.0 and isinstance(self.hollow_min_height_range[0], float):
-                min_height = random.randint(
-                    int(self.hollow_min_height_range[0] * ysize * upscale),
-                    int(self.hollow_min_height_range[1] * ysize * upscale),
-                )
+                min_height = random.randint(int(self.hollow_min_height_range[0] * ysize * upscale), int(self.hollow_min_height_range[1] * ysize * upscale))
             else:
-                min_height = random.randint(
-                    self.hollow_min_height_range[0] * upscale,
-                    self.hollow_min_width_range[1] * upscale,
-                )
+                min_height = random.randint(self.hollow_min_height_range[0] * upscale, self.hollow_min_width_range[1] * upscale)
             if self.hollow_max_height_range[0] <= 1.0 and isinstance(self.hollow_max_height_range[0], float):
-                max_height = random.randint(
-                    int(self.hollow_max_height_range[0] * ysize * upscale),
-                    int(self.hollow_max_height_range[1] * ysize * upscale),
-                )
+                max_height = random.randint(int(self.hollow_max_height_range[0] * ysize * upscale), int(self.hollow_max_height_range[1] * ysize * upscale))
             else:
-                max_height = random.randint(
-                    self.hollow_max_height_range[0] * upscale,
-                    self.hollow_max_height_range[1] * upscale,
-                )
+                max_height = random.randint(self.hollow_max_height_range[0] * upscale, self.hollow_max_height_range[1] * upscale)
 
             # area
             if self.hollow_min_area_range[0] <= 1.0 and isinstance(self.hollow_min_area_range[0], float):
@@ -181,20 +179,14 @@ class Hollow(Augmentation):
                     int(self.hollow_min_area_range[1] * image_area * upscale_area),
                 )
             else:
-                min_area = random.randint(
-                    self.hollow_min_area_range[0] * upscale_area,
-                    self.hollow_min_area_range[1] * upscale_area,
-                )
+                min_area = random.randint(self.hollow_min_area_range[0] * upscale_area, self.hollow_min_area_range[1] * upscale_area)
             if self.hollow_max_area_range[0] <= 1.0 and isinstance(self.hollow_max_area_range[0], float):
                 max_area = random.randint(
                     int(self.hollow_max_area_range[0] * image_area * upscale_area),
                     int(self.hollow_max_area_range[1] * image_area * upscale_area),
                 )
             else:
-                max_area = random.randint(
-                    self.hollow_max_area_range[0] * upscale_area,
-                    self.hollow_max_area_range[1] * upscale_area,
-                )
+                max_area = random.randint(self.hollow_max_area_range[0] * upscale_area, self.hollow_max_area_range[1] * upscale_area)
 
             # find contours of image
             image_mask = np.zeros_like(image_binary, dtype="uint8")
@@ -227,7 +219,7 @@ class Hollow(Augmentation):
                 self.hollow_median_kernel_value_range[1],
             )
             # median kernel value must be odd
-            if not median_kernel_value % 2:
+            if median_kernel_value % 2 == 0:
                 median_kernel_value += 1
 
             # median kernel max value is 255
@@ -273,5 +265,4 @@ class Hollow(Augmentation):
             if outputs_extra:
                 # returns in the format of [image, mask, keypoints, bounding_boxes]
                 return [image_output] + outputs_extra
-            else:
-                return image_output
+            return image_output
