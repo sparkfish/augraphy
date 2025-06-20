@@ -8,10 +8,14 @@ Highly-configurable pipelines apply adjustments to the originals to create reali
 
 Treatments applied by Augraphy fabricate realistic documents that appear to have been printed on dirty laser or inkjet printers, scanned by dirty office scanners, faxed by low-resolution fax machines and otherwise mistreated by real-world paper handling office equipment.
 
+
+
+
+
 # What makes Augraphy Magical?
-<video src="videos/augraphy.mp4" controls>
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/09fc8ddc-4475-4f81-9472-6615c3ecd5c6
+
+
 Virtually no readily available datasets exist with both a _clean_ and _noisy_ version of target documents.  Augraphy addresses that problem by manufacturing large volumes of high-quality noisy documents to train alongside their clean source originals.
 
 Training neural networks typically requires augmenting limited sources of data in a variety of ways so that networks can learn to generalize their solutions.  Networks designed to work with scanned document images must be trained with images that have the type of distortions and noise typical of real-world scanned office documents.
