@@ -88,18 +88,18 @@ class BadPhotoCopy(Augmentation):
         # clamp values
         # noise value range from 0-255
         self.noise_value = list(self.noise_value)
-        self.noise_value[0] = np.clip(self.noise_value[0], 0, 255)
-        self.noise_value[1] = np.clip(self.noise_value[1], 0, 255)
+        self.noise_value[0] = np.clip(self.noise_value[0], 0, 255).item()
+        self.noise_value[1] = np.clip(self.noise_value[1], 0, 255).item()
 
         # sparsity range from 0-1
         self.noise_sparsity = list(self.noise_sparsity)
-        self.noise_sparsity[0] = np.clip(self.noise_sparsity[0], 0, 1)
-        self.noise_sparsity[1] = np.clip(self.noise_sparsity[1], 0, 1)
+        self.noise_sparsity[0] = np.clip(self.noise_sparsity[0], 0, 1).item()
+        self.noise_sparsity[1] = np.clip(self.noise_sparsity[1], 0, 1).item()
 
         # concentration range from 0-1
         self.noise_concentration = list(self.noise_concentration)
-        self.noise_concentration[0] = np.clip(self.noise_concentration[0], 0, 1)
-        self.noise_concentration[1] = np.clip(self.noise_concentration[1], 0, 1)
+        self.noise_concentration[0] = np.clip(self.noise_concentration[0], 0, 1).item()
+        self.noise_concentration[1] = np.clip(self.noise_concentration[1], 0, 1).item()
 
     # Constructs a string representation of this Augmentation.
     def __repr__(self):

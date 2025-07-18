@@ -346,7 +346,7 @@ class InkGenerator:
 
         n_clusters = (200 + kernel_size * 10, 250 + kernel_size * 10)
         n_samples = (200 + kernel_size * 5, 250 + kernel_size * 5)
-        std_range = (3 + np.ceil(kernel_size / 5), 7 + np.ceil(kernel_size / 5))
+        std_range = (3 + np.ceil(kernel_size / 5).astype(int), 7 + np.ceil(kernel_size / 5).astype(int))
         image_noise_center = self.generate_noise_clusters(gray_image, n_clusters, n_samples, std_range)
         image_noise_border = self.generate_noise_clusters(gray_image, n_clusters, n_samples, std_range)
 
