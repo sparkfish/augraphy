@@ -9,7 +9,7 @@ from augraphy.base.augmentation import Augmentation
 class DepthSimulatedBlur(Augmentation):
     """Creates a depth-simulated blur effect from a camera by blurring a small elliptical region of image.
 
-    :param blur_centerr: Center (x,y) of blur effect. Use "random" for random location.
+    :param blur_center: Center (x,y) of blur effect. Use "random" for random location.
     :type blur_center: tuple or string, optional
     :param blur_major_axes_length_range: Pair of ints determining the value of major axis in the blurring ellipse.
     :type blur_major_axes_length_range: tuple, optional
