@@ -16,7 +16,11 @@ To use the default pipeline which contains all available augmentations and sensi
 
     image = cv2.imread("image.png")
 
-    data = pipeline(image)
+    # 1. Returns numpy array directly
+    augmented = pipeline(image)
+
+    # 2. Explicitly request dictionary
+    data = pipeline.augment(image, return_dict=1)
 
     augmented = data["output"]
 
